@@ -10,12 +10,12 @@ A modern, robust, and extensible workflow orchestration framework for .NET with 
 
 **Zero Dependencies, Maximum Performance**
 - **Core package has ZERO external dependencies** - Just add one package
-- **~15x faster concurrency scaling** - 16 concurrent workflows vs sequential execution
+- **15x faster concurrency scaling** - 16 concurrent workflows vs sequential execution
 - **Sub-20 microsecond operations** - Custom operations execute in 4-56 μs
 - **Built-in compensation** (automatic rollback/saga pattern)
 - **Comprehensive observability** (metrics, tracing, health checks)
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Installation
 ```bash
@@ -46,6 +46,23 @@ using var smith = WorkflowForge.CreateSmith();
 
 await smith.ForgeAsync(workflow, foundry);
 ```
+
+## 📚 Learn by Example - Interactive Samples
+
+**The fastest way to learn WorkflowForge is through our comprehensive interactive samples:**
+
+### 🎯 [Complete Sample Collection](src/samples/WorkflowForge.Samples.BasicConsole/README.md)
+Interactive console application with 18 hands-on examples:
+
+```bash
+cd src/samples/WorkflowForge.Samples.BasicConsole
+dotnet run
+```
+
+**Learning Path:**
+- **Beginner (1-4)**: Basic workflows, data passing, conditions, inline operations
+- **Intermediate (5-12)**: Control flow, error handling, configuration, middleware
+- **Advanced (13-18)**: Extensions integration, observability, resilience patterns
 
 ## Key Features
 
@@ -126,7 +143,7 @@ WorkflowForge delivers exceptional performance:
 |--------|-------------|
 | **Operation Execution** | 4-56 μs per operation |
 | **Foundry Creation** | 5-15 μs setup time |
-| **Concurrency Scaling** | ~15x improvement with 16 concurrent workflows |
+| **Concurrency Scaling** | 15x improvement with 16 concurrent workflows |
 | **Memory Allocation** | <1KB per operation, <2KB per foundry |
 
 [View detailed benchmarks →](src/benchmarks/WorkflowForge.Benchmarks/README.md)
@@ -154,13 +171,20 @@ public async Task Should_Execute_Workflow_Successfully()
 }
 ```
 
-## Documentation & Examples
+## Examples & Documentation
 
+**🎯 Start Here:**
+- **[Interactive Samples](src/samples/WorkflowForge.Samples.BasicConsole/README.md)** - 18 hands-on examples (recommended starting point)
 - **[Getting Started Guide](docs/getting-started.md)** - Comprehensive tutorial
-- **[Architecture Overview](docs/architecture.md)** - Core design principles
-- **[Extension System](docs/extensions.md)** - Using and creating extensions
-- **[Sample Applications](src/samples/)** - Interactive examples
+
+**📖 Deep Dive:**
+- **[Core Framework](src/core/WorkflowForge/README.md)** - Core concepts and architecture
+- **[Extensions](src/extensions/)** - Available extensions and usage
+- **[Performance Benchmarks](src/benchmarks/WorkflowForge.Benchmarks/README.md)** - Verified performance claims
+
+**🔧 Reference:**
 - **[API Reference](docs/api-reference.md)** - Complete API documentation
+- **[Architecture Overview](docs/architecture.md)** - Core design principles
 
 ## Building
 

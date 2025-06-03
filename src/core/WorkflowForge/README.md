@@ -1,6 +1,6 @@
 # WorkflowForge Core
 
-The foundational workflow orchestration framework for .NET. This core package provides the essential abstractions, operations, and foundry infrastructure for building robust workflows without any external dependencies.
+The foundational workflow orchestration framework for .NET with zero dependencies, built-in compensation, and sub-20 microsecond operation performance.
 
 ## 🎯 Core Package Overview
 
@@ -25,7 +25,7 @@ dotnet add package WorkflowForge
 
 ## 🚀 Quick Start
 
-### 1. Create a Simple Workflow
+### Create and Execute a Simple Workflow
 
 ```csharp
 using WorkflowForge;
@@ -47,26 +47,15 @@ var workflow = WorkflowForge.CreateWorkflow()
         foundry.Properties["PaymentId"] = paymentResult.Id;
         return paymentResult;
     })
-    .AddOperation("FulfillOrder", async (paymentResult, foundry, ct) =>
-    {
-        foundry.Logger.LogInformation("Fulfilling order for payment {PaymentId}", paymentResult.Id);
-        return await FulfillOrderAsync(paymentResult, ct);
-    })
     .Build();
-```
 
-### 2. Execute with Foundry and Smith
-
-```csharp
-// Create foundry and smith
+// Execute the workflow
 using var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
 using var smith = WorkflowForge.CreateSmith();
 
-// Execute the workflow
 try
 {
     var order = new Order { Id = "ORD-001", Amount = 99.99m };
-    // Set initial data in foundry properties
     foundry.Properties["order"] = order;
     
     await smith.ForgeAsync(workflow, foundry);
@@ -76,6 +65,24 @@ catch (Exception ex)
 {
     foundry.Logger.LogError(ex, "Workflow execution failed");
 }
+```
+
+## 📚 Interactive Learning & Examples
+
+**The fastest way to learn WorkflowForge is through our comprehensive interactive samples:**
+
+### 🎯 [Complete Sample Collection](../../samples/WorkflowForge.Samples.BasicConsole/README.md)
+Interactive console application with 18 hands-on examples:
+
+- **Basic Workflows (1-4)**: Hello World, Data Passing, Multiple Outcomes, Inline Operations
+- **Control Flow (5-8)**: Conditional Workflows, ForEach Loops, Error Handling, Built-in Operations  
+- **Configuration & Middleware (9-12)**: Options Pattern, Configuration Profiles, Workflow Events, Middleware Usage
+- **Extensions (13-17)**: Serilog Logging, Polly Resilience, OpenTelemetry, Health Checks, Performance Monitoring
+- **Advanced (18)**: Comprehensive Demo with all extensions
+
+```bash
+cd src/samples/WorkflowForge.Samples.BasicConsole
+dotnet run
 ```
 
 ## 🏗️ Core Architecture
@@ -343,31 +350,30 @@ public async Task Should_Execute_Workflow_Operations()
 
 ## 📊 Performance Characteristics
 
-WorkflowForge Core is optimized for performance:
+WorkflowForge Core delivers exceptional performance:
 
 - **Zero external dependencies** - No additional overhead
+- **Sub-20 microsecond operations** - Custom operations execute in 4-56 μs
+- **15x better concurrency scaling** - 16 concurrent workflows vs sequential execution
 - **Minimal allocations** - Efficient memory usage in hot paths
-- **Async-first design** - Non-blocking execution throughout
 - **Thread-safe operations** - ConcurrentDictionary for shared state
-- **Lightweight abstractions** - Minimal interface overhead
 
 ## 🔗 Extension Ecosystem
 
 The core package integrates seamlessly with WorkflowForge extensions:
 
-- **WorkflowForge.Extensions.Observability.Performance** - Performance monitoring and metrics
-- **WorkflowForge.Extensions.Observability.HealthChecks** - System health monitoring
-- **WorkflowForge.Extensions.Observability.OpenTelemetry** - Distributed tracing
-- **WorkflowForge.Extensions.Resilience** - Basic retry and circuit breaker patterns
-- **WorkflowForge.Extensions.Resilience.Polly** - Advanced resilience with Polly
-- **WorkflowForge.Extensions.Logging.Serilog** - Structured logging with Serilog
+- **[WorkflowForge.Extensions.Logging.Serilog](../../extensions/WorkflowForge.Extensions.Logging.Serilog/README.md)** - Structured logging with Serilog
+- **[WorkflowForge.Extensions.Resilience.Polly](../../extensions/WorkflowForge.Extensions.Resilience.Polly/README.md)** - Advanced resilience with Polly
+- **[WorkflowForge.Extensions.Observability.OpenTelemetry](../../extensions/WorkflowForge.Extensions.Observability.OpenTelemetry/README.md)** - Distributed tracing
+- **[WorkflowForge.Extensions.Observability.Performance](../../extensions/WorkflowForge.Extensions.Observability.Performance/README.md)** - Performance monitoring
+- **[WorkflowForge.Extensions.Observability.HealthChecks](../../extensions/WorkflowForge.Extensions.Observability.HealthChecks/README.md)** - System health monitoring
 
 ## 📚 Additional Resources
 
-- [Main Project Documentation](../../README.md)
-- [Performance Benchmarks](../../benchmarks/WorkflowForge.Benchmarks/README.md)
-- [Sample Projects](../../samples/README.md)
-- [Extension Documentation](../)
+- **[Interactive Samples](../../samples/WorkflowForge.Samples.BasicConsole/README.md)** - Learn by example with 18 hands-on tutorials
+- **[Performance Benchmarks](../../benchmarks/WorkflowForge.Benchmarks/README.md)** - Verified performance claims
+- **[Main Project Documentation](../../../README.md)** - Framework overview
+- **[Extension Documentation](../../extensions/)** - Available extensions
 
 ## 📝 Professional Logging System
 

@@ -416,7 +416,7 @@ Congratulations! You've created your first WorkflowForge workflow. Here's what t
 - **[Performance Optimization](performance.md)** - High-performance patterns
 
 ### 4. **Run Sample Applications**
-- **[Interactive Samples](../src/samples/README.md)** - Comprehensive examples
+- **[Interactive Samples](../src/samples/WorkflowForge.Samples.BasicConsole/README.md)** - Comprehensive examples
 - **[Performance Benchmarks](../src/benchmarks/README.md)** - See performance characteristics
 
 ### 5. **Advanced Deployment**
@@ -501,7 +501,7 @@ var workflow = WorkflowForge.CreateWorkflow()
 ### Getting Help
 
 - **Documentation**: Explore the [full documentation](README.md)
-- **Samples**: Run the [interactive samples](../src/samples/README.md)
+- **Samples**: Run the [interactive samples](../src/samples/WorkflowForge.Samples.BasicConsole/README.md)
 - **Issues**: Report bugs on [GitHub Issues](../issues)
 - **Discussions**: Ask questions in [GitHub Discussions](../discussions)
 

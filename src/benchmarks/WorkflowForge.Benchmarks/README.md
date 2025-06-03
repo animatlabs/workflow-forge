@@ -11,7 +11,7 @@ All performance claims in WorkflowForge documentation are backed by actual Bench
 | Claim | Benchmark Evidence | Result File |
 |-------|-------------------|-------------|
 | **Sub-20 microsecond operations** | Custom operations execute in 4-56 μs | [OperationPerformanceBenchmark](BenchmarkDotNet.Artifacts/results/WorkflowForge.Benchmarks.OperationPerformanceBenchmark-report-github.md) |
-| **~15x concurrency scaling** | 16 concurrent workflows vs sequential | [ConcurrencyBenchmark](BenchmarkDotNet.Artifacts/results/WorkflowForge.Benchmarks.ConcurrencyBenchmark-report-github.md) |
+| **15x concurrency scaling** | 16 concurrent workflows vs sequential | [ConcurrencyBenchmark](BenchmarkDotNet.Artifacts/results/WorkflowForge.Benchmarks.ConcurrencyBenchmark-report-github.md) |
 | **Sub-millisecond foundry creation** | Foundry setup in 5-15 μs | [ConfigurationProfilesBenchmark](BenchmarkDotNet.Artifacts/results/WorkflowForge.Benchmarks.ConfigurationProfilesBenchmark-report-github.md) |
 | **Minimal memory allocation** | <2KB per foundry, <1KB per operation | [MemoryAllocationBenchmark](BenchmarkDotNet.Artifacts/results/) |
 
@@ -26,7 +26,7 @@ Operation Performance:
 Concurrency Scaling:
 - Sequential (16 workflows): 4,540ms
 - Concurrent (16 workflows): 301ms  
-- Scaling improvement: ~15x
+- Scaling improvement: 15x
 
 Memory Efficiency:
 - Foundry creation: 2,176 bytes

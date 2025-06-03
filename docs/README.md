@@ -1,22 +1,46 @@
-# WorkflowForge - A forge for workflows
+# WorkflowForge Documentation
 
 Comprehensive documentation for WorkflowForge, the modern workflow orchestration framework for .NET.
 
 [![GitHub Repository](https://img.shields.io/badge/GitHub-animatlabs%2Fworkflow--forge-blue?logo=github)](https://github.com/animatlabs/workflow-forge)
 [![Documentation](https://img.shields.io/badge/Docs-Latest-green?logo=gitbook)](https://github.com/animatlabs/workflow-forge/tree/main/docs)
 
+## 🎯 Quick Start Learning Path
+
+### **🚀 Start Here - Interactive Samples (Recommended)**
+**[Complete Sample Collection](../src/samples/WorkflowForge.Samples.BasicConsole/README.md)** - 18 hands-on examples covering everything from basics to advanced patterns:
+
+```bash
+cd src/samples/WorkflowForge.Samples.BasicConsole
+dotnet run
+```
+
+**Learning Path:**
+- **Beginner (1-4)**: Hello World, Data Passing, Conditions, Inline Operations
+- **Intermediate (5-12)**: Control Flow, Error Handling, Configuration, Middleware
+- **Advanced (13-18)**: Extensions, Observability, Resilience, Comprehensive Integration
+
+### **📖 Core Documentation**
+- **[Getting Started Guide](getting-started.md)** - Step-by-step introduction
+- **[Core Framework](../src/core/WorkflowForge/README.md)** - Architecture and core concepts
+- **[Extensions Overview](../src/extensions/)** - Available extensions
+
+### **🔧 Reference Documentation**
+- **[API Reference](api-reference.md)** - Complete API documentation
+- **[Configuration Reference](configuration-reference.md)** - All configuration options
+- **[Performance Benchmarks](../src/benchmarks/README.md)** - Verified performance claims
+
 ## 🎯 Why WorkflowForge?
 
 ### **Zero Dependencies, Maximum Power**
-WorkflowForge core has **zero external dependencies** while providing advanced features through optional extensions. This means:
 - **Minimal deployment footprint** (~50KB core)
 - **No version conflicts** with your existing dependencies
 - **Maximum compatibility** across .NET versions
 - **Lightweight containers** and edge deployments
 
 ### **Performance That Scales**
-- **Up to 15x better concurrency scaling** - 16 concurrent workflows vs sequential execution
-- **Microsecond-level operations** - Custom operations execute in 4-116 μs range
+- **15x better concurrency scaling** - 16 concurrent workflows vs sequential execution
+- **Microsecond-level operations** - Custom operations execute in 4-56 μs range
 - **Memory efficient** with <2KB per operation
 - **Concurrent execution** with excellent parallel performance
 
@@ -29,34 +53,31 @@ WorkflowForge core has **zero external dependencies** while providing advanced f
 ## Documentation Structure
 
 ### Getting Started
-- **[Getting Started Guide](getting-started.md)** - Step-by-step introduction to WorkflowForge
-- **[Installation & Setup](installation.md)** - Installation instructions and initial configuration
-- **[Your First Workflow](first-workflow.md)** - Creating and executing your first workflow
+- **[Getting Started Guide](getting-started.md)** - Step-by-step introduction
+- **[Installation & Setup](installation.md)** - Installation and initial configuration
+- **[Your First Workflow](first-workflow.md)** - Creating and executing workflows
 
 ### Core Concepts
-- **[Architecture Overview](architecture.md)** - Core abstractions and design principles
-- **[Workflow Concepts](concepts.md)** - Understanding workflows, operations, foundries, and smiths
-- **[Configuration](configuration.md)** - Configuration management and environment-specific settings
+- **[Architecture Overview](architecture.md)** - Core design principles
+- **[Workflow Concepts](concepts.md)** - Understanding workflows, operations, foundries
+- **[Configuration](configuration.md)** - Configuration management
 
 ### Implementation Guides
 - **[Building Operations](operations.md)** - Creating custom workflow operations
-- **[Middleware Development](middleware.md)** - Building and using middleware components
-- **[Error Handling & Compensation](error-handling.md)** - Implementing robust error handling and rollback strategies
-- **[Testing Workflows](testing.md)** - Unit testing and integration testing patterns
+- **[Middleware Development](middleware.md)** - Building and using middleware
+- **[Error Handling & Compensation](error-handling.md)** - Robust error handling
+- **[Testing Workflows](testing.md)** - Unit and integration testing
 
 ### Extensions
 - **[Extension System](extensions.md)** - Overview of the extension ecosystem
 - **[Logging Extensions](extensions/logging.md)** - Structured logging with Serilog
-- **[Resilience Extensions](extensions/resilience.md)** - Retry policies and circuit breakers with Polly
-- **[Observability Extensions](extensions/observability.md)** - Monitoring, metrics, and distributed tracing
-- **[Health Checks](extensions/health-checks.md)** - System health monitoring and diagnostics
+- **[Resilience Extensions](extensions/resilience.md)** - Retry policies and circuit breakers
+- **[Observability Extensions](extensions/observability.md)** - Monitoring and tracing
 
 ### Advanced Topics
 - **[Performance Optimization](performance.md)** - Best practices for high-performance workflows
 - **[Scalability & Concurrency](scalability.md)** - Designing workflows for scale
-- **[Advanced Patterns](advanced-patterns.md)** - Advanced workflow patterns and practices
-- **[Security Considerations](security.md)** - Security best practices and considerations
-- **[Competitive Analysis](competitive-analysis.md)** - How WorkflowForge compares to alternatives
+- **[Security Considerations](security.md)** - Security best practices
 
 ### Reference
 - **[API Reference](api-reference.md)** - Complete API documentation
@@ -64,28 +85,22 @@ WorkflowForge core has **zero external dependencies** while providing advanced f
 - **[Migration Guide](migration.md)** - Upgrading between versions
 - **[Troubleshooting](troubleshooting.md)** - Common issues and solutions
 
-### Examples & Samples
-- **[Sample Applications](../src/samples/README.md)** - Interactive examples and tutorials
-- **[Performance Benchmarks](../src/benchmarks/README.md)** - Performance analysis and benchmarks
-- **[Real-world Examples](examples/)** - Production use cases and implementations
-
 ## Quick Navigation
 
 | Topic | Description | Audience |
 |-------|-------------|----------|
+| [Interactive Samples](../src/samples/WorkflowForge.Samples.BasicConsole/README.md) | **Recommended starting point** | All users |
 | [Getting Started](getting-started.md) | Basic introduction and first steps | New users |
 | [Architecture](architecture.md) | Core design and abstractions | Developers |
-| [Operations](operations.md) | Building custom operations | Developers |
 | [Extensions](extensions.md) | Using and creating extensions | All users |
 | [Performance](performance.md) | Optimization techniques | Advanced users |
-| [Advanced Patterns](advanced-patterns.md) | Advanced patterns | Advanced users |
 
 ## 🏆 Competitive Advantages
 
 ### **Developer Experience**
 - **Fluent API** with IntelliSense support
 - **Industrial metaphor** (Foundries, Smiths) for intuitive understanding
-- **Comprehensive documentation** with real-world examples
+- **Comprehensive examples** with real-world scenarios
 - **Test-first design** with mockable interfaces
 
 ### **Performance & Efficiency**
