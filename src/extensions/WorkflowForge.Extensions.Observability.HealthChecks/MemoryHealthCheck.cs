@@ -28,6 +28,8 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <returns>A task representing the health check result.</returns>
         public Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            
             try
             {
                 var process = Process.GetCurrentProcess();
@@ -36,10 +38,8 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
                 
                 var data = new Dictionary<string, object>
                 {
-                    ["working_set_bytes"] = workingSet,
-                    ["managed_memory_bytes"] = managedMemory,
-                    ["working_set_mb"] = workingSet / (1024.0 * 1024.0),
-                    ["managed_memory_mb"] = managedMemory / (1024.0 * 1024.0)
+                    ["WorkingSetMB"] = workingSet / (1024.0 * 1024.0),
+                    ["GCTotalMemoryMB"] = managedMemory / (1024.0 * 1024.0)
                 };
 
                 // Basic thresholds (can be made configurable)

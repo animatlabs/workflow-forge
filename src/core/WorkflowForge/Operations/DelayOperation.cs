@@ -30,6 +30,9 @@ namespace WorkflowForge.Operations
         /// <param name="name">Optional name for the operation.</param>
         public DelayOperation(TimeSpan delay, string? name = null)
         {
+            if (delay < TimeSpan.Zero)
+                throw new ArgumentException("Delay duration cannot be negative.", nameof(delay));
+                
             _delay = delay;
             Name = name ?? $"Delay {delay.TotalMilliseconds}ms";
         }
@@ -37,11 +40,25 @@ namespace WorkflowForge.Operations
         /// <inheritdoc />
         public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            foundry.Logger.LogDebug(WorkflowLogMessages.DelayOperationStarted);
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+
+            // Create logging properties with comprehensive operation information
+            var loggingProperties = new Dictionary<string, string>
+            {
+                ["DelayMs"] = _delay.TotalMilliseconds.ToString(),
+                ["InputType"] = inputData?.GetType().Name ?? "null",
+                ["OperationId"] = Id.ToString(),
+                ["OperationName"] = Name,
+                ["WorkflowId"] = foundry.ExecutionId.ToString(),
+                ["WorkflowName"] = foundry.CurrentWorkflow?.Name ?? "Unknown"
+            };
+
+            foundry.Logger.LogDebug(loggingProperties, "Starting delay operation");
 
             await Task.Delay(_delay, cancellationToken).ConfigureAwait(false);
             
-            foundry.Logger.LogDebug(WorkflowLogMessages.DelayOperationCompleted);
+            foundry.Logger.LogDebug(loggingProperties, "Completed delay operation");
             
             return inputData; // Pass through input data unchanged
         }

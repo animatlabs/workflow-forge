@@ -121,7 +121,7 @@ public class ConcurrencyTests
         await Task.WhenAll(tasks);
 
         // Assert - Verify all data was stored correctly
-        Assert.Equal(threadCount * 100, foundry.Properties.Count);
+        Assert.Equal(threadCount * 100 * 2, foundry.Properties.Count); // Each iteration creates 2 properties
         _output.WriteLine($"Total data items: {foundry.Properties.Count}");
     }
 
@@ -349,7 +349,7 @@ public class ConcurrencyTests
         Assert.Empty(exceptions);
         Assert.All(foundries, foundry =>
         {
-            Assert.Equal(operationsPerFoundry, foundry.Properties.Count);
+            Assert.Equal(operationsPerFoundry * 2, foundry.Properties.Count); // Each operation creates 2 properties
         });
 
         _output.WriteLine($"Stress test completed successfully with {foundryCount} foundries and {foundryCount * operationsPerFoundry} total operations");

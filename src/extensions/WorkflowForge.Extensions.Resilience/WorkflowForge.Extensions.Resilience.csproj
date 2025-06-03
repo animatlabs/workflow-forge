@@ -55,7 +55,7 @@ Initial release v1.0.0 of WorkflowForge Resilience Extension:
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>

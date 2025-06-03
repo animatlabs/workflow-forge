@@ -542,9 +542,21 @@ public class ExceptionHandlingMiddleware : IWorkflowOperationMiddleware
         {
             return await next();
         }
+        catch (WorkflowOperationException wex) when (_handleAll || wex.InnerException is InvalidOperationException)
+        {
+            // Extract the original exception from the WorkflowOperationException
+            var originalException = wex.InnerException ?? wex;
+            
+            // Handle the exception
+            foundry.Properties["exception-handled"] = true;
+            foundry.Properties["exception-type"] = originalException.GetType().Name;
+            foundry.Properties["exception-message"] = originalException.Message;
+            
+            return null; // Return null to indicate handled exception
+        }
         catch (Exception ex) when (_handleAll || ex is InvalidOperationException)
         {
-            // Handle the exception
+            // Handle direct exceptions (in case they're not wrapped)
             foundry.Properties["exception-handled"] = true;
             foundry.Properties["exception-type"] = ex.GetType().Name;
             foundry.Properties["exception-message"] = ex.Message;
@@ -615,13 +627,26 @@ public class CancellationAwareMiddleware : IWorkflowOperationMiddleware
     public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, 
         object? inputData, Func<Task<object?>> next, CancellationToken cancellationToken = default)
     {
-        if (cancellationToken.IsCancellationRequested)
+        try
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                foundry.Properties["cancellation-requested"] = true;
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+            
+            return await next();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             foundry.Properties["cancellation-requested"] = true;
-            cancellationToken.ThrowIfCancellationRequested();
+            throw;
         }
-        
-        return await next();
+        catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            foundry.Properties["cancellation-requested"] = true;
+            throw;
+        }
     }
 }
 

@@ -27,6 +27,8 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <returns>A task representing the health check result.</returns>
         public Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            
             try
             {
                 ThreadPool.GetAvailableThreads(out var availableWorkerThreads, out var availableCompletionPortThreads);
@@ -37,13 +39,13 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
                 
                 var data = new Dictionary<string, object>
                 {
-                    ["available_worker_threads"] = availableWorkerThreads,
-                    ["available_completion_port_threads"] = availableCompletionPortThreads,
-                    ["max_worker_threads"] = maxWorkerThreads,
-                    ["max_completion_port_threads"] = maxCompletionPortThreads,
-                    ["busy_worker_threads"] = busyWorkerThreads,
-                    ["busy_completion_port_threads"] = busyCompletionPortThreads,
-                    ["worker_thread_usage_percent"] = (double)busyWorkerThreads / maxWorkerThreads * 100
+                    ["WorkerThreads"] = availableWorkerThreads,
+                    ["CompletionPortThreads"] = availableCompletionPortThreads,
+                    ["MaxWorkerThreads"] = maxWorkerThreads,
+                    ["MaxCompletionPortThreads"] = maxCompletionPortThreads,
+                    ["BusyWorkerThreads"] = busyWorkerThreads,
+                    ["BusyCompletionPortThreads"] = busyCompletionPortThreads,
+                    ["WorkerThreadUsagePercent"] = (double)busyWorkerThreads / maxWorkerThreads * 100
                 };
 
                 var workerUsagePercent = (double)busyWorkerThreads / maxWorkerThreads * 100;

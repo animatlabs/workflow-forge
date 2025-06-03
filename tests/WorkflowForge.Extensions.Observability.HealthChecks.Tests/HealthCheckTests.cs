@@ -150,7 +150,7 @@ public class HealthCheckServiceTests
         var logger = new ConsoleLogger();
 
         // Act
-        var service = new HealthCheckService(logger);
+        var service = new HealthCheckService(logger, registerBuiltInHealthChecks: false);
 
         // Assert
         Assert.NotNull(service);
@@ -160,7 +160,7 @@ public class HealthCheckServiceTests
     public void Constructor_WithNullLogger_ThrowsArgumentNullException()
     {
         // Arrange, Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new HealthCheckService(null!));
+        Assert.Throws<ArgumentNullException>(() => new HealthCheckService(null!, registerBuiltInHealthChecks: false));
     }
 
     [Fact]
@@ -168,7 +168,7 @@ public class HealthCheckServiceTests
     {
         // Arrange
         var logger = new ConsoleLogger();
-        var service = new HealthCheckService(logger);
+        var service = new HealthCheckService(logger, registerBuiltInHealthChecks: false);
         var healthCheck = new MemoryHealthCheck();
 
         // Act
@@ -183,7 +183,7 @@ public class HealthCheckServiceTests
     {
         // Arrange
         var logger = new ConsoleLogger();
-        var service = new HealthCheckService(logger);
+        var service = new HealthCheckService(logger, registerBuiltInHealthChecks: false);
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => service.RegisterHealthCheck(null!));
@@ -194,7 +194,7 @@ public class HealthCheckServiceTests
     {
         // Arrange
         var logger = new ConsoleLogger();
-        var service = new HealthCheckService(logger);
+        var service = new HealthCheckService(logger, registerBuiltInHealthChecks: false);
         var healthCheck = new MemoryHealthCheck();
         service.RegisterHealthCheck(healthCheck);
 
@@ -212,7 +212,7 @@ public class HealthCheckServiceTests
     {
         // Arrange
         var logger = new ConsoleLogger();
-        var service = new HealthCheckService(logger);
+        var service = new HealthCheckService(logger, registerBuiltInHealthChecks: false);
         var memoryCheck = new MemoryHealthCheck();
         var gcCheck = new GarbageCollectorHealthCheck();
         var threadPoolCheck = new ThreadPoolHealthCheck();
@@ -229,6 +229,7 @@ public class HealthCheckServiceTests
         Assert.True(results.ContainsKey("Memory"));
         Assert.True(results.ContainsKey("GarbageCollector"));
         Assert.True(results.ContainsKey("ThreadPool"));
+        Assert.All(results.Values, result => Assert.Equal(HealthStatus.Healthy, result.Status));
     }
 
     [Fact]
@@ -236,7 +237,7 @@ public class HealthCheckServiceTests
     {
         // Arrange
         var logger = new ConsoleLogger();
-        var service = new HealthCheckService(logger);
+        var service = new HealthCheckService(logger, registerBuiltInHealthChecks: false);
         var memoryCheck = new MemoryHealthCheck();
         var gcCheck = new GarbageCollectorHealthCheck();
 
@@ -256,7 +257,7 @@ public class HealthCheckServiceTests
     {
         // Arrange
         var logger = new ConsoleLogger();
-        var service = new HealthCheckService(logger);
+        var service = new HealthCheckService(logger, registerBuiltInHealthChecks: false);
 
         // Act
         var result = await service.CheckHealthAsync("NonExistent", CancellationToken.None);
@@ -270,7 +271,7 @@ public class HealthCheckServiceTests
     {
         // Arrange
         var logger = new ConsoleLogger();
-        var service = new HealthCheckService(logger);
+        var service = new HealthCheckService(logger, registerBuiltInHealthChecks: false);
         var healthCheck = new MemoryHealthCheck();
         service.RegisterHealthCheck(healthCheck);
 

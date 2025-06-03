@@ -61,7 +61,7 @@ Initial release v1.0.0 of WorkflowForge Performance Extension:
   <ItemGroup>
     <!-- Package Dependencies -->
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
-    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="6.0.1" />
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="9.0.5" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 

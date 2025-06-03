@@ -65,19 +65,6 @@ public class DelayOperationTests
         Assert.Equal("Delay 0ms", operation.Name);
     }
 
-    [Fact]
-    public void Constructor_WithNegativeDelay_SetsName()
-    {
-        // Arrange
-        var delay = TimeSpan.FromMilliseconds(-100);
-
-        // Act
-        var operation = new DelayOperation(delay);
-
-        // Assert
-        Assert.Equal("Delay -100ms", operation.Name);
-    }
-
     #endregion
 
     #region Static Factory Methods Tests

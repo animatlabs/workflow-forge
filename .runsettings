@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <RunConfiguration>
+    <MaxCpuCount>0</MaxCpuCount>
+    <ResultsDirectory>.\TestResults</ResultsDirectory>
+    <TestSessionTimeout>180000</TestSessionTimeout>
+    <TreatNoTestsAsError>false</TreatNoTestsAsError>
+  </RunConfiguration>
+
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="Code Coverage" uri="datacollector://Microsoft/CodeCoverage/2.0" assemblyQualifiedName="Microsoft.VisualStudio.Coverage.DynamicCoverageDataCollector, Microsoft.VisualStudio.TraceCollector, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+        <Configuration>
+          <CodeCoverage>
+            <ModulePaths>
+              <Exclude>
+                <ModulePath>.*CPPUnitTestFramework.*</ModulePath>
+                <ModulePath>.*testhost.exe</ModulePath>
+                <ModulePath>.*\.Tests\.dll</ModulePath>
+              </Exclude>
+            </ModulePaths>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+
+  <TestRunParameters>
+    <Parameter name="Environment" value="Test" />
+  </TestRunParameters>
+
+  <MSTest>
+    <Parallelize>
+      <Workers>0</Workers>
+      <Scope>ClassLevel</Scope>
+    </Parallelize>
+  </MSTest>
+</RunSettings> 

@@ -40,38 +40,47 @@ namespace WorkflowForge.Operations
         /// <inheritdoc />
         public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            // Create logging operation scope with essential properties only
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+
+            // Create logging properties with input data information
             var loggingProperties = new Dictionary<string, string>
             {
                 ["LogLevel"] = _logLevel.ToString(),
-                ["UserMessage"] = _message
+                ["UserMessage"] = _message,
+                ["InputDataType"] = inputData?.GetType().Name ?? "null",
+                ["OperationId"] = Id.ToString(),
+                ["OperationName"] = Name,
+                ["WorkflowId"] = foundry.ExecutionId.ToString(),
+                ["WorkflowName"] = foundry.CurrentWorkflow?.Name ?? "Unknown",
+                ["InputType"] = inputData?.GetType().Name ?? "null"
             };
 
             using var loggingScope = foundry.Logger.BeginScope("LoggingOperation", loggingProperties);
             
-            // Log the user's message at the specified level
+            // Log the user's message at the specified level with properties
             switch (_logLevel)
             {
                 case LogLevel.Trace:
-                    foundry.Logger.LogTrace(_message);
+                    foundry.Logger.LogTrace(loggingProperties, _message);
                     break;
                 case LogLevel.Debug:
-                    foundry.Logger.LogDebug(_message);
+                    foundry.Logger.LogDebug(loggingProperties, _message);
                     break;
                 case LogLevel.Information:
-                    foundry.Logger.LogInformation(_message);
+                    foundry.Logger.LogInformation(loggingProperties, _message);
                     break;
                 case LogLevel.Warning:
-                    foundry.Logger.LogWarning(_message);
+                    foundry.Logger.LogWarning(loggingProperties, _message);
                     break;
                 case LogLevel.Error:
-                    foundry.Logger.LogError(_message);
+                    foundry.Logger.LogError(loggingProperties, _message);
                     break;
                 case LogLevel.Critical:
-                    foundry.Logger.LogCritical(_message);
+                    foundry.Logger.LogCritical(loggingProperties, _message);
                     break;
                 default:
-                    foundry.Logger.LogInformation(_message);
+                    foundry.Logger.LogInformation(loggingProperties, _message);
                     break;
             }
 

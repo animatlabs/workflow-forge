@@ -1,11 +1,11 @@
 ﻿param (
-    [string]$CoreVersion = "1.0.0",
-    [string]$SerilogVersion = "1.0.0",
-    [string]$PollyVersion = "1.0.0",
-    [string]$ResilienceVersion = "1.0.0",
-    [string]$PerformanceVersion = "1.0.0",
-    [string]$HealthChecksVersion = "1.0.0",
-    [string]$OpenTelemetryVersion = "1.0.0",
+    [string]$CoreVersion = "1.0.1",
+    [string]$SerilogVersion = "1.0.1",
+    [string]$PollyVersion = "1.0.1",
+    [string]$ResilienceVersion = "1.0.1",
+    [string]$PerformanceVersion = "1.0.1",
+    [string]$HealthChecksVersion = "1.0.1",
+    [string]$OpenTelemetryVersion = "1.0.1",
     [string]$NuGetApiKey
 )
 

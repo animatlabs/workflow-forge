@@ -13,7 +13,7 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <summary>
         /// Gets the name of the health check.
         /// </summary>
-        public string Name => "GC";
+        public string Name => "GarbageCollector";
         
         /// <summary>
         /// Gets the description of what this health check validates.
@@ -27,6 +27,8 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <returns>A task representing the health check result.</returns>
         public Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            
             try
             {
                 var gen0Collections = GC.CollectionCount(0);
@@ -36,11 +38,10 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
                 
                 var data = new Dictionary<string, object>
                 {
-                    ["gen0_collections"] = gen0Collections,
-                    ["gen1_collections"] = gen1Collections,
-                    ["gen2_collections"] = gen2Collections,
-                    ["total_memory_bytes"] = totalMemory,
-                    ["total_memory_mb"] = totalMemory / (1024.0 * 1024.0)
+                    ["Gen0Collections"] = gen0Collections,
+                    ["Gen1Collections"] = gen1Collections,
+                    ["Gen2Collections"] = gen2Collections,
+                    ["TotalMemoryMB"] = totalMemory / (1024.0 * 1024.0)
                 };
 
                 // Assess GC pressure

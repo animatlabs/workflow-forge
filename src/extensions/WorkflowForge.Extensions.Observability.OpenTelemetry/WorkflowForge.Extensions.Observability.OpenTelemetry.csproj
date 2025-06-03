@@ -58,9 +58,9 @@ Initial release v1.0.0 of WorkflowForge OpenTelemetry Extension:
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenTelemetry" Version="1.7.0" />
-    <PackageReference Include="OpenTelemetry.Api" Version="1.7.0" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.7.0" />
+    <PackageReference Include="OpenTelemetry" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Api" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.12.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 

@@ -53,13 +53,17 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <param name="logger">The logger to use for health check operations.</param>
         /// <param name="timeProvider">The time provider to use for timestamps.</param>
         /// <param name="checkInterval">The interval for periodic health checks. Set to null to disable periodic checks.</param>
-        public HealthCheckService(IWorkflowForgeLogger logger, ISystemTimeProvider? timeProvider = null, TimeSpan? checkInterval = null)
+        /// <param name="registerBuiltInHealthChecks">Whether to automatically register built-in health checks.</param>
+        public HealthCheckService(IWorkflowForgeLogger logger, ISystemTimeProvider? timeProvider = null, TimeSpan? checkInterval = null, bool registerBuiltInHealthChecks = true)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
             _checkInterval = checkInterval ?? TimeSpan.FromMinutes(1);
 
-            RegisterBuiltInHealthChecks();
+            if (registerBuiltInHealthChecks)
+            {
+                RegisterBuiltInHealthChecks();
+            }
 
             if (checkInterval.HasValue)
             {
@@ -129,6 +133,7 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         public async Task<IReadOnlyDictionary<string, HealthCheckResult>> CheckHealthAsync(CancellationToken cancellationToken = default)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(HealthCheckService));
+            cancellationToken.ThrowIfCancellationRequested();
 
             var results = new Dictionary<string, HealthCheckResult>();
             var tasks = new List<Task<(string Name, HealthCheckResult Result)>>();
