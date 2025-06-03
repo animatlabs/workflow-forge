@@ -7,29 +7,24 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     <AssemblyName>WorkflowForge</AssemblyName>
     <RootNamespace>WorkflowForge</RootNamespace>
     
-    <!-- Version Information -->
-    <Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <FileVersion>1.0.0</FileVersion>
-    <PackageVersion>1.0.0</PackageVersion>
-    
     <!-- Package Information -->
     <PackageId>WorkflowForge</PackageId>
-    <Title>WorkflowForge Workflow Engine</Title>
-    <Description>A modern, robust, and extensible workflow orchestration framework for .NET. WorkflowForge provides a clean API for building, executing, and managing complex business workflows with built-in support for compensation, middleware, and dependency injection.</Description>
+    <Title>WorkflowForge</Title>
+    <Description>A powerful, extensible workflow orchestration framework for .NET applications. WorkflowForge enables you to build, execute, and manage complex workflows with support for dependency injection, logging, resilience patterns, and comprehensive observability.</Description>
     <Authors>AnimatLabs</Authors>
     <Company>AnimatLabs</Company>
-    <PackageTags>workflowforge;workflow;orchestration;automation;engine;dotnet;csharp;business-logic</PackageTags>
+    <Product>WorkflowForge</Product>
+    <PackageTags>workflowforge;workflow;orchestration;dotnet;csharp;pipeline;automation;enterprise</PackageTags>
     <PackageProjectUrl>https://github.com/animatlabs/workflow-forge</PackageProjectUrl>
     <RepositoryUrl>https://github.com/animatlabs/workflow-forge</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryBranch>main</RepositoryBranch>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Product>WorkflowForge</Product>
     <Copyright>Copyright © 2025 AnimatLabs</Copyright>
     
     <!-- NuGet Package Settings -->
@@ -44,13 +39,11 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
-Initial release v1.0.0 of WorkflowForge core framework:
-- Zero-dependency core workflow engine
-- IWorkflowSmith and IWorkflowFoundry architecture
-- Operations and builder patterns
-- Built-in middleware support
-- Comprehensive logging system
-- SystemTime abstraction for testability
+Initial release v1.0.0 of WorkflowForge:
+- Powerful workflow orchestration framework
+- Extensible architecture with dependency injection
+- Built-in logging, resilience, and observability
+- Production-ready with comprehensive testing
     </PackageReleaseNotes>
   </PropertyGroup>
 

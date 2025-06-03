@@ -4,26 +4,22 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>disable</ImplicitUsings>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
     <AssemblyName>WorkflowForge.Extensions.Observability.HealthChecks</AssemblyName>
     <RootNamespace>WorkflowForge.Extensions.Observability.HealthChecks</RootNamespace>
-    
-    <!-- Version Information -->
-    <Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <FileVersion>1.0.0</FileVersion>
-    <PackageVersion>1.0.0</PackageVersion>
     
     <!-- Package Information -->
     <PackageId>WorkflowForge.Extensions.Observability.HealthChecks</PackageId>
     <Title>WorkflowForge Health Checks Extension</Title>
-    <Description>Comprehensive health monitoring extension for WorkflowForge that provides detailed health checks including memory, GC, and thread pool monitoring with customizable check intervals.</Description>
+    <Description>Health monitoring and diagnostics extension for WorkflowForge providing comprehensive health checks, dependency monitoring, and system status reporting for production workflows.</Description>
     <Authors>AnimatLabs</Authors>
     <Company>AnimatLabs</Company>
     <Product>WorkflowForge Health Checks Extension</Product>
-    <PackageTags>workflowforge;workflow;health-checks;monitoring;observability;dotnet;csharp;diagnostics</PackageTags>
+    <PackageTags>workflowforge;workflow;health-checks;monitoring;diagnostics;observability;dotnet;csharp</PackageTags>
     <PackageProjectUrl>https://github.com/animatlabs/workflow-forge</PackageProjectUrl>
     <RepositoryUrl>https://github.com/animatlabs/workflow-forge</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -44,18 +40,16 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
-Initial release v1.0.0 of WorkflowForge Health Checks Extension:
-- Comprehensive system health monitoring
-- Built-in checks for memory, GC, and thread pool
-- Customizable health check intervals
-- Detailed health status reporting
+Initial release of WorkflowForge Health Checks Extension:
+- Comprehensive health monitoring for workflows
 - Seamless integration with WorkflowForge core
+- Comprehensive documentation and examples included
+- Enterprise-grade reliability and performance
     </PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Core Dependencies -->
-    <ProjectReference Include="..\..\core\WorkflowForge\WorkflowForge.csproj" />
+    <ProjectReference Include="../../core/WorkflowForge/WorkflowForge.csproj" />
   </ItemGroup>
 
   <ItemGroup>

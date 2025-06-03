@@ -8,12 +8,6 @@
     <AssemblyName>WorkflowForge.Extensions.Resilience</AssemblyName>
     <RootNamespace>WorkflowForge.Extensions.Resilience</RootNamespace>
     
-    <!-- Version Information -->
-    <Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <FileVersion>1.0.0</FileVersion>
-    <PackageVersion>1.0.0</PackageVersion>
-    
     <!-- Package Information -->
     <PackageId>WorkflowForge.Extensions.Resilience</PackageId>
     <Title>WorkflowForge Resilience Extension</Title>
@@ -42,11 +36,11 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
-Initial release v1.0.0 of WorkflowForge Resilience Extension:
-- Circuit breakers for fault tolerance
-- Configurable retry strategies
-- Timeout management for operations
+Initial release of WorkflowForge Resilience Extension:
+- Production-ready resilience patterns for workflows
 - Seamless integration with WorkflowForge core
+- Comprehensive documentation and examples included
+- Enterprise-grade reliability and performance
     </PackageReleaseNotes>
   </PropertyGroup>
 

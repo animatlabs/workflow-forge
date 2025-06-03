@@ -10,12 +10,6 @@
     <WarningsAsErrors />
     <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
     
-    <!-- Version Information -->
-    <Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <FileVersion>1.0.0</FileVersion>
-    <PackageVersion>1.0.0</PackageVersion>
-    
     <!-- Package Information -->
     <PackageId>WorkflowForge.Extensions.Logging.Serilog</PackageId>
     <Title>WorkflowForge Serilog Extension</Title>
