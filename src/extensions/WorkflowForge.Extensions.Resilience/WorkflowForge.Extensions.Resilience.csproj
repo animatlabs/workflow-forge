@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AssemblyName>WorkflowForge.Extensions.Resilience</AssemblyName>
+    <RootNamespace>WorkflowForge.Extensions.Resilience</RootNamespace>
+    
+    <!-- Version Information -->
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <FileVersion>1.0.0</FileVersion>
+    <PackageVersion>1.0.0</PackageVersion>
+    
+    <!-- Package Information -->
+    <PackageId>WorkflowForge.Extensions.Resilience</PackageId>
+    <Title>WorkflowForge Resilience Extension</Title>
+    <Description>Resilience and retry extension for WorkflowForge workflow engine. Provides circuit breakers, retry strategies, and timeout management for robust workflow execution.</Description>
+    <Authors>AnimatLabs</Authors>
+    <Company>AnimatLabs</Company>
+    <Product>WorkflowForge Resilience Extension</Product>
+    <PackageTags>workflowforge;workflow;retry;resilience;circuit-breaker;timeout;dotnet;csharp</PackageTags>
+    <PackageProjectUrl>https://github.com/animatlabs/workflow-forge</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/animatlabs/workflow-forge</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryBranch>main</RepositoryBranch>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright © 2025 AnimatLabs</Copyright>
+    
+    <!-- NuGet Package Settings -->
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>embedded</DebugType>
+    
+    <!-- Documentation -->
+    <PackageReleaseNotes>
+Initial release v1.0.0 of WorkflowForge Resilience Extension:
+- Circuit breakers for fault tolerance
+- Configurable retry strategies
+- Timeout management for operations
+- Seamless integration with WorkflowForge core
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../core/WorkflowForge/WorkflowForge.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+</Project> 

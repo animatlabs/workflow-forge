@@ -1,0 +1,78 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AssemblyName>WorkflowForge</AssemblyName>
+    <RootNamespace>WorkflowForge</RootNamespace>
+    
+    <!-- Version Information -->
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <FileVersion>1.0.0</FileVersion>
+    <PackageVersion>1.0.0</PackageVersion>
+    
+    <!-- Package Information -->
+    <PackageId>WorkflowForge</PackageId>
+    <Title>WorkflowForge Workflow Engine</Title>
+    <Description>A modern, robust, and extensible workflow orchestration framework for .NET. WorkflowForge provides a clean API for building, executing, and managing complex business workflows with built-in support for compensation, middleware, and dependency injection.</Description>
+    <Authors>AnimatLabs</Authors>
+    <Company>AnimatLabs</Company>
+    <PackageTags>workflowforge;workflow;orchestration;automation;engine;dotnet;csharp;business-logic</PackageTags>
+    <PackageProjectUrl>https://github.com/animatlabs/workflow-forge</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/animatlabs/workflow-forge</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryBranch>main</RepositoryBranch>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Product>WorkflowForge</Product>
+    <Copyright>Copyright © 2025 AnimatLabs</Copyright>
+    
+    <!-- NuGet Package Settings -->
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>embedded</DebugType>
+    
+    <!-- Documentation -->
+    <!-- <PackageReadmeFile>README.md</PackageReadmeFile> -->
+    <PackageReleaseNotes>
+Initial release v1.0.0 of WorkflowForge core framework:
+- Zero-dependency core workflow engine
+- IWorkflowSmith and IWorkflowFoundry architecture
+- Operations and builder patterns
+- Built-in middleware support
+- Comprehensive logging system
+- SystemTime abstraction for testability
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.OpenTelemetry" />
+    <InternalsVisibleTo Include="WorkflowForge.Tests" />
+  </ItemGroup>
+
+  <!-- <ItemGroup>
+    <None Include="../../../README.md" Pack="true" PackagePath="\" />
+  </ItemGroup> -->
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <!-- Core library remains dependency-free for most scenarios -->
+  <!-- Extensions can be added through separate packages:
+       - WorkflowForge.Extensions.Logging.Serilog
+       - WorkflowForge.Extensions.Resilience.Polly
+       - WorkflowForge.Extensions.Observability.OpenTelemetry
+       - WorkflowForge.Extensions.Observability.HealthChecks
+       - WorkflowForge.Extensions.Observability.Performance
+  -->
+
+</Project> 

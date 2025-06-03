@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AssemblyName>WorkflowForge.Extensions.Observability.Performance</AssemblyName>
+    <RootNamespace>WorkflowForge.Extensions.Observability.Performance</RootNamespace>
+    
+    <!-- Version Information -->
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <FileVersion>1.0.0</FileVersion>
+    <PackageVersion>1.0.0</PackageVersion>
+    
+    <!-- Package Information -->
+    <PackageId>WorkflowForge.Extensions.Observability.Performance</PackageId>
+    <Title>WorkflowForge Performance Monitoring Extension</Title>
+    <Description>Advanced performance monitoring extension for WorkflowForge that provides detailed metrics collection, timing analysis, and performance insights for workflow operations.</Description>
+    <Authors>AnimatLabs</Authors>
+    <Company>AnimatLabs</Company>
+    <Product>WorkflowForge Performance Extension</Product>
+    <PackageTags>workflowforge;workflow;performance;monitoring;metrics;observability;dotnet;csharp;timing</PackageTags>
+    <PackageProjectUrl>https://github.com/animatlabs/workflow-forge</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/animatlabs/workflow-forge</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryBranch>main</RepositoryBranch>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright © 2025 AnimatLabs</Copyright>
+    
+    <!-- NuGet Package Settings -->
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>embedded</DebugType>
+    
+    <!-- Documentation -->
+    <PackageReleaseNotes>
+Initial release v1.0.0 of WorkflowForge Performance Extension:
+- Advanced performance metrics collection
+- Detailed timing analysis for operations
+- Memory and resource usage monitoring
+- Performance insights and reporting
+- Seamless integration with WorkflowForge core
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Core Dependencies -->
+    <ProjectReference Include="..\..\core\WorkflowForge\WorkflowForge.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Package Dependencies -->
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="6.0.1" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+</Project> 

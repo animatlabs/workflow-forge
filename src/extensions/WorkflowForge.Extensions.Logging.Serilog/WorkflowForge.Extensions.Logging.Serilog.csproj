@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
+    
+    <!-- Version Information -->
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <FileVersion>1.0.0</FileVersion>
+    <PackageVersion>1.0.0</PackageVersion>
+    
+    <!-- Package Information -->
+    <PackageId>WorkflowForge.Extensions.Logging.Serilog</PackageId>
+    <Title>WorkflowForge Serilog Extension</Title>
+    <Description>Serilog adapter for WorkflowForge providing professional structured logging capabilities with rich context and correlation.</Description>
+    <Authors>AnimatLabs</Authors>
+    <Company>AnimatLabs</Company>
+    <Product>WorkflowForge Serilog Extension</Product>
+    <PackageTags>workflowforge;workflow;orchestration;logging;serilog;structured-logging;dotnet;csharp</PackageTags>
+    <PackageProjectUrl>https://github.com/animatlabs/workflow-forge</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/animatlabs/workflow-forge</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryBranch>main</RepositoryBranch>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright © 2025 AnimatLabs</Copyright>
+    
+    <!-- NuGet Package Settings -->
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>embedded</DebugType>
+    
+    <!-- Documentation -->
+    <PackageReleaseNotes>
+Initial release v1.0.0 of WorkflowForge Serilog Extension:
+- Professional structured logging with Serilog
+- Rich context and correlation support
+- Enterprise-ready log formatting and enrichment
+- Seamless integration with WorkflowForge core
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Serilog" Version="3.1.1" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="7.0.0" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\core\WorkflowForge\WorkflowForge.csproj" />
+  </ItemGroup>
+
+</Project> 

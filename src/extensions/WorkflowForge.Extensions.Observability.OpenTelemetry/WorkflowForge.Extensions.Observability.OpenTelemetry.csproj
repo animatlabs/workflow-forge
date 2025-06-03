@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AssemblyName>WorkflowForge.Extensions.Observability.OpenTelemetry</AssemblyName>
+    <RootNamespace>WorkflowForge.Extensions.Observability.OpenTelemetry</RootNamespace>
+    
+    <!-- Version Information -->
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <FileVersion>1.0.0</FileVersion>
+    <PackageVersion>1.0.0</PackageVersion>
+    
+    <!-- Package Information -->
+    <PackageId>WorkflowForge.Extensions.Observability.OpenTelemetry</PackageId>
+    <Title>WorkflowForge OpenTelemetry Extension</Title>
+    <Description>OpenTelemetry integration extension for WorkflowForge that provides distributed tracing, metrics collection, and observability features using industry-standard OpenTelemetry protocols.</Description>
+    <Authors>AnimatLabs</Authors>
+    <Company>AnimatLabs</Company>
+    <Product>WorkflowForge OpenTelemetry Extension</Product>
+    <PackageTags>workflowforge;workflow;opentelemetry;tracing;metrics;observability;dotnet;csharp;telemetry</PackageTags>
+    <PackageProjectUrl>https://github.com/animatlabs/workflow-forge</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/animatlabs/workflow-forge</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryBranch>main</RepositoryBranch>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright © 2025 AnimatLabs</Copyright>
+    
+    <!-- NuGet Package Settings -->
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>embedded</DebugType>
+    
+    <!-- Documentation -->
+    <PackageReleaseNotes>
+Initial release v1.0.0 of WorkflowForge OpenTelemetry Extension:
+- Industry-standard OpenTelemetry integration
+- Distributed tracing for workflow operations
+- Metrics collection and export
+- Comprehensive observability features
+- Seamless integration with WorkflowForge core
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\core\WorkflowForge\WorkflowForge.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry" Version="1.7.0" />
+    <PackageReference Include="OpenTelemetry.Api" Version="1.7.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.7.0" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+</Project> 
