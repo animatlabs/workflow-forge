@@ -48,11 +48,12 @@ foundryConfig.UseSerilog(logger => logger
     .WriteTo.Seq("http://seq-server:5341"));
 ```
 
-## Examples & Documentation
+## Documentation & Examples
 
-- **[Complete Examples](../../samples/WorkflowForge.Samples.BasicConsole/README.md#13-serilog-logging)** - Interactive samples with Serilog integration
-- **[Core Documentation](../../core/WorkflowForge/README.md#professional-logging-system)** - Professional logging system details
-- **[Main README](../../../README.md)** - Framework overview
+- **[Interactive Samples](../../samples/WorkflowForge.Samples.BasicConsole/#13-serilog-logging)** - Sample #13: Serilog integration
+- **[Extensions Documentation](../../../docs/extensions.md)** - Complete extensions guide  
+- **[Getting Started](../../../docs/getting-started.md)** - Framework tutorial
+- **[Main Documentation](../../../docs/)** - Comprehensive guides
 
 ---
 

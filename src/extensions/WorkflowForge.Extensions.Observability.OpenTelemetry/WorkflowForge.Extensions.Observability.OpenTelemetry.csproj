@@ -41,6 +41,8 @@
     <DebugType>embedded</DebugType>
     
     <!-- Documentation -->
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
 Initial release v1.0.0 of WorkflowForge OpenTelemetry Extension:
 - Industry-standard OpenTelemetry integration
@@ -60,6 +62,11 @@ Initial release v1.0.0 of WorkflowForge OpenTelemetry Extension:
     <PackageReference Include="OpenTelemetry.Api" Version="1.7.0" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.7.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="../../../icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project> 

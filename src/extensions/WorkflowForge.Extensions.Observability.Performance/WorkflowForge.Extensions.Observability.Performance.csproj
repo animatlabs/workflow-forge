@@ -41,6 +41,8 @@
     <DebugType>embedded</DebugType>
     
     <!-- Documentation -->
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
 Initial release v1.0.0 of WorkflowForge Performance Extension:
 - Advanced performance metrics collection
@@ -61,6 +63,11 @@ Initial release v1.0.0 of WorkflowForge Performance Extension:
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="6.0.1" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="../../../icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project> 

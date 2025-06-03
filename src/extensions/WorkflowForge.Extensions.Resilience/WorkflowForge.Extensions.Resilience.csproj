@@ -39,6 +39,8 @@
     <DebugType>embedded</DebugType>
     
     <!-- Documentation -->
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
 Initial release v1.0.0 of WorkflowForge Resilience Extension:
 - Circuit breakers for fault tolerance
@@ -56,6 +58,11 @@ Initial release v1.0.0 of WorkflowForge Resilience Extension:
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="../../../icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project> 

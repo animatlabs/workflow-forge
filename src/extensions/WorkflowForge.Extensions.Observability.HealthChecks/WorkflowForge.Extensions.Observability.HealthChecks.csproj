@@ -41,6 +41,8 @@
     <DebugType>embedded</DebugType>
     
     <!-- Documentation -->
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
 Initial release v1.0.0 of WorkflowForge Health Checks Extension:
 - Comprehensive system health monitoring
@@ -58,6 +60,11 @@ Initial release v1.0.0 of WorkflowForge Health Checks Extension:
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="../../../icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project> 

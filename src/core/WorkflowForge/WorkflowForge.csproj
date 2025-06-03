@@ -41,7 +41,8 @@
     <DebugType>embedded</DebugType>
     
     <!-- Documentation -->
-    <!-- <PackageReadmeFile>README.md</PackageReadmeFile> -->
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
 Initial release v1.0.0 of WorkflowForge core framework:
 - Zero-dependency core workflow engine
@@ -58,9 +59,10 @@ Initial release v1.0.0 of WorkflowForge core framework:
     <InternalsVisibleTo Include="WorkflowForge.Tests" />
   </ItemGroup>
 
-  <!-- <ItemGroup>
-    <None Include="../../../README.md" Pack="true" PackagePath="\" />
-  </ItemGroup> -->
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="../../../icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />

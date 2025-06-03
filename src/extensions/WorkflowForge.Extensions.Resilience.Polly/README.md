@@ -1,6 +1,6 @@
 # WorkflowForge.Extensions.Resilience.Polly
 
-Advanced resilience extension for WorkflowForge using the battle-tested Polly library.
+Advanced resilience extension for WorkflowForge using the battle-tested Polly library. Provides circuit breakers, retry policies, timeout management, and rate limiting.
 
 ## Installation
 
@@ -13,78 +13,43 @@ dotnet add package WorkflowForge.Extensions.Resilience.Polly
 ```csharp
 using WorkflowForge.Extensions.Resilience.Polly;
 
-// Use predefined configurations
+// Enable Polly resilience
 var foundryConfig = FoundryConfiguration.ForProduction()
-    .UsePollyProductionResilience();
+    .UsePollyResilience();
 
 var foundry = WorkflowForge.CreateFoundry("MyWorkflow", foundryConfig);
-
-// Or configure manually
-var foundryConfig = FoundryConfiguration.ForProduction()
-    .UsePollyRetry(maxRetryAttempts: 5, baseDelay: TimeSpan.FromSeconds(1))
-    .UsePollyCircuitBreaker(failureThreshold: 3, breakDuration: TimeSpan.FromMinutes(1))
-    .UsePollyTimeout(TimeSpan.FromSeconds(30));
 ```
 
 ## Key Features
 
-- **Advanced Retry Policies**: Exponential backoff, fixed interval, random interval
-- **Circuit Breakers**: Fail-fast pattern with configurable thresholds
-- **Timeouts**: Operation-level timeouts with cancellation
-- **Rate Limiting**: Resource throttling with sliding windows
-- **Policy Composition**: Combine multiple resilience strategies
-- **Configuration Support**: Complete appsettings.json integration
+- **Circuit Breakers**: Prevent cascading failures with configurable thresholds
+- **Retry Policies**: Exponential backoff, jitter, and custom retry strategies
+- **Timeout Management**: Operation-level and workflow-level timeouts
+- **Rate Limiting**: Control execution rates and resource usage
+- **Battle-Tested**: Built on the proven Polly resilience library
 
-## Environment Configurations
-
-```csharp
-// Development - lenient settings
-foundryConfig.UsePollyDevelopmentResilience();
-
-// Production - balanced settings
-foundryConfig.UsePollyProductionResilience();
-
-// Enterprise - comprehensive settings
-foundryConfig.UsePollyEnterpriseResilience();
-```
-
-## Operation-Level Resilience
+## Configuration
 
 ```csharp
-// Wrap individual operations
-var resilientOperation = myOperation
-    .WithPollyRetry(maxRetries: 3)
-    .WithPollyCircuitBreaker(failureThreshold: 5)
-    .WithPollyTimeout(TimeSpan.FromSeconds(30));
-```
-
-## Configuration File Support
-
-```json
+// Custom resilience policies
+var pollyConfig = new PollyResilienceConfiguration
 {
-  "WorkflowForge": {
-    "Polly": {
-      "Retry": {
-        "MaxRetryAttempts": 3,
-        "BaseDelay": "00:00:01"
-      },
-      "CircuitBreaker": {
-        "FailureThreshold": 5,
-        "DurationOfBreak": "00:00:30"
-      }
-    }
-  }
-}
+    RetryAttempts = 3,
+    CircuitBreakerFailureThreshold = 5,
+    CircuitBreakerSamplingDuration = TimeSpan.FromMinutes(1),
+    TimeoutDuration = TimeSpan.FromSeconds(30)
+};
+
+foundryConfig.UsePollyResilience(pollyConfig);
 ```
 
-## Examples & Documentation
+## Documentation & Examples
 
-- **[Complete Examples](../../samples/WorkflowForge.Samples.BasicConsole/README.md#14-polly-resilience)** - Interactive samples with Polly integration
-- **[Base Resilience Extension](../WorkflowForge.Extensions.Resilience/README.md)** - Basic resilience patterns
-- **[Core Documentation](../../core/WorkflowForge/README.md)** - Core concepts
-- **[Main README](../../../README.md)** - Framework overview
-- **[Polly Documentation](https://www.pollydocs.org/)** - Polly library docs
+- **[Interactive Samples](../../samples/WorkflowForge.Samples.BasicConsole/#14-polly-resilience)** - Sample #14: Polly integration
+- **[Extensions Documentation](../../../docs/extensions.md)** - Complete extensions guide
+- **[Getting Started](../../../docs/getting-started.md)** - Framework tutorial
+- **[Main Documentation](../../../docs/)** - Comprehensive guides
 
 ---
 
-*Advanced resilience for mission-critical workflows* 
+*Advanced resilience patterns for robust workflows* 

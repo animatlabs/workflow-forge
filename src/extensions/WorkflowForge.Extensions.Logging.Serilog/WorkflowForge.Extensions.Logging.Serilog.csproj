@@ -41,6 +41,8 @@
     <DebugType>embedded</DebugType>
     
     <!-- Documentation -->
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
 Initial release v1.0.0 of WorkflowForge Serilog Extension:
 - Professional structured logging with Serilog
@@ -49,6 +51,11 @@ Initial release v1.0.0 of WorkflowForge Serilog Extension:
 - Seamless integration with WorkflowForge core
     </PackageReleaseNotes>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="../../../icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Serilog" Version="3.1.1" />
