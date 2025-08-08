@@ -41,7 +41,7 @@ public class DataPassingSample : ISample
         };
         using var foundry = WorkflowForge.CreateFoundryWithData("DataPassingWorkflow", initialData, FoundryConfiguration.Development());
         
-        Console.WriteLine($"Initial data - Customer: {foundry.Properties["customer_id"]}, Amount: ${foundry.Properties["order_amount"]}");
+        Console.WriteLine($"Initial data - Customer: {foundry.GetPropertyOrDefault<int>("customer_id")}, Amount: ${foundry.GetPropertyOrDefault<decimal>("order_amount")}");
         
         // Step 3: Create a smith to execute the workflow
         using var smith = WorkflowForge.CreateSmith();
@@ -52,8 +52,8 @@ public class DataPassingSample : ISample
         await smith.ForgeAsync(workflow, foundry);
         
         // Show final data
-        Console.WriteLine($"\nFinal result - Receipt: {foundry.Properties["receipt_number"]}");
-        Console.WriteLine($"Final amount: ${foundry.Properties["final_amount"]}");
+        Console.WriteLine($"\nFinal result - Receipt: {foundry.GetPropertyOrDefault<string>("receipt_number", "N/A")}");
+        Console.WriteLine($"Final amount: ${foundry.GetPropertyOrDefault<decimal>("final_amount", 0m)}");
     }
 }
 
@@ -65,17 +65,17 @@ public class ValidateCustomerOperation : IWorkflowOperation
 
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
-        var customerId = (int)foundry.Properties["customer_id"]!;
+        var customerId = foundry.GetPropertyOrDefault<int>("customer_id");
         Console.WriteLine($"   [INFO] Validating customer {customerId}...");
         
         // Simulate validation
         await Task.Delay(100, cancellationToken);
         
         // Set customer details
-        foundry.Properties["customer_name"] = "John Doe";
-        foundry.Properties["customer_tier"] = "Gold";
+        foundry.SetProperty("customer_name", "John Doe");
+        foundry.SetProperty("customer_tier", "Gold");
         
-        Console.WriteLine($"   [SUCCESS] Customer validated: {foundry.Properties["customer_name"]} ({foundry.Properties["customer_tier"]} tier)");
+        Console.WriteLine($"   [SUCCESS] Customer validated: {foundry.GetPropertyOrDefault<string>("customer_name")} ({foundry.GetPropertyOrDefault<string>("customer_tier")} tier)");
         return "Customer validated";
     }
 
@@ -97,8 +97,8 @@ public class CalculateDiscountOperation : IWorkflowOperation
 
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
-        var amount = (decimal)foundry.Properties["order_amount"]!;
-        var tier = (string)foundry.Properties["customer_tier"]!;
+        var amount = foundry.GetPropertyOrDefault<decimal>("order_amount");
+        var tier = foundry.GetPropertyOrDefault<string>("customer_tier", string.Empty);
         
         Console.WriteLine($"   [INFO] Calculating discount for {tier} customer on ${amount}...");
         
@@ -116,9 +116,9 @@ public class CalculateDiscountOperation : IWorkflowOperation
         var discountAmount = amount * discount;
         var finalAmount = amount - discountAmount;
         
-        foundry.Properties["discount_percent"] = discount * 100;
-        foundry.Properties["discount_amount"] = discountAmount;
-        foundry.Properties["final_amount"] = finalAmount;
+        foundry.SetProperty("discount_percent", discount * 100);
+        foundry.SetProperty("discount_amount", discountAmount);
+        foundry.SetProperty("final_amount", finalAmount);
         
         Console.WriteLine($"   [SUCCESS] Applied {discount * 100}% discount: ${discountAmount:F2} off, final: ${finalAmount:F2}");
         return $"Discount calculated: {discount * 100}%";
@@ -143,8 +143,8 @@ public class ProcessPaymentOperation : IWorkflowOperation
 
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
-        var amount = (decimal)foundry.Properties["final_amount"]!;
-        var customerName = (string)foundry.Properties["customer_name"]!;
+        var amount = foundry.GetPropertyOrDefault<decimal>("final_amount");
+        var customerName = foundry.GetPropertyOrDefault<string>("customer_name", string.Empty);
         
         Console.WriteLine($"   [INFO] Processing payment of ${amount:F2} for {customerName}...");
         
@@ -152,8 +152,8 @@ public class ProcessPaymentOperation : IWorkflowOperation
         await Task.Delay(200, cancellationToken);
         
         var transactionId = $"TXN-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
-        foundry.Properties["transaction_id"] = transactionId;
-        foundry.Properties["payment_status"] = "Completed";
+        foundry.SetProperty("transaction_id", transactionId);
+        foundry.SetProperty("payment_status", "Completed");
         
         Console.WriteLine($"   [SUCCESS] Payment processed successfully! Transaction ID: {transactionId}");
         return $"Payment processed: {transactionId}";
@@ -161,13 +161,13 @@ public class ProcessPaymentOperation : IWorkflowOperation
 
     public async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
-        var transactionId = foundry.Properties.TryGetValue("transaction_id", out var txnId) ? (string)txnId! : "Unknown";
+        var transactionId = foundry.GetPropertyOrDefault<string>("transaction_id", "Unknown");
         Console.WriteLine($"   [REFUND] Refunding transaction {transactionId}...");
         
         await Task.Delay(100, cancellationToken);
         
         foundry.Properties.TryRemove("transaction_id", out _);
-        foundry.Properties["payment_status"] = "Refunded";
+        foundry.SetProperty("payment_status", "Refunded");
         
         Console.WriteLine($"   [SUCCESS] Transaction {transactionId} refunded successfully");
     }
@@ -183,8 +183,8 @@ public class GenerateReceiptOperation : IWorkflowOperation
 
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
-        var customerName = (string)foundry.Properties["customer_name"]!;
-        var transactionId = (string)foundry.Properties["transaction_id"]!;
+        var customerName = foundry.GetPropertyOrDefault<string>("customer_name", string.Empty);
+        var transactionId = foundry.GetPropertyOrDefault<string>("transaction_id", string.Empty);
         
         Console.WriteLine($"   [INFO] Generating receipt for {customerName}...");
         
@@ -192,7 +192,7 @@ public class GenerateReceiptOperation : IWorkflowOperation
         await Task.Delay(60, cancellationToken);
         
         var receiptNumber = $"RCP-{DateTime.UtcNow:yyyyMMdd}-{Random.Shared.Next(1000, 9999)}";
-        foundry.Properties["receipt_number"] = receiptNumber;
+        foundry.SetProperty("receipt_number", receiptNumber);
         
         Console.WriteLine($"   [SUCCESS] Receipt generated: {receiptNumber}");
         return $"Receipt: {receiptNumber}";

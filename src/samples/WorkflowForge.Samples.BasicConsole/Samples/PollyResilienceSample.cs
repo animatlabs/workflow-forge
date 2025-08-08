@@ -38,7 +38,7 @@ public class PollyResilienceSample : ISample
         using var foundry = WorkflowForge.CreateFoundry("DevelopmentResilience");
         
         // Apply development resilience settings (lenient for debugging)
-        ((WorkflowFoundry)foundry).UsePollyDevelopmentResilience();
+        foundry.UsePollyDevelopmentResilience();
         
         foundry.Properties["scenario"] = "development";
         foundry.Properties["max_failures"] = 1; // Fail once, then succeed
@@ -66,7 +66,7 @@ public class PollyResilienceSample : ISample
         using var foundry = WorkflowForge.CreateFoundry("ProductionResilience");
         
         // Apply production resilience settings (strict for reliability)
-        ((WorkflowFoundry)foundry).UsePollyProductionResilience();
+        foundry.UsePollyProductionResilience();
         
         foundry.Properties["scenario"] = "production";
         foundry.Properties["max_failures"] = 2; // Fail twice, then succeed
@@ -94,7 +94,7 @@ public class PollyResilienceSample : ISample
         using var foundry = WorkflowForge.CreateFoundry("EnterpriseResilience");
         
         // Apply enterprise resilience settings (comprehensive)
-        ((WorkflowFoundry)foundry).UsePollyEnterpriseResilience();
+        foundry.UsePollyEnterpriseResilience();
         
         foundry.Properties["scenario"] = "enterprise";
         foundry.Properties["max_failures"] = 1; // Succeed after one failure

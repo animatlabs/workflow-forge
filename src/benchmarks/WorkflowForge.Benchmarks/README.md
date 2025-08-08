@@ -2,41 +2,40 @@
 
 This project contains comprehensive performance benchmarks for WorkflowForge using BenchmarkDotNet. The benchmarks measure core framework performance, middleware overhead, memory allocation patterns, and throughput characteristics.
 
-## 🔬 Performance Claims Verification
+## Performance Claims Verification
 
 All performance claims in WorkflowForge documentation are backed by actual BenchmarkDotNet results:
 
-### **Verified Performance Claims**
+### Verified Performance Highlights
 
-| Claim | Benchmark Evidence | Result File |
-|-------|-------------------|-------------|
-| **Sub-20 microsecond operations** | Custom operations execute in 4-56 μs | [OperationPerformanceBenchmark](BenchmarkDotNet.Artifacts/results/WorkflowForge.Benchmarks.OperationPerformanceBenchmark-report-github.md) |
-| **15x concurrency scaling** | 16 concurrent workflows vs sequential | [ConcurrencyBenchmark](BenchmarkDotNet.Artifacts/results/WorkflowForge.Benchmarks.ConcurrencyBenchmark-report-github.md) |
-| **Sub-millisecond foundry creation** | Foundry setup in 5-15 μs | [ConfigurationProfilesBenchmark](BenchmarkDotNet.Artifacts/results/WorkflowForge.Benchmarks.ConfigurationProfilesBenchmark-report-github.md) |
-| **Minimal memory allocation** | <2KB per foundry, <1KB per operation | [MemoryAllocationBenchmark](BenchmarkDotNet.Artifacts/results/) |
+| Highlight | Benchmark Evidence | Notes |
+|----------|--------------------|-------|
+| **Microsecond-level operation execution** | OperationPerformanceBenchmark | Medians typically 14–36 μs; means vary with outliers. |
+| **Foundry creation in single-digit microseconds (median)** | ConfigurationProfilesBenchmark | Median ~5–7 μs; means ~13–16 μs due to outliers. |
+| **Low allocations** | OperationPerformanceBenchmark / ConfigurationProfilesBenchmark | ~2.2 KB per foundry; ~0.9–2.3 KB per operation. |
+| **Throughput scales with operation count** | WorkflowThroughputBenchmark | See summary output; significant gains with optimized config. |
 
-### **Real Performance Numbers (Intel Core Ultra 7 165H, .NET 8.0)**
+### Real Performance Numbers (Intel Core Ultra 7 165H, .NET 8.0)
 
 ```
-Operation Performance:
-- Custom operations: 4-56 μs execution time
-- Delegate operations: ~20 μs median
-- Logging operations: ~4 μs median
+Operation Performance (OperationPerformanceBenchmark):
+- Custom/Delegate operations: median ~14–36 μs (means 55–73 μs with outliers)
+- Logging operation: median ~14 μs (mean ~23 μs)
+- Delay (1 op artificial): ~14 ms (baseline reference)
 
-Concurrency Scaling:
-- Sequential (16 workflows): 4,540ms
-- Concurrent (16 workflows): 301ms  
-- Scaling improvement: 15x
+Throughput & Scaling (WorkflowThroughputBenchmark):
+- Per-operation fast-path measurements ~0.35–0.55 ms mean with wide outliers at low counts
+- End-to-end multi-op workflows scale approximately linearly with operation count
 
 Memory Efficiency:
-- Foundry creation: 2,176 bytes
-- Simple operation: 432-1,176 bytes
-- Memory allocation: <1KB typical
+- Foundry creation: ~2,176 bytes
+- Simple operation allocations: ~736–2,376 bytes depending on operation type
+- Options/config related: up to ~6,184 bytes in binding scenario
 ```
 
 **Test System**: Intel Core Ultra 7 165H, 22 logical cores, .NET 8.0.16, Windows 11
 
-## 🎯 Benchmark Categories
+## Benchmark Categories
 
 ### Core Performance Benchmarks
 
@@ -70,7 +69,7 @@ Memory Efficiency:
 | **Concurrent Execution** | Multi-threaded workflow execution | Parallel performance, contention overhead |
 | **Large Workflows** | Performance with many operations | Scaling characteristics, memory growth |
 
-## 🚀 Running Benchmarks
+## Running Benchmarks
 
 ### Prerequisites
 - .NET 8.0 or later
@@ -119,7 +118,7 @@ dotnet run --project src/benchmarks/WorkflowForge.Benchmarks --configuration Rel
 dotnet run --project src/benchmarks/WorkflowForge.Benchmarks --configuration Release -- --artifacts ./benchmark-results
 ```
 
-## 📊 Benchmark Results Interpretation
+## Benchmark Results Interpretation
 
 ### Key Metrics
 
@@ -140,7 +139,7 @@ dotnet run --project src/benchmarks/WorkflowForge.Benchmarks --configuration Rel
 | **Middleware Pipeline** | < 5μs overhead | < 500 bytes |
 | **Foundry Creation** | < 100μs | < 10KB |
 
-## 🔧 Benchmark Configuration
+## Benchmark Configuration
 
 ### BenchmarkDotNet Configuration
 ```csharp
@@ -181,7 +180,7 @@ public void Cleanup()
 }
 ```
 
-## 📈 Performance Analysis
+## Performance Analysis
 
 ### Baseline Performance (Reference System)
 
@@ -214,7 +213,7 @@ public void Cleanup()
 3. **Property Access**: Optimize foundry property access patterns
 4. **Logging Optimization**: Minimize logging overhead in hot paths
 
-## 🔍 Profiling Integration
+## Profiling Integration
 
 ### Memory Profiling
 ```bash
@@ -225,7 +224,7 @@ dotnet run --project src/benchmarks/WorkflowForge.Benchmarks --configuration Rel
 dotnet run --project src/benchmarks/WorkflowForge.Benchmarks --configuration Release -- --profiler ConcurrencyVisualizer
 ```
 
-## 📋 Benchmark Development Guidelines
+## Benchmark Development Guidelines
 
 ### Creating New Benchmarks
 
@@ -265,7 +264,7 @@ public class CustomOperationBenchmarks
 }
 ```
 
-## 🎯 Performance Goals
+## Performance Goals
 
 ### Short-term Goals
 - [ ] Sub-microsecond simple operations
@@ -279,13 +278,13 @@ public class CustomOperationBenchmarks
 - [ ] Object pooling implementation
 - [ ] Horizontal scaling benchmarks
 
-## 🔗 Related Documentation
+## Related Documentation
 
 - [Performance Extension](../../extensions/WorkflowForge.Extensions.Observability.Performance/README.md) - Runtime performance monitoring
 - [Sample Applications](../../samples/WorkflowForge.Samples.BasicConsole/README.md) - Performance examples
 - [Core Documentation](../../core/WorkflowForge/README.md) - Architecture details
 
-## 📊 Continuous Performance Monitoring
+## Continuous Performance Monitoring
 
 ### Automated Benchmark Reporting
 

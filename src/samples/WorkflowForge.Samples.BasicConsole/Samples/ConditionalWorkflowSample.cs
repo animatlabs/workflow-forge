@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using WorkflowForge;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Operations;
+using WorkflowForge.Extensions;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -40,7 +41,7 @@ public class ConditionalWorkflowSample : ISample
             .AddOperation(new ConditionalWorkflowOperation(
                 condition: (input, foundry) => 
                 {
-                    var orderAmount = (decimal)foundry.Properties["order_amount"]!;
+                    var orderAmount = foundry.GetPropertyOrDefault<decimal>("order_amount");
                     return orderAmount >= 1000m; // Premium threshold
                 },
                 trueOperation: new PremiumOrderProcessingOperation(),
@@ -50,7 +51,7 @@ public class ConditionalWorkflowSample : ISample
             .AddOperation(new ConditionalWorkflowOperation(
                 condition: (input, foundry) => 
                 {
-                    var paymentMethod = foundry.Properties["payment_method"] as string;
+                    foundry.TryGetProperty<string>("payment_method", out var paymentMethod);
                     return paymentMethod == "CreditCard";
                 },
                 trueOperation: new CreditCardPaymentOperation(),
@@ -78,8 +79,8 @@ public class ConditionalWorkflowSample : ISample
         await smith.ForgeAsync(workflow, foundry);
         
         // Show results
-        var processingType = foundry.Properties.TryGetValue("processing_type", out var pt) ? (string)pt! : "Unknown";
-        var paymentType = foundry.Properties.TryGetValue("payment_type", out var pmt) ? (string)pmt! : "Unknown";
+        var processingType = foundry.GetPropertyOrDefault<string>("processing_type", "Unknown");
+        var paymentType = foundry.GetPropertyOrDefault<string>("payment_type", "Unknown");
         Console.WriteLine($"   [RESULT] Processing: {processingType}, Payment: {paymentType}");
     }
 }
@@ -95,8 +96,8 @@ public class InitializeOrderOperation : IWorkflowOperation
         Console.WriteLine("   [START] Initializing order...");
         await Task.Delay(50, cancellationToken);
         
-        foundry.Properties["order_status"] = "Initialized";
-        foundry.Properties["processing_start"] = DateTime.UtcNow;
+        foundry.SetProperty("order_status", "Initialized");
+        foundry.SetProperty("processing_start", DateTime.UtcNow);
         
         return "Order initialized";
     }
@@ -122,10 +123,10 @@ public class PremiumOrderProcessingOperation : IWorkflowOperation
         Console.WriteLine("   [PREMIUM] Processing high-value order with premium service...");
         await Task.Delay(150, cancellationToken);
         
-        foundry.Properties["processing_type"] = "Premium";
-        foundry.Properties["priority_level"] = "High";
-        foundry.Properties["estimated_completion"] = DateTime.UtcNow.AddHours(1);
-        foundry.Properties["premium_benefits"] = "Express processing, dedicated support, priority fulfillment";
+        foundry.SetProperty("processing_type", "Premium");
+        foundry.SetProperty("priority_level", "High");
+        foundry.SetProperty("estimated_completion", DateTime.UtcNow.AddHours(1));
+        foundry.SetProperty("premium_benefits", "Express processing, dedicated support, priority fulfillment");
         
         Console.WriteLine("   [SUCCESS] Premium processing assigned with express service");
         return "Premium processing assigned";
@@ -154,9 +155,9 @@ public class StandardOrderProcessingOperation : IWorkflowOperation
         Console.WriteLine("   [STANDARD] Processing order with standard service...");
         await Task.Delay(80, cancellationToken);
         
-        foundry.Properties["processing_type"] = "Standard";
-        foundry.Properties["priority_level"] = "Normal";
-        foundry.Properties["estimated_completion"] = DateTime.UtcNow.AddHours(4);
+        foundry.SetProperty("processing_type", "Standard");
+        foundry.SetProperty("priority_level", "Normal");
+        foundry.SetProperty("estimated_completion", DateTime.UtcNow.AddHours(4));
         
         Console.WriteLine("   [SUCCESS] Standard processing assigned");
         return "Standard processing assigned";
@@ -185,10 +186,10 @@ public class CreditCardPaymentOperation : IWorkflowOperation
         await Task.Delay(120, cancellationToken);
         
         var transactionId = $"CC-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
-        foundry.Properties["payment_type"] = "CreditCard";
-        foundry.Properties["transaction_id"] = transactionId;
-        foundry.Properties["payment_status"] = "Processed";
-        foundry.Properties["processing_fee"] = 2.9m; // 2.9% processing fee
+        foundry.SetProperty("payment_type", "CreditCard");
+        foundry.SetProperty("transaction_id", transactionId);
+        foundry.SetProperty("payment_status", "Processed");
+        foundry.SetProperty("processing_fee", 2.9m); // 2.9% processing fee
         
         Console.WriteLine($"   [SUCCESS] Credit card payment processed: {transactionId}");
         return $"Credit card payment: {transactionId}";
@@ -196,13 +197,13 @@ public class CreditCardPaymentOperation : IWorkflowOperation
 
     public async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
-        var transactionId = foundry.Properties.TryGetValue("transaction_id", out var txnId) ? (string)txnId! : "Unknown";
+        var transactionId = foundry.GetPropertyOrDefault<string>("transaction_id", "Unknown");
         Console.WriteLine($"   [REFUND] Refunding credit card transaction {transactionId}...");
         
         await Task.Delay(100, cancellationToken);
         
         foundry.Properties.TryRemove("transaction_id", out _);
-        foundry.Properties["payment_status"] = "Refunded";
+        foundry.SetProperty("payment_status", "Refunded");
         
         Console.WriteLine($"   [SUCCESS] Credit card refund completed");
     }
@@ -222,11 +223,11 @@ public class BankTransferPaymentOperation : IWorkflowOperation
         await Task.Delay(200, cancellationToken);
         
         var transferId = $"BT-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
-        foundry.Properties["payment_type"] = "BankTransfer";
-        foundry.Properties["transfer_id"] = transferId;
-        foundry.Properties["payment_status"] = "Pending"; // Bank transfers take longer
-        foundry.Properties["processing_fee"] = 0.5m; // Lower processing fee
-        foundry.Properties["clearing_time"] = "1-3 business days";
+        foundry.SetProperty("payment_type", "BankTransfer");
+        foundry.SetProperty("transfer_id", transferId);
+        foundry.SetProperty("payment_status", "Pending"); // Bank transfers take longer
+        foundry.SetProperty("processing_fee", 0.5m); // Lower processing fee
+        foundry.SetProperty("clearing_time", "1-3 business days");
         
         Console.WriteLine($"   [SUCCESS] Bank transfer initiated: {transferId} (clearing in 1-3 business days)");
         return $"Bank transfer: {transferId}";
@@ -234,13 +235,13 @@ public class BankTransferPaymentOperation : IWorkflowOperation
 
     public async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
-        var transferId = foundry.Properties.TryGetValue("transfer_id", out var tid) ? (string)tid! : "Unknown";
+        var transferId = foundry.GetPropertyOrDefault<string>("transfer_id", "Unknown");
         Console.WriteLine($"   [REVERSAL] Reversing bank transfer {transferId}...");
         
         await Task.Delay(150, cancellationToken);
         
         foundry.Properties.TryRemove("transfer_id", out _);
-        foundry.Properties["payment_status"] = "Reversed";
+        foundry.SetProperty("payment_status", "Reversed");
         
         Console.WriteLine($"   [SUCCESS] Bank transfer reversal completed");
     }
@@ -260,13 +261,14 @@ public class FinalizeOrderOperation : IWorkflowOperation
         
         await Task.Delay(60, cancellationToken);
         
-        var processingType = foundry.Properties.TryGetValue("processing_type", out var pt) ? (string)pt! : "Unknown";
-        var completion = foundry.Properties.TryGetValue("estimated_completion", out var ec) ? (DateTime)ec! : DateTime.UtcNow;
+        var processingType = foundry.GetPropertyOrDefault<string>("processing_type", "Unknown");
+        var completion = foundry.GetPropertyOrDefault<DateTime>("estimated_completion", DateTime.UtcNow);
         
-        foundry.Properties["order_status"] = "Finalized";
-        foundry.Properties["completion_time"] = DateTime.UtcNow;
+        foundry.SetProperty("order_status", "Finalized");
+        foundry.SetProperty("completion_time", DateTime.UtcNow);
         
-        var duration = DateTime.UtcNow - (DateTime)foundry.Properties["processing_start"]!;
+        var start = foundry.GetPropertyOrDefault<DateTime>("processing_start", DateTime.UtcNow);
+        var duration = DateTime.UtcNow - start;
         Console.WriteLine($"   [SUCCESS] Order finalized with {processingType} processing in {duration.TotalMilliseconds:F0}ms");
         Console.WriteLine($"   [INFO] Estimated completion: {completion:yyyy-MM-dd HH:mm}");
         

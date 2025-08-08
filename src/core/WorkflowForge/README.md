@@ -2,26 +2,26 @@
 
 The foundational workflow orchestration framework for .NET with zero dependencies, built-in compensation, and sub-20 microsecond operation performance.
 
-## 🎯 Package Overview
+## Package Overview
 
 WorkflowForge Core is the dependency-free foundation providing:
 
-- **🏭 Foundry & Smith Architecture**: Industrial-strength metaphor with `IWorkflowFoundry` for execution context and `IWorkflowSmith` for orchestration
-- **⚙️ Flexible Operations**: Support for sync/async operations, lambda expressions, and typed operations  
-- **🔄 Compensation Support**: Built-in saga pattern with automatic rollback capabilities
-- **🧩 Middleware Pipeline**: Extensible middleware system for cross-cutting concerns
-- **📊 Data Management**: Thread-safe shared data with `ConcurrentDictionary`
-- **🏗️ Builder Pattern**: Fluent API for constructing workflows
-- **🔧 Zero Dependencies**: Core framework has no external dependencies
-- **⚡ High Performance**: Optimized for production workloads
+- **Foundry & Smith Architecture**: Industrial-strength metaphor with `IWorkflowFoundry` for execution context and `IWorkflowSmith` for orchestration
+- **Flexible Operations**: Support for sync/async operations, lambda expressions, and typed operations  
+- **Compensation Support**: Built-in saga pattern with automatic rollback capabilities
+- **Middleware Pipeline**: Extensible middleware system for cross-cutting concerns
+- **Data Management**: Thread-safe shared data with `ConcurrentDictionary`
+- **Builder Pattern**: Fluent API for constructing workflows
+- **Zero Dependencies**: Core framework has no external dependencies
+- **High Performance**: Optimized for production workloads
 
-## 📦 Installation
+## Installation
 
 ```bash
 dotnet add package WorkflowForge
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ```csharp
 using WorkflowForge;
@@ -43,7 +43,7 @@ using var smith = WorkflowForge.CreateSmith();
 await smith.ForgeAsync(workflow, foundry);
 ```
 
-## 🏗️ Core Architecture
+## Core Architecture
 
 ### The WorkflowForge Metaphor
 
@@ -92,7 +92,7 @@ public interface IWorkflowOperation : IDisposable
 }
 ```
 
-## 📚 Documentation & Examples
+## Documentation & Examples
 
 - **[Interactive Samples](../../samples/WorkflowForge.Samples.BasicConsole/)** - 18 hands-on examples (recommended starting point)
 - **[Getting Started Guide](../../../docs/getting-started.md)** - Step-by-step tutorial
@@ -100,7 +100,7 @@ public interface IWorkflowOperation : IDisposable
 - **[Extensions](../../../docs/extensions.md)** - Available extensions
 - **[Complete Documentation](../../../docs/)** - Comprehensive guides and reference
 
-## 🔧 Built-in Operations
+## Built-in Operations
 
 ### Delegate Operations
 ```csharp
@@ -137,7 +137,7 @@ var forEachOp = ForEachWorkflowOperation.Create<string>(
 );
 ```
 
-## 🔄 Compensation (Saga Pattern)
+## Compensation (Saga Pattern)
 
 Built-in support for automatic rollback:
 
@@ -164,7 +164,7 @@ public class PaymentOperation : IWorkflowOperation
 }
 ```
 
-## 🧪 Testing
+## Testing
 
 Built for testability with mockable interfaces:
 

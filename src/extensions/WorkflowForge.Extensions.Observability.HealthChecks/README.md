@@ -13,18 +13,15 @@ dotnet add package WorkflowForge.Extensions.Observability.HealthChecks
 ```csharp
 using WorkflowForge.Extensions.Observability.HealthChecks;
 
-// Enable health checks for foundry
-var foundryConfig = FoundryConfiguration.ForProduction()
-    .EnableHealthChecks();
-
-var foundry = WorkflowForge.CreateFoundry("MyWorkflow", foundryConfig);
+// Create foundry and create a health check service
+using var foundry = WorkflowForge.CreateFoundry("MyWorkflow");
+var healthService = foundry.CreateHealthCheckService(TimeSpan.FromSeconds(30));
 
 // Execute health checks
-var healthService = foundry.GetHealthCheckService();
 var results = await healthService.CheckHealthAsync();
 
-Console.WriteLine($"Overall Status: {results.Status}");
-foreach (var (name, result) in results.Results)
+Console.WriteLine($"Overall Status: {healthService.OverallStatus}");
+foreach (var (name, result) in results)
 {
     Console.WriteLine($"{name}: {result.Status} - {result.Description}");
 }
@@ -42,12 +39,12 @@ foreach (var (name, result) in results.Results)
 
 ### System Health Monitoring
 ```csharp
-// Automatically included:
+// Automatically included when using CreateHealthCheckService():
 // - Memory Health Check (working set, managed memory)
 // - Garbage Collector Health Check (GC performance)
 // - Thread Pool Health Check (thread availability)
 
-var overallStatus = await foundry.CheckFoundryHealthAsync();
+var overallStatus = await foundry.CheckFoundryHealthAsync(healthService);
 ```
 
 ## Custom Health Checks
@@ -73,7 +70,6 @@ public class DatabaseHealthCheck : IHealthCheck
 }
 
 // Register custom health check
-var healthService = foundry.GetHealthCheckService();
 healthService.RegisterHealthCheck(new DatabaseHealthCheck(dbConnection));
 ```
 

@@ -13,11 +13,18 @@ dotnet add package WorkflowForge.Extensions.Resilience.Polly
 ```csharp
 using WorkflowForge.Extensions.Resilience.Polly;
 
-// Enable Polly resilience
-var foundryConfig = FoundryConfiguration.ForProduction()
-    .UsePollyResilience();
+// Create foundry and apply Polly resilience (extension methods are on WorkflowFoundry)
+var config = FoundryConfiguration.ForProduction();
+var foundry = (WorkflowFoundry)WorkflowForge.CreateFoundry("MyWorkflow", config);
 
-var foundry = WorkflowForge.CreateFoundry("MyWorkflow", foundryConfig);
+// Preset:
+foundry.UsePollyProductionResilience();
+
+// Or custom policies:
+foundry
+    .UsePollyRetry(maxRetryAttempts: 5, baseDelay: TimeSpan.FromSeconds(1))
+    .UsePollyCircuitBreaker(failureThreshold: 3, durationOfBreak: TimeSpan.FromMinutes(1))
+    .UsePollyTimeout(TimeSpan.FromSeconds(30));
 ```
 
 ## Key Features
@@ -31,16 +38,9 @@ var foundry = WorkflowForge.CreateFoundry("MyWorkflow", foundryConfig);
 ## Configuration
 
 ```csharp
-// Custom resilience policies
-var pollyConfig = new PollyResilienceConfiguration
-{
-    RetryAttempts = 3,
-    CircuitBreakerFailureThreshold = 5,
-    CircuitBreakerSamplingDuration = TimeSpan.FromMinutes(1),
-    TimeoutDuration = TimeSpan.FromSeconds(30)
-};
-
-foundryConfig.UsePollyResilience(pollyConfig);
+// Configuration from strongly-typed settings
+var settings = PollySettings.ForProduction();
+foundry.UsePollyFromSettings(settings);
 ```
 
 ## Documentation & Examples

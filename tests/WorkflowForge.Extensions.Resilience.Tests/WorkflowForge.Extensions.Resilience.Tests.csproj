@@ -9,7 +9,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
     <WarningsNotAsErrors>CS8981</WarningsNotAsErrors>
-    <RunSettingsFilePath>D:\Repositories\animatlabs\workflow-forge\tests\WorkflowForge.Extensions.Resilience.Tests\bin\Debug\net8.0\fine-code-coverage\coverage-tool-output\WorkflowForge.Extensions.Resilience.Tests-fcc-mscodecoverage-generated.runsettings</RunSettingsFilePath>
+    <RunSettingsFilePath></RunSettingsFilePath>
   </PropertyGroup>
 
   <ItemGroup>

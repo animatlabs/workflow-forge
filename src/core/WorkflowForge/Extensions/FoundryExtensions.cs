@@ -12,6 +12,43 @@ namespace WorkflowForge.Extensions
     public static class FoundryExtensions
     {
         /// <summary>
+        /// Tries to get a strongly-typed value from the foundry properties.
+        /// </summary>
+        public static bool TryGetProperty<T>(this IWorkflowFoundry foundry, string key, out T? value)
+        {
+            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (string.IsNullOrWhiteSpace(key)) throw new ArgumentException("Key cannot be null or empty.", nameof(key));
+
+            if (foundry.Properties.TryGetValue(key, out var obj) && obj is T t)
+            {
+                value = t;
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Gets a strongly-typed value from the foundry properties, or default if not present or of wrong type.
+        /// </summary>
+        public static T? GetPropertyOrDefault<T>(this IWorkflowFoundry foundry, string key)
+        {
+            return foundry.TryGetProperty<T>(key, out var value) ? value : default;
+        }
+
+        /// <summary>
+        /// Sets a value in the foundry properties.
+        /// </summary>
+        public static IWorkflowFoundry SetProperty(this IWorkflowFoundry foundry, string key, object? value)
+        {
+            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (string.IsNullOrWhiteSpace(key)) throw new ArgumentException("Key cannot be null or empty.", nameof(key));
+            foundry.Properties[key] = value;
+            return foundry;
+        }
+
+        /// <summary>
         /// Adds operations to the foundry and returns the foundry for method chaining.
         /// </summary>
         /// <param name="foundry">The foundry to add operations to.</param>

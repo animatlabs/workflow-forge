@@ -57,37 +57,18 @@ dotnet run
 
 ### Running Specific Samples
 
-```bash
-# Run individual samples
-dotnet run -- hello-world
-dotnet run -- data-passing
-dotnet run -- error-handling
-dotnet run -- comprehensive-integration
-
-# Run all samples in sequence
-dotnet run -- all
-
-# List all available samples with descriptions
-dotnet run -- list
-
-# Run samples by category
-dotnet run -- category:basic
-dotnet run -- category:extensions
-dotnet run -- category:config
-```
+Use the interactive menu to select samples. Command-line arguments are not implemented at this time.
 
 ### Interactive Sample Explorer
 
 ```bash
-# Start interactive mode
-dotnet run -- interactive
-
-# This will provide:
-# - Menu-driven sample selection
-# - Detailed sample descriptions
-# - Step-by-step execution with explanations
-# - Performance metrics and timing information
+dotnet run
 ```
+The console will provide:
+- Menu-driven sample selection
+- Detailed sample descriptions
+- Step-by-step execution with explanations
+- Performance metrics and timing information
 
 ## Detailed Sample Descriptions
 
@@ -270,14 +251,14 @@ public class MyCustomSample : ISample
     
     public async Task RunAsync()
     {
-        Console.WriteLine("🚀 Starting My Custom Sample...");
+        Console.WriteLine("Starting My Custom Sample...");
         
         // Your sample implementation here
         var foundry = WorkflowForge.CreateFoundry("CustomSample");
         
         // ... implementation details ...
         
-        Console.WriteLine("✅ Custom sample completed successfully!");
+        Console.WriteLine("Custom sample completed successfully.");
     }
 }
 ```
@@ -297,7 +278,7 @@ private static readonly Dictionary<string, ISample> Samples = new()
 
 ### Sample Development Guidelines
 
-- **Clear Console Output**: Use emojis and formatting for readability
+- **Clear Console Output**: Use concise, consistent formatting for readability
 - **Comprehensive Comments**: Explain key concepts and patterns
 - **Error Handling**: Demonstrate proper exception management
 - **Performance Notes**: Include timing and memory usage information
@@ -372,16 +353,16 @@ var foundry = WorkflowForge.CreateFoundry("ECommerceWorkflow", foundryConfig);
 
 | Sample | Core | Logging | Resilience | Observability | Health | Performance |
 |--------|------|---------|------------|---------------|--------|-------------|
-| hello-world | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| data-passing | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| conditional | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| error-handling | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| serilog-integration | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| polly-resilience | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| opentelemetry-observability | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
-| health-checks | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
-| performance-monitoring | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ |
-| comprehensive-integration | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| hello-world | Yes | No | No | No | No | No |
+| data-passing | Yes | No | No | No | No | No |
+| conditional | Yes | No | No | No | No | No |
+| error-handling | Yes | Yes | Yes | No | No | No |
+| serilog-integration | Yes | Yes | No | No | No | No |
+| polly-resilience | Yes | Yes | Yes | No | No | No |
+| opentelemetry-observability | Yes | Yes | No | Yes | No | No |
+| health-checks | Yes | Yes | No | No | Yes | No |
+| performance-monitoring | Yes | Yes | No | No | No | Yes |
+| comprehensive-integration | Yes | Yes | Yes | Yes | Yes | Yes |
 
 ## Prerequisites
 

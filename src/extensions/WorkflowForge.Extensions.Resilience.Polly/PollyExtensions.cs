@@ -221,5 +221,78 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             var settings = PollySettings.Minimal();
             return foundry.UsePollyFromSettings(settings);
         }
+
+        // Interface-based convenience overloads to avoid casts in user code
+
+        public static IWorkflowFoundry UsePollyRetry(
+            this IWorkflowFoundry foundry,
+            int maxRetryAttempts = 3,
+            TimeSpan? baseDelay = null,
+            TimeSpan? maxDelay = null)
+        {
+            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
+                UsePollyRetry(maxRetryAttempts, baseDelay, maxDelay);
+        }
+
+        public static IWorkflowFoundry UsePollyCircuitBreaker(
+            this IWorkflowFoundry foundry,
+            int failureThreshold = 5,
+            TimeSpan? durationOfBreak = null)
+        {
+            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
+                UsePollyCircuitBreaker(failureThreshold, durationOfBreak);
+        }
+
+        public static IWorkflowFoundry UsePollyTimeout(
+            this IWorkflowFoundry foundry,
+            TimeSpan timeout)
+        {
+            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
+                UsePollyTimeout(timeout);
+        }
+
+        public static IWorkflowFoundry UsePollyComprehensive(
+            this IWorkflowFoundry foundry,
+            int maxRetryAttempts = 3,
+            TimeSpan? baseDelay = null,
+            int circuitBreakerThreshold = 5,
+            TimeSpan? circuitBreakerDuration = null,
+            TimeSpan? timeoutDuration = null)
+        {
+            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
+                UsePollyComprehensive(maxRetryAttempts, baseDelay, circuitBreakerThreshold, circuitBreakerDuration, timeoutDuration);
+        }
+
+        public static IWorkflowFoundry UsePollyFromSettings(
+            this IWorkflowFoundry foundry,
+            PollySettings settings)
+        {
+            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
+                UsePollyFromSettings(settings);
+        }
+
+        public static IWorkflowFoundry UsePollyEnterpriseResilience(this IWorkflowFoundry foundry)
+        {
+            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
+                UsePollyEnterpriseResilience();
+        }
+
+        public static IWorkflowFoundry UsePollyDevelopmentResilience(this IWorkflowFoundry foundry)
+        {
+            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
+                UsePollyDevelopmentResilience();
+        }
+
+        public static IWorkflowFoundry UsePollyProductionResilience(this IWorkflowFoundry foundry)
+        {
+            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
+                UsePollyProductionResilience();
+        }
+
+        public static IWorkflowFoundry UsePollyMinimalResilience(this IWorkflowFoundry foundry)
+        {
+            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
+                UsePollyMinimalResilience();
+        }
     }
 } 

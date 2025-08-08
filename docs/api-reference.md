@@ -21,7 +21,6 @@ public static class WorkflowForge
     
     // Smith creation
     public static IWorkflowSmith CreateSmith();
-    public static IWorkflowSmith CreateSmith(IServiceProvider? serviceProvider);
 }
 ```
 
@@ -34,17 +33,17 @@ public interface IWorkflowFoundry : IDisposable
 {
     // Core properties
     Guid ExecutionId { get; }
-    string FoundryName { get; }
     IWorkflow? CurrentWorkflow { get; }
-    
+
     // Shared data and services
     ConcurrentDictionary<string, object?> Properties { get; }
     IWorkflowForgeLogger Logger { get; }
     IServiceProvider? ServiceProvider { get; }
-    
+
     // Workflow management
     void SetCurrentWorkflow(IWorkflow? workflow);
     void AddOperation(IWorkflowOperation operation);
+    void AddMiddleware(IWorkflowOperationMiddleware middleware);
 }
 ```
 
@@ -59,7 +58,7 @@ public interface IWorkflowSmith : IDisposable
     Task ForgeAsync(IWorkflow workflow, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
     Task ForgeAsync(IWorkflow workflow, ConcurrentDictionary<string, object?> data, CancellationToken cancellationToken = default);
     
-    // Utility overloads
+    // Utility overloads (typed result)
     Task<T?> ForgeAsync<T>(IWorkflow workflow, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
     Task<T?> ForgeAsync<T>(IWorkflow workflow, ConcurrentDictionary<string, object?> data, CancellationToken cancellationToken = default);
 }
@@ -110,32 +109,30 @@ public interface IWorkflowOperation : IDisposable
 
 ## Workflow Builder
 
-### IWorkflowBuilder
+### WorkflowBuilder
 
-Fluent builder interface for constructing workflows.
+Fluent builder for constructing workflows.
 
 ```csharp
-public interface IWorkflowBuilder
+public sealed class WorkflowBuilder
 {
     // Metadata configuration
-    IWorkflowBuilder WithName(string name);
-    IWorkflowBuilder WithVersion(string version);
-    IWorkflowBuilder WithDescription(string description);
-    IWorkflowBuilder WithTimeout(TimeSpan timeout);
-    
+    public WorkflowBuilder WithName(string name);
+    public WorkflowBuilder WithVersion(string version);
+    public WorkflowBuilder WithDescription(string? description);
+
     // Operation addition
-    IWorkflowBuilder AddOperation(IWorkflowOperation operation);
-    IWorkflowBuilder AddOperation(string name, Func<object?, IWorkflowFoundry, CancellationToken, Task<object?>> func);
-    IWorkflowBuilder AddOperation(string name, Func<object?, IWorkflowFoundry, CancellationToken, object?> func);
-    
-    // Conditional operations
-    IWorkflowBuilder AddConditionalOperation(string name, Func<IWorkflowFoundry, bool> condition, IWorkflowOperation trueOperation, IWorkflowOperation falseOperation);
-    
-    // ForEach operations
-    IWorkflowBuilder AddForEachOperation<T>(string name, IEnumerable<T> items, IWorkflowOperation itemOperation, bool parallelExecution = false);
-    
+    public WorkflowBuilder AddOperation(IWorkflowOperation operation);
+    public WorkflowBuilder AddOperation<T>() where T : class, IWorkflowOperation;
+    public WorkflowBuilder AddOperation(string name, Func<IWorkflowFoundry, CancellationToken, Task> action);
+    public WorkflowBuilder AddOperation(string name, Action<IWorkflowFoundry> action);
+
     // Build workflow
-    IWorkflow Build();
+    public IWorkflow Build();
+
+    // Helpers
+    public static IWorkflow Sequential(params IWorkflowOperation[] operations);
+    public static IWorkflow Parallel(params IWorkflowOperation[] operations);
 }
 ```
 
@@ -158,26 +155,58 @@ public class DelegateWorkflowOperation : IWorkflowOperation
 Execute operations based on conditions.
 
 ```csharp
-public class ConditionalWorkflowOperation : IWorkflowOperation
+public sealed class ConditionalWorkflowOperation : IWorkflowOperation
 {
     public static ConditionalWorkflowOperation Create(
         Func<IWorkflowFoundry, bool> condition,
         IWorkflowOperation trueOperation,
-        IWorkflowOperation falseOperation);
+        IWorkflowOperation? falseOperation = null,
+        string? name = null);
+
+    public static ConditionalWorkflowOperation CreateDataAware(
+        Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>> condition,
+        IWorkflowOperation trueOperation,
+        IWorkflowOperation? falseOperation = null,
+        string? name = null);
+
+    public static ConditionalWorkflowOperation CreateTyped<T>(
+        Func<T, IWorkflowFoundry, CancellationToken, Task<bool>> condition,
+        IWorkflowOperation trueOperation,
+        IWorkflowOperation? falseOperation = null,
+        string? name = null);
 }
 ```
 
 ### ForEachWorkflowOperation
 
-Process collections in parallel or sequentially.
+Execute a set of operations with shared, split, or no input, with optional throttling.
 
 ```csharp
-public class ForEachWorkflowOperation<T> : IWorkflowOperation
+public sealed class ForEachWorkflowOperation : IWorkflowOperation
 {
-    public static ForEachWorkflowOperation<T> Create(
-        IEnumerable<T> items,
-        IWorkflowOperation operation,
-        bool parallelExecution = false);
+    public static ForEachWorkflowOperation CreateSharedInput(
+        IEnumerable<IWorkflowOperation> operations,
+        TimeSpan? timeout = null,
+        int? maxConcurrency = null,
+        string? name = null);
+
+    public static ForEachWorkflowOperation CreateSplitInput(
+        IEnumerable<IWorkflowOperation> operations,
+        TimeSpan? timeout = null,
+        int? maxConcurrency = null,
+        string? name = null);
+
+    public static ForEachWorkflowOperation CreateNoInput(
+        IEnumerable<IWorkflowOperation> operations,
+        TimeSpan? timeout = null,
+        int? maxConcurrency = null,
+        string? name = null);
+
+    public static ForEachWorkflowOperation Create(params IWorkflowOperation[] operations);
+    public static ForEachWorkflowOperation CreateWithThrottling(
+        IEnumerable<IWorkflowOperation> operations,
+        int maxConcurrency,
+        TimeSpan? timeout = null);
 }
 ```
 
@@ -200,26 +229,26 @@ public class ActionWorkflowOperation : IWorkflowOperation
 Configuration class for foundry behavior.
 
 ```csharp
-public class FoundryConfiguration
+public sealed class FoundryConfiguration
 {
-    // Factory methods
+    // Presets
+    public static FoundryConfiguration Default();
     public static FoundryConfiguration Minimal();
+    public static FoundryConfiguration HighPerformance();
+    public static FoundryConfiguration ForHighPerformance();
+    public static FoundryConfiguration Development();
     public static FoundryConfiguration ForDevelopment();
     public static FoundryConfiguration ForProduction();
-    public static FoundryConfiguration ForTesting();
-    
+
     // Properties
-    public bool EnableAutoRestore { get; set; }
-    public int MaxConcurrentOperations { get; set; }
     public TimeSpan DefaultTimeout { get; set; }
     public IWorkflowForgeLogger? Logger { get; set; }
     public IServiceProvider? ServiceProvider { get; set; }
-    
-    // Fluent configuration
-    public FoundryConfiguration WithLogger(IWorkflowForgeLogger logger);
-    public FoundryConfiguration WithServiceProvider(IServiceProvider serviceProvider);
-    public FoundryConfiguration WithMaxConcurrentOperations(int maxConcurrentOperations);
-    public FoundryConfiguration WithDefaultTimeout(TimeSpan timeout);
+    public int MaxRetryAttempts { get; set; }
+    public bool EnableParallelExecution { get; set; }
+    public int MaxDegreeOfParallelism { get; set; }
+    public bool EnableDetailedTiming { get; set; }
+    public bool AutoDisposeOperations { get; set; }
 }
 ```
 
@@ -273,17 +302,17 @@ public class NullLogger : IWorkflowForgeLogger
 
 ## Middleware
 
-### IWorkflowMiddleware
+### IWorkflowOperationMiddleware
 
-Middleware interface for cross-cutting concerns.
+Middleware interface for cross-cutting concerns in operation execution.
 
 ```csharp
-public interface IWorkflowMiddleware
+public interface IWorkflowOperationMiddleware
 {
     Task<object?> ExecuteAsync(
         IWorkflowOperation operation,
-        object? inputData,
         IWorkflowFoundry foundry,
+        object? inputData,
         Func<Task<object?>> next,
         CancellationToken cancellationToken);
 }
@@ -363,25 +392,35 @@ public class CompensationException : WorkflowForgeException
 
 ### Extension Configuration
 
-Methods for configuring extensions on FoundryConfiguration.
+Methods for configuring extensions.
 
 ```csharp
-// Serilog extension
+// Serilog logging (configuration-based)
 public static FoundryConfiguration UseSerilog(this FoundryConfiguration config);
 public static FoundryConfiguration UseSerilog(this FoundryConfiguration config, ILogger logger);
 
-// Polly resilience extension
-public static FoundryConfiguration UsePollyResilience(this FoundryConfiguration config);
-public static FoundryConfiguration UsePollyResilience(this FoundryConfiguration config, PollyResilienceConfiguration pollyConfig);
+// Resilience (Polly) on foundry
+public static WorkflowFoundry UsePollyRetry(this WorkflowFoundry foundry, int maxRetryAttempts = 3, TimeSpan? baseDelay = null, TimeSpan? maxDelay = null);
+public static WorkflowFoundry UsePollyCircuitBreaker(this WorkflowFoundry foundry, int failureThreshold = 5, TimeSpan? durationOfBreak = null);
+public static WorkflowFoundry UsePollyTimeout(this WorkflowFoundry foundry, TimeSpan timeout);
+public static WorkflowFoundry UsePollyComprehensive(this WorkflowFoundry foundry, int maxRetryAttempts = 3, TimeSpan? baseDelay = null, int circuitBreakerThreshold = 5, TimeSpan? circuitBreakerDuration = null, TimeSpan? timeoutDuration = null);
+public static WorkflowFoundry UsePollyFromSettings(this WorkflowFoundry foundry, PollySettings settings);
+public static WorkflowFoundry UsePollyEnterpriseResilience(this WorkflowFoundry foundry);
+public static WorkflowFoundry UsePollyDevelopmentResilience(this WorkflowFoundry foundry);
+public static WorkflowFoundry UsePollyProductionResilience(this WorkflowFoundry foundry);
+public static WorkflowFoundry UsePollyMinimalResilience(this WorkflowFoundry foundry);
 
-// Performance monitoring extension
-public static FoundryConfiguration EnablePerformanceMonitoring(this FoundryConfiguration config);
+// Performance monitoring on foundry
+public static bool EnablePerformanceMonitoring(this IWorkflowFoundry foundry);
+public static IFoundryPerformanceStatistics? GetPerformanceStatistics(this IWorkflowFoundry foundry);
 
-// Health checks extension
-public static FoundryConfiguration EnableHealthChecks(this FoundryConfiguration config);
+// Health checks on foundry
+public static HealthCheckService CreateHealthCheckService(this IWorkflowFoundry foundry, TimeSpan? checkInterval = null);
+public static Task<HealthStatus> CheckFoundryHealthAsync(this IWorkflowFoundry foundry, HealthCheckService service, CancellationToken cancellationToken = default);
 
-// OpenTelemetry extension
-public static FoundryConfiguration EnableOpenTelemetry(this FoundryConfiguration config, string serviceName, string serviceVersion);
+// OpenTelemetry on foundry
+public static bool EnableOpenTelemetry(this IWorkflowFoundry foundry, WorkflowForgeOpenTelemetryOptions? options = null);
+public static bool DisableOpenTelemetry(this IWorkflowFoundry foundry);
 ```
 
 ---

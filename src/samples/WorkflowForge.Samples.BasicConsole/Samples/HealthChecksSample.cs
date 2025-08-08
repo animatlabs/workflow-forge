@@ -93,7 +93,7 @@ public class HealthChecksSample : ISample
         
         var healthCheckService = foundry.CreateHealthCheckService();
         
-        foundry.Properties["health_check_service"] = healthCheckService;
+        foundry.SetProperty("health_check_service", healthCheckService);
         
         foundry
             .WithOperation(LoggingOperation.Info("Starting workflow health check demonstration"))
@@ -201,7 +201,7 @@ public class HealthAwareOperation : IWorkflowOperation
         foundry.Logger.LogInformation("Starting health-aware operation: {OperationName}", _operationName);
         
         // Get health check service from foundry properties
-        var healthCheckService = foundry.Properties.GetValueOrDefault("health_check_service") as HealthCheckService;
+        var healthCheckService = foundry.GetPropertyOrDefault<HealthCheckService>("health_check_service");
         
         if (healthCheckService != null)
         {
@@ -217,8 +217,8 @@ public class HealthAwareOperation : IWorkflowOperation
             }
             
             // Update health check counter
-            var healthChecks = (int)foundry.Properties.GetValueOrDefault("health_checks_performed", 0);
-            foundry.Properties["health_checks_performed"] = healthChecks + 1;
+            var healthChecks = foundry.GetPropertyOrDefault<int>("health_checks_performed", 0);
+            foundry.SetProperty("health_checks_performed", healthChecks + 1);
         }
         
         // Simulate operation work

@@ -71,11 +71,11 @@ public class EmailNotificationOperation : IWorkflowOperation
         foundry.Logger.LogInformation("Sending email to {Recipient}", emailRequest.Recipient);
         
         // Send email logic
-        var emailService = foundry.GetService<IEmailService>();
+         var emailService = (IEmailService)foundry.ServiceProvider!.GetService(typeof(IEmailService))!;
         var messageId = await emailService.SendAsync(emailRequest, cancellationToken);
         
         // Store message ID for potential rollback
-        foundry.SetProperty("EmailMessageId", messageId);
+         foundry.Properties["EmailMessageId"] = messageId;
         
         foundry.Logger.LogInformation("Email sent successfully, MessageId: {MessageId}", messageId);
         
@@ -89,13 +89,11 @@ public class EmailNotificationOperation : IWorkflowOperation
 
     public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        var messageId = foundry.GetProperty<string>("EmailMessageId");
-        
-        if (!string.IsNullOrEmpty(messageId))
+        if (foundry.Properties.TryGetValue("EmailMessageId", out var msg) && msg is string messageId && !string.IsNullOrEmpty(messageId))
         {
             foundry.Logger.LogWarning("Attempting to recall email {MessageId}", messageId);
             
-            var emailService = foundry.GetService<IEmailService>();
+            var emailService = (IEmailService)foundry.ServiceProvider!.GetService(typeof(IEmailService))!;
             await emailService.RecallAsync(messageId, cancellationToken);
             
             foundry.Logger.LogInformation("Email recall completed for {MessageId}", messageId);
@@ -217,8 +215,8 @@ public class BatchProcessingOperation : IWorkflowOperation
             items.Count(), batchId);
 
         // Store batch ID for tracking
-        foundry.SetProperty("BatchId", batchId);
-        foundry.SetProperty("ProcessedItems", new List<object>());
+        foundry.Properties["BatchId"] = batchId;
+        foundry.Properties["ProcessedItems"] = new List<object>();
 
         var processedItems = new List<object>();
         var batch = new List<object>();
@@ -233,7 +231,7 @@ public class BatchProcessingOperation : IWorkflowOperation
                 processedItems.AddRange(batchResult);
                 
                 // Update progress
-                foundry.SetProperty("ProcessedItems", processedItems);
+                foundry.Properties["ProcessedItems"] = processedItems;
                 
                 batch.Clear();
                 
@@ -262,8 +260,8 @@ public class BatchProcessingOperation : IWorkflowOperation
 
     public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        var batchId = foundry.GetProperty<Guid>("BatchId");
-        var processedItems = foundry.GetProperty<List<object>>("ProcessedItems");
+        var batchId = foundry.GetPropertyOrDefault<Guid>("BatchId");
+        var processedItems = foundry.GetPropertyOrDefault<List<object>>("ProcessedItems");
 
         if (processedItems?.Any() == true)
         {
@@ -319,21 +317,21 @@ public class ConditionalWorkflowOperation : IWorkflowOperation
         var conditionResult = _condition(inputData, foundry);
         
         foundry.Logger.LogInformation("Condition evaluated to: {ConditionResult}", conditionResult);
-        foundry.SetProperty("ConditionResult", conditionResult);
+        foundry.Properties["ConditionResult"] = conditionResult;
 
         if (conditionResult)
         {
-            foundry.SetProperty("ExecutedOperation", "True");
+            foundry.Properties["ExecutedOperation"] = "True";
             return await _trueOperation.ForgeAsync(inputData, foundry, cancellationToken);
         }
         else if (_falseOperation != null)
         {
-            foundry.SetProperty("ExecutedOperation", "False");
+            foundry.Properties["ExecutedOperation"] = "False";
             return await _falseOperation.ForgeAsync(inputData, foundry, cancellationToken);
         }
         else
         {
-            foundry.SetProperty("ExecutedOperation", "None");
+            foundry.Properties["ExecutedOperation"] = "None";
             foundry.Logger.LogInformation("Condition was false and no false operation provided");
             return inputData;
         }
@@ -341,7 +339,7 @@ public class ConditionalWorkflowOperation : IWorkflowOperation
 
     public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        var executedOperation = foundry.GetProperty<string>("ExecutedOperation");
+        var executedOperation = foundry.GetPropertyOrDefault<string>("ExecutedOperation");
         
         switch (executedOperation)
         {
@@ -425,7 +423,7 @@ public class ParallelWorkflowOperation : IWorkflowOperation
         }
 
         // Store completed operations for potential rollback
-        foundry.SetProperty("CompletedOperations", completedOperations.ToList());
+        foundry.Properties["CompletedOperations"] = completedOperations.ToList();
 
         if (exceptions.Any() && _settings.FailFast)
         {
@@ -446,7 +444,7 @@ public class ParallelWorkflowOperation : IWorkflowOperation
 
     public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        var completedOperations = foundry.GetProperty<List<(IWorkflowOperation Operation, object? Result)>>("CompletedOperations");
+        var completedOperations = foundry.GetPropertyOrDefault<List<(IWorkflowOperation Operation, object? Result)>>("CompletedOperations");
 
         if (completedOperations?.Any() == true)
         {
@@ -527,7 +525,7 @@ public class EmailNotificationOperationTests
 
         mockFoundry.Setup(x => x.Logger).Returns(mockLogger.Object);
         mockFoundry.Setup(x => x.GetService<IEmailService>()).Returns(mockEmailService.Object);
-        mockFoundry.Setup(x => x.GetProperty<string>("EmailMessageId")).Returns("MSG123");
+        mockFoundry.Setup(x => x.GetPropertyOrDefault<string>("EmailMessageId")).Returns("MSG123");
 
         var operation = new EmailNotificationOperation();
 

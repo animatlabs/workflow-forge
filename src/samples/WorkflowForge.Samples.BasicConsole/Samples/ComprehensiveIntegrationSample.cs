@@ -52,7 +52,7 @@ public class ComprehensiveIntegrationSample : ISample
             using var foundry = WorkflowForge.CreateFoundry("ECommerceOrderProcessing", config);
             
             // Enable Polly resilience patterns
-            ((WorkflowFoundry)foundry).UsePollyProductionResilience();
+            foundry.UsePollyProductionResilience();
             
             // Enable OpenTelemetry observability
             var telemetryOptions = new WorkflowForgeOpenTelemetryOptions
@@ -64,7 +64,7 @@ public class ComprehensiveIntegrationSample : ISample
                 EnableSystemMetrics = true,
                 EnableOperationMetrics = true
             };
-            ((WorkflowFoundry)foundry).EnableOpenTelemetry(telemetryOptions);
+            foundry.EnableOpenTelemetry(telemetryOptions);
             
             // Set up order context
             var orderId = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";

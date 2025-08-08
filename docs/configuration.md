@@ -299,48 +299,43 @@ public static class FoundryConfigurations
 {
     public static IWorkflowFoundry CreateDevelopmentFoundry(string name)
     {
-        return WorkflowForge.CreateFoundry(name)
-            .UseSerilog(CreateDevelopmentLogger())
-            .UsePollyDevelopmentResilience()
-            .EnablePerformanceMonitoring(options =>
-            {
-                options.TrackMemoryUsage = true;
-                options.DetailedMetrics = true;
-                options.SampleSize = 100;
-            })
-            .EnableHealthChecks();
+        var config = FoundryConfiguration.ForDevelopment().UseSerilog(CreateDevelopmentLogger());
+        var foundry = WorkflowForge.CreateFoundry(name, config)
+            .UsePollyDevelopmentResilience();
+        // Enable performance monitoring
+        foundry.EnablePerformanceMonitoring();
+        // Health checks service
+        var healthService = foundry.CreateHealthCheckService(TimeSpan.FromSeconds(30));
+        return foundry;
     }
 
     public static IWorkflowFoundry CreateOptimizedFoundry(string name)
     {
-        return WorkflowForge.CreateFoundry(name)
-            .UseSerilog(CreateOptimizedLogger())
-            .UsePollyResilience()
-            .EnableOpenTelemetry("OptimizedService", "1.0.0", options =>
-            {
-                options.EnableJaegerExporter("https://jaeger.company.com");
-                options.SetSampling(0.1); // 10% sampling
-            });
+        var config = FoundryConfiguration.ForProduction().UseSerilog(CreateOptimizedLogger());
+        var foundry = WorkflowForge.CreateFoundry(name, config)
+            .UsePollyProductionResilience();
+        // Enable OpenTelemetry with available options type
+        foundry.EnableOpenTelemetry(new WorkflowForge.Extensions.Observability.OpenTelemetry.WorkflowForgeOpenTelemetryOptions
+        {
+            ServiceName = "OptimizedService",
+            ServiceVersion = "1.0.0"
+        });
+        return foundry;
     }
 
     public static IWorkflowFoundry CreateAdvancedFoundry(string name, IServiceProvider serviceProvider)
     {
-        return WorkflowForge.CreateFoundry(name, serviceProvider)
-            .UseSerilog(CreateAdvancedLogger())
-            .UsePollyAdvancedResilience()
-            .EnablePerformanceMonitoring()
-            .EnableHealthChecks(options =>
-            {
-                options.AddDatabaseCheck("Database", connectionString);
-                options.AddCustomCheck("ExternalAPI", CheckExternalApiHealth);
-            })
-            .EnableOpenTelemetry("AdvancedService", "1.0.0")
-            .EnableSecurity(options =>
-            {
-                options.RequireAuthentication = true;
-                options.EnableEncryption = true;
-                options.AuditAllOperations = true;
-            });
+        var config = FoundryConfiguration.ForProduction().UseSerilog(CreateAdvancedLogger());
+        var foundry = WorkflowForge.CreateFoundry(name, config)
+            .UsePollyEnterpriseResilience();
+        foundry.EnablePerformanceMonitoring();
+        var healthService = foundry.CreateHealthCheckService(TimeSpan.FromMinutes(1));
+        foundry.EnableOpenTelemetry(new WorkflowForge.Extensions.Observability.OpenTelemetry.WorkflowForgeOpenTelemetryOptions
+        {
+            ServiceName = "AdvancedService",
+            ServiceVersion = "1.0.0"
+        });
+        return foundry;
     }
 
     private static ILogger CreateDevelopmentLogger()

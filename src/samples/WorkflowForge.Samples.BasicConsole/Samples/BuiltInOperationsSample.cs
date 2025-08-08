@@ -77,8 +77,8 @@ public class BuiltInOperationsSample : ISample
         using var foundry = WorkflowForge.CreateFoundry("DelegateOperationsDemo");
         
         // Set up initial data
-        foundry.Properties["counter"] = 0;
-        foundry.Properties["message_list"] = new List<string>();
+        foundry.SetProperty("counter", 0);
+        foundry.SetProperty("message_list", new List<string>());
         
         foundry.AddOperation(LoggingOperation.Info("Starting delegate operations demonstration"));
         
@@ -86,16 +86,16 @@ public class BuiltInOperationsSample : ISample
         foundry.AddOperation(new DelegateWorkflowOperation("SimpleDelegate", async (input, foundry, token) =>
         {
             foundry.Logger.LogInformation("Executing simple delegate operation");
-            foundry.Properties["simple_result"] = "Delegate executed successfully";
+            foundry.SetProperty("simple_result", "Delegate executed successfully");
             return "Simple delegate completed";
         }));
         
         // Delegate with counter increment
         foundry.AddOperation(new DelegateWorkflowOperation("CounterIncrement", async (input, foundry, token) =>
         {
-            var counter = (int)foundry.Properties["counter"];
+            var counter = foundry.GetPropertyOrDefault<int>("counter");
             counter++;
-            foundry.Properties["counter"] = counter;
+            foundry.SetProperty("counter", counter);
             foundry.Logger.LogInformation("Counter incremented to: {Counter}", counter);
             return counter;
         }));
@@ -103,7 +103,7 @@ public class BuiltInOperationsSample : ISample
         // Delegate with data processing
         foundry.AddOperation(new DelegateWorkflowOperation("DataProcessor", async (input, foundry, token) =>
         {
-            var messageList = (List<string>)foundry.Properties["message_list"];
+            var messageList = foundry.GetPropertyOrDefault<List<string>>("message_list") ?? new List<string>();
             var newMessage = $"Processed at {DateTime.UtcNow:HH:mm:ss.fff}";
             messageList.Add(newMessage);
             foundry.Logger.LogInformation("Added message: {Message}", newMessage);
@@ -114,7 +114,7 @@ public class BuiltInOperationsSample : ISample
         foundry.AddOperation(new ActionWorkflowOperation("ActionOperation", async (input, foundry, token) =>
         {
             foundry.Logger.LogInformation("Executing action operation");
-            foundry.Properties["action_executed"] = DateTime.UtcNow;
+            foundry.SetProperty("action_executed", DateTime.UtcNow);
             await Task.Delay(100, token);
         }));
         
@@ -123,10 +123,10 @@ public class BuiltInOperationsSample : ISample
         await foundry.ForgeAsync();
         
         // Display results
-        Console.WriteLine($"   Final counter value: {foundry.Properties["counter"]}");
-        Console.WriteLine($"   Simple result: {foundry.Properties["simple_result"]}");
-        Console.WriteLine($"   Messages processed: {((List<string>)foundry.Properties["message_list"]).Count}");
-        Console.WriteLine($"   Action executed at: {foundry.Properties["action_executed"]}");
+        Console.WriteLine($"   Final counter value: {foundry.GetPropertyOrDefault<int>("counter")}");
+        Console.WriteLine($"   Simple result: {foundry.GetPropertyOrDefault<string>("simple_result", "")}");
+        Console.WriteLine($"   Messages processed: {(foundry.GetPropertyOrDefault<List<string>>("message_list")?.Count ?? 0)}");
+        Console.WriteLine($"   Action executed at: {foundry.GetPropertyOrDefault<DateTime>("action_executed")}");
     }
 
     private static async Task RunCombinedOperationsDemo()
@@ -135,18 +135,18 @@ public class BuiltInOperationsSample : ISample
         
         using var foundry = WorkflowForge.CreateFoundry("CombinedOperationsDemo");
         
-        foundry.Properties["process_id"] = Guid.NewGuid().ToString("N")[..8];
-        foundry.Properties["step_count"] = 0;
+        foundry.SetProperty("process_id", Guid.NewGuid().ToString("N")[..8]);
+        foundry.SetProperty("step_count", 0);
         
         foundry.AddOperation(LoggingOperation.Info("=== Combined Operations Workflow Started ==="));
         
         // Step 1: Initialize
         foundry.AddOperation(new DelegateWorkflowOperation("Initialize", async (input, foundry, token) =>
         {
-            var processId = foundry.Properties["process_id"] as string;
+            foundry.TryGetProperty<string>("process_id", out var processId);
             foundry.Logger.LogInformation("Initializing process: {ProcessId}", processId);
-            foundry.Properties["step_count"] = 1;
-            foundry.Properties["start_time"] = DateTime.UtcNow;
+            foundry.SetProperty("step_count", 1);
+            foundry.SetProperty("start_time", DateTime.UtcNow);
             return "Initialized";
         }));
         
@@ -156,13 +156,13 @@ public class BuiltInOperationsSample : ISample
         foundry.AddOperation(LoggingOperation.Debug("Processing data..."));
         foundry.AddOperation(new DelegateWorkflowOperation("ProcessData", async (input, foundry, token) =>
         {
-            foundry.Properties["step_count"] = 2;
-            foundry.Properties["data_processed"] = new
+            foundry.SetProperty("step_count", 2);
+            foundry.SetProperty("data_processed", new
             {
                 RecordsProcessed = 42,
                 ProcessingTime = TimeSpan.FromMilliseconds(300),
                 Status = "Completed"
-            };
+            });
             foundry.Logger.LogInformation("Data processing completed: 42 records processed");
             return "Data processed";
         }));
@@ -173,10 +173,10 @@ public class BuiltInOperationsSample : ISample
         foundry.AddOperation(LoggingOperation.Debug("Validating results..."));
         foundry.AddOperation(new ActionWorkflowOperation("ValidateResults", async (input, foundry, token) =>
         {
-            foundry.Properties["step_count"] = 3;
-            var processedData = foundry.Properties["data_processed"];
+            foundry.SetProperty("step_count", 3);
+            var processedData = foundry.GetPropertyOrDefault<object>("data_processed");
             foundry.Logger.LogInformation("Validation completed for processed data");
-            foundry.Properties["validation_result"] = "Valid";
+            foundry.SetProperty("validation_result", "Valid");
             await Task.Delay(100, token);
         }));
         
@@ -185,12 +185,12 @@ public class BuiltInOperationsSample : ISample
         // Step 4: Finalize
         foundry.AddOperation(new DelegateWorkflowOperation("Finalize", async (input, foundry, token) =>
         {
-            var processId = foundry.Properties["process_id"] as string;
-            var startTime = (DateTime)foundry.Properties["start_time"];
+            foundry.TryGetProperty<string>("process_id", out var processId);
+            var startTime = foundry.GetPropertyOrDefault<DateTime>("start_time");
             var totalDuration = DateTime.UtcNow - startTime;
             
-            foundry.Properties["step_count"] = 4;
-            foundry.Properties["total_duration"] = totalDuration;
+            foundry.SetProperty("step_count", 4);
+            foundry.SetProperty("total_duration", totalDuration);
             
             foundry.Logger.LogInformation("Process {ProcessId} completed in {Duration}ms", 
                 processId, totalDuration.TotalMilliseconds);
@@ -203,14 +203,14 @@ public class BuiltInOperationsSample : ISample
         await foundry.ForgeAsync();
         
         // Display final results
-        var processId = foundry.Properties["process_id"] as string;
-        var stepCount = (int)foundry.Properties["step_count"];
-        var totalDuration = (TimeSpan)foundry.Properties["total_duration"];
+        foundry.TryGetProperty<string>("process_id", out var processId);
+        var stepCount = foundry.GetPropertyOrDefault<int>("step_count");
+        var totalDuration = foundry.GetPropertyOrDefault<TimeSpan>("total_duration");
         
         Console.WriteLine($"   Process ID: {processId}");
         Console.WriteLine($"   Steps completed: {stepCount}");
         Console.WriteLine($"   Total duration: {totalDuration.TotalMilliseconds:F0}ms");
-        Console.WriteLine($"   Validation result: {foundry.Properties["validation_result"]}");
+        Console.WriteLine($"   Validation result: {foundry.GetPropertyOrDefault<string>("validation_result", "")}");
     }
 }
 

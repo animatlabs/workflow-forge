@@ -146,9 +146,7 @@ public class ProcessPaymentOperation : IWorkflowOperation
 
     public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        var transactionId = foundry.GetProperty<string>("TransactionId");
-        
-        if (!string.IsNullOrEmpty(transactionId))
+        if (foundry.TryGetProperty<string>("TransactionId", out var transactionId) && !string.IsNullOrEmpty(transactionId))
         {
             foundry.Logger.LogWarning("Refunding payment for transaction {TransactionId}", transactionId);
             
@@ -208,7 +206,7 @@ class Program
         using var smith = WorkflowForge.CreateSmith();
 
         // Set initial data in foundry
-        foundry.Properties["order"] = order;
+        foundry.SetProperty("order", order);
 
         await smith.ForgeAsync(workflow, foundry);
     }
@@ -264,7 +262,7 @@ The foundry provides:
 ### 3. Execution
 ```csharp
 var smith = WorkflowForge.CreateSmith();
-foundry.Properties["order"] = order; // Set order data in foundry
+foundry.SetProperty("order", order); // Set order data in foundry
 await smith.ForgeAsync(workflow, foundry);
 ```
 The smith:
@@ -298,8 +296,8 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 // Create foundry with Serilog
-var foundry = WorkflowForge.CreateFoundry("OrderProcessing")
-    .UseSerilog(Log.Logger);
+var config = FoundryConfiguration.ForProduction().UseSerilog(Log.Logger);
+var foundry = WorkflowForge.CreateFoundry("OrderProcessing", config);
 ```
 
 ### Resilience with Polly
@@ -309,9 +307,9 @@ var foundry = WorkflowForge.CreateFoundry("OrderProcessing")
 
 using WorkflowForge.Extensions.Resilience.Polly;
 
-// Create resilient foundry
-var foundry = WorkflowForge.CreateFoundry("OrderProcessing")
-    .UsePollyResilience(); // Adds retry, circuit breaker, timeout
+// Apply Polly resilience to foundry (extension methods are on WorkflowFoundry)
+var foundry = WorkflowForge.CreateFoundry("OrderProcessing", FoundryConfiguration.ForProduction());
+foundry.UsePollyProductionResilience(); // Retry, circuit breaker, timeout from settings
 ```
 
 ### Performance Monitoring
@@ -322,8 +320,8 @@ var foundry = WorkflowForge.CreateFoundry("OrderProcessing")
 using WorkflowForge.Extensions.Observability.Performance;
 
 // Enable performance monitoring
-var foundry = WorkflowForge.CreateFoundry("OrderProcessing")
-    .EnablePerformanceMonitoring();
+var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
+foundry.EnablePerformanceMonitoring();
 
 // After execution, get statistics
 var stats = foundry.GetPerformanceStatistics();
@@ -366,13 +364,13 @@ public class OrderWorkflowTests
         var smith = WorkflowForge.CreateSmith();
 
         // Act
-        foundry.Properties["order"] = order; // Set order data in foundry
+        foundry.SetProperty("order", order); // Set order data in foundry
         await smith.ForgeAsync(workflow, foundry);
 
         // Assert
-        var processedOrder = foundry.Properties["processedOrder"] as Order;
+        var processedOrder = foundry.GetPropertyOrDefault<Order>("processedOrder");
         Assert.Equal("Paid", processedOrder?.Status);
-        Assert.NotNull(foundry.Properties["TransactionId"]);
+        Assert.True(foundry.TryGetProperty<string>("TransactionId", out _));
     }
 
     [Fact]
@@ -390,7 +388,7 @@ public class OrderWorkflowTests
         var smith = WorkflowForge.CreateSmith();
 
         // Act & Assert
-        foundry.Properties["order"] = invalidOrder; // Set invalid order data in foundry
+        foundry.SetProperty("order", invalidOrder); // Set invalid order data in foundry
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => smith.ForgeAsync(workflow, foundry));
     }
@@ -407,8 +405,8 @@ Congratulations! You've created your first WorkflowForge workflow. Here's what t
 
 ### 2. **Explore Advanced Features**
 - **[Building Operations](operations.md)** - Create sophisticated custom operations
-- **[Middleware Development](middleware.md)** - Add cross-cutting concerns
-- **[Error Handling & Compensation](error-handling.md)** - Robust error management
+- Middleware development - See examples in samples and `architecture.md`
+- Error handling & compensation - Covered throughout `operations.md` and samples
 
 ### 3. **Add Enterprise Features**
 - **[Extensions Guide](extensions.md)** - Logging, resilience, observability
@@ -420,9 +418,9 @@ Congratulations! You've created your first WorkflowForge workflow. Here's what t
 - **[Performance Benchmarks](../src/benchmarks/README.md)** - See performance characteristics
 
 ### 5. **Advanced Deployment**
-- **[Advanced Patterns](advanced-patterns.md)** - Advanced implementation patterns
-- **[Security Considerations](security.md)** - Security best practices
-- **[Monitoring & Observability](extensions/observability.md)** - Advanced monitoring
+- Advanced patterns - To be documented in future versions
+- Security considerations - Follow standard .NET security practices
+- Monitoring & Observability - See `docs/extensions.md` and extension READMEs
 
 ## Common Patterns
 
@@ -451,7 +449,7 @@ var workflow = WorkflowForge.CreateWorkflow()
     })
     .AddOperation("ProcessHighValue", async (input, foundry, ct) =>
     {
-        if (foundry.GetProperty<string>("PreviousResult") == "HighValue")
+        if (foundry.TryGetProperty<string>("PreviousResult", out var prev) && prev == "HighValue")
         {
             // High value processing
         }
@@ -490,7 +488,7 @@ var workflow = WorkflowForge.CreateWorkflow()
 - Check that `RestoreAsync` is properly implemented
 
 **2. "Foundry properties not persisting between operations"**
-- Use `foundry.SetProperty()` to store data
+- Use `foundry.SetProperty("key", value);` to store data
 - Ensure the foundry instance is reused across operations
 
 **3. "Performance is slower than expected"**
@@ -502,8 +500,8 @@ var workflow = WorkflowForge.CreateWorkflow()
 
 - **Documentation**: Explore the [full documentation](README.md)
 - **Samples**: Run the [interactive samples](../src/samples/WorkflowForge.Samples.BasicConsole/README.md)
-- **Issues**: Report bugs on [GitHub Issues](../issues)
-- **Discussions**: Ask questions in [GitHub Discussions](../discussions)
+- **Issues**: Report bugs on GitHub Issues: https://github.com/animatlabs/workflow-forge/issues
+- **Discussions**: Ask questions in GitHub Discussions: https://github.com/animatlabs/workflow-forge/discussions
 
 ---
 

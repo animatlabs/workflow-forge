@@ -78,8 +78,7 @@ public interface IWorkflowFoundry : IDisposable
     IServiceProvider? ServiceProvider { get; }
     
     T GetService<T>() where T : class;
-    void SetProperty(string key, object value);
-    T? GetProperty<T>(string key);
+   ConcurrentDictionary<string, object?> Properties { get; }
 }
 ```
 
@@ -181,7 +180,7 @@ using var smith = WorkflowForge.CreateSmith();
 using var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
 
 // Set initial data in foundry
-foundry.Properties["order"] = order;
+foundry.SetProperty("order", order);
 
 await smith.ForgeAsync(workflow, foundry);
 ```
@@ -379,9 +378,9 @@ The framework provides utilities for testing:
 
 - **[Getting Started](getting-started.md)** - Basic usage patterns
 - **[Operations Guide](operations.md)** - Building custom operations
-- **[Middleware Guide](middleware.md)** - Creating middleware
-- **[Performance Guide](performance.md)** - Optimization techniques
-- **[Testing Guide](testing.md)** - Testing strategies
+ - Middleware: see extension and pipeline examples in `docs/extensions.md` and samples
+ - Performance: see `src/benchmarks/WorkflowForge.Benchmarks/README.md`
+ - Testing: see testing examples in samples and unit tests
 
 ---
 

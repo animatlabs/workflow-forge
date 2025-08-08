@@ -13,21 +13,19 @@ dotnet add package WorkflowForge.Extensions.Observability.Performance
 ```csharp
 using WorkflowForge.Extensions.Observability.Performance;
 
-// Enable performance monitoring
-var foundryConfig = FoundryConfiguration.ForProduction()
-    .EnablePerformanceMonitoring();
-
-var foundry = WorkflowForge.CreateFoundry("MyWorkflow", foundryConfig);
+// Create foundry and enable monitoring
+using var foundry = WorkflowForge.CreateFoundry("MyWorkflow");
+foundry.EnablePerformanceMonitoring();
 
 // Execute workflows (multiple times for meaningful statistics)
-var smith = WorkflowForge.CreateSmith();
+using var smith = WorkflowForge.CreateSmith();
 await smith.ForgeAsync(workflow, foundry);
 
 // Access performance statistics
 var stats = foundry.GetPerformanceStatistics();
-Console.WriteLine($"Success Rate: {stats.SuccessRate:P2}");
-Console.WriteLine($"Average Duration: {stats.AverageDuration}ms");
-Console.WriteLine($"Operations/sec: {stats.OperationsPerSecond:F2}");
+Console.WriteLine($"Success Rate: {stats?.SuccessRate:P2}");
+Console.WriteLine($"Average Duration: {stats?.AverageDuration}ms");
+Console.WriteLine($"Operations/sec: {stats?.OperationsPerSecond:F2}");
 ```
 
 ## Key Features
@@ -68,22 +66,13 @@ foreach (var opStats in stats.GetAllOperationStatistics())
 ## Environment Configurations
 
 ```csharp
-// Development - detailed monitoring
-var devConfig = FoundryConfiguration.ForDevelopment()
-    .EnablePerformanceMonitoring(options =>
-    {
-        options.EnableDetailedOperationStats = true;
-        options.EnableMemoryTracking = true;
-        options.SampleRate = 1.0; // Monitor everything
-    });
+// Development - detailed monitoring (no options object; enable/disable only)
+using var devFoundry = WorkflowForge.CreateFoundry("Dev");
+devFoundry.EnablePerformanceMonitoring();
 
-// Production - optimized monitoring
-var prodConfig = FoundryConfiguration.ForProduction()
-    .EnablePerformanceMonitoring(options =>
-    {
-        options.SampleRate = 0.1; // Sample 10% for performance
-        options.EnableMemoryTracking = false;
-    });
+// Production - enable selectively from config or toggle at runtime
+using var prodFoundry = WorkflowForge.CreateFoundry("Prod");
+prodFoundry.EnablePerformanceMonitoring();
 ```
 
 ## Examples & Documentation

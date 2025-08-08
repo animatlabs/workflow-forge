@@ -60,9 +60,9 @@ Log.Logger = new LoggerConfiguration()
     .Enrich.WithProperty("Application", "WorkflowApp")
     .CreateLogger();
 
-// Apply to foundry
-var foundry = WorkflowForge.CreateFoundry("ProcessOrder")
-    .UseSerilog(Log.Logger);
+// Bind via configuration and create foundry
+var config = FoundryConfiguration.ForProduction().UseSerilog(Log.Logger);
+var foundry = WorkflowForge.CreateFoundry("ProcessOrder", config);
 ```
 
 **Configuration:**
@@ -104,11 +104,7 @@ dotnet add package WorkflowForge.Extensions.Resilience
 
 **Usage:**
 ```csharp
-using WorkflowForge.Extensions.Resilience;
-
-var foundry = WorkflowForge.CreateFoundry("ProcessOrder")
-    .UseRetryMiddleware(maxRetries: 3, delay: TimeSpan.FromSeconds(1))
-    .UseTimeoutMiddleware(timeout: TimeSpan.FromSeconds(30));
+// See package README for current API; base resilience is covered by Polly extension.
 ```
 
 #### WorkflowForge.Extensions.Resilience.Polly
@@ -130,18 +126,19 @@ dotnet add package WorkflowForge.Extensions.Resilience.Polly
 
 **Usage:**
 ```csharp
+using WorkflowForge;
 using WorkflowForge.Extensions.Resilience.Polly;
 
-// Environment-specific configurations
-var foundry = WorkflowForge.CreateFoundry("ProcessOrder")
-    .UsePollyResilience();  // Pre-configured settings
+var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
 
-// Or custom configuration
-var foundry = WorkflowForge.CreateFoundry("ProcessOrder")
+// Development-friendly preset
+foundry.UsePollyDevelopmentResilience();
+
+// Or custom policies
+foundry
     .UsePollyRetry(maxRetryAttempts: 5, baseDelay: TimeSpan.FromSeconds(1))
-    .UsePollyCircuitBreaker(failureThreshold: 3, breakDuration: TimeSpan.FromMinutes(1))
-    .UsePollyTimeout(TimeSpan.FromSeconds(30))
-    .UsePollyRateLimit(permitLimit: 10, window: TimeSpan.FromSeconds(1));
+    .UsePollyCircuitBreaker(failureThreshold: 3, durationOfBreak: TimeSpan.FromMinutes(1))
+    .UsePollyTimeout(TimeSpan.FromSeconds(30));
 ```
 
 **Configuration:**
@@ -191,8 +188,8 @@ dotnet add package WorkflowForge.Extensions.Observability.Performance
 ```csharp
 using WorkflowForge.Extensions.Observability.Performance;
 
-var foundry = WorkflowForge.CreateFoundry("ProcessOrder")
-    .EnablePerformanceMonitoring();
+var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
+foundry.EnablePerformanceMonitoring();
 
 // Execute workflow
 await smith.ForgeAsync(workflow, order, foundry);
@@ -231,11 +228,8 @@ dotnet add package WorkflowForge.Extensions.Observability.HealthChecks
 ```csharp
 using WorkflowForge.Extensions.Observability.HealthChecks;
 
-var foundry = WorkflowForge.CreateFoundry("ProcessOrder")
-    .EnableHealthChecks();
-
-// Perform health check
-var healthService = foundry.GetHealthCheckService();
+var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
+var healthService = foundry.CreateHealthCheckService();
 var result = await healthService.CheckHealthAsync();
 
 Console.WriteLine($"Overall Status: {result.Status}");
@@ -272,8 +266,12 @@ dotnet add package WorkflowForge.Extensions.Observability.OpenTelemetry
 ```csharp
 using WorkflowForge.Extensions.Observability.OpenTelemetry;
 
-var foundry = WorkflowForge.CreateFoundry("ProcessOrder")
-    .EnableOpenTelemetry("OrderService", "1.0.0");
+var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
+foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions
+{
+    ServiceName = "OrderService",
+    ServiceVersion = "1.0.0"
+});
 
 // Create custom spans
 using var activity = foundry.StartActivity("ProcessOrder")
@@ -637,9 +635,14 @@ public class ExtensionIntegrationTests
 - **[Getting Started](getting-started.md)** - Basic extension usage
 - **[Architecture](architecture.md)** - Extension architecture details
 - **[Configuration](configuration.md)** - Configuration patterns
-- **[Logging Extensions](extensions/logging.md)** - Detailed logging guide
-- **[Resilience Extensions](extensions/resilience.md)** - Detailed resilience guide
-- **[Observability Extensions](extensions/observability.md)** - Detailed observability guide
+Refer to extension package READMEs for details:
+- Core logging integration: `src/core/WorkflowForge/README.md`
+- Serilog: `src/extensions/WorkflowForge.Extensions.Logging.Serilog/README.md`
+- Resilience base: `src/extensions/WorkflowForge.Extensions.Resilience/README.md`
+- Resilience Polly: `src/extensions/WorkflowForge.Extensions.Resilience.Polly/README.md`
+- Performance monitoring: `src/extensions/WorkflowForge.Extensions.Observability.Performance/README.md`
+- Health checks: `src/extensions/WorkflowForge.Extensions.Observability.HealthChecks/README.md`
+- OpenTelemetry: `src/extensions/WorkflowForge.Extensions.Observability.OpenTelemetry/README.md`
 
 ---
 

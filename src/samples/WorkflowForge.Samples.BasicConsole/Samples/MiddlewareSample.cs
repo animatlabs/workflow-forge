@@ -63,8 +63,8 @@ public class MiddlewareSample : ISample
         foundry.AddMiddleware(new ValidationMiddleware());
         foundry.AddMiddleware(new AuditMiddleware());
         
-        foundry.Properties["user_id"] = "user_12345";
-        foundry.Properties["security_token"] = "sec_token_abc123";
+        foundry.SetProperty("user_id", "user_12345");
+        foundry.SetProperty("security_token", "sec_token_abc123");
         
         foundry
             .WithOperation(LoggingOperation.Info("Starting custom middleware demonstration"))
@@ -88,9 +88,9 @@ public class MiddlewareSample : ISample
         foundry.AddMiddleware(new LoggingMiddleware(foundry.Logger)); // Fourth: Detailed logging
         foundry.AddMiddleware(new AuditMiddleware());              // Fifth: Audit trail
         
-        foundry.Properties["user_id"] = "admin_user";
-        foundry.Properties["security_token"] = "admin_token_xyz789";
-        foundry.Properties["validation_rules"] = new[] { "required_field", "format_check", "business_rules" };
+        foundry.SetProperty("user_id", "admin_user");
+        foundry.SetProperty("security_token", "admin_token_xyz789");
+        foundry.SetProperty("validation_rules", new[] { "required_field", "format_check", "business_rules" });
         
         foundry
             .WithOperation(LoggingOperation.Info("Starting comprehensive middleware pipeline"))
@@ -114,8 +114,8 @@ public class MiddlewareSample : ISample
         using var foundry = WorkflowForge.CreateFoundry("ConditionalMiddlewareDemo");
         
         // Set condition for middleware behavior
-        foundry.Properties["enable_validation"] = true;
-        foundry.Properties["enable_caching"] = false;
+        foundry.SetProperty("enable_validation", true);
+        foundry.SetProperty("enable_caching", false);
         
         foundry
             .WithOperation(LoggingOperation.Info("Starting conditional middleware demonstration"))
@@ -159,8 +159,8 @@ public class SecurityMiddleware : IWorkflowOperationMiddleware
     public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData, 
         Func<Task<object?>> next, CancellationToken cancellationToken = default)
     {
-        var userId = foundry.Properties.GetValueOrDefault("user_id") as string;
-        var token = foundry.Properties.GetValueOrDefault("security_token") as string;
+        foundry.TryGetProperty<string>("user_id", out var userId);
+        foundry.TryGetProperty<string>("security_token", out var token);
         
         foundry.Logger.LogInformation("Security check for operation: {OperationName}, User: {UserId}", 
             operation.Name, userId ?? "anonymous");
@@ -177,8 +177,8 @@ public class SecurityMiddleware : IWorkflowOperationMiddleware
         }
         
         // Update security check counter
-        var securityChecks = (int)foundry.Properties.GetValueOrDefault("security_checks", 0);
-        foundry.Properties["security_checks"] = securityChecks + 1;
+        var securityChecks = foundry.GetPropertyOrDefault<int>("security_checks", 0);
+        foundry.SetProperty("security_checks", securityChecks + 1);
         
         foundry.Logger.LogDebug("Security validation passed for user: {UserId}", userId);
         
@@ -197,7 +197,7 @@ public class ValidationMiddleware : IWorkflowOperationMiddleware
     {
         foundry.Logger.LogInformation("Validation check for operation: {OperationName}", operation.Name);
         
-        var validationRules = foundry.Properties.GetValueOrDefault("validation_rules") as string[];
+        var validationRules = foundry.GetPropertyOrDefault<string[]>("validation_rules");
         
         if (validationRules != null)
         {
@@ -216,8 +216,8 @@ public class ValidationMiddleware : IWorkflowOperationMiddleware
         }
         
         // Update validation check counter
-        var validationChecks = (int)foundry.Properties.GetValueOrDefault("validation_checks", 0);
-        foundry.Properties["validation_checks"] = validationChecks + 1;
+        var validationChecks = foundry.GetPropertyOrDefault<int>("validation_checks", 0);
+        foundry.SetProperty("validation_checks", validationChecks + 1);
         
         foundry.Logger.LogDebug("Validation completed for operation: {OperationName}", operation.Name);
         
@@ -259,8 +259,8 @@ public class AuditMiddleware : IWorkflowOperationMiddleware
                 operation.Name, duration.TotalMilliseconds);
             
             // Update audit counter
-            var auditCount = (int)foundry.Properties.GetValueOrDefault("audit_count", 0);
-            foundry.Properties["audit_count"] = auditCount + 1;
+            var auditCount = foundry.GetPropertyOrDefault<int>("audit_count", 0);
+            foundry.SetProperty("audit_count", auditCount + 1);
             
             return result;
         }
@@ -425,8 +425,8 @@ public class ConditionalOperation : IWorkflowOperation
 
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        var enableValidation = foundry.Properties.GetValueOrDefault("enable_validation", false);
-        var enableCaching = foundry.Properties.GetValueOrDefault("enable_caching", false);
+        var enableValidation = foundry.GetPropertyOrDefault<bool>("enable_validation", false);
+        var enableCaching = foundry.GetPropertyOrDefault<bool>("enable_caching", false);
         
         foundry.Logger.LogInformation("Executing conditional operation: {OperationName}, Validation: {ValidationEnabled}, Caching: {CachingEnabled}", 
             _operationName, enableValidation, enableCaching);

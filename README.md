@@ -1,6 +1,6 @@
 # WorkflowForge - A forge for workflows
 
-**Zero-dependency workflow orchestration for .NET with sub-microsecond performance**
+**Zero-dependency workflow orchestration for .NET with microsecond-level performance**
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge?logo=nuget)](https://www.nuget.org/packages/WorkflowForge)
 [![GitHub Repository](https://img.shields.io/badge/GitHub-animatlabs%2Fworkflow--forge-blue?logo=github)](https://github.com/animatlabs/workflow-forge)
@@ -9,10 +9,10 @@
 
 ## What Makes WorkflowForge Different?
 
-**True Zero Dependencies** → Core package: **0 external dependencies**, **~50KB footprint**  
-**Industrial Performance** → **4-56 μs operation execution**, **15x concurrency scaling**  
-**Production Ready** → **Built-in compensation** (saga pattern), **comprehensive observability**  
-**Developer First** → **Fluent API**, **industrial metaphor**, **extensive samples**
+**True Zero Dependencies**: Core package with no external dependencies, small footprint  
+**Measured Performance**: Microsecond-level per-operation execution (medians ~14–36 μs; typical range ~14–80 μs). See benchmarks.  
+**Production Ready**: Built-in compensation (saga pattern), observability via extensions  
+**Developer First**: Fluent API, clear metaphor, extensive samples
 
 ## Quick Start
 
@@ -45,7 +45,7 @@ await smith.ForgeAsync(workflow, foundry);
 
 ## Learn & Explore
 
-### 🎯 Start Here: Interactive Samples
+### Start Here: Interactive Samples
 **Best way to learn** → Run 18 progressive examples from basic to advanced:
 
 ```bash
@@ -53,9 +53,9 @@ cd src/samples/WorkflowForge.Samples.BasicConsole
 dotnet run
 ```
 
-**➜ [Browse All Examples](src/samples/WorkflowForge.Samples.BasicConsole/)**
+Browse all examples: [src/samples/WorkflowForge.Samples.BasicConsole/](src/samples/WorkflowForge.Samples.BasicConsole/)
 
-### 📚 Documentation Hub
+### Documentation Hub
 **Complete guides and reference** → **[docs/](docs/)** folder contains:
 - **[Getting Started Guide](docs/getting-started.md)** - Step-by-step tutorial
 - **[Architecture Overview](docs/architecture.md)** - Core design principles  
@@ -74,36 +74,36 @@ dotnet run
 | **Health Checks** | Application health | `WorkflowForge.Extensions.Observability.HealthChecks` |
 | **OpenTelemetry** | Distributed tracing | `WorkflowForge.Extensions.Observability.OpenTelemetry` |
 
-**➜ [Complete Extensions Documentation](docs/extensions.md)**
+Complete Extensions Documentation: [docs/extensions.md](docs/extensions.md)
 
 ## Performance Characteristics
 
 | Metric | Performance | Context |
 |--------|-------------|---------|
-| **Operation Execution** | 4-56 μs | Per operation overhead |
-| **Foundry Creation** | 5-15 μs | Setup time |
-| **Concurrency Scaling** | 15x improvement | 16 concurrent vs sequential |
-| **Memory Footprint** | <2KB per foundry | Runtime allocation |
+| **Operation Execution** | Microsecond-level (median ~14–36 μs) | Per-operation timing (see OperationPerformance benchmarks) |
+| **Foundry Creation** | ~5–7 μs median (means ~13–16 μs) | Setup time (ConfigurationProfiles benchmarks) |
+| **Parallel Throughput** | Improves with concurrent execution | See throughput benchmarks |
+| **Memory Footprint** | ≈2.2 KB per foundry; ≈0.9–2.3 KB per operation | Allocations from benchmarks |
 
-**➜ [Detailed Benchmarks & Analysis](src/benchmarks/WorkflowForge.Benchmarks/)**
+Detailed Benchmarks & Analysis: [src/benchmarks/WorkflowForge.Benchmarks/](src/benchmarks/WorkflowForge.Benchmarks/)
 
 ## Industrial Metaphor
 
 WorkflowForge uses an **industrial metaphor** for intuitive understanding:
-- **🏭 The Forge** - Main factory creating workflows and components
-- **⚒️ Foundries** - Execution environments where operations are performed
-- **👨‍🔧 Smiths** - Orchestration engines managing workflow execution
-- **⚙️ Operations** - Individual tasks within workflows
+- **The Forge** - Main factory creating workflows and components
+- **Foundries** - Execution environments where operations are performed
+- **Smiths** - Orchestration engines managing workflow execution
+- **Operations** - Individual tasks within workflows
 
 ## Quick Links
 
 | Resource | Description |
 |----------|-------------|
-| **[📖 Getting Started](docs/getting-started.md)** | Step-by-step tutorial |
-| **[🎯 Interactive Samples](src/samples/WorkflowForge.Samples.BasicConsole/)** | 18 hands-on examples |
-| **[📚 Complete Documentation](docs/)** | Comprehensive guides |
-| **[🔧 Extensions](docs/extensions.md)** | Available extensions |
-| **[⚡ Benchmarks](src/benchmarks/WorkflowForge.Benchmarks/)** | Performance analysis |
+| **[Getting Started](docs/getting-started.md)** | Step-by-step tutorial |
+| **[Interactive Samples](src/samples/WorkflowForge.Samples.BasicConsole/)** | 18 hands-on examples |
+| **[Complete Documentation](docs/)** | Comprehensive guides |
+| **[Extensions](docs/extensions.md)** | Available extensions |
+| **[Benchmarks](src/benchmarks/WorkflowForge.Benchmarks/)** | Performance analysis |
 
 ## Building & Contributing
 
@@ -113,8 +113,8 @@ cd workflow-forge
 dotnet restore && dotnet build && dotnet test
 ```
 
-**➜ [Contributing Guidelines](CONTRIBUTING.md)** | **➜ [License: MIT](LICENSE)**
+[Contributing Guidelines](CONTRIBUTING.md) | [License: MIT](LICENSE)
 
 ---
 
-**WorkflowForge** - *Build workflows with industrial strength* 🏭
+**WorkflowForge** - *Build workflows with industrial strength*

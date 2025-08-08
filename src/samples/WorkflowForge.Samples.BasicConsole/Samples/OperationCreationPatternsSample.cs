@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using WorkflowForge;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Operations;
+using WorkflowForge.Extensions;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -34,7 +35,7 @@ public class OperationCreationPatternsSample : ISample
             .Build();
 
         using var showcaseFoundry = WorkflowForge.CreateFoundry("OperationShowcase");
-        showcaseFoundry.Properties["input"] = "Starting workflow with class-based operations";
+        showcaseFoundry.SetProperty("input", "Starting workflow with class-based operations");
         
         using var showcaseSmith = WorkflowForge.CreateSmith();
         await showcaseSmith.ForgeAsync(showcaseWorkflow, showcaseFoundry);
@@ -55,7 +56,7 @@ public class OperationCreationPatternsSample : ISample
             .Build();
 
         using var foundry1 = WorkflowForge.CreateFoundry("DirectConstructor");
-        foundry1.Properties["input"] = "Starting with direct constructors";
+        foundry1.SetProperty("input", "Starting with direct constructors");
         
         using var smith1 = WorkflowForge.CreateSmith();
         await smith1.ForgeAsync(workflow1, foundry1);
@@ -71,7 +72,7 @@ public class OperationCreationPatternsSample : ISample
             .Build();
 
         using var mathFoundry = WorkflowForge.CreateFoundry("MathDemo");
-        mathFoundry.Properties["input"] = "Starting math operations";
+        mathFoundry.SetProperty("input", "Starting math operations");
         
         using var mathSmith = WorkflowForge.CreateSmith();
         await mathSmith.ForgeAsync(mathWorkflow, mathFoundry);
@@ -84,7 +85,7 @@ public class OperationCreationPatternsSample : ISample
             .Build();
 
         using var paymentFoundry = WorkflowForge.CreateFoundry("PaymentDemo");
-        paymentFoundry.Properties["input"] = "Payment processing";
+        paymentFoundry.SetProperty("input", "Payment processing");
         
         using var paymentSmith = WorkflowForge.CreateSmith();
         await paymentSmith.ForgeAsync(paymentWorkflow, paymentFoundry);
@@ -120,11 +121,11 @@ public class OperationCreationPatternsSample : ISample
             .Build();
 
         using var foundry2 = WorkflowForge.CreateFoundry("GenericFactory");
-        foundry2.Properties["input"] = "hello world";
+        foundry2.SetProperty("input", "hello world");
         
         using var smith2 = WorkflowForge.CreateSmith();
         await smith2.ForgeAsync(workflow2, foundry2);
-        Console.WriteLine($"Generic factory pattern completed - Final result: {foundry2.Properties.GetValueOrDefault("result")}\n");
+        Console.WriteLine($"Generic factory pattern completed - Final result: {foundry2.GetPropertyOrDefault<object>("result")}\n");
 
         // =====================================================================
         // PATTERN 3: DelegateWorkflowOperation Patterns
@@ -146,7 +147,7 @@ public class OperationCreationPatternsSample : ISample
                     foundry.Logger.LogInformation(properties, "Validating input: {Input}", input);
                     await Task.Delay(100, ct);
                     var isValid = input?.ToString()?.Length > 3;
-                    foundry.Properties["validationResult"] = isValid;
+                    foundry.SetProperty("validationResult", isValid);
                     return isValid ? "Valid" : "Invalid";
                 }))
             
@@ -169,7 +170,7 @@ public class OperationCreationPatternsSample : ISample
             .Build();
 
         using var foundry3 = WorkflowForge.CreateFoundry("DelegateOperations");
-        foundry3.Properties["input"] = "sample data";
+        foundry3.SetProperty("input", "sample data");
         
         using var smith3 = WorkflowForge.CreateSmith();
         await smith3.ForgeAsync(workflow3, foundry3);
@@ -209,7 +210,7 @@ public class OperationCreationPatternsSample : ISample
             .Build();
 
         using var foundry4 = WorkflowForge.CreateFoundry("FactoryClass");
-        foundry4.Properties["input"] = "  RAW DATA  ";
+        foundry4.SetProperty("input", "  RAW DATA  ");
         
         using var smith4 = WorkflowForge.CreateSmith();
         await smith4.ForgeAsync(workflow4, foundry4);
@@ -225,7 +226,7 @@ public class OperationCreationPatternsSample : ISample
             // Simple inline operation using WorkflowBuilder.AddOperation
             .AddOperation("QuickValidation", async (foundry, ct) =>
             {
-                var input = foundry.Properties.GetValueOrDefault("input");
+                var input = foundry.GetPropertyOrDefault<object>("input");
                 var properties = new Dictionary<string, string>
                 {
                     ["ValidationType"] = "QuickValidation",
@@ -233,13 +234,13 @@ public class OperationCreationPatternsSample : ISample
                 };
                 foundry.Logger.LogInformation(properties, "Quick validation started");
                 await Task.Delay(30, ct);
-                foundry.Properties["validationResult"] = input != null ? "passed" : "failed";
+                foundry.SetProperty("validationResult", input != null ? "passed" : "failed");
             })
             
             // Complex inline operation using WorkflowBuilder.AddOperation
             .AddOperation("ComplexProcessing", async (foundry, ct) =>
             {
-                var input = foundry.Properties.GetValueOrDefault("input");
+                var input = foundry.GetPropertyOrDefault<object>("input");
                 var processId = Guid.NewGuid().ToString("N")[..8];
                 var properties = new Dictionary<string, string>
                 {
@@ -258,7 +259,7 @@ public class OperationCreationPatternsSample : ISample
                 
                 await Task.Delay(100, ct);
                 
-                foundry.Properties["processingInfo"] = processor;
+                foundry.SetProperty("processingInfo", processor);
                 
                 var result = new
                 {
@@ -268,13 +269,13 @@ public class OperationCreationPatternsSample : ISample
                     Result = $"processed_{processor.Input}"
                 };
                 
-                foundry.Properties["result"] = result;
+                foundry.SetProperty("result", result);
             })
             
             .Build();
 
         using var foundry5 = WorkflowForge.CreateFoundry("InlineLambda");
-        foundry5.Properties["input"] = "test data";
+        foundry5.SetProperty("input", "test data");
         
         using var smith5 = WorkflowForge.CreateSmith();
         await smith5.ForgeAsync(workflow5, foundry5);
@@ -299,7 +300,7 @@ public class OperationCreationPatternsSample : ISample
             // Inline operation for business rules
             .AddOperation("ApplyDiscounts", async (foundry, ct) =>
             {
-                var total = (decimal)(foundry.Properties.GetValueOrDefault("result") ?? 299.99m);
+                var total = (decimal)(foundry.GetPropertyOrDefault<object>("result") ?? 299.99m);
                 var discount = total * 0.1m; // 10% discount
                 var properties = new Dictionary<string, string>
                 {
@@ -311,7 +312,7 @@ public class OperationCreationPatternsSample : ISample
                 foundry.Logger.LogInformation(properties, "Applied discount: ${Discount:F2}", discount);
                 await Task.Delay(25, ct);
                 var finalTotal = total - discount;
-                foundry.Properties["finalTotal"] = finalTotal;
+                foundry.SetProperty("finalTotal", finalTotal);
             })
             
             // Final action using factory
@@ -321,7 +322,7 @@ public class OperationCreationPatternsSample : ISample
             .Build();
 
         using var foundry6 = WorkflowForge.CreateFoundry("MixedPattern");
-        foundry6.Properties["input"] = "Mixed pattern order processing";
+        foundry6.SetProperty("input", "Mixed pattern order processing");
         
         using var smith6 = WorkflowForge.CreateSmith();
         await smith6.ForgeAsync(workflow6, foundry6);

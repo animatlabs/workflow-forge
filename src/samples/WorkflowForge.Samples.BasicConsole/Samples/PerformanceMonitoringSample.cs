@@ -74,8 +74,8 @@ public class PerformanceMonitoringSample : ISample
         // Enable performance monitoring
         foundry.EnablePerformanceMonitoring();
         
-        foundry.Properties["batch_size"] = 5;
-        foundry.Properties["iteration"] = 0;
+        foundry.SetProperty("batch_size", 5);
+        foundry.SetProperty("iteration", 0);
         
         foundry
             .WithOperation(LoggingOperation.Info("Starting performance statistics collection"))
@@ -105,8 +105,8 @@ public class PerformanceMonitoringSample : ISample
         // Enable performance monitoring
         foundry.EnablePerformanceMonitoring();
         
-        foundry.Properties["performance_threshold_ms"] = 200;
-        foundry.Properties["optimization_enabled"] = true;
+        foundry.SetProperty("performance_threshold_ms", 200);
+        foundry.SetProperty("optimization_enabled", true);
         
         foundry
             .WithOperation(LoggingOperation.Info("Starting performance-aware operations demonstration"))
@@ -120,8 +120,8 @@ public class PerformanceMonitoringSample : ISample
         
         // Performance summary
         var stats = foundry.GetPerformanceStatistics();
-        var optimizationCount = (int)foundry.Properties.GetValueOrDefault("optimizations_applied", 0);
-        var thresholdExceeded = (int)foundry.Properties.GetValueOrDefault("threshold_exceeded", 0);
+        var optimizationCount = foundry.GetPropertyOrDefault<int>("optimizations_applied", 0);
+        var thresholdExceeded = foundry.GetPropertyOrDefault<int>("threshold_exceeded", 0);
         
         Console.WriteLine($"   Operations optimized: {optimizationCount}");
         Console.WriteLine($"   Performance threshold exceeded: {thresholdExceeded} times");
@@ -300,8 +300,8 @@ public class PerformanceOptimizedOperation : IWorkflowOperation
     {
         foundry.Logger.LogInformation("Starting performance-optimized operation: {OperationName}", _operationName);
         
-        var thresholdMs = (int)foundry.Properties.GetValueOrDefault("performance_threshold_ms", 200);
-        var optimizationEnabled = (bool)foundry.Properties.GetValueOrDefault("optimization_enabled", false);
+        var thresholdMs = foundry.GetPropertyOrDefault<int>("performance_threshold_ms", 200);
+        var optimizationEnabled = foundry.GetPropertyOrDefault<bool>("optimization_enabled", false);
         
         var executionTime = _baseExecutionTime;
         var optimizationApplied = false;
@@ -313,8 +313,8 @@ public class PerformanceOptimizedOperation : IWorkflowOperation
             executionTime = TimeSpan.FromMilliseconds(_baseExecutionTime.TotalMilliseconds * 0.75);
             optimizationApplied = true;
             
-            var optimizationCount = (int)foundry.Properties.GetValueOrDefault("optimizations_applied", 0);
-            foundry.Properties["optimizations_applied"] = optimizationCount + 1;
+            var optimizationCount = foundry.GetPropertyOrDefault<int>("optimizations_applied", 0);
+            foundry.SetProperty("optimizations_applied", optimizationCount + 1);
             
             foundry.Logger.LogInformation("Performance optimization applied to {OperationName}: {OriginalTime}ms -> {OptimizedTime}ms", 
                 _operationName, _baseExecutionTime.TotalMilliseconds, executionTime.TotalMilliseconds);
@@ -323,8 +323,8 @@ public class PerformanceOptimizedOperation : IWorkflowOperation
         // Track threshold exceeded
         if (_baseExecutionTime.TotalMilliseconds > thresholdMs)
         {
-            var thresholdCount = (int)foundry.Properties.GetValueOrDefault("threshold_exceeded", 0);
-            foundry.Properties["threshold_exceeded"] = thresholdCount + 1;
+            var thresholdCount = foundry.GetPropertyOrDefault<int>("threshold_exceeded", 0);
+            foundry.SetProperty("threshold_exceeded", thresholdCount + 1);
         }
         
         var startTime = DateTime.UtcNow;

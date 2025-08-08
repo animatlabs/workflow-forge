@@ -47,7 +47,7 @@ public class OpenTelemetryObservabilitySample : ISample
             EnableMetrics = true
         };
         
-        ((WorkflowFoundry)foundry).EnableOpenTelemetry(options);
+        foundry.EnableOpenTelemetry(options);
         
         foundry.Properties["scenario"] = "basic";
         foundry.Properties["customer_id"] = "cust_12345";
@@ -87,7 +87,7 @@ public class OpenTelemetryObservabilitySample : ISample
             EnableOperationMetrics = true
         };
         
-        ((WorkflowFoundry)foundry).EnableOpenTelemetry(options);
+        foundry.EnableOpenTelemetry(options);
         
         foundry.Properties["scenario"] = "advanced";
         foundry.Properties["customer_id"] = "cust_54321";
@@ -128,7 +128,7 @@ public class OpenTelemetryObservabilitySample : ISample
             EnableOperationMetrics = true
         };
         
-        ((WorkflowFoundry)foundry).EnableOpenTelemetry(options);
+        foundry.EnableOpenTelemetry(options);
         
         foundry.Properties["scenario"] = "performance";
         foundry.Properties["customer_id"] = "cust_99999";

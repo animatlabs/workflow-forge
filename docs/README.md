@@ -5,9 +5,9 @@ Comprehensive documentation for WorkflowForge, the modern workflow orchestration
 [![GitHub Repository](https://img.shields.io/badge/GitHub-animatlabs%2Fworkflow--forge-blue?logo=github)](https://github.com/animatlabs/workflow-forge)
 [![Documentation](https://img.shields.io/badge/Docs-Latest-green?logo=gitbook)](https://github.com/animatlabs/workflow-forge/tree/main/docs)
 
-## 🎯 Quick Start Learning Path
+## Quick Start Learning Path
 
-### 🚀 Interactive Samples (Recommended Starting Point)
+### Interactive Samples (Recommended Starting Point)
 **The fastest way to learn WorkflowForge is through our comprehensive interactive samples:**
 
 ```bash
@@ -20,19 +20,19 @@ dotnet run
 - **Intermediate (5-12)**: Control Flow, Error Handling, Configuration, Middleware
 - **Advanced (13-18)**: Extensions, Observability, Resilience, Comprehensive Integration
 
-**➜ [View Complete Sample Collection](../src/samples/WorkflowForge.Samples.BasicConsole/)**
+[View Complete Sample Collection](../src/samples/WorkflowForge.Samples.BasicConsole/)
 
-### 📖 Core Documentation
+### Core Documentation
 - **[Getting Started Guide](getting-started.md)** - Step-by-step introduction
 - **[Architecture Overview](architecture.md)** - Core design principles
 - **[Operations Guide](operations.md)** - Building custom operations
 - **[Configuration Reference](configuration.md)** - Complete configuration options
 
-### 🔧 Reference Documentation
+### Reference Documentation
 - **[API Reference](api-reference.md)** - Complete API documentation
 - **[Extensions Overview](extensions.md)** - Available extensions and usage
 
-## 🎯 Why WorkflowForge?
+## Why WorkflowForge?
 
 ### Zero Dependencies, Maximum Power
 - **Minimal deployment footprint** (~50KB core)
@@ -41,9 +41,9 @@ dotnet run
 - **Lightweight containers** and edge deployments
 
 ### Performance That Scales
-- **15x better concurrency scaling** - 16 concurrent workflows vs sequential execution
-- **Microsecond-level operations** - Custom operations execute in 4-56 μs range
-- **Memory efficient** with <2KB per operation
+- **Microsecond-level operations** - Typical medians ~14–36 μs; see benchmarks
+- **Parallel throughput** - Improves with concurrent execution; see throughput benchmarks
+- **Memory efficient** - ~0.9–2.3 KB per operation (benchmarks)
 - **Concurrent execution** with excellent parallel performance
 
 ### Feature-Rich Architecture
@@ -52,7 +52,7 @@ dotnet run
 - **Comprehensive observability** with metrics, tracing, and health checks
 - **Advanced resilience** with circuit breakers and retries
 
-## 📚 Documentation Structure
+## Documentation Structure
 
 ### Getting Started
 | Document | Description | Audience |
@@ -77,7 +77,7 @@ dotnet run
 |----------|-------------|----------|
 | [API Reference](api-reference.md) | Complete API documentation | Developers |
 
-## 🏆 Quick Navigation
+## Quick Navigation
 
 ### For New Users
 1. **[Interactive Samples](../src/samples/WorkflowForge.Samples.BasicConsole/)** - Learn by doing (recommended)
@@ -94,19 +94,19 @@ dotnet run
 2. **[Extensions Overview](extensions.md)** - Available extensions
 3. **[Performance Benchmarks](../src/benchmarks/WorkflowForge.Benchmarks/)** - Performance data
 
-## 🏭 WorkflowForge Metaphor
+## WorkflowForge Metaphor
 
 WorkflowForge uses an **industrial metaphor** that makes workflow concepts intuitive:
 
-- **🏭 The Forge** - Main factory for creating workflows and components
-- **⚒️ Foundries** - Execution environments where operations are performed  
-- **👨‍🔧 Smiths** - Skilled craftsmen who manage foundries and forge workflows
-- **⚙️ Operations** - Individual tasks performed in the foundry
-- **📋 Workflows** - Complete workflow definitions with operations
+- **The Forge** - Main factory for creating workflows and components
+- **Foundries** - Execution environments where operations are performed  
+- **Smiths** - Skilled craftsmen who manage foundries and forge workflows
+- **Operations** - Individual tasks performed in the foundry
+- **Workflows** - Complete workflow definitions with operations
 
 This metaphor provides a consistent mental model throughout the framework.
 
-## 🔧 Core Features Highlighted
+## Core Features Highlighted
 
 ### Developer Experience
 - **Fluent API** with IntelliSense support
@@ -126,7 +126,7 @@ This metaphor provides a consistent mental model throughout the framework.
 - **Advanced resilience** patterns
 - **Configuration management** for different environments
 
-## 📝 Documentation Conventions
+## Documentation Conventions
 
 ### Code Examples
 All code examples are tested and maintained:
@@ -141,7 +141,7 @@ Documentation is versioned alongside the codebase:
 - **Version compatibility** is noted where applicable
 - **Migration guides** are provided for breaking changes
 
-## 🤝 Contributing to Documentation
+## Contributing to Documentation
 
 We welcome contributions to improve the documentation:
 
@@ -150,7 +150,7 @@ We welcome contributions to improve the documentation:
 3. **Follow conventions** - Maintain professional tone and structure
 4. **Test examples** - Ensure all code examples work correctly
 
-## 🆘 Support
+## Support
 
 - **Issues**: Report documentation issues on [GitHub Issues](https://github.com/animatlabs/workflow-forge/issues)
 - **Discussions**: Ask questions in [GitHub Discussions](https://github.com/animatlabs/workflow-forge/discussions)

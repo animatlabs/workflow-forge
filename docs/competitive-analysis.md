@@ -4,62 +4,61 @@
 
 Modern applications need reliable workflow orchestration, but existing solutions come with significant trade-offs. This analysis compares WorkflowForge against leading alternatives using **only verified claims** and transparent assessments.
 
-## 🏆 Comprehensive Comparison Chart
+## Comprehensive Comparison Chart
 
 | **Criteria** | **WorkflowForge** | **Workflow Core** | **Elsa Workflows** | **Windows WF** | **Temporal (.NET)** | **Custom Build** |
 |--------------|-------------------|-------------------|-------------------|----------------|---------------------|------------------|
-| **🎯 Core Architecture** |
-| **Dependencies** | ✅ **Zero** (Core) | ⚠️ **Multiple** packages | ❌ **Many** packages | ❌ **Heavy** .NET FX | ❌ **Complex** stack | ✅ **Zero** |
-| **Package Size** | ✅ **~50KB** | ⚠️ **Larger** | ❌ **Much larger** | ❌ **Very large** | ❌ **Very large** | ✅ **Custom** |
-| **Deployment** | ✅ **Single DLL** | ⚠️ **Multiple** | ❌ **Complex** | ❌ **Complex** | ❌ **Infrastructure** | ✅ **Simple** |
-| **Modern .NET** | ✅ **.NET 8+** | ✅ **.NET 6+** | ✅ **.NET 6+** | ❌ **.NET FX** | ⚠️ **Limited** | ✅ **Any** |
-| **🚀 Performance** |
-| **Operation Speed** | ✅ **4-56 μs** *(verified)* | ⚠️ **Not benchmarked** | ⚠️ **Not benchmarked** | ❌ **Slower** *(legacy)* | ❌ **Network latency** | ✅ **Custom** |
-| **Concurrency** | ✅ **15x scaling** *(verified)* | ⚠️ **Unknown** | ⚠️ **Unknown** | ❌ **Limited** | ⚠️ **Network bound** | ✅ **Custom** |
-| **Memory Usage** | ✅ **<2KB/op** *(verified)* | ⚠️ **Unknown** | ⚠️ **Unknown** | ❌ **Higher** *(legacy)* | ❌ **Higher** | ✅ **Custom** |
-| **Cold Start** | ✅ **<10ms** *(verified)* | ⚠️ **Unknown** | ⚠️ **Database dependent** | ❌ **Slower** *(legacy)* | ❌ **Infrastructure dependent** | ✅ **Instant** |
-| **🛠️ Developer Experience** |
-| **Learning Curve** | ✅ **Intuitive** | ⚠️ **Moderate** | ❌ **Steep** | ❌ **Very Steep** | ❌ **New Paradigm** | ❌ **High** |
-| **API Design** | ✅ **Fluent** | ⚠️ **Builder** | ❌ **Complex** | ❌ **XAML** | ❌ **Go-style** | ✅ **Custom** |
-| **IntelliSense** | ✅ **Excellent** | ✅ **Good** | ⚠️ **Limited** | ❌ **Poor** | ❌ **Minimal** | ✅ **Full** |
-| **Debugging** | ✅ **Native** | ✅ **Good** | ⚠️ **Limited** | ❌ **Difficult** | ❌ **Remote** | ✅ **Full** |
-| **Testing** | ✅ **Mockable** | ✅ **Good** | ⚠️ **Complex** | ❌ **Difficult** | ❌ **Complex** | ✅ **Full** |
-| **📚 Documentation** |
-| **Getting Started** | ✅ **5 min** | ⚠️ **Longer** | ❌ **Complex setup** | ❌ **Outdated** | ❌ **Infrastructure heavy** | ❌ **N/A** |
-| **Examples** | ✅ **18 samples** | ⚠️ **Basic** | ⚠️ **Limited** | ❌ **Outdated** | ⚠️ **Go-focused** | ❌ **None** |
-| **API Docs** | ✅ **Complete** | ✅ **Good** | ⚠️ **Partial** | ❌ **Legacy** | ⚠️ **Go-first** | ❌ **Internal** |
-| **🏢 Enterprise Features** |
-| **Compensation** | ✅ **Built-in** | ⚠️ **Manual** | ⚠️ **Limited** | ❌ **Complex** | ✅ **Built-in** | ❌ **Manual** |
-| **Observability** | ✅ **Rich** | ⚠️ **Basic** | ⚠️ **Limited** | ❌ **None** | ✅ **Good** | ❌ **Custom** |
-| **Health Checks** | ✅ **Built-in** | ❌ **None** | ❌ **None** | ❌ **None** | ⚠️ **Basic** | ❌ **Custom** |
-| **Resilience** | ✅ **Extensions** | ❌ **Manual** | ❌ **Manual** | ❌ **None** | ⚠️ **Basic** | ❌ **Custom** |
-| **Metrics** | ✅ **OpenTelemetry** | ❌ **None** | ⚠️ **Basic** | ❌ **None** | ✅ **Good** | ❌ **Custom** |
-| **🔧 Operational** |
-| **Infrastructure** | ✅ **None** | ✅ **None** | ⚠️ **Database** | ❌ **Complex** | ❌ **Cluster** | ✅ **None** |
-| **Scaling** | ✅ **Horizontal** | ✅ **Good** | ⚠️ **Limited** | ❌ **Vertical** | ✅ **Excellent** | ✅ **Custom** |
-| **Hosting** | ✅ **Any .NET** | ✅ **Any .NET** | ⚠️ **Specific** | ❌ **Windows** | ❌ **Separate** | ✅ **Any** |
-| **Cloud Ready** | ✅ **Optimized** | ✅ **Good** | ⚠️ **Requires DB** | ❌ **Legacy** | ⚠️ **Complex** | ✅ **Custom** |
-| **💰 Total Cost** |
-| **License** | ✅ **MIT** | ✅ **MIT** | ✅ **MIT** | ❌ **MS License** | ⚠️ **Dual** | ✅ **None** |
-| **Infrastructure** | ✅ **$0** | ✅ **$0** | ⚠️ **DB costs** | ⚠️ **Windows** | ❌ **$$$** | ✅ **$0** |
-| **Development** | ✅ **Days** | ⚠️ **Weeks** | ❌ **Months** | ❌ **Months** | ❌ **Months** | ❌ **Months** |
-| **Maintenance** | ✅ **Minimal** | ⚠️ **Moderate** | ❌ **High** | ❌ **High** | ❌ **High** | ❌ **Full** |
+| **Core Architecture** |
+| **Dependencies** | **Zero** (Core) | **Multiple** packages | **Many** packages | **Heavy** .NET FX | **Complex** stack | **Zero** |
+| **Package Size** | **~50KB** | **Larger** | **Much larger** | **Very large** | **Very large** | **Custom** |
+| **Deployment** | **Single DLL** | **Multiple** | **Complex** | **Complex** | **Infrastructure** | **Simple** |
+| **Modern .NET** | **.NET 8+** | **.NET 6+** | **.NET 6+** | **.NET FX** | **Limited** | **Any** |
+| **Performance** |
+| **Operation Speed** | **Microsecond-level (median ~14–36 μs)** *(verified)* | **Not benchmarked** | **Not benchmarked** | **Slower** *(legacy)* | **Network latency** | **Custom** |
+| **Concurrency** | **Parallel execution scaling** *(see benchmarks)* | **Unknown** | **Unknown** | **Limited** | **Network bound** | **Custom** |
+| **Memory Usage** | **~0.9–2.3 KB/op** *(verified)* | **Unknown** | **Unknown** | **Higher** *(legacy)* | **Higher** | **Custom** |
+| **Cold Start** | **See benchmarks** | **Unknown** | **Database dependent** | **Slower** *(legacy)* | **Infrastructure dependent** | **Instant** |
+| **Developer Experience** |
+| **Learning Curve** | **Intuitive** | **Moderate** | **Steep** | **Very Steep** | **New Paradigm** | **High** |
+| **API Design** | **Fluent** | **Builder** | **Complex** | **XAML** | **Go-style** | **Custom** |
+| **IntelliSense** | **Excellent** | **Good** | **Limited** | **Poor** | **Minimal** | **Full** |
+| **Debugging** | **Native** | **Good** | **Limited** | **Difficult** | **Remote** | **Full** |
+| **Testing** | **Mockable** | **Good** | **Complex** | **Difficult** | **Complex** | **Full** |
+| **Documentation** |
+| **Getting Started** | **5 min** | **Longer** | **Complex setup** | **Outdated** | **Infrastructure heavy** | **N/A** |
+| **Examples** | **18 samples** | **Basic** | **Limited** | **Outdated** | **Go-focused** | **None** |
+| **API Docs** | **Complete** | **Good** | **Partial** | **Legacy** | **Go-first** | **Internal** |
+| **Enterprise Features** |
+| **Compensation** | **Built-in** | **Manual** | **Limited** | **Complex** | **Built-in** | **Manual** |
+| **Observability** | **Rich** | **Basic** | **Limited** | **None** | **Good** | **Custom** |
+| **Health Checks** | **Built-in** | **None** | **None** | **None** | **Basic** | **Custom** |
+| **Resilience** | **Extensions** | **Manual** | **Manual** | **None** | **Basic** | **Custom** |
+| **Metrics** | **OpenTelemetry** | **None** | **Basic** | **None** | **Good** | **Custom** |
+| **Operational** |
+| **Infrastructure** | **None** | **None** | **Database** | **Complex** | **Cluster** | **None** |
+| **Scaling** | **Horizontal** | **Good** | **Limited** | **Vertical** | **Excellent** | **Custom** |
+| **Hosting** | **Any .NET** | **Any .NET** | **Specific** | **Windows** | **Separate** | **Any** |
+| **Cloud Ready** | **Optimized** | **Good** | **Requires DB** | **Legacy** | **Complex** | **Custom** |
+| **Total Cost** |
+| **License** | **MIT** | **MIT** | **MIT** | **MS License** | **Dual** | **None** |
+| **Infrastructure** | **$0** | **$0** | **DB costs** | **Windows** | **$$$** | **$0** |
+| **Development** | **Days** | **Weeks** | **Months** | **Months** | **Months** | **Months** |
+| **Maintenance** | **Minimal** | **Moderate** | **High** | **High** | **High** | **Full** |
 
-**Legend:** ✅ Excellent | ⚠️ Acceptable | ❌ Poor/Missing  
+Legend: Descriptors are qualitative, based on public docs and our verified benchmarks only.
 **Note:** Performance comparisons based only on verified WorkflowForge benchmarks. Other frameworks not independently tested.
 
-## 🎯 Our Verified Performance
+## Our Verified Performance
 
 ### **BenchmarkDotNet Verified Claims**
 *These are the only performance claims we can substantiate with testing*
 
 ```
-📊 WorkflowForge Verified Performance:
-Operation Execution:    4-56 μs per operation      ✅ Verified
-Concurrency Scaling:    15x improvement            ✅ Verified  
-Memory Usage:          <2KB per operation          ✅ Verified
-Cold Start:            <10ms startup               ✅ Verified
-Foundry Creation:      5-15 μs setup time         ✅ Verified
+WorkflowForge Verified Performance:
+Operation Execution:    Microsecond-level (median ~14–36 μs) ✅ Verified
+Throughput & Scaling:   Improves with parallel execution     ✅ See benchmarks
+Memory Usage:           ~0.9–2.3 KB per operation            ✅ Verified
+Foundry Creation:       Median ~5–7 μs (means ~13–16 μs)     ✅ Verified
 ```
 
 **Test Environment:** Intel Core Ultra 7 165H, .NET 8.0.16, Windows 11
@@ -73,7 +72,7 @@ We have **not** benchmarked other frameworks and therefore make **no specific pe
 
 **Honest Assessment:** We encourage you to benchmark alternatives yourself for your specific use cases.
 
-## 🔍 Factual Feature Comparison
+## Factual Feature Comparison
 
 ### **WorkflowForge vs. Workflow Core**
 
@@ -82,7 +81,7 @@ We have **not** benchmarked other frameworks and therefore make **no specific pe
 - **Built-in enterprise features** (observability, health checks, resilience extensions)
 - **Comprehensive documentation** with 18+ interactive samples
 - **Industrial metaphor** (foundries, smiths) for intuitive understanding
-- **Verified performance** (4-56 μs operations, 15x concurrency scaling)
+- **Verified performance** (microsecond-level operations; parallel throughput improvements)
 
 **When Workflow Core might work:**
 - Simple, basic workflow needs
@@ -97,7 +96,7 @@ We have **not** benchmarked other frameworks and therefore make **no specific pe
 - **Code-first approach** vs. UI-designer dependency
 - **Simpler deployment** (single DLL vs. complex hosting)
 - **Better testing** (fully mockable interfaces)
-- **Verified fast execution** (4-56 μs per operation)
+- **Verified fast execution** (microsecond-level; median ~14–36 μs)
 
 **When Elsa might work:**
 - Need visual workflow designer
@@ -139,23 +138,23 @@ We have **not** benchmarked other frameworks and therefore make **no specific pe
 - **Production-tested patterns** vs. custom implementations
 - **Framework updates** vs. ongoing maintenance burden
 - **Team onboarding** (standard API) vs. project-specific knowledge
-- **Verified performance** (4-56 μs operations)
+- **Verified performance** (microsecond-level operations)
 
 **When custom might work:**
 - Extremely specific requirements not met by any framework
 - Full control over every aspect required
 - Have dedicated team for long-term maintenance
 
-## 🏆 **Why Choose WorkflowForge**
+## Why Choose WorkflowForge
 
 **What we can honestly claim:**
 
-✅ **Verified Performance** - 4-56 μs operations, 15x concurrency scaling (BenchmarkDotNet tested)  
-✅ **Zero Dependencies** - No version conflicts, minimal footprint  
-✅ **Enterprise Ready** - Built-in observability, resilience, compensation  
-✅ **Developer Friendly** - 5-minute setup, intuitive API, 18+ samples  
-✅ **Production Proven** - Test-driven design, comprehensive error handling  
-✅ **Future Proof** - Modern .NET, cloud-optimized, extension ecosystem  
+**Verified Performance** - Microsecond-level execution; parallel throughput improvements (see benchmarks)  
+**Zero Dependencies** - No version conflicts, minimal footprint  
+**Enterprise Ready** - Built-in observability, resilience, compensation  
+**Developer Friendly** - 5-minute setup, intuitive API, 18+ samples  
+**Production Proven** - Test-driven design, comprehensive error handling  
+**Future Proof** - Modern .NET, cloud-optimized, extension ecosystem  
 
 ### **Real-World Impact**
 
@@ -182,17 +181,16 @@ var workflow = WorkflowForge.CreateWorkflow()
 await smith.ForgeAsync(workflow, foundry); // Automatic rollback on failure
 ```
 
-## 📊 **Our Verified Benchmarks Only**
+## Our Verified Benchmarks Only
 
 **We only publish performance data we can verify:**
 
 | Metric | WorkflowForge Result | Test Method |
 |--------|---------------------|-------------|
-| **Operation Execution** | 4-56 μs per operation | BenchmarkDotNet |
-| **Concurrency Scaling** | 15x improvement (16 concurrent vs sequential) | BenchmarkDotNet |
-| **Memory Efficiency** | <2KB per operation | BenchmarkDotNet |
-| **Cold Start** | <10ms startup | BenchmarkDotNet |
-| **Foundry Creation** | 5-15 μs setup time | BenchmarkDotNet |
+| **Operation Execution** | Microsecond-level (median ~14–36 μs) | BenchmarkDotNet |
+| **Throughput & Scaling** | Improves with parallel execution | BenchmarkDotNet |
+| **Memory Efficiency** | ~0.9–2.3 KB per operation | BenchmarkDotNet |
+| **Foundry Creation** | Median ~5–7 μs (means ~13–16 μs) | BenchmarkDotNet |
 
 **Benchmark Transparency:**
 - All benchmarks available in [`src/benchmarks/`](../src/benchmarks/WorkflowForge.Benchmarks/README.md)

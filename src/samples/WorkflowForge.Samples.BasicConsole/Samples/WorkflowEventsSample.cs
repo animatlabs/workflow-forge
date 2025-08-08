@@ -69,8 +69,8 @@ public class WorkflowEventsSample : ISample
             workflowEvents.OperationFailed += OnOperationFailed;
         }
         
-        foundry.Properties["operation_count"] = 0;
-        foundry.Properties["total_duration"] = TimeSpan.Zero;
+        foundry.SetProperty("operation_count", 0);
+        foundry.SetProperty("total_duration", TimeSpan.Zero);
         
         foundry
             .WithOperation(new MonitoredOperation("InitializeSystem", TimeSpan.FromMilliseconds(100)))
@@ -80,8 +80,8 @@ public class WorkflowEventsSample : ISample
         
         await foundry.ForgeAsync();
         
-        Console.WriteLine($"   Total operations executed: {foundry.Properties["operation_count"]}");
-        Console.WriteLine($"   Total processing time: {((TimeSpan)foundry.Properties["total_duration"]).TotalMilliseconds:F0}ms");
+        Console.WriteLine($"   Total operations executed: {foundry.GetPropertyOrDefault<int>("operation_count")}");
+        Console.WriteLine($"   Total processing time: {foundry.GetPropertyOrDefault<TimeSpan>("total_duration").TotalMilliseconds:F0}ms");
     }
 
     private static async Task RunErrorHandlingEventsDemo()
@@ -145,11 +145,11 @@ public class WorkflowEventsSample : ISample
         // Update foundry statistics if available
         if (sender is IWorkflowFoundry foundry)
         {
-            var currentCount = (int)foundry.Properties.GetValueOrDefault("operation_count", 0);
-            var currentDuration = (TimeSpan)foundry.Properties.GetValueOrDefault("total_duration", TimeSpan.Zero);
+            var currentCount = foundry.GetPropertyOrDefault<int>("operation_count", 0);
+            var currentDuration = foundry.GetPropertyOrDefault<TimeSpan>("total_duration", TimeSpan.Zero);
             
-            foundry.Properties["operation_count"] = currentCount + 1;
-            foundry.Properties["total_duration"] = currentDuration + e.Duration;
+            foundry.SetProperty("operation_count", currentCount + 1);
+            foundry.SetProperty("total_duration", currentDuration + e.Duration);
         }
     }
 
