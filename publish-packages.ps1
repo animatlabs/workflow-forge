@@ -124,7 +124,8 @@ catch {
 }
 
 Write-Host ""
-Write-Host ("Starting package {0}..." -f ($Publish ? "publishing" : "packing")) -ForegroundColor Cyan
+$mode = if ($Publish) { "publishing" } else { "packing" }
+Write-Host ("Starting package {0}..." -f $mode) -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor DarkGray
 
 $results = @()
@@ -199,7 +200,8 @@ if (Test-Path $corePackagePath) {
 Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
 
 Write-Host ""
-Write-Host (("{0} SUMMARY" -f ($Publish ? "PUBLISHING" : "PACKING"))) -ForegroundColor Yellow
+$summary = if ($Publish) { "PUBLISHING" } else { "PACKING" }
+Write-Host (("{0} SUMMARY" -f $summary)) -ForegroundColor Yellow
 Write-Host "============================================================" -ForegroundColor DarkGray
 
 $successful = ($results | Where-Object { $_.Success }).Count
