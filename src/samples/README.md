@@ -41,6 +41,9 @@ This collection provides hands-on examples showcasing WorkflowForge's capabiliti
 - **opentelemetry-observability** - Distributed tracing, custom metrics, and observability pipelines
 - **health-checks** - System health monitoring and custom health check implementations
 - **performance-monitoring** - Performance metrics, memory monitoring, and benchmarking
+- **persistence** - Resumable workflows with BYO storage
+- **recovery-only** - Resume + retry without re-running completed steps
+- **recovery-plus-resilience** - Unified resume + retry using the base Resilience extension
 - **middleware** - Custom middleware creation and execution pipeline patterns
 - **workflow-events** - Event handling, notifications, and event-driven architectures
 - **builtin-operations** - Comprehensive demonstrations of all built-in operations
@@ -363,6 +366,20 @@ var foundry = WorkflowForge.CreateFoundry("ECommerceWorkflow", foundryConfig);
 | health-checks | Yes | Yes | No | No | Yes | No |
 | performance-monitoring | Yes | Yes | No | No | No | Yes |
 | comprehensive-integration | Yes | Yes | Yes | Yes | Yes | Yes |
+| persistence | Yes | Yes | Optional | No | No | No |
+| recovery-only | Yes | Yes | Optional | No | No | No |
+| recovery-plus-resilience | Yes | Yes | Yes | No | No | No |
+
+Notes:
+- recovery-plus-resilience (22) persists after each operation and resumes from the last successful step; base resilience then retries transient failures within a run.
+
+Quick tip to try Recovery + Resilience (22):
+
+```bash
+cd src/samples/WorkflowForge.Samples.BasicConsole
+dotnet run
+# choose 22 when prompted
+```
 
 ## Prerequisites
 

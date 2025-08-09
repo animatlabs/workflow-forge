@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace WorkflowForge
+namespace WorkflowForge.Abstractions
 {
     /// <summary>
     /// Represents middleware that can be applied to individual workflow operations.
@@ -26,4 +26,4 @@ namespace WorkflowForge
             Func<Task<object?>> next,
             CancellationToken cancellationToken = default);
     }
-} 
+}

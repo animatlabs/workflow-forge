@@ -1,5 +1,3 @@
-using System.Threading.Tasks;
-
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
 /// <summary>
@@ -12,15 +10,15 @@ public interface ISample
     /// Gets the name of the sample.
     /// </summary>
     string Name { get; }
-    
+
     /// <summary>
     /// Gets a brief description of what this sample demonstrates.
     /// </summary>
     string Description { get; }
-    
+
     /// <summary>
     /// Executes the sample workflow.
     /// </summary>
     /// <returns>A task representing the asynchronous execution.</returns>
     Task RunAsync();
-} 
+}

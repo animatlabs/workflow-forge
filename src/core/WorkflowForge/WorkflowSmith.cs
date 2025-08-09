@@ -1,11 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Configurations;
+using WorkflowForge.Constants;
+using WorkflowForge.Extensions;
 using WorkflowForge.Loggers;
 
 namespace WorkflowForge
@@ -14,10 +15,10 @@ namespace WorkflowForge
     /// Main orchestration smith that forges workflow operations in sequence.
     /// Supports dependency injection, compensation logic, and comprehensive error handling.
     /// In the WorkflowForge metaphor, the smith is the skilled craftsman who coordinates the forging process.
-    /// 
+    ///
     /// Supports both simple pattern (smith manages foundry) and advanced pattern (reusable foundry).
     /// </summary>
-    public sealed class WorkflowSmith : IWorkflowSmith
+    internal sealed class WorkflowSmith : IWorkflowSmith
     {
         private readonly IWorkflowForgeLogger _logger;
         private readonly IServiceProvider? _serviceProvider;
@@ -57,8 +58,8 @@ namespace WorkflowForge
 
         /// <inheritdoc />
         public async Task ForgeAsync(
-            IWorkflow workflow, 
-            ConcurrentDictionary<string, object?> data, 
+            IWorkflow workflow,
+            ConcurrentDictionary<string, object?> data,
             CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
@@ -73,8 +74,8 @@ namespace WorkflowForge
 
         /// <inheritdoc />
         public async Task ForgeAsync(
-            IWorkflow workflow, 
-            IWorkflowFoundry foundry, 
+            IWorkflow workflow,
+            IWorkflowFoundry foundry,
             CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
@@ -83,61 +84,31 @@ namespace WorkflowForge
 
             // Advanced pattern: use provided foundry and set current workflow
             foundry.SetCurrentWorkflow(workflow);
-            
+
             // Create workflow scope using helper
-            using var workflowScope = LoggingContextHelper.CreateWorkflowScope(_logger, workflow, foundry);
-            
-            _logger.LogInformation(WorkflowLogMessages.WorkflowExecutionStarted);
-            
+            using var workflowScope = _logger.CreateWorkflowScope(workflow, foundry);
+
+            _logger.LogInformation(WorkflowLogMessageConstants.WorkflowExecutionStarted);
+
             try
             {
-                // Forge operations with data flow support using provided foundry
-                object? currentData = foundry.Properties; // Start with foundry properties
-                for (int i = 0; i < workflow.Operations.Count; i++)
-                {
-                    var operation = workflow.Operations[i];
-                    cancellationToken.ThrowIfCancellationRequested();
-                    
-                    // Create operation scope using helper
-                    using var operationScope = LoggingContextHelper.CreateOperationScope(_logger, operation, i + 1, currentData);
-                    
-                    _logger.LogDebug(WorkflowLogMessages.OperationExecutionStarted);
-                    
-                    try
-                    {
-                        // Forge operation with current data, get output data
-                        currentData = await operation.ForgeAsync(currentData, foundry, cancellationToken).ConfigureAwait(false);
-                        
-                        // Log completion 
-                        _logger.LogDebug(WorkflowLogMessages.OperationExecutionCompleted);
-                    }
-                    catch (Exception operationEx)
-                    {
-                        var errorProperties = LoggingContextHelper.CreateErrorProperties(operationEx, "OperationExecution");
-                        
-                        _logger.LogError(errorProperties, operationEx, WorkflowLogMessages.OperationExecutionFailed);
-                        
-                        // Attempt compensation for previously executed operations
-                        await CompensateForgedOperationsAsync(workflow.Operations, i - 1, foundry, cancellationToken).ConfigureAwait(false);
-                        
-                        throw; // Re-throw to caller
-                    }
-                }
-                
+                // Route execution through foundry pipeline so middlewares (e.g., persistence, retry, logging) are applied
+                foundry.WithOperations(workflow.Operations);
+                await foundry.ForgeAsync(cancellationToken).ConfigureAwait(false);
+
                 // Log workflow completion
-                _logger.LogInformation(WorkflowLogMessages.WorkflowExecutionCompleted);
+                _logger.LogInformation(WorkflowLogMessageConstants.WorkflowExecutionCompleted);
             }
             catch (OperationCanceledException)
             {
-                _logger.LogWarning(WorkflowLogMessages.WorkflowExecutionCancelled);
-                throw; // Re-throw cancellation
+                _logger.LogWarning(WorkflowLogMessageConstants.WorkflowExecutionCancelled);
+                throw;
             }
             catch (Exception ex)
             {
-                var errorProperties = LoggingContextHelper.CreateErrorProperties(ex, "WorkflowExecution");
-                
-                _logger.LogError(errorProperties, ex, WorkflowLogMessages.WorkflowExecutionFailed);
-                throw; // Re-throw exception
+                var errorProperties = _logger.CreateErrorProperties(ex, "WorkflowExecution");
+                _logger.LogError(errorProperties, ex, WorkflowLogMessageConstants.WorkflowExecutionFailed);
+                throw;
             }
         }
 
@@ -162,7 +133,7 @@ namespace WorkflowForge
             if (workflow == null) throw new ArgumentNullException(nameof(workflow));
 
             return new WorkflowFoundry(
-                Guid.NewGuid(), 
+                Guid.NewGuid(),
                 new ConcurrentDictionary<string, object?>(),
                 new FoundryConfiguration
                 {
@@ -179,7 +150,7 @@ namespace WorkflowForge
             if (data == null) throw new ArgumentNullException(nameof(data));
 
             return new WorkflowFoundry(
-                Guid.NewGuid(), 
+                Guid.NewGuid(),
                 data,
                 new FoundryConfiguration
                 {
@@ -196,21 +167,21 @@ namespace WorkflowForge
         /// <param name="foundry">The workflow foundry.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         private async Task CompensateForgedOperationsAsync(
-            IReadOnlyList<IWorkflowOperation> operations, 
-            int lastForgedIndex, 
-            IWorkflowFoundry foundry, 
+            IReadOnlyList<IWorkflowOperation> operations,
+            int lastForgedIndex,
+            IWorkflowFoundry foundry,
             CancellationToken cancellationToken)
         {
             if (lastForgedIndex < 0) return;
-            
+
             // Create compensation scope using helper
-            using var compensationScope = LoggingContextHelper.CreateCompensationScope(_logger, lastForgedIndex + 1);
-            
-            _logger.LogInformation(WorkflowLogMessages.CompensationProcessStarted);
-            
+            using var compensationScope = _logger.CreateCompensationScope(lastForgedIndex + 1);
+
+            _logger.LogInformation(WorkflowLogMessageConstants.CompensationProcessStarted);
+
             int successCount = 0;
             int failureCount = 0;
-            
+
             // Compensate in reverse order
             for (int i = lastForgedIndex; i >= 0; i--)
             {
@@ -219,52 +190,52 @@ namespace WorkflowForge
                 {
                     var skipProperties = new Dictionary<string, string>
                     {
-                        [PropertyNames.ExecutionId] = operation.Id.ToString(),
-                        [PropertyNames.ExecutionName] = operation.Name,
-                        [PropertyNames.ExecutionType] = operation.GetType().Name
+                        [PropertyNameConstants.ExecutionId] = operation.Id.ToString(),
+                        [PropertyNameConstants.ExecutionName] = operation.Name,
+                        [PropertyNameConstants.ExecutionType] = operation.GetType().Name
                     };
-                    
-                    _logger.LogDebug(skipProperties, WorkflowLogMessages.CompensationActionSkipped);
+
+                    _logger.LogDebug(skipProperties, WorkflowLogMessageConstants.CompensationActionSkipped);
                     continue;
                 }
-                
+
                 var operationProperties = new Dictionary<string, string>
                 {
-                    [PropertyNames.ExecutionId] = operation.Id.ToString(),
-                    [PropertyNames.ExecutionName] = operation.Name,
-                    [PropertyNames.ExecutionType] = operation.GetType().Name
+                    [PropertyNameConstants.ExecutionId] = operation.Id.ToString(),
+                    [PropertyNameConstants.ExecutionName] = operation.Name,
+                    [PropertyNameConstants.ExecutionType] = operation.GetType().Name
                 };
 
                 using var operationScope = _logger.BeginScope("CompensationAction", operationProperties);
-                
+
                 try
                 {
-                    _logger.LogDebug(WorkflowLogMessages.CompensationActionStarted);
-                    
+                    _logger.LogDebug(WorkflowLogMessageConstants.CompensationActionStarted);
+
                     await operation.RestoreAsync(null, foundry, cancellationToken).ConfigureAwait(false);
-                    
-                    _logger.LogDebug(WorkflowLogMessages.CompensationActionCompleted);
+
+                    _logger.LogDebug(WorkflowLogMessageConstants.CompensationActionCompleted);
                     successCount++;
                 }
                 catch (Exception compensationEx)
                 {
-                    var errorProperties = LoggingContextHelper.CreateErrorProperties(compensationEx, "CompensationFailure");
-                    
-                    _logger.LogError(errorProperties, compensationEx, WorkflowLogMessages.CompensationActionFailed);
+                    var errorProperties = _logger.CreateErrorProperties(compensationEx, "CompensationFailure");
+
+                    _logger.LogError(errorProperties, compensationEx, WorkflowLogMessageConstants.CompensationActionFailed);
                     failureCount++;
                     // Continue with other compensations even if one fails
                 }
             }
-            
-            var completionProperties = LoggingContextHelper.CreateCompensationResultProperties(successCount, failureCount);
-            
-            _logger.LogInformation(completionProperties, WorkflowLogMessages.CompensationProcessCompleted);
+
+            var completionProperties = _logger.CreateCompensationResultProperties(successCount, failureCount);
+
+            _logger.LogInformation(completionProperties, WorkflowLogMessageConstants.CompensationProcessCompleted);
         }
 
         private IWorkflowFoundry CreateFoundryFor(IWorkflow workflow)
         {
             return new WorkflowFoundry(
-                Guid.NewGuid(), 
+                Guid.NewGuid(),
                 new ConcurrentDictionary<string, object?>(),
                 _configuration,
                 workflow);
@@ -273,7 +244,7 @@ namespace WorkflowForge
         private IWorkflowFoundry CreateFoundryWithData(ConcurrentDictionary<string, object?> properties)
         {
             return new WorkflowFoundry(
-                Guid.NewGuid(), 
+                Guid.NewGuid(),
                 properties,
                 _configuration);
         }
@@ -288,10 +259,10 @@ namespace WorkflowForge
             _disposed = true;
             GC.SuppressFinalize(this);
         }
-        
+
         private void ThrowIfDisposed()
         {
             if (_disposed) throw new ObjectDisposedException(nameof(WorkflowSmith));
         }
     }
-} 
+}

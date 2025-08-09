@@ -20,6 +20,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
 
         // Standard WorkflowForge metrics following OpenTelemetry semantic conventions
         private readonly Counter<long> _operationsTotal;
+
         private readonly Counter<long> _operationErrorsTotal;
         private readonly Histogram<double> _operationDuration;
         private readonly Histogram<long> _operationMemoryAllocations;
@@ -27,6 +28,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
 
         // System metrics
         private readonly ObservableGauge<long> _memoryUsage;
+
         private readonly ObservableGauge<long> _gcCollections;
         private readonly ObservableGauge<int> _threadPoolAvailable;
 
@@ -71,7 +73,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
                 "Total number of operations executed");
 
             _operationErrorsTotal = _meter.CreateCounter<long>(
-                "workflowforge.operations.errors.total", 
+                "workflowforge.operations.errors.total",
                 "error",
                 "Total number of operation errors");
 
@@ -132,9 +134,9 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <param name="memoryAllocated">Memory allocated during the operation.</param>
         /// <param name="tags">Additional tags for the metrics.</param>
         public void RecordOperation(
-            string operationName, 
-            TimeSpan duration, 
-            bool success, 
+            string operationName,
+            TimeSpan duration,
+            bool success,
             long memoryAllocated = 0,
             KeyValuePair<string, object?>[]? tags = null)
         {
@@ -165,7 +167,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         public void IncrementActiveOperations(string operationName, KeyValuePair<string, object?>[]? tags = null)
         {
             if (_disposed) return;
-            
+
             var metricTags = CreateTagsArray(operationName, null, tags);
             _activeOperations.Add(1, metricTags);
         }
@@ -178,7 +180,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         public void DecrementActiveOperations(string operationName, KeyValuePair<string, object?>[]? tags = null)
         {
             if (_disposed) return;
-            
+
             var metricTags = CreateTagsArray(operationName, null, tags);
             _activeOperations.Add(-1, metricTags);
         }
@@ -191,7 +193,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <param name="unit">The unit of measurement.</param>
         /// <param name="description">The counter description.</param>
         /// <returns>The counter instrument.</returns>
-        public Counter<T> CreateCounter<T>(string name, string? unit = null, string? description = null) 
+        public Counter<T> CreateCounter<T>(string name, string? unit = null, string? description = null)
             where T : struct
         {
             return _meter.CreateCounter<T>(name, unit, description);
@@ -205,7 +207,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <param name="unit">The unit of measurement.</param>
         /// <param name="description">The histogram description.</param>
         /// <returns>The histogram instrument.</returns>
-        public Histogram<T> CreateHistogram<T>(string name, string? unit = null, string? description = null) 
+        public Histogram<T> CreateHistogram<T>(string name, string? unit = null, string? description = null)
             where T : struct
         {
             return _meter.CreateHistogram<T>(name, unit, description);
@@ -219,7 +221,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <param name="unit">The unit of measurement.</param>
         /// <param name="description">The counter description.</param>
         /// <returns>The up-down counter instrument.</returns>
-        public UpDownCounter<T> CreateUpDownCounter<T>(string name, string? unit = null, string? description = null) 
+        public UpDownCounter<T> CreateUpDownCounter<T>(string name, string? unit = null, string? description = null)
             where T : struct
         {
             return _meter.CreateUpDownCounter<T>(name, unit, description);
@@ -237,16 +239,16 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         public ObservableGauge<T> CreateObservableGauge<T>(
             string name,
             Func<T> observeValue,
-            string? unit = null, 
-            string? description = null) 
+            string? unit = null,
+            string? description = null)
             where T : struct
         {
             return _meter.CreateObservableGauge<T>(name, observeValue, unit, description);
         }
 
         private KeyValuePair<string, object?>[] CreateTagsArray(
-            string operationName, 
-            bool? success, 
+            string operationName,
+            bool? success,
             KeyValuePair<string, object?>[]? additionalTags)
         {
             var tagsList = new List<KeyValuePair<string, object?>>
@@ -311,12 +313,12 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         public void Dispose()
         {
             if (_disposed) return;
-            
+
             _disposed = true;
             _activitySource?.Dispose();
             _meter?.Dispose();
-            
+
             _logger.LogInformation("OpenTelemetry service disposed for {ServiceName}", ServiceName);
         }
     }
-} 
+}

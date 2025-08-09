@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace WorkflowForge
+namespace WorkflowForge.Abstractions
 {
     /// <summary>
     /// Represents a complete workflow definition with its operations and metadata.
@@ -38,4 +38,4 @@ namespace WorkflowForge
         /// </summary>
         bool SupportsRestore { get; }
     }
-} 
+}

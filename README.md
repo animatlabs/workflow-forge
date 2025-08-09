@@ -46,7 +46,7 @@ await smith.ForgeAsync(workflow, foundry);
 ## Learn & Explore
 
 ### Start Here: Interactive Samples
-**Best way to learn** → Run 18 progressive examples from basic to advanced:
+**Best way to learn** → Run 22 progressive examples from basic to advanced:
 
 ```bash
 cd src/samples/WorkflowForge.Samples.BasicConsole
@@ -100,7 +100,7 @@ WorkflowForge uses an **industrial metaphor** for intuitive understanding:
 | Resource | Description |
 |----------|-------------|
 | **[Getting Started](docs/getting-started.md)** | Step-by-step tutorial |
-| **[Interactive Samples](src/samples/WorkflowForge.Samples.BasicConsole/)** | 18 hands-on examples |
+| **[Interactive Samples](src/samples/WorkflowForge.Samples.BasicConsole/)** | 22 hands-on examples |
 | **[Complete Documentation](docs/)** | Comprehensive guides |
 | **[Extensions](docs/extensions.md)** | Available extensions |
 | **[Benchmarks](src/benchmarks/WorkflowForge.Benchmarks/)** | Performance analysis |

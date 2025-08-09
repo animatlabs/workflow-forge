@@ -1,9 +1,9 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
+using WorkflowForge.Configurations;
 
 namespace WorkflowForge.Benchmarks;
 
@@ -37,7 +37,7 @@ public class WorkflowThroughputBenchmark
     public async Task<string> SequentialDelegateOperations()
     {
         using var foundry = WorkflowForge.CreateFoundry("SequentialBenchmark", _minimalConfig);
-        
+
         for (int i = 0; i < OperationCount; i++)
         {
             var operationIndex = i;
@@ -57,7 +57,7 @@ public class WorkflowThroughputBenchmark
     public async Task<string> SequentialCustomOperations()
     {
         using var foundry = WorkflowForge.CreateFoundry("CustomOpsBenchmark", _minimalConfig);
-        
+
         for (int i = 0; i < OperationCount; i++)
         {
             foundry.WithOperation(new LightweightOperation($"LightOp{i}"));
@@ -71,7 +71,7 @@ public class WorkflowThroughputBenchmark
     public async Task<string> HighPerformanceConfiguration()
     {
         using var foundry = WorkflowForge.CreateFoundry("HighPerfBenchmark", _performanceConfig);
-        
+
         for (int i = 0; i < OperationCount; i++)
         {
             var operationIndex = i;
@@ -91,9 +91,9 @@ public class WorkflowThroughputBenchmark
     public async Task<string> DataPassingWorkflow()
     {
         using var foundry = WorkflowForge.CreateFoundry("DataPassingBenchmark", _minimalConfig);
-        
+
         foundry.Properties["counter"] = 0;
-        
+
         for (int i = 0; i < OperationCount; i++)
         {
             var operationIndex = i;
@@ -114,13 +114,13 @@ public class WorkflowThroughputBenchmark
     public async Task<string> ConditionalOperationsWorkflow()
     {
         using var foundry = WorkflowForge.CreateFoundry("ConditionalBenchmark", _minimalConfig);
-        
+
         foundry.Properties["process_count"] = 0;
-        
+
         for (int i = 0; i < OperationCount; i++)
         {
             var operationIndex = i;
-            
+
             // Add conditional operation (50% will execute the "then" branch)
             foundry.WithOperation(new ConditionalWorkflowOperation(
                 (inputData, foundry, cancellationToken) => Task.FromResult(operationIndex % 2 == 0),
@@ -146,11 +146,11 @@ public class WorkflowThroughputBenchmark
     public async Task<string> ForEachLoopWorkflow()
     {
         using var foundry = WorkflowForge.CreateFoundry("ForEachBenchmark", _minimalConfig);
-        
+
         // Create a collection to iterate over
         var items = Enumerable.Range(1, OperationCount).Select(i => $"Item{i}").ToArray();
         foundry.Properties["items"] = items;
-        
+
         foundry.WithOperation(new ForEachWorkflowOperation(
             new[] { new LightweightOperation("ProcessItem") },
             TimeSpan.FromSeconds(30),
@@ -167,11 +167,11 @@ public class WorkflowThroughputBenchmark
     public async Task<string> LoggingOperationsWorkflow()
     {
         using var foundry = WorkflowForge.CreateFoundry("LoggingBenchmark", _minimalConfig);
-        
+
         for (int i = 0; i < OperationCount; i++)
         {
-            foundry.WithOperation(new LoggingOperation($"Benchmark operation {i}", LogLevel.Information));
-            
+            foundry.WithOperation(new LoggingOperation($"Benchmark operation {i}", WorkflowForgeLogLevel.Information));
+
             var operationIndex = i;
             foundry.WithOperation($"WorkOp{operationIndex}", async (foundry) =>
             {
@@ -188,7 +188,7 @@ public class WorkflowThroughputBenchmark
     public async Task<string> MemoryIntensiveWorkflow()
     {
         using var foundry = WorkflowForge.CreateFoundry("MemoryBenchmark", _minimalConfig);
-        
+
         for (int i = 0; i < OperationCount; i++)
         {
             var operationIndex = i;
@@ -197,7 +197,7 @@ public class WorkflowThroughputBenchmark
                 // Simulate memory allocation
                 var data = new byte[1024]; // 1KB allocation per operation
                 Array.Fill(data, (byte)(operationIndex % 256));
-                
+
                 foundry.Properties[$"data_{operationIndex}"] = data;
                 await Task.Delay(1);
             });
@@ -234,5 +234,6 @@ public class LightweightOperation : IWorkflowOperation
         return Task.CompletedTask;
     }
 
-    public void Dispose() { }
-} 
+    public void Dispose()
+    { }
+}

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace WorkflowForge.Extensions.Resilience
+namespace WorkflowForge.Extensions.Resilience.Configurations
 {
     /// <summary>
     /// Configuration settings for retry policies in WorkflowForge operations.
@@ -23,14 +23,14 @@ namespace WorkflowForge.Extensions.Resilience
         /// <summary>
         /// Gets or sets the base delay between retries.
         /// </summary>
-        [Range(typeof(TimeSpan), "00:00:00", "00:10:00", 
+        [Range(typeof(TimeSpan), "00:00:00", "00:10:00",
                ErrorMessage = "BaseDelay must be between 0 and 10 minutes")]
         public TimeSpan BaseDelay { get; set; } = TimeSpan.FromMilliseconds(100);
 
         /// <summary>
         /// Gets or sets the maximum delay between retries.
         /// </summary>
-        [Range(typeof(TimeSpan), "00:00:00", "01:00:00", 
+        [Range(typeof(TimeSpan), "00:00:00", "01:00:00",
                ErrorMessage = "MaxDelay must be between 0 and 1 hour")]
         public TimeSpan MaxDelay { get; set; } = TimeSpan.FromSeconds(30);
 
@@ -48,10 +48,10 @@ namespace WorkflowForge.Extensions.Resilience
         /// <summary>
         /// Gets a predefined no-retry policy configuration.
         /// </summary>
-        public static RetryPolicySettings NoRetry => new() 
-        { 
-            StrategyType = RetryStrategyType.None, 
-            MaxAttempts = 0 
+        public static RetryPolicySettings NoRetry => new()
+        {
+            StrategyType = RetryStrategyType.None,
+            MaxAttempts = 0
         };
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace WorkflowForge.Extensions.Resilience
             if (MaxDelay < BaseDelay)
             {
                 results.Add(new ValidationResult(
-                    "MaxDelay cannot be less than BaseDelay", 
+                    "MaxDelay cannot be less than BaseDelay",
                     new[] { nameof(MaxDelay), nameof(BaseDelay) }));
             }
 
@@ -117,4 +117,4 @@ namespace WorkflowForge.Extensions.Resilience
             };
         }
     }
-} 
+}

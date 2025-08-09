@@ -1,10 +1,10 @@
 using System;
 using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using WorkflowForge.Abstractions;
 
 namespace WorkflowForge.Operations
 {
@@ -40,7 +40,7 @@ namespace WorkflowForge.Operations
             Guid? id = null)
         {
             if (operations == null) throw new ArgumentNullException(nameof(operations));
-            
+
             _operations = operations.ToList();
             if (_operations.Count == 0)
                 throw new ArgumentException("At least one operation must be provided.", nameof(operations));
@@ -51,7 +51,7 @@ namespace WorkflowForge.Operations
             _timeout = timeout;
             _dataStrategy = dataStrategy;
             _maxConcurrency = maxConcurrency;
-            
+
             Id = id ?? Guid.NewGuid();
             Name = name ?? $"ForEach[{_operations.Count}]";
         }
@@ -76,7 +76,7 @@ namespace WorkflowForge.Operations
 
             var workflowId = foundry.CurrentWorkflow?.Id ?? Guid.Empty;
             var workflowName = foundry.CurrentWorkflow?.Name ?? "Unknown";
-            var frameworkMaxConcurrency = foundry.Properties.TryGetValue("MaxConcurrentOperations", out var maxConcurrent) 
+            var frameworkMaxConcurrency = foundry.Properties.TryGetValue("MaxConcurrentOperations", out var maxConcurrent)
                 ? maxConcurrent as int? : null;
 
             foundry.Logger.LogInformation(
@@ -89,7 +89,7 @@ namespace WorkflowForge.Operations
             {
                 // Execute with throttling
                 using var semaphore = new SemaphoreSlim(effectiveMaxConcurrency.Value, effectiveMaxConcurrency.Value);
-                var tasks = _operations.Select((op, index) => 
+                var tasks = _operations.Select((op, index) =>
                     ForgeOperationWithThrottlingAsync(op, inputData, index, foundry, semaphore, cancellationToken)).ToArray();
 
                 if (_timeout.HasValue)
@@ -106,7 +106,7 @@ namespace WorkflowForge.Operations
             else
             {
                 // Execute without throttling
-                var tasks = _operations.Select((op, index) => 
+                var tasks = _operations.Select((op, index) =>
                     ForgeOperationAsync(op, inputData, index, foundry, cancellationToken)).ToArray();
 
                 if (_timeout.HasValue)
@@ -152,7 +152,7 @@ namespace WorkflowForge.Operations
             {
                 // Restore with throttling
                 using var semaphore = new SemaphoreSlim(effectiveMaxConcurrency.Value, effectiveMaxConcurrency.Value);
-                var tasks = _operations.Select((op, index) => 
+                var tasks = _operations.Select((op, index) =>
                     RestoreOperationWithThrottlingAsync(op, GetResultForIndex(individualResults, index), foundry, semaphore, cancellationToken)).ToArray();
 
                 await Task.WhenAll(tasks).ConfigureAwait(false);
@@ -160,7 +160,7 @@ namespace WorkflowForge.Operations
             else
             {
                 // Restore without throttling
-                var tasks = _operations.Select((op, index) => 
+                var tasks = _operations.Select((op, index) =>
                     RestoreOperationAsync(op, GetResultForIndex(individualResults, index), foundry, cancellationToken)).ToArray();
 
                 await Task.WhenAll(tasks).ConfigureAwait(false);
@@ -191,7 +191,7 @@ namespace WorkflowForge.Operations
 
             _operations.Clear();
             _disposed = true;
-            
+
             GC.SuppressFinalize(this);
         }
 
@@ -257,10 +257,10 @@ namespace WorkflowForge.Operations
         {
             if (outputData is ForEachResults forEachResults)
                 return forEachResults.Results;
-            
+
             if (outputData is object[] array)
                 return array;
-                
+
             return new object?[] { outputData };
         }
 
@@ -376,19 +376,19 @@ namespace WorkflowForge.Operations
         /// <returns>The effective maximum concurrency to use, or null for unlimited.</returns>
         private int? GetEffectiveMaxConcurrency(IWorkflowFoundry foundry)
         {
-            var frameworkMax = foundry.Properties.TryGetValue("MaxConcurrentOperations", out var maxConcurrent) == true 
+            var frameworkMax = foundry.Properties.TryGetValue("MaxConcurrentOperations", out var maxConcurrent) == true
                 ? maxConcurrent as int? : null;
-            
+
             // If no framework limit is set, use operation-specific limit
             if (!frameworkMax.HasValue)
                 return _maxConcurrency;
-                
+
             // If no operation-specific limit is set, use framework limit
             if (!_maxConcurrency.HasValue)
                 return frameworkMax;
-                
+
             // Use the minimum of both limits (most restrictive wins)
             return Math.Min(_maxConcurrency.Value, frameworkMax.Value);
         }
     }
-} 
+}

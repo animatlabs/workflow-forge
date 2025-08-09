@@ -1,6 +1,6 @@
 using System;
 
-namespace WorkflowForge
+namespace WorkflowForge.Abstractions
 {
     /// <summary>
     /// Provides an abstraction for system time operations to enable testability and time mocking.
@@ -23,4 +23,4 @@ namespace WorkflowForge
         /// </summary>
         DateTimeOffset Today { get; }
     }
-} 
+}

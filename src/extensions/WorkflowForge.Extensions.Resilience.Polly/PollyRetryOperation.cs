@@ -3,13 +3,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Polly;
 using Polly.CircuitBreaker;
-using Polly.Timeout;
 using Polly.Retry;
+using Polly.Timeout;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Operations;
+using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Resilience.Polly.Configurations;
+using WorkflowForge.Operations;
+using WorkflowForge.Exceptions;
 
-namespace WorkflowForge.Extensions.Resilience.Polly.Operations
+namespace WorkflowForge.Extensions.Resilience.Polly
 {
     /// <summary>
     /// A Polly-powered retry operation that can wrap any workflow operation with advanced resilience policies.
@@ -31,8 +33,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Operations
         /// <param name="logger">Optional logger for operation events.</param>
         /// <param name="name">Optional custom name for the operation.</param>
         public PollyRetryOperation(
-            IWorkflowOperation innerOperation, 
-            ResiliencePipeline pipeline, 
+            IWorkflowOperation innerOperation,
+            ResiliencePipeline pipeline,
             IWorkflowForgeLogger? logger = null,
             string? name = null)
         {
@@ -66,18 +68,18 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Operations
             {
                 _logger?.LogWarning(ex, "Circuit breaker is open for operation '{OperationName}'", _innerOperation.Name);
                 throw new WorkflowOperationException(
-                    $"Circuit breaker is open for operation '{_innerOperation.Name}'", 
-                    ex, 
-                    _innerOperation.Name, 
+                    $"Circuit breaker is open for operation '{_innerOperation.Name}'",
+                    ex,
+                    _innerOperation.Name,
                     _innerOperation.Id);
             }
             catch (TimeoutRejectedException ex)
             {
                 _logger?.LogError(ex, "Operation '{OperationName}' timed out", _innerOperation.Name);
                 throw new WorkflowOperationException(
-                    $"Operation '{_innerOperation.Name}' timed out", 
-                    ex, 
-                    _innerOperation.Name, 
+                    $"Operation '{_innerOperation.Name}' timed out",
+                    ex,
+                    _innerOperation.Name,
                     _innerOperation.Id);
             }
             catch (Exception ex)
@@ -363,7 +365,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Operations
             return WithComprehensivePolicy(innerOperation, settings, logger, name);
         }
 
-        #endregion
+        #endregion Factory Methods
     }
 
     /// <summary>
@@ -461,4 +463,4 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Operations
             return PollyRetryOperation.ForEnterprise(operation, logger);
         }
     }
-} 
+}

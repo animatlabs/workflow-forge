@@ -1,4 +1,4 @@
-namespace WorkflowForge.Extensions.Resilience
+namespace WorkflowForge.Extensions.Resilience.Abstractions
 {
     /// <summary>
     /// Represents the state of a circuit breaker.
@@ -20,4 +20,4 @@ namespace WorkflowForge.Extensions.Resilience
         /// </summary>
         HalfOpen
     }
-} 
+}

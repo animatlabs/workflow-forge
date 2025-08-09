@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace WorkflowForge.Extensions.Resilience
+namespace WorkflowForge.Extensions.Resilience.Abstractions
 {
     /// <summary>
     /// Interface for circuit breaker policies.
@@ -28,4 +28,4 @@ namespace WorkflowForge.Extensions.Resilience
         /// </summary>
         event EventHandler<CircuitBreakerStateChangedEventArgs>? StateChanged;
     }
-} 
+}

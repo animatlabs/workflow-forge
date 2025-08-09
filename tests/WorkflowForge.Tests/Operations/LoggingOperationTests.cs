@@ -4,10 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Loggers;
 using WorkflowForge.Operations;
-using Xunit;
-using Moq;
 
 namespace WorkflowForge.Tests.Operations;
 
@@ -38,7 +35,7 @@ public class LoggingOperationTests
     {
         // Arrange
         const string message = "Debug message";
-        const LogLevel level = LogLevel.Debug;
+        const WorkflowForgeLogLevel level = WorkflowForgeLogLevel.Debug;
 
         // Act
         var operation = new LoggingOperation(message, level);
@@ -54,7 +51,7 @@ public class LoggingOperationTests
     {
         // Arrange
         const string message = "Custom message";
-        const LogLevel level = LogLevel.Warning;
+        const WorkflowForgeLogLevel level = WorkflowForgeLogLevel.Warning;
         const string customName = "CustomLogger";
 
         // Act
@@ -70,16 +67,16 @@ public class LoggingOperationTests
     public void Constructor_WithNullMessage_ThrowsArgumentException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new LoggingOperation(null!, LogLevel.Information, "Test"));
+        Assert.Throws<ArgumentNullException>(() => new LoggingOperation(null!, WorkflowForgeLogLevel.Information, "Test"));
     }
 
     [Fact]
     public void Constructor_WithNullName_UsesDefaultName()
     {
         // Act
-        var operation1 = new LoggingOperation("message", LogLevel.Information, null);
-        var operation2 = new LoggingOperation("message", LogLevel.Information, "");
-        var operation3 = new LoggingOperation("message", LogLevel.Information, " ");
+        var operation1 = new LoggingOperation("message", WorkflowForgeLogLevel.Information, null);
+        var operation2 = new LoggingOperation("message", WorkflowForgeLogLevel.Information, "");
+        var operation3 = new LoggingOperation("message", WorkflowForgeLogLevel.Information, " ");
 
         // Assert - Null name should use default "Log: {message}" format
         Assert.Equal("Log: message", operation1.Name);
@@ -87,7 +84,7 @@ public class LoggingOperationTests
         Assert.Equal(" ", operation3.Name); // Whitespace is preserved
     }
 
-    #endregion
+    #endregion Constructor Tests
 
     #region ForgeAsync Tests
 
@@ -98,7 +95,7 @@ public class LoggingOperationTests
         var operation = new LoggingOperation("Test message");
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() => 
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             operation.ForgeAsync("input", null!, CancellationToken.None));
     }
 
@@ -146,7 +143,7 @@ public class LoggingOperationTests
         Assert.Same(inputData, result);
     }
 
-    #endregion
+    #endregion ForgeAsync Tests
 
     #region Logging Level Tests
 
@@ -155,7 +152,7 @@ public class LoggingOperationTests
     {
         // Arrange
         const string message = "Debug test message";
-        var operation = new LoggingOperation(message, LogLevel.Debug);
+        var operation = new LoggingOperation(message, WorkflowForgeLogLevel.Debug);
         var foundry = CreateMockFoundry();
 
         // Act
@@ -173,7 +170,7 @@ public class LoggingOperationTests
     {
         // Arrange
         const string message = "Information test message";
-        var operation = new LoggingOperation(message, LogLevel.Information);
+        var operation = new LoggingOperation(message, WorkflowForgeLogLevel.Information);
         var foundry = CreateMockFoundry();
 
         // Act
@@ -191,7 +188,7 @@ public class LoggingOperationTests
     {
         // Arrange
         const string message = "Warning test message";
-        var operation = new LoggingOperation(message, LogLevel.Warning);
+        var operation = new LoggingOperation(message, WorkflowForgeLogLevel.Warning);
         var foundry = CreateMockFoundry();
 
         // Act
@@ -209,7 +206,7 @@ public class LoggingOperationTests
     {
         // Arrange
         const string message = "Error test message";
-        var operation = new LoggingOperation(message, LogLevel.Error);
+        var operation = new LoggingOperation(message, WorkflowForgeLogLevel.Error);
         var foundry = CreateMockFoundry();
 
         // Act
@@ -237,7 +234,7 @@ public class LoggingOperationTests
         foundry.Verify(f => f.Logger.LogInformation(It.IsAny<Dictionary<string, string>>(), message), Times.Once);
     }
 
-    #endregion
+    #endregion Logging Level Tests
 
     #region Properties Logging Tests
 
@@ -246,12 +243,12 @@ public class LoggingOperationTests
     {
         // Arrange
         const string message = "Test message with properties";
-        var operation = new LoggingOperation(message, LogLevel.Information, "TestLogger");
+        var operation = new LoggingOperation(message, WorkflowForgeLogLevel.Information, "TestLogger");
         var foundry = CreateMockFoundry();
         var executionId = Guid.NewGuid();
         var workflowName = "TestWorkflow";
         foundry.Setup(f => f.ExecutionId).Returns(executionId);
-        
+
         var mockWorkflow = new Mock<IWorkflow>();
         mockWorkflow.Setup(w => w.Name).Returns(workflowName);
         foundry.Setup(f => f.CurrentWorkflow).Returns(mockWorkflow.Object);
@@ -311,7 +308,7 @@ public class LoggingOperationTests
         Assert.Equal("List`1", loggedProperties["InputType"]);
     }
 
-    #endregion
+    #endregion Properties Logging Tests
 
     #region Cancellation Tests
 
@@ -349,7 +346,7 @@ public class LoggingOperationTests
         foundry.Verify(f => f.Logger.LogInformation(It.IsAny<Dictionary<string, string>>(), "Test message"), Times.Once);
     }
 
-    #endregion
+    #endregion Cancellation Tests
 
     #region RestoreAsync Tests
 
@@ -361,7 +358,7 @@ public class LoggingOperationTests
         var foundry = CreateMockFoundry();
 
         // Act & Assert
-        await Assert.ThrowsAsync<NotSupportedException>(() => 
+        await Assert.ThrowsAsync<NotSupportedException>(() =>
             operation.RestoreAsync("output", foundry.Object));
     }
 
@@ -372,11 +369,11 @@ public class LoggingOperationTests
         var operation = new LoggingOperation("Test message");
 
         // Act & Assert
-        await Assert.ThrowsAsync<NotSupportedException>(() => 
+        await Assert.ThrowsAsync<NotSupportedException>(() =>
             operation.RestoreAsync("output", null!));
     }
 
-    #endregion
+    #endregion RestoreAsync Tests
 
     #region Dispose Tests
 
@@ -418,7 +415,7 @@ public class LoggingOperationTests
         foundry.Verify(f => f.Logger.LogInformation(It.IsAny<Dictionary<string, string>>(), "Test message"), Times.Once);
     }
 
-    #endregion
+    #endregion Dispose Tests
 
     #region Edge Cases and Performance Tests
 
@@ -460,10 +457,10 @@ public class LoggingOperationTests
         // Arrange
         var operations = new[]
         {
-            new LoggingOperation("Message 1", LogLevel.Debug),
-            new LoggingOperation("Message 2", LogLevel.Information),
-            new LoggingOperation("Message 3", LogLevel.Warning),
-            new LoggingOperation("Message 4", LogLevel.Error)
+            new LoggingOperation("Message 1", WorkflowForgeLogLevel.Debug),
+            new LoggingOperation("Message 2", WorkflowForgeLogLevel.Information),
+            new LoggingOperation("Message 3", WorkflowForgeLogLevel.Warning),
+            new LoggingOperation("Message 4", WorkflowForgeLogLevel.Error)
         };
         var foundry = CreateMockFoundry();
 
@@ -494,11 +491,11 @@ public class LoggingOperationTests
     }
 
     [Theory]
-    [InlineData(LogLevel.Debug)]
-    [InlineData(LogLevel.Information)]
-    [InlineData(LogLevel.Warning)]
-    [InlineData(LogLevel.Error)]
-    public async Task ForgeAsync_AllLogLevels_LogCorrectly(LogLevel level)
+    [InlineData(WorkflowForgeLogLevel.Debug)]
+    [InlineData(WorkflowForgeLogLevel.Information)]
+    [InlineData(WorkflowForgeLogLevel.Warning)]
+    [InlineData(WorkflowForgeLogLevel.Error)]
+    public async Task ForgeAsync_AllLogLevels_LogCorrectly(WorkflowForgeLogLevel level)
     {
         // Arrange
         var message = $"Test message for {level}";
@@ -511,22 +508,25 @@ public class LoggingOperationTests
         // Assert
         switch (level)
         {
-            case LogLevel.Debug:
+            case WorkflowForgeLogLevel.Debug:
                 foundry.Verify(f => f.Logger.LogDebug(It.IsAny<Dictionary<string, string>>(), message), Times.Once);
                 break;
-            case LogLevel.Information:
+
+            case WorkflowForgeLogLevel.Information:
                 foundry.Verify(f => f.Logger.LogInformation(It.IsAny<Dictionary<string, string>>(), message), Times.Once);
                 break;
-            case LogLevel.Warning:
+
+            case WorkflowForgeLogLevel.Warning:
                 foundry.Verify(f => f.Logger.LogWarning(It.IsAny<Dictionary<string, string>>(), message), Times.Once);
                 break;
-            case LogLevel.Error:
+
+            case WorkflowForgeLogLevel.Error:
                 foundry.Verify(f => f.Logger.LogError(It.IsAny<Dictionary<string, string>>(), message), Times.Once);
                 break;
         }
     }
 
-    #endregion
+    #endregion Edge Cases and Performance Tests
 
     #region Helper Methods
 
@@ -534,10 +534,10 @@ public class LoggingOperationTests
     {
         var foundry = new Mock<IWorkflowFoundry>();
         var logger = new Mock<IWorkflowForgeLogger>();
-        
+
         foundry.Setup(f => f.Logger).Returns(logger.Object);
         foundry.Setup(f => f.ExecutionId).Returns(Guid.NewGuid());
-        
+
         var mockWorkflow = new Mock<IWorkflow>();
         mockWorkflow.Setup(w => w.Name).Returns("TestWorkflow");
         foundry.Setup(f => f.CurrentWorkflow).Returns(mockWorkflow.Object);
@@ -545,5 +545,5 @@ public class LoggingOperationTests
         return foundry;
     }
 
-    #endregion
-} 
+    #endregion Helper Methods
+}

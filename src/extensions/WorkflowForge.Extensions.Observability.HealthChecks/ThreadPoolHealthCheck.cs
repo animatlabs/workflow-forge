@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using WorkflowForge.Extensions.Observability.HealthChecks.Abstractions;
 
 namespace WorkflowForge.Extensions.Observability.HealthChecks
 {
@@ -14,7 +15,7 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// Gets the name of the health check.
         /// </summary>
         public string Name => "ThreadPool";
-        
+
         /// <summary>
         /// Gets the description of what this health check validates.
         /// </summary>
@@ -28,15 +29,15 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         public Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             try
             {
                 ThreadPool.GetAvailableThreads(out var availableWorkerThreads, out var availableCompletionPortThreads);
                 ThreadPool.GetMaxThreads(out var maxWorkerThreads, out var maxCompletionPortThreads);
-                
+
                 var busyWorkerThreads = maxWorkerThreads - availableWorkerThreads;
                 var busyCompletionPortThreads = maxCompletionPortThreads - availableCompletionPortThreads;
-                
+
                 var data = new Dictionary<string, object>
                 {
                     ["WorkerThreads"] = availableWorkerThreads,
@@ -49,10 +50,10 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
                 };
 
                 var workerUsagePercent = (double)busyWorkerThreads / maxWorkerThreads * 100;
-                
+
                 HealthStatus status;
                 string description;
-                
+
                 if (workerUsagePercent > 90)
                 {
                     status = HealthStatus.Unhealthy;
@@ -77,4 +78,4 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
             }
         }
     }
-} 
+}

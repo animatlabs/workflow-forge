@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using WorkflowForge.Extensions.Observability.HealthChecks.Abstractions;
 
 namespace WorkflowForge.Extensions.Observability.HealthChecks
 {
@@ -14,7 +15,7 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// Gets the name of the health check.
         /// </summary>
         public string Name => "GarbageCollector";
-        
+
         /// <summary>
         /// Gets the description of what this health check validates.
         /// </summary>
@@ -28,14 +29,14 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         public Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             try
             {
                 var gen0Collections = GC.CollectionCount(0);
                 var gen1Collections = GC.CollectionCount(1);
                 var gen2Collections = GC.CollectionCount(2);
                 var totalMemory = GC.GetTotalMemory(forceFullCollection: false);
-                
+
                 var data = new Dictionary<string, object>
                 {
                     ["Gen0Collections"] = gen0Collections,
@@ -47,10 +48,10 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
                 // Assess GC pressure
                 HealthStatus status;
                 string description;
-                
+
                 // Simple heuristic: if Gen2 collections are frequent relative to Gen0
                 var gen2Ratio = gen0Collections > 0 ? (double)gen2Collections / gen0Collections : 0;
-                
+
                 if (gen2Ratio > 0.1) // More than 10% Gen2 collections
                 {
                     status = HealthStatus.Degraded;
@@ -75,4 +76,4 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
             }
         }
     }
-} 
+}

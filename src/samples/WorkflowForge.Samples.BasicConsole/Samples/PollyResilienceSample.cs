@@ -1,7 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Resilience.Polly;
@@ -20,13 +16,13 @@ public class PollyResilienceSample : ISample
     public async Task RunAsync()
     {
         Console.WriteLine("Demonstrating Polly resilience patterns...");
-        
+
         // Scenario 1: Development resilience (lenient)
         await RunDevelopmentResilienceScenario();
-        
+
         // Scenario 2: Production resilience (strict)
         await RunProductionResilienceScenario();
-        
+
         // Scenario 3: Enterprise resilience (comprehensive)
         await RunEnterpriseResilienceScenario();
     }
@@ -34,20 +30,20 @@ public class PollyResilienceSample : ISample
     private static async Task RunDevelopmentResilienceScenario()
     {
         Console.WriteLine("\n--- Development Resilience Scenario ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("DevelopmentResilience");
-        
+
         // Apply development resilience settings (lenient for debugging)
         foundry.UsePollyDevelopmentResilience();
-        
+
         foundry.Properties["scenario"] = "development";
         foundry.Properties["max_failures"] = 1; // Fail once, then succeed
-        
+
         foundry
             .WithOperation(new UnreliableServiceOperation())
             .WithOperation(new DataProcessingOperation())
             .WithOperation(new CompletionOperation());
-        
+
         try
         {
             Console.WriteLine("Executing workflow with development resilience...");
@@ -62,20 +58,20 @@ public class PollyResilienceSample : ISample
     private static async Task RunProductionResilienceScenario()
     {
         Console.WriteLine("\n--- Production Resilience Scenario ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("ProductionResilience");
-        
+
         // Apply production resilience settings (strict for reliability)
         foundry.UsePollyProductionResilience();
-        
+
         foundry.Properties["scenario"] = "production";
         foundry.Properties["max_failures"] = 2; // Fail twice, then succeed
-        
+
         foundry
             .WithOperation(new UnreliableServiceOperation())
             .WithOperation(new DataProcessingOperation())
             .WithOperation(new CompletionOperation());
-        
+
         try
         {
             Console.WriteLine("Executing workflow with production resilience...");
@@ -90,20 +86,20 @@ public class PollyResilienceSample : ISample
     private static async Task RunEnterpriseResilienceScenario()
     {
         Console.WriteLine("\n--- Enterprise Resilience Scenario ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("EnterpriseResilience");
-        
+
         // Apply enterprise resilience settings (comprehensive)
         foundry.UsePollyEnterpriseResilience();
-        
+
         foundry.Properties["scenario"] = "enterprise";
         foundry.Properties["max_failures"] = 1; // Succeed after one failure
-        
+
         foundry
             .WithOperation(new UnreliableServiceOperation())
             .WithOperation(new DataProcessingOperation())
             .WithOperation(new CompletionOperation());
-        
+
         try
         {
             Console.WriteLine("Executing workflow with enterprise resilience...");
@@ -131,14 +127,14 @@ public class UnreliableServiceOperation : IWorkflowOperation
     {
         var scenario = foundry.Properties["scenario"] as string ?? "unknown";
         var maxFailures = (int)(foundry.Properties["max_failures"] ?? 0);
-        
+
         _attemptCount++;
-        
+
         foundry.Logger.LogInformation("Attempting to call unreliable service (attempt {AttemptCount})", _attemptCount);
-        
+
         // Simulate network delay
         await Task.Delay(100, cancellationToken);
-        
+
         // Fail for the first few attempts based on scenario
         if (_attemptCount <= maxFailures)
         {
@@ -149,11 +145,11 @@ public class UnreliableServiceOperation : IWorkflowOperation
                 "enterprise" => "Service circuit breaker activated",
                 _ => "Unknown service error"
             };
-            
+
             foundry.Logger.LogWarning("Service call failed: {ErrorMessage}", errorMessage);
             throw new ExternalServiceException(errorMessage);
         }
-        
+
         // Success after configured failures
         var serviceResponse = new
         {
@@ -162,25 +158,26 @@ public class UnreliableServiceOperation : IWorkflowOperation
             Timestamp = DateTime.UtcNow,
             AttemptCount = _attemptCount
         };
-        
+
         foundry.Properties["service_response"] = serviceResponse;
         foundry.Logger.LogInformation("Service call succeeded on attempt {AttemptCount}", _attemptCount);
-        
+
         return serviceResponse;
     }
 
     public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogWarning("Restoring unreliable service operation due to workflow failure");
-        
+
         // Simulate cleanup
         await Task.Delay(50, cancellationToken);
-        
+
         foundry.Properties.TryRemove("service_response", out _);
         foundry.Logger.LogInformation("Service operation restoration completed");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -196,9 +193,9 @@ public class DataProcessingOperation : IWorkflowOperation
     {
         var serviceResponse = inputData as dynamic;
         var scenario = foundry.Properties["scenario"] as string ?? "unknown";
-        
+
         foundry.Logger.LogInformation("Processing data from service response");
-        
+
         // Simulate data processing with different durations based on scenario
         var processingTime = scenario switch
         {
@@ -207,9 +204,9 @@ public class DataProcessingOperation : IWorkflowOperation
             "enterprise" => 300,   // Optimized for enterprise
             _ => 1000
         };
-        
+
         await Task.Delay(processingTime, cancellationToken);
-        
+
         var processedData = new
         {
             OriginalRequestId = serviceResponse?.RequestId ?? "unknown",
@@ -218,10 +215,10 @@ public class DataProcessingOperation : IWorkflowOperation
             Scenario = scenario,
             Status = "Processed"
         };
-        
+
         foundry.Properties["processed_data"] = processedData;
         foundry.Logger.LogInformation("Data processing completed in {ProcessingTime}ms", processingTime);
-        
+
         return processedData;
     }
 
@@ -230,7 +227,8 @@ public class DataProcessingOperation : IWorkflowOperation
         throw new NotSupportedException("Data processing does not support restoration");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -246,12 +244,12 @@ public class CompletionOperation : IWorkflowOperation
     {
         var processedData = inputData as dynamic;
         var scenario = foundry.Properties["scenario"] as string ?? "unknown";
-        
+
         foundry.Logger.LogInformation("Completing {Scenario} resilience workflow", scenario);
-        
+
         // Simulate final processing
         await Task.Delay(50, cancellationToken);
-        
+
         var summary = new
         {
             Scenario = scenario,
@@ -267,14 +265,14 @@ public class CompletionOperation : IWorkflowOperation
                 _ => "Unknown pattern"
             }
         };
-        
+
         foundry.Properties["workflow_summary"] = summary;
-        
+
         Console.WriteLine($"   [SUCCESS] {scenario} resilience workflow completed successfully!");
         Console.WriteLine($"   [INFO] Request ID: {summary.RequestId}");
         Console.WriteLine($"   [INFO] Processing time: {summary.ProcessingTime}ms");
         Console.WriteLine($"   [INFO] Resilience pattern: {summary.ResiliencePattern}");
-        
+
         return summary;
     }
 
@@ -283,5 +281,6 @@ public class CompletionOperation : IWorkflowOperation
         throw new NotSupportedException("Completion operation does not support restoration");
     }
 
-    public void Dispose() { }
-} 
+    public void Dispose()
+    { }
+}

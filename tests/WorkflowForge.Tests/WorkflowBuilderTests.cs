@@ -5,8 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Operations;
-using Xunit;
-using Moq;
 
 namespace WorkflowForge.Tests;
 
@@ -88,7 +86,7 @@ public class WorkflowBuilderTests
         Assert.Null(builder.ServiceProvider);
     }
 
-    #endregion
+    #endregion Constructor Tests
 
     #region WithName Tests
 
@@ -152,7 +150,7 @@ public class WorkflowBuilderTests
         Assert.Equal("FinalName", builder.Name);
     }
 
-    #endregion
+    #endregion WithName Tests
 
     #region WithDescription Tests
 
@@ -201,7 +199,7 @@ public class WorkflowBuilderTests
         Assert.Equal("Final description", builder.Description);
     }
 
-    #endregion
+    #endregion WithDescription Tests
 
     #region WithVersion Tests
 
@@ -248,7 +246,7 @@ public class WorkflowBuilderTests
         Assert.Equal("2.0.0", builder.Version);
     }
 
-    #endregion
+    #endregion WithVersion Tests
 
     #region AddOperation Tests
 
@@ -411,7 +409,7 @@ public class WorkflowBuilderTests
         Assert.Throws<InvalidOperationException>(() => builder.AddOperation<TestParameterlessOperation>());
     }
 
-    #endregion
+    #endregion AddOperation Tests
 
     #region Build Tests
 
@@ -511,7 +509,7 @@ public class WorkflowBuilderTests
         Assert.NotEqual(workflow1.Id, workflow2.Id);
     }
 
-    #endregion
+    #endregion Build Tests
 
     #region Sequential and Parallel Tests
 
@@ -576,7 +574,7 @@ public class WorkflowBuilderTests
         Assert.Throws<ArgumentException>(() => WorkflowBuilder.Parallel());
     }
 
-    #endregion
+    #endregion Sequential and Parallel Tests
 
     #region Fluent API Tests
 
@@ -628,7 +626,7 @@ public class WorkflowBuilderTests
         Assert.Equal(2, workflow.Operations.Count);
     }
 
-    #endregion
+    #endregion Fluent API Tests
 
     #region Edge Cases
 
@@ -723,7 +721,7 @@ public class WorkflowBuilderTests
         Assert.NotNull(builder.Version);
     }
 
-    #endregion
+    #endregion Edge Cases
 
     #region Helper Classes
 
@@ -777,5 +775,5 @@ public class WorkflowBuilderTests
         }
     }
 
-    #endregion
-} 
+    #endregion Helper Classes
+}

@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Operations;
 using WorkflowForge.Extensions;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -28,7 +23,7 @@ public class OperationCreationPatternsSample : ISample
         // =====================================================================
         Console.WriteLine("SHOWCASE: Class-Based Operations");
         Console.WriteLine("=================================");
-        
+
         var showcaseWorkflow = WorkflowForge.CreateWorkflow()
             .WithName("ShowcaseWorkflow")
             .AddOperation(new CustomBusinessOperation("DEMO-001", "ShowcaseData"))
@@ -36,7 +31,7 @@ public class OperationCreationPatternsSample : ISample
 
         using var showcaseFoundry = WorkflowForge.CreateFoundry("OperationShowcase");
         showcaseFoundry.SetProperty("input", "Starting workflow with class-based operations");
-        
+
         using var showcaseSmith = WorkflowForge.CreateSmith();
         await showcaseSmith.ForgeAsync(showcaseWorkflow, showcaseFoundry);
         Console.WriteLine("Showcase workflow completed successfully!");
@@ -57,7 +52,7 @@ public class OperationCreationPatternsSample : ISample
 
         using var foundry1 = WorkflowForge.CreateFoundry("DirectConstructor");
         foundry1.SetProperty("input", "Starting with direct constructors");
-        
+
         using var smith1 = WorkflowForge.CreateSmith();
         await smith1.ForgeAsync(workflow1, foundry1);
         Console.WriteLine("Direct constructor pattern completed\n");
@@ -66,14 +61,14 @@ public class OperationCreationPatternsSample : ISample
         Console.WriteLine("Demonstrating TypedMathOperation with proper integer input...");
         var mathWorkflow = WorkflowForge.CreateWorkflow()
             .WithName("MathWorkflow")
-            .AddOperation(WorkflowOperations.Create<object, int>("PrepareNumber", 
+            .AddOperation(WorkflowOperations.Create<object, int>("PrepareNumber",
                 input => 10)) // Convert to integer
             .AddOperation(new TypedMathOperation(42))
             .Build();
 
         using var mathFoundry = WorkflowForge.CreateFoundry("MathDemo");
         mathFoundry.SetProperty("input", "Starting math operations");
-        
+
         using var mathSmith = WorkflowForge.CreateSmith();
         await mathSmith.ForgeAsync(mathWorkflow, mathFoundry);
         Console.WriteLine("Math operation pattern completed\n");
@@ -86,7 +81,7 @@ public class OperationCreationPatternsSample : ISample
 
         using var paymentFoundry = WorkflowForge.CreateFoundry("PaymentDemo");
         paymentFoundry.SetProperty("input", "Payment processing");
-        
+
         using var paymentSmith = WorkflowForge.CreateSmith();
         await paymentSmith.ForgeAsync(paymentWorkflow, paymentFoundry);
         Console.WriteLine("Payment operation pattern completed\n");
@@ -98,17 +93,17 @@ public class OperationCreationPatternsSample : ISample
         var workflow2 = WorkflowForge.CreateWorkflow()
             .WithName("GenericFactoryWorkflow")
             // Untyped operations that work with any input
-            .AddOperation(WorkflowOperations.Create("StringProcessor", 
+            .AddOperation(WorkflowOperations.Create("StringProcessor",
                 input => $"Processed: {input?.ToString()?.ToUpperInvariant()}"))
-            
+
             // Another untyped async operation
-            .AddOperation(WorkflowOperations.CreateAsync("StringLengthCalculator", 
-                async input => 
+            .AddOperation(WorkflowOperations.CreateAsync("StringLengthCalculator",
+                async input =>
                 {
                     await Task.Delay(50); // Simulate async work
                     return input?.ToString()?.Length ?? 0;
                 }))
-            
+
             // Untyped with foundry access
             .AddOperation(DelegateWorkflowOperation.FromAsync("ScaleCalculator",
                 async input =>
@@ -117,12 +112,12 @@ public class OperationCreationPatternsSample : ISample
                     var length = input?.ToString()?.Length ?? 0;
                     return length * 2.5;
                 }))
-            
+
             .Build();
 
         using var foundry2 = WorkflowForge.CreateFoundry("GenericFactory");
         foundry2.SetProperty("input", "hello world");
-        
+
         using var smith2 = WorkflowForge.CreateSmith();
         await smith2.ForgeAsync(workflow2, foundry2);
         Console.WriteLine($"Generic factory pattern completed - Final result: {foundry2.GetPropertyOrDefault<object>("result")}\n");
@@ -133,9 +128,9 @@ public class OperationCreationPatternsSample : ISample
         Console.WriteLine("--- Pattern 3: DelegateWorkflowOperation Patterns ---");
         var workflow3 = WorkflowForge.CreateWorkflow()
             .WithName("DelegateOperationWorkflow")
-            
+
             // Untyped delegate with full signature
-            .AddOperation(new DelegateWorkflowOperation("CustomValidator", 
+            .AddOperation(new DelegateWorkflowOperation("CustomValidator",
                 async (input, foundry, ct) =>
                 {
                     var properties = new Dictionary<string, string>
@@ -150,28 +145,28 @@ public class OperationCreationPatternsSample : ISample
                     foundry.SetProperty("validationResult", isValid);
                     return isValid ? "Valid" : "Invalid";
                 }))
-            
+
             // From sync factory method
-            .AddOperation(DelegateWorkflowOperation.FromSync("SimpleTransform", 
+            .AddOperation(DelegateWorkflowOperation.FromSync("SimpleTransform",
                 input => $"Transformed: {input}"))
-            
-            // From async factory method  
+
+            // From async factory method
             .AddOperation(DelegateWorkflowOperation.FromAsync("AsyncProcessor",
                 async input =>
                 {
                     await Task.Delay(75);
                     return $"Async result: {input}";
                 }))
-            
+
             // Action operation (no return value)
             .AddOperation(DelegateWorkflowOperation.FromAction("LogResults",
                 input => Console.WriteLine($"   [ACTION] Final result: {input}")))
-            
+
             .Build();
 
         using var foundry3 = WorkflowForge.CreateFoundry("DelegateOperations");
         foundry3.SetProperty("input", "sample data");
-        
+
         using var smith3 = WorkflowForge.CreateSmith();
         await smith3.ForgeAsync(workflow3, foundry3);
         Console.WriteLine("Delegate operation patterns completed\n");
@@ -182,11 +177,11 @@ public class OperationCreationPatternsSample : ISample
         Console.WriteLine("--- Pattern 4: WorkflowOperations Factory Class ---");
         var workflow4 = WorkflowForge.CreateWorkflow()
             .WithName("FactoryClassWorkflow")
-            
+
             // Simple sync operation
-            .AddOperation(WorkflowOperations.Create("DataNormalizer", 
+            .AddOperation(WorkflowOperations.Create("DataNormalizer",
                 input => input?.ToString()?.Trim().ToLowerInvariant()))
-            
+
             // Simple async operation
             .AddOperation(WorkflowOperations.CreateAsync("DataEnricher",
                 async input =>
@@ -194,11 +189,11 @@ public class OperationCreationPatternsSample : ISample
                     await Task.Delay(50);
                     return $"enriched_{input}_{DateTime.Now:HHmmss}";
                 }))
-            
+
             // Action operation
             .AddOperation(WorkflowOperations.CreateAction("ResultLogger",
                 input => Console.WriteLine($"   [FACTORY ACTION] Processing: {input}")))
-            
+
             // Async action operation
             .AddOperation(WorkflowOperations.CreateAsyncAction("AsyncNotifier",
                 async input =>
@@ -206,12 +201,12 @@ public class OperationCreationPatternsSample : ISample
                     await Task.Delay(25);
                     Console.WriteLine($"   [ASYNC ACTION] Notification sent for: {input}");
                 }))
-            
+
             .Build();
 
         using var foundry4 = WorkflowForge.CreateFoundry("FactoryClass");
         foundry4.SetProperty("input", "  RAW DATA  ");
-        
+
         using var smith4 = WorkflowForge.CreateSmith();
         await smith4.ForgeAsync(workflow4, foundry4);
         Console.WriteLine("Factory class patterns completed\n");
@@ -222,7 +217,7 @@ public class OperationCreationPatternsSample : ISample
         Console.WriteLine("--- Pattern 5: Inline Lambda Operations (For Prototyping) ---");
         var workflow5 = WorkflowForge.CreateWorkflow()
             .WithName("InlineLambdaWorkflow")
-            
+
             // Simple inline operation using WorkflowBuilder.AddOperation
             .AddOperation("QuickValidation", async (foundry, ct) =>
             {
@@ -232,11 +227,11 @@ public class OperationCreationPatternsSample : ISample
                     ["ValidationType"] = "QuickValidation",
                     ["InputPresent"] = (input != null).ToString()
                 };
-                foundry.Logger.LogInformation(properties, "Quick validation started");
+                foundry.Logger.LogInformation(properties, "Quick validation started - InputPresent: {InputPresent}", input is not null);
                 await Task.Delay(30, ct);
                 foundry.SetProperty("validationResult", input != null ? "passed" : "failed");
             })
-            
+
             // Complex inline operation using WorkflowBuilder.AddOperation
             .AddOperation("ComplexProcessing", async (foundry, ct) =>
             {
@@ -249,18 +244,18 @@ public class OperationCreationPatternsSample : ISample
                     ["InputData"] = input?.ToString() ?? "null"
                 };
                 foundry.Logger.LogInformation(properties, "Complex processing started");
-                
+
                 var processor = new
                 {
                     StartTime = DateTime.Now,
                     Input = input?.ToString(),
                     ProcessId = processId
                 };
-                
+
                 await Task.Delay(100, ct);
-                
+
                 foundry.SetProperty("processingInfo", processor);
-                
+
                 var result = new
                 {
                     Status = "completed",
@@ -268,15 +263,15 @@ public class OperationCreationPatternsSample : ISample
                     Duration = DateTime.Now - processor.StartTime,
                     Result = $"processed_{processor.Input}"
                 };
-                
+
                 foundry.SetProperty("result", result);
             })
-            
+
             .Build();
 
         using var foundry5 = WorkflowForge.CreateFoundry("InlineLambda");
         foundry5.SetProperty("input", "test data");
-        
+
         using var smith5 = WorkflowForge.CreateSmith();
         await smith5.ForgeAsync(workflow5, foundry5);
         Console.WriteLine($"Inline lambda patterns completed\n");
@@ -289,14 +284,14 @@ public class OperationCreationPatternsSample : ISample
         Console.WriteLine("--- Pattern 6: Mixed Patterns (Real-world Example) ---");
         var workflow6 = WorkflowForge.CreateWorkflow()
             .WithName("MixedPatternWorkflow")
-            
+
             // Start with a custom class (complex business logic)
             .AddOperation(new CustomBusinessOperation("ORDER-001", "Order Processing"))
-            
+
             // Use factory for simple transformation to decimal
             .AddOperation(WorkflowOperations.Create<object, decimal>("CalculateTotal",
                 input => 299.99m)) // Simplified calculation
-            
+
             // Inline operation for business rules
             .AddOperation("ApplyDiscounts", async (foundry, ct) =>
             {
@@ -309,21 +304,21 @@ public class OperationCreationPatternsSample : ISample
                     ["DiscountAmount"] = discount.ToString("F2"),
                     ["OperationType"] = "DiscountCalculation"
                 };
-                foundry.Logger.LogInformation(properties, "Applied discount: ${Discount:F2}", discount);
+                foundry.Logger.LogInformation(properties, "Applied discount: {Discount:F2}", discount);
                 await Task.Delay(25, ct);
                 var finalTotal = total - discount;
                 foundry.SetProperty("finalTotal", finalTotal);
             })
-            
+
             // Final action using factory
             .AddOperation(WorkflowOperations.CreateAction("SendConfirmation",
                 input => Console.WriteLine($"   [CONFIRMATION] Order completed! Processing finished.")))
-            
+
             .Build();
 
         using var foundry6 = WorkflowForge.CreateFoundry("MixedPattern");
         foundry6.SetProperty("input", "Mixed pattern order processing");
-        
+
         using var smith6 = WorkflowForge.CreateSmith();
         await smith6.ForgeAsync(workflow6, foundry6);
         Console.WriteLine("Mixed patterns workflow completed\n");
@@ -388,7 +383,7 @@ public class CustomBusinessOperation : WorkflowOperationBase
         };
         foundry.Logger.LogInformation(properties, "Processing {DataType} with ID {ProcessId}", _dataType, _processId);
         await Task.Delay(100, cancellationToken);
-        
+
         var result = new
         {
             ProcessId = _processId,
@@ -397,7 +392,7 @@ public class CustomBusinessOperation : WorkflowOperationBase
             ProcessedAt = DateTime.Now,
             Status = "Completed"
         };
-        
+
         foundry.Properties[$"customResult_{_processId}"] = result;
         return result;
     }
@@ -428,7 +423,7 @@ public class TypedMathOperation : WorkflowOperationBase<int, double>
         };
         foundry.Logger.LogInformation(properties, "Calculating {Input} * {Multiplier}", inputData, _multiplier);
         await Task.Delay(50, cancellationToken);
-        
+
         var result = inputData * _multiplier * 1.5;
         foundry.Properties["mathResult"] = result;
         return result;
@@ -461,12 +456,12 @@ public class PaymentOperation : WorkflowOperationBase
             ["Currency"] = "USD"
         };
         foundry.Logger.LogInformation(properties, "Processing payment: ${Amount:F2}", _amount);
-        
+
         await Task.Delay(120, cancellationToken);
-        
+
         foundry.Properties["paymentTransactionId"] = transactionId;
         foundry.Properties["paymentAmount"] = _amount;
-        
+
         return new { TransactionId = transactionId, Amount = _amount, Status = "Charged" };
     }
 
@@ -474,7 +469,7 @@ public class PaymentOperation : WorkflowOperationBase
     {
         var transactionId = foundry.Properties.GetValueOrDefault("paymentTransactionId");
         var amount = foundry.Properties.GetValueOrDefault("paymentAmount");
-        
+
         var properties = new Dictionary<string, string>
         {
             ["TransactionId"] = transactionId?.ToString() ?? "unknown",
@@ -484,7 +479,7 @@ public class PaymentOperation : WorkflowOperationBase
         };
         foundry.Logger.LogWarning(properties, "Refunding payment: {TransactionId} for ${Amount:F2}", transactionId, amount);
         await Task.Delay(80, cancellationToken);
-        
+
         foundry.Properties["paymentRefunded"] = true;
     }
 }
@@ -506,17 +501,17 @@ public class OrderValidationSampleOperation : WorkflowOperationBase<Order, Order
             ["OperationType"] = "OrderValidation",
             ["ValidationStep"] = "Initial"
         };
-        foundry.Logger.LogInformation(properties, "Validating order {OrderId} with {ItemCount} items", 
+        foundry.Logger.LogInformation(properties, "Validating order {OrderId} with {ItemCount} items",
             inputData.Id, inputData.Items.Count);
-        
+
         await Task.Delay(75, cancellationToken);
-        
+
         if (string.IsNullOrEmpty(inputData.Id))
             throw new InvalidOperationException("Order ID is required");
-            
+
         if (!inputData.Items.Any())
             throw new InvalidOperationException("Order must contain at least one item");
-            
+
         foundry.Properties["orderValidated"] = true;
         return inputData;
     }
@@ -543,7 +538,7 @@ public class NotificationOperation : WorkflowOperationBase
     {
         var emailId = $"EMAIL_{Guid.NewGuid():N}"[..12];
         var recipient = _parameters.GetValueOrDefault("recipient", "customer@example.com");
-        
+
         var properties = new Dictionary<string, string>
         {
             ["EmailId"] = emailId,
@@ -553,10 +548,10 @@ public class NotificationOperation : WorkflowOperationBase
             ["NotificationType"] = "Outbound"
         };
         foundry.Logger.LogInformation(properties, "Sending email notification using template {Template}", _templateName);
-        
+
         foundry.Logger.LogInformation(properties, "Sending email {EmailId} to {Recipient}", emailId, recipient);
         await Task.Delay(200, cancellationToken); // Simulate email sending
-        
+
         var result = new
         {
             EmailId = emailId,
@@ -565,10 +560,10 @@ public class NotificationOperation : WorkflowOperationBase
             SentAt = DateTime.UtcNow,
             Status = "Sent"
         };
-        
+
         foundry.Properties["emailId"] = emailId;
         foundry.Properties["emailRecipient"] = recipient;
-        
+
         return result;
     }
 
@@ -576,7 +571,7 @@ public class NotificationOperation : WorkflowOperationBase
     {
         var emailId = foundry.Properties.GetValueOrDefault("emailId");
         var recipient = foundry.Properties.GetValueOrDefault("emailRecipient");
-        
+
         var properties = new Dictionary<string, string>
         {
             ["OriginalEmailId"] = emailId?.ToString() ?? "unknown",
@@ -587,7 +582,7 @@ public class NotificationOperation : WorkflowOperationBase
         };
         foundry.Logger.LogWarning(properties, "Sending cancellation email for original {EmailId} to {Recipient}", emailId, recipient);
         await Task.Delay(150, cancellationToken);
-        
+
         foundry.Properties["cancellationEmailSent"] = true;
     }
 }
@@ -611,16 +606,16 @@ public class ExternalApiDataProcessor : WorkflowOperationBase<string, ApiRespons
     public override async Task<ApiResponse> ForgeAsync(string inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Processing data through external API: {Endpoint}", _apiEndpoint);
-        
+
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         cts.CancelAfter(_timeout);
-        
+
         try
         {
             // Simulate external API call
             foundry.Logger.LogDebug("Calling external API with data: {Data}", inputData);
             await Task.Delay(300, cts.Token); // Simulate API latency
-            
+
             var response = new ApiResponse
             {
                 Success = true,
@@ -628,10 +623,10 @@ public class ExternalApiDataProcessor : WorkflowOperationBase<string, ApiRespons
                 RequestId = Guid.NewGuid().ToString("N")[..8],
                 ProcessedAt = DateTime.UtcNow
             };
-            
+
             foundry.Logger.LogInformation("External API call completed successfully. RequestId: {RequestId}", response.RequestId);
             foundry.Properties["apiRequestId"] = response.RequestId;
-            
+
             return response;
         }
         catch (OperationCanceledException) when (cts.Token.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
@@ -665,18 +660,18 @@ public class ComprehensiveValidationOperation : WorkflowOperationBase<Validation
     public override async Task<ValidationResult> ForgeAsync(ValidationRequest inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Starting comprehensive validation with {RuleCount} rules", _validationRules.Count);
-        
+
         var result = new ValidationResult
         {
             IsValid = true,
             Errors = new List<string>(),
             ValidatedAt = DateTime.UtcNow
         };
-        
+
         foreach (var rule in _validationRules)
         {
             foundry.Logger.LogDebug("Applying validation rule: {RuleName}", rule.GetType().Name);
-            
+
             if (!await rule.ValidateAsync(inputData, cancellationToken))
             {
                 result.IsValid = false;
@@ -688,10 +683,10 @@ public class ComprehensiveValidationOperation : WorkflowOperationBase<Validation
                 foundry.Logger.LogDebug("Validation rule passed: {RuleName}", rule.GetType().Name);
             }
         }
-        
-        foundry.Logger.LogInformation("Validation completed. IsValid: {IsValid}, ErrorCount: {ErrorCount}", 
+
+        foundry.Logger.LogInformation("Validation completed. IsValid: {IsValid}, ErrorCount: {ErrorCount}",
             result.IsValid, result.Errors.Count);
-            
+
         foundry.Properties["validationResult"] = result;
         return result;
     }
@@ -731,7 +726,7 @@ public interface IValidationRule
 public class NotNullValidationRule : IValidationRule
 {
     public string ErrorMessage => "Data cannot be null or empty";
-    
+
     public Task<bool> ValidateAsync(ValidationRequest request, CancellationToken cancellationToken)
     {
         return Task.FromResult(!string.IsNullOrEmpty(request.Data));
@@ -742,15 +737,15 @@ public class StringLengthValidationRule : IValidationRule
 {
     private readonly int _minLength;
     private readonly int _maxLength;
-    
+
     public StringLengthValidationRule(int minLength, int maxLength)
     {
         _minLength = minLength;
         _maxLength = maxLength;
     }
-    
+
     public string ErrorMessage => $"Data length must be between {_minLength} and {_maxLength} characters";
-    
+
     public Task<bool> ValidateAsync(ValidationRequest request, CancellationToken cancellationToken)
     {
         var length = request.Data?.Length ?? 0;
@@ -774,4 +769,4 @@ public class OrderItem
     public string Name { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public int Quantity { get; set; }
-} 
+}

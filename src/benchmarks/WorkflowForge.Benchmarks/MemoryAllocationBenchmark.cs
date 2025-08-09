@@ -1,10 +1,9 @@
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Engines;
 using System.Collections.Concurrent;
 using System.Text;
-using WorkflowForge;
-using WorkflowForge.Abstractions;
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Engines;
 using WorkflowForge.Extensions;
+using WorkflowForge.Configurations;
 
 namespace WorkflowForge.Benchmarks;
 
@@ -43,7 +42,7 @@ public class MemoryAllocationBenchmark
     public async Task<string> MinimalAllocationWorkflow()
     {
         using var foundry = WorkflowForge.CreateFoundry("MinimalAllocation", _minimalConfig);
-        
+
         foundry.WithOperation("MinimalOp", async (foundry) =>
         {
             // Minimal allocation - just return a string
@@ -59,7 +58,7 @@ public class MemoryAllocationBenchmark
     public async Task<string> SmallObjectAllocation()
     {
         using var foundry = WorkflowForge.CreateFoundry("SmallObjects", _minimalConfig);
-        
+
         for (int i = 0; i < AllocationCount; i++)
         {
             var index = i;
@@ -80,7 +79,7 @@ public class MemoryAllocationBenchmark
     public async Task<string> LargeObjectAllocation()
     {
         using var foundry = WorkflowForge.CreateFoundry("LargeObjects", _minimalConfig);
-        
+
         for (int i = 0; i < Math.Min(AllocationCount, 50); i++) // Limit for large objects
         {
             var index = i;
@@ -102,9 +101,9 @@ public class MemoryAllocationBenchmark
     public async Task<string> StringConcatenationAllocation()
     {
         using var foundry = WorkflowForge.CreateFoundry("StringConcat", _minimalConfig);
-        
+
         foundry.Properties["result_string"] = "";
-        
+
         for (int i = 0; i < AllocationCount; i++)
         {
             var index = i;
@@ -127,10 +126,10 @@ public class MemoryAllocationBenchmark
     public async Task<string> StringBuilderOptimization()
     {
         using var foundry = WorkflowForge.CreateFoundry("StringBuilder", _minimalConfig);
-        
+
         var stringBuilder = new StringBuilder(AllocationCount * 20); // Pre-size for efficiency
         foundry.Properties["string_builder"] = stringBuilder;
-        
+
         for (int i = 0; i < AllocationCount; i++)
         {
             var index = i;
@@ -151,10 +150,10 @@ public class MemoryAllocationBenchmark
     public async Task<string> CollectionAllocation()
     {
         using var foundry = WorkflowForge.CreateFoundry("Collections", _minimalConfig);
-        
+
         var collections = new List<List<string>>();
         foundry.Properties["collections"] = collections;
-        
+
         for (int i = 0; i < AllocationCount; i++)
         {
             var index = i;
@@ -175,10 +174,10 @@ public class MemoryAllocationBenchmark
     public async Task<string> ObjectPoolingSimulation()
     {
         using var foundry = WorkflowForge.CreateFoundry("ObjectPooling", _memoryOptimizedConfig);
-        
+
         var objectPool = new SimpleObjectPool<BenchmarkWorkObject>(AllocationCount);
         foundry.Properties["object_pool"] = objectPool;
-        
+
         for (int i = 0; i < AllocationCount; i++)
         {
             var index = i;
@@ -207,29 +206,29 @@ public class MemoryAllocationBenchmark
     public async Task<string> MemoryPressureScenario()
     {
         using var foundry = WorkflowForge.CreateFoundry("MemoryPressure", _minimalConfig);
-        
+
         var memoryIntensiveData = new List<byte[]>();
         foundry.Properties["memory_data"] = memoryIntensiveData;
-        
+
         for (int i = 0; i < Math.Min(AllocationCount, 100); i++) // Limit to prevent OOM
         {
             var index = i;
             foundry.WithOperation($"MemOp_{index}", async (foundry) =>
             {
                 var data = (List<byte[]>)foundry.Properties["memory_data"]!;
-                
+
                 // Allocate various sizes to create memory pressure
                 var size = (index % 5 + 1) * 10_000; // 10KB to 50KB
                 var allocation = new byte[size];
                 Array.Fill(allocation, (byte)(index % 256));
                 data.Add(allocation);
-                
+
                 // Occasionally force GC to test pressure handling
                 if (index % 20 == 0)
                 {
                     GC.Collect(0, GCCollectionMode.Optimized);
                 }
-                
+
                 await Task.Yield();
             });
         }
@@ -243,10 +242,10 @@ public class MemoryAllocationBenchmark
     public async Task<string> DisposableResourceManagement()
     {
         using var foundry = WorkflowForge.CreateFoundry("DisposableResources", _minimalConfig);
-        
+
         var disposedCount = 0;
         foundry.Properties["disposed_count"] = disposedCount;
-        
+
         for (int i = 0; i < AllocationCount; i++)
         {
             var index = i;
@@ -257,7 +256,7 @@ public class MemoryAllocationBenchmark
                     var count = (int)foundry.Properties["disposed_count"]!;
                     foundry.Properties["disposed_count"] = count + 1;
                 });
-                
+
                 await disposableResource.DoWorkAsync(index);
                 await Task.Yield();
             });
@@ -272,20 +271,20 @@ public class MemoryAllocationBenchmark
     public async Task<string> ArrayReuseOptimization()
     {
         using var foundry = WorkflowForge.CreateFoundry("ArrayReuse", _memoryOptimizedConfig);
-        
+
         var reuseableArray = new int[1000]; // Reuse same array
         foundry.Properties["reuseable_array"] = reuseableArray;
-        
+
         for (int i = 0; i < AllocationCount; i++)
         {
             var index = i;
             foundry.WithOperation($"ReuseOp_{index}", async (foundry) =>
             {
                 var array = (int[])foundry.Properties["reuseable_array"]!;
-                
+
                 // Reuse array instead of allocating new one
                 Array.Fill(array, index, 0, Math.Min(array.Length, index + 1));
-                
+
                 await Task.Yield();
                 foundry.Properties[$"array_sum_{index}"] = array.Sum();
             });
@@ -367,7 +366,7 @@ public class DisposableBenchmarkResource : IDisposable
     public async Task DoWorkAsync(int workId)
     {
         if (_disposed) throw new ObjectDisposedException(nameof(DisposableBenchmarkResource));
-        
+
         await Task.Delay(1);
         // Simulate work with the resource
     }
@@ -380,4 +379,4 @@ public class DisposableBenchmarkResource : IDisposable
             _disposed = true;
         }
     }
-} 
+}

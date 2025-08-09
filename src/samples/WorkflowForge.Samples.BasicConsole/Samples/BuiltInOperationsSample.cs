@@ -1,17 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Operations;
 using WorkflowForge.Extensions;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
 /// <summary>
 /// Demonstrates all built-in operations available in WorkflowForge.
-/// Shows proper usage of LoggingOperation, DelayOperation, DelegateWorkflowOperation, 
+/// Shows proper usage of LoggingOperation, DelayOperation, DelegateWorkflowOperation,
 /// ActionWorkflowOperation, and other common operations.
 /// </summary>
 public class BuiltInOperationsSample : ISample
@@ -22,16 +17,16 @@ public class BuiltInOperationsSample : ISample
     public async Task RunAsync()
     {
         Console.WriteLine("Demonstrating built-in WorkflowForge operations...");
-        
+
         // Scenario 1: Logging Operations
         await RunLoggingOperationsDemo();
-        
+
         // Scenario 2: Delay Operations
         await RunDelayOperationsDemo();
-        
+
         // Scenario 3: Delegate and Action Operations
         await RunDelegateOperationsDemo();
-        
+
         // Scenario 4: Combined Operations Workflow
         await RunCombinedOperationsDemo();
     }
@@ -39,25 +34,25 @@ public class BuiltInOperationsSample : ISample
     private static async Task RunLoggingOperationsDemo()
     {
         Console.WriteLine("\n--- Logging Operations Demo ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("LoggingOperationsDemo");
-        
+
         // Demonstrate logging operations
         foundry.AddOperation(LoggingOperation.Info("Starting logging operations demonstration"));
         foundry.AddOperation(LoggingOperation.Debug("Debug information: System initialized"));
         foundry.AddOperation(LoggingOperation.Warning("Warning: This is a demonstration warning"));
         foundry.AddOperation(LoggingOperation.Error("Error simulation: This is not a real error"));
         foundry.AddOperation(LoggingOperation.Info("Logging operations demonstration completed"));
-        
+
         await foundry.ForgeAsync();
     }
 
     private static async Task RunDelayOperationsDemo()
     {
         Console.WriteLine("\n--- Delay Operations Demo ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("DelayOperationsDemo");
-        
+
         // Demonstrate delay operations
         foundry.AddOperation(LoggingOperation.Info("Starting delay operations demonstration"));
         foundry.AddOperation(DelayOperation.FromMilliseconds(250));
@@ -66,50 +61,50 @@ public class BuiltInOperationsSample : ISample
         foundry.AddOperation(LoggingOperation.Info("Completed 1 second delay"));
         foundry.AddOperation(new CustomTimedOperation("Custom operation with timing", TimeSpan.FromMilliseconds(300)));
         foundry.AddOperation(LoggingOperation.Info("Delay operations demonstration completed"));
-        
+
         await foundry.ForgeAsync();
     }
 
     private static async Task RunDelegateOperationsDemo()
     {
         Console.WriteLine("\n--- Delegate Operations Demo ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("DelegateOperationsDemo");
-        
+
         // Set up initial data
         foundry.SetProperty("counter", 0);
         foundry.SetProperty("message_list", new List<string>());
-        
+
         foundry.AddOperation(LoggingOperation.Info("Starting delegate operations demonstration"));
-        
+
         // Simple delegate operation
-        foundry.AddOperation(new DelegateWorkflowOperation("SimpleDelegate", async (input, foundry, token) =>
+        foundry.AddOperation(new DelegateWorkflowOperation("SimpleDelegate", (input, foundry, token) =>
         {
             foundry.Logger.LogInformation("Executing simple delegate operation");
             foundry.SetProperty("simple_result", "Delegate executed successfully");
-            return "Simple delegate completed";
+            return Task.FromResult<object?>("Simple delegate completed");
         }));
-        
+
         // Delegate with counter increment
-        foundry.AddOperation(new DelegateWorkflowOperation("CounterIncrement", async (input, foundry, token) =>
+        foundry.AddOperation(new DelegateWorkflowOperation("CounterIncrement", (input, foundry, token) =>
         {
             var counter = foundry.GetPropertyOrDefault<int>("counter");
             counter++;
             foundry.SetProperty("counter", counter);
             foundry.Logger.LogInformation("Counter incremented to: {Counter}", counter);
-            return counter;
+            return Task.FromResult<object?>(counter);
         }));
-        
+
         // Delegate with data processing
-        foundry.AddOperation(new DelegateWorkflowOperation("DataProcessor", async (input, foundry, token) =>
+        foundry.AddOperation(new DelegateWorkflowOperation("DataProcessor", (input, foundry, token) =>
         {
             var messageList = foundry.GetPropertyOrDefault<List<string>>("message_list") ?? new List<string>();
             var newMessage = $"Processed at {DateTime.UtcNow:HH:mm:ss.fff}";
             messageList.Add(newMessage);
             foundry.Logger.LogInformation("Added message: {Message}", newMessage);
-            return messageList.Count;
+            return Task.FromResult<object?>(messageList.Count);
         }));
-        
+
         // Action operation
         foundry.AddOperation(new ActionWorkflowOperation("ActionOperation", async (input, foundry, token) =>
         {
@@ -117,11 +112,11 @@ public class BuiltInOperationsSample : ISample
             foundry.SetProperty("action_executed", DateTime.UtcNow);
             await Task.Delay(100, token);
         }));
-        
+
         foundry.AddOperation(LoggingOperation.Info("Delegate operations demonstration completed"));
-        
+
         await foundry.ForgeAsync();
-        
+
         // Display results
         Console.WriteLine($"   Final counter value: {foundry.GetPropertyOrDefault<int>("counter")}");
         Console.WriteLine($"   Simple result: {foundry.GetPropertyOrDefault<string>("simple_result", "")}");
@@ -132,14 +127,14 @@ public class BuiltInOperationsSample : ISample
     private static async Task RunCombinedOperationsDemo()
     {
         Console.WriteLine("\n--- Combined Operations Demo ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("CombinedOperationsDemo");
-        
+
         foundry.SetProperty("process_id", Guid.NewGuid().ToString("N")[..8]);
         foundry.SetProperty("step_count", 0);
-        
+
         foundry.AddOperation(LoggingOperation.Info("=== Combined Operations Workflow Started ==="));
-        
+
         // Step 1: Initialize
         foundry.AddOperation(new DelegateWorkflowOperation("Initialize", async (input, foundry, token) =>
         {
@@ -149,9 +144,9 @@ public class BuiltInOperationsSample : ISample
             foundry.SetProperty("start_time", DateTime.UtcNow);
             return "Initialized";
         }));
-        
+
         foundry.AddOperation(DelayOperation.FromMilliseconds(150));
-        
+
         // Step 2: Process data
         foundry.AddOperation(LoggingOperation.Debug("Processing data..."));
         foundry.AddOperation(new DelegateWorkflowOperation("ProcessData", async (input, foundry, token) =>
@@ -166,47 +161,47 @@ public class BuiltInOperationsSample : ISample
             foundry.Logger.LogInformation("Data processing completed: 42 records processed");
             return "Data processed";
         }));
-        
+
         foundry.AddOperation(DelayOperation.FromMilliseconds(200));
-        
+
         // Step 3: Validate results
         foundry.AddOperation(LoggingOperation.Debug("Validating results..."));
         foundry.AddOperation(new ActionWorkflowOperation("ValidateResults", async (input, foundry, token) =>
         {
             foundry.SetProperty("step_count", 3);
             var processedData = foundry.GetPropertyOrDefault<object>("data_processed");
-            foundry.Logger.LogInformation("Validation completed for processed data");
+            foundry.Logger.LogInformation("Validation completed for processed data: {HasData}", processedData is not null);
             foundry.SetProperty("validation_result", "Valid");
             await Task.Delay(100, token);
         }));
-        
+
         foundry.AddOperation(DelayOperation.FromMilliseconds(100));
-        
+
         // Step 4: Finalize
         foundry.AddOperation(new DelegateWorkflowOperation("Finalize", async (input, foundry, token) =>
         {
             foundry.TryGetProperty<string>("process_id", out var processId);
             var startTime = foundry.GetPropertyOrDefault<DateTime>("start_time");
             var totalDuration = DateTime.UtcNow - startTime;
-            
+
             foundry.SetProperty("step_count", 4);
             foundry.SetProperty("total_duration", totalDuration);
-            
-            foundry.Logger.LogInformation("Process {ProcessId} completed in {Duration}ms", 
+
+            foundry.Logger.LogInformation("Process {ProcessId} completed in {Duration}ms",
                 processId, totalDuration.TotalMilliseconds);
-            
+
             return "Finalized";
         }));
-        
+
         foundry.AddOperation(LoggingOperation.Info("=== Combined Operations Workflow Completed ==="));
-        
+
         await foundry.ForgeAsync();
-        
+
         // Display final results
         foundry.TryGetProperty<string>("process_id", out var processId);
         var stepCount = foundry.GetPropertyOrDefault<int>("step_count");
         var totalDuration = foundry.GetPropertyOrDefault<TimeSpan>("total_duration");
-        
+
         Console.WriteLine($"   Process ID: {processId}");
         Console.WriteLine($"   Steps completed: {stepCount}");
         Console.WriteLine($"   Total duration: {totalDuration.TotalMilliseconds:F0}ms");
@@ -234,13 +229,13 @@ public class CustomTimedOperation : IWorkflowOperation
 
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        foundry.Logger.LogInformation("Starting custom timed operation: {OperationName} (Duration: {Duration}ms)", 
+        foundry.Logger.LogInformation("Starting custom timed operation: {OperationName} (Duration: {Duration}ms)",
             _operationName, _duration.TotalMilliseconds);
-        
+
         await Task.Delay(_duration, cancellationToken);
-        
+
         foundry.Logger.LogInformation("Completed custom timed operation: {OperationName}", _operationName);
-        
+
         return new
         {
             OperationName = _operationName,
@@ -255,4 +250,4 @@ public class CustomTimedOperation : IWorkflowOperation
     }
 
     public void Dispose() { }
-} 
+}

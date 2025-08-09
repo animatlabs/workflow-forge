@@ -1,13 +1,10 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Operations;
-using Xunit;
-using Moq;
-using System.Collections.Concurrent;
 
 namespace WorkflowForge.Tests.Operations
 {
@@ -94,7 +91,7 @@ namespace WorkflowForge.Tests.Operations
             Assert.False(foreachOp.SupportsRestore);
         }
 
-        #endregion
+        #endregion Constructor Tests
 
         #region ForgeAsync Tests
 
@@ -191,8 +188,8 @@ namespace WorkflowForge.Tests.Operations
         public async Task ForgeAsync_CombinesResults_ReturnsForEachResults()
         {
             // Arrange
-            var operations = new[] 
-            { 
+            var operations = new[]
+            {
                 CreateMockOperationWithResult("Op1", "result1").Object,
                 CreateMockOperationWithResult("Op2", "result2").Object
             };
@@ -218,7 +215,7 @@ namespace WorkflowForge.Tests.Operations
             var foreachOp = new ForEachWorkflowOperation(operations);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() => 
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
                 foreachOp.ForgeAsync("input", null!));
         }
 
@@ -247,12 +244,12 @@ namespace WorkflowForge.Tests.Operations
                 .Select(i => CreateMockOperation($"Op{i}").Object)
                 .ToArray();
             var foundry = CreateMockFoundry();
-            
+
             // Setup Properties to contain MaxConcurrentOperations
             var properties = new ConcurrentDictionary<string, object?>();
             properties["MaxConcurrentOperations"] = 2;
             foundry.Setup(f => f.Properties).Returns(properties);
-            
+
             var foreachOp = new ForEachWorkflowOperation(operations, maxConcurrency: 5); // Request 5, but framework limits to 2
 
             // Act
@@ -265,7 +262,7 @@ namespace WorkflowForge.Tests.Operations
             }
         }
 
-        #endregion
+        #endregion ForgeAsync Tests
 
         #region RestoreAsync Tests
 
@@ -295,7 +292,7 @@ namespace WorkflowForge.Tests.Operations
             var foreachOp = new ForEachWorkflowOperation(operations);
 
             // Act & Assert
-            await Assert.ThrowsAsync<NotSupportedException>(() => 
+            await Assert.ThrowsAsync<NotSupportedException>(() =>
                 foreachOp.RestoreAsync(null, foundry.Object));
         }
 
@@ -322,7 +319,7 @@ namespace WorkflowForge.Tests.Operations
             Assert.True(duration >= expectedMinDuration);
         }
 
-        #endregion
+        #endregion RestoreAsync Tests
 
         #region Static Factory Method Tests
 
@@ -398,7 +395,7 @@ namespace WorkflowForge.Tests.Operations
             Assert.Equal("ForEach[2]", foreachOp.Name);
         }
 
-        #endregion
+        #endregion Static Factory Method Tests
 
         #region Dispose Tests
 
@@ -427,7 +424,7 @@ namespace WorkflowForge.Tests.Operations
             foreachOp.Dispose();
 
             // Act & Assert
-            await Assert.ThrowsAsync<ObjectDisposedException>(() => 
+            await Assert.ThrowsAsync<ObjectDisposedException>(() =>
                 foreachOp.ForgeAsync("input", foundry.Object));
         }
 
@@ -441,7 +438,7 @@ namespace WorkflowForge.Tests.Operations
             foreachOp.Dispose();
 
             // Act & Assert
-            await Assert.ThrowsAsync<ObjectDisposedException>(() => 
+            await Assert.ThrowsAsync<ObjectDisposedException>(() =>
                 foreachOp.RestoreAsync(null, foundry.Object));
         }
 
@@ -460,7 +457,7 @@ namespace WorkflowForge.Tests.Operations
             Assert.True(true);
         }
 
-        #endregion
+        #endregion Dispose Tests
 
         #region Edge Cases and Error Handling
 
@@ -471,17 +468,17 @@ namespace WorkflowForge.Tests.Operations
             var failingOp = CreateMockOperation("FailingOp");
             failingOp.Setup(op => op.ForgeAsync(It.IsAny<object>(), It.IsAny<IWorkflowFoundry>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new InvalidOperationException("Operation failed"));
-            
+
             var operations = new[] { failingOp.Object };
             var foundry = CreateMockFoundry();
             var foreachOp = new ForEachWorkflowOperation(operations);
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => 
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
                 foreachOp.ForgeAsync("input", foundry.Object));
         }
 
-        #endregion
+        #endregion Edge Cases and Error Handling
 
         #region Helper Methods
 
@@ -527,19 +524,19 @@ namespace WorkflowForge.Tests.Operations
         {
             var mock = new Mock<IWorkflowFoundry>();
             mock.Setup(f => f.ExecutionId).Returns(Guid.NewGuid());
-            
+
             var mockWorkflow = new Mock<IWorkflow>();
             mockWorkflow.Setup(w => w.Name).Returns("TestWorkflow");
             mock.Setup(f => f.CurrentWorkflow).Returns(mockWorkflow.Object);
-            
+
             mock.Setup(f => f.Logger).Returns(Mock.Of<IWorkflowForgeLogger>());
-            
+
             var properties = new ConcurrentDictionary<string, object?>();
             mock.Setup(f => f.Properties).Returns(properties);
-            
+
             return mock;
         }
 
-        #endregion
+        #endregion Helper Methods
     }
-} 
+}

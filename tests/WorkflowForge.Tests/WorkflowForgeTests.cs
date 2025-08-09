@@ -1,10 +1,7 @@
+using WorkflowForge.Configurations;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Loggers;
-using WorkflowForge.Operations;
-using Xunit;
 
 namespace WorkflowForge.Tests;
 
@@ -239,10 +236,10 @@ public class WorkflowForgeTests
     {
         // Arrange
         const string workflowName = "TestWorkflow";
-        var initialData = new Dictionary<string, object?> 
-        { 
-            { "key1", "value1" }, 
-            { "key2", 42 } 
+        var initialData = new Dictionary<string, object?>
+        {
+            { "key1", "value1" },
+            { "key2", 42 }
         };
 
         // Act
@@ -258,10 +255,10 @@ public class WorkflowForgeTests
     {
         // Arrange
         const string workflowName = "TestWorkflow";
-        var initialData = new Dictionary<string, object?> 
-        { 
-            { "key1", "value1" }, 
-            { "key2", 42 } 
+        var initialData = new Dictionary<string, object?>
+        {
+            { "key1", "value1" },
+            { "key2", 42 }
         };
         var configuration = FoundryConfiguration.ForProduction();
 
@@ -365,4 +362,4 @@ public class WorkflowForgeTests
             public void Dispose() { }
         }
     }
-} 
+}

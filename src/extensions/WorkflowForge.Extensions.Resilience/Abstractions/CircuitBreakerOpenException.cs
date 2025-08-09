@@ -1,6 +1,6 @@
 using System;
 
-namespace WorkflowForge.Extensions.Resilience
+namespace WorkflowForge.Extensions.Resilience.Abstractions
 {
     /// <summary>
     /// Exception thrown when a circuit breaker is open.
@@ -24,4 +24,4 @@ namespace WorkflowForge.Extensions.Resilience
         {
         }
     }
-} 
+}

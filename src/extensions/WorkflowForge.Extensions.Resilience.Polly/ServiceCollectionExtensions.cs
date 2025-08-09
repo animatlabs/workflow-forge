@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.Resilience;
+using WorkflowForge.Extensions.Resilience.Abstractions;
 using WorkflowForge.Extensions.Resilience.Polly.Configurations;
 
 namespace WorkflowForge.Extensions.Resilience.Polly
@@ -32,7 +32,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
 
             // Register core Polly services
             services.TryAddSingleton<IPollyResilienceFactory, PollyResilienceFactory>();
-            services.TryAddTransient<IWorkflowResilienceStrategy>(provider => 
+            services.TryAddTransient<IWorkflowResilienceStrategy>(provider =>
                 provider.GetRequiredService<IPollyResilienceFactory>().CreateDefaultStrategy());
 
             // Register middleware
@@ -57,8 +57,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             // Bind configuration
             var settings = new PollySettings();
             configuration.GetSection(sectionName).Bind(settings);
-            
-            return services.AddWorkflowForgePolly(opts => 
+
+            return services.AddWorkflowForgePolly(opts =>
             {
                 opts.IsEnabled = settings.IsEnabled;
                 opts.Retry = settings.Retry;
@@ -317,4 +317,4 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             return TimeSpan.Zero;
         }
     }
-} 
+}

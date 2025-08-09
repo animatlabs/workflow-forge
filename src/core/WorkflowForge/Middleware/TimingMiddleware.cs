@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Loggers;
 
 namespace WorkflowForge.Middleware
 {
@@ -39,10 +37,10 @@ namespace WorkflowForge.Middleware
             try
             {
                 var result = await next().ConfigureAwait(false);
-                
+
                 stopwatch.Stop();
                 var elapsedMs = stopwatch.ElapsedMilliseconds;
-                
+
                 // Store basic timing data in foundry properties for other components
                 foundry.Properties[$"Timing.{operationName}.StartTime"] = _timeProvider.UtcNow.AddMilliseconds(-elapsedMs);
                 foundry.Properties[$"Timing.{operationName}.Duration"] = elapsedMs;
@@ -61,4 +59,4 @@ namespace WorkflowForge.Middleware
             }
         }
     }
-} 
+}

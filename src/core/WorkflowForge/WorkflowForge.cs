@@ -1,15 +1,17 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Operations;
+using WorkflowForge.Configurations;
+using WorkflowForge.Exceptions;
 using WorkflowForge.Loggers;
+
 namespace WorkflowForge
 {
     /// <summary>
     /// Main entry point for WorkflowForge - the enterprise workflow orchestration framework.
     /// Provides essential factory methods for creating workflow builders and smiths.
-    /// 
+    ///
     /// In the WorkflowForge metaphor:
     /// - The Forge is the main factory where workflows are created and configured
     /// - Foundries are execution environments created by smiths
@@ -53,6 +55,7 @@ namespace WorkflowForge
                 throw new WorkflowForgeException("Failed to create workflow builder. Ensure the system has sufficient resources.", ex);
             }
         }
+
         /// <summary>
         /// Creates a new workflow builder with a specified name and optional service provider.
         /// </summary>
@@ -84,9 +87,9 @@ namespace WorkflowForge
         {
             if (string.IsNullOrWhiteSpace(workflowName))
                 throw new ArgumentException("Workflow name cannot be null, empty, or whitespace.", nameof(workflowName));
-                
+
             return new WorkflowFoundry(
-                Guid.NewGuid(), 
+                Guid.NewGuid(),
                 new ConcurrentDictionary<string, object?>(),
                 FoundryConfiguration.Minimal());
         }
@@ -101,9 +104,9 @@ namespace WorkflowForge
         {
             if (string.IsNullOrWhiteSpace(workflowName))
                 throw new ArgumentException("Workflow name cannot be null, empty, or whitespace.", nameof(workflowName));
-                
+
             return new WorkflowFoundry(
-                Guid.NewGuid(), 
+                Guid.NewGuid(),
                 new ConcurrentDictionary<string, object?>(),
                 logger);
         }
@@ -120,9 +123,9 @@ namespace WorkflowForge
                 throw new ArgumentException("Workflow name cannot be null, empty, or whitespace.", nameof(workflowName));
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
-                
+
             return new WorkflowFoundry(
-                Guid.NewGuid(), 
+                Guid.NewGuid(),
                 new ConcurrentDictionary<string, object?>(),
                 configuration);
         }
@@ -139,10 +142,10 @@ namespace WorkflowForge
                 throw new ArgumentException("Workflow name cannot be null, empty, or whitespace.", nameof(workflowName));
             if (initialProperties == null)
                 throw new ArgumentNullException(nameof(initialProperties));
-                
+
             var properties = new ConcurrentDictionary<string, object?>(initialProperties);
             return new WorkflowFoundry(
-                Guid.NewGuid(), 
+                Guid.NewGuid(),
                 properties,
                 FoundryConfiguration.Minimal());
         }
@@ -162,10 +165,10 @@ namespace WorkflowForge
                 throw new ArgumentNullException(nameof(initialProperties));
             if (configuration == null)
                 throw new ArgumentNullException(nameof(configuration));
-                
+
             var properties = new ConcurrentDictionary<string, object?>(initialProperties);
             return new WorkflowFoundry(
-                Guid.NewGuid(), 
+                Guid.NewGuid(),
                 properties,
                 configuration);
         }
@@ -182,10 +185,10 @@ namespace WorkflowForge
         /// <code>
         /// // For development
         /// var smith = WorkflowForge.CreateSmith(logger);
-        /// 
+        ///
         /// // For production
         /// var foundry = WorkflowForge.CreateFoundry("ProcessOrder", FoundryConfiguration.ForProduction());
-        /// 
+        ///
         /// // For high performance
         /// var foundry = WorkflowForge.CreateFoundry("ProcessBatch", FoundryConfiguration.HighPerformance());
         /// </code>
@@ -202,4 +205,4 @@ namespace WorkflowForge
             }
         }
     }
-} 
+}

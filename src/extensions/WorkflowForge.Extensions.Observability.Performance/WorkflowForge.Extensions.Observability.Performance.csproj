@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <Version>1.1.0</Version>
+    <PackageVersion>1.1.0</PackageVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -40,11 +42,8 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
-Initial release of WorkflowForge Performance Extension:
-- Comprehensive performance monitoring for workflows
-- Seamless integration with WorkflowForge core
-- Comprehensive documentation and examples included
-- Enterprise-grade reliability and performance
+Minor release v1.1.0:
+- Docs updated; minor API polish
     </PackageReleaseNotes>
   </PropertyGroup>
 

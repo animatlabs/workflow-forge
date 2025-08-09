@@ -1,10 +1,7 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Operations;
+using WorkflowForge.Events;
 using WorkflowForge.Extensions;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -20,13 +17,13 @@ public class WorkflowEventsSample : ISample
     public async Task RunAsync()
     {
         Console.WriteLine("Demonstrating workflow events and event handling...");
-        
+
         // Scenario 1: Basic workflow events
         await RunBasicWorkflowEventsDemo();
-        
+
         // Scenario 2: Operation-level events
         await RunOperationEventsDemo();
-        
+
         // Scenario 3: Error handling with events
         await RunErrorHandlingEventsDemo();
     }
@@ -34,9 +31,9 @@ public class WorkflowEventsSample : ISample
     private static async Task RunBasicWorkflowEventsDemo()
     {
         Console.WriteLine("\n--- Basic Workflow Events Demo ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("WorkflowEventsDemo");
-        
+
         // Subscribe to workflow events
         if (foundry is IWorkflowEvents workflowEvents)
         {
@@ -44,23 +41,23 @@ public class WorkflowEventsSample : ISample
             workflowEvents.WorkflowCompleted += OnWorkflowCompleted;
             workflowEvents.WorkflowFailed += OnWorkflowFailed;
         }
-        
+
         foundry
             .WithOperation(LoggingOperation.Info("Step 1: Initializing workflow"))
             .WithOperation(DelayOperation.FromMilliseconds(200))
             .WithOperation(LoggingOperation.Info("Step 2: Processing data"))
             .WithOperation(DelayOperation.FromMilliseconds(150))
             .WithOperation(LoggingOperation.Info("Step 3: Finalizing workflow"));
-        
+
         await foundry.ForgeAsync();
     }
 
     private static async Task RunOperationEventsDemo()
     {
         Console.WriteLine("\n--- Operation Events Demo ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("OperationEventsDemo");
-        
+
         // Subscribe to operation events
         if (foundry is IWorkflowEvents workflowEvents)
         {
@@ -68,18 +65,18 @@ public class WorkflowEventsSample : ISample
             workflowEvents.OperationCompleted += OnOperationCompleted;
             workflowEvents.OperationFailed += OnOperationFailed;
         }
-        
+
         foundry.SetProperty("operation_count", 0);
         foundry.SetProperty("total_duration", TimeSpan.Zero);
-        
+
         foundry
             .WithOperation(new MonitoredOperation("InitializeSystem", TimeSpan.FromMilliseconds(100)))
             .WithOperation(new MonitoredOperation("ProcessRecords", TimeSpan.FromMilliseconds(250)))
             .WithOperation(new MonitoredOperation("ValidateResults", TimeSpan.FromMilliseconds(150)))
             .WithOperation(new MonitoredOperation("GenerateReport", TimeSpan.FromMilliseconds(200)));
-        
+
         await foundry.ForgeAsync();
-        
+
         Console.WriteLine($"   Total operations executed: {foundry.GetPropertyOrDefault<int>("operation_count")}");
         Console.WriteLine($"   Total processing time: {foundry.GetPropertyOrDefault<TimeSpan>("total_duration").TotalMilliseconds:F0}ms");
     }
@@ -87,9 +84,9 @@ public class WorkflowEventsSample : ISample
     private static async Task RunErrorHandlingEventsDemo()
     {
         Console.WriteLine("\n--- Error Handling Events Demo ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("ErrorEventsDemo");
-        
+
         // Subscribe to all events for comprehensive monitoring
         if (foundry is IWorkflowEvents workflowEvents)
         {
@@ -100,13 +97,13 @@ public class WorkflowEventsSample : ISample
             workflowEvents.OperationCompleted += OnOperationCompleted;
             workflowEvents.OperationFailed += OnOperationFailed;
         }
-        
+
         foundry
             .WithOperation(LoggingOperation.Info("Starting error handling demo"))
             .WithOperation(new SuccessfulOperation("NormalOperation"))
             .WithOperation(new FailingOperation("SimulatedFailure"))
             .WithOperation(LoggingOperation.Info("This step should not execute due to failure"));
-        
+
         try
         {
             await foundry.ForgeAsync();
@@ -141,13 +138,13 @@ public class WorkflowEventsSample : ISample
     private static void OnOperationCompleted(object? sender, OperationCompletedEventArgs e)
     {
         Console.WriteLine($"   EVENT: Operation completed - {e.Operation.Name}, Duration: {e.Duration.TotalMilliseconds:F0}ms");
-        
+
         // Update foundry statistics if available
         if (sender is IWorkflowFoundry foundry)
         {
             var currentCount = foundry.GetPropertyOrDefault<int>("operation_count", 0);
             var currentDuration = foundry.GetPropertyOrDefault<TimeSpan>("total_duration", TimeSpan.Zero);
-            
+
             foundry.SetProperty("operation_count", currentCount + 1);
             foundry.SetProperty("total_duration", currentDuration + e.Duration);
         }
@@ -180,10 +177,10 @@ public class MonitoredOperation : IWorkflowOperation
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Executing monitored operation: {OperationName}", _operationName);
-        
+
         // Simulate work
         await Task.Delay(_simulatedDuration, cancellationToken);
-        
+
         var result = new
         {
             OperationName = _operationName,
@@ -191,9 +188,9 @@ public class MonitoredOperation : IWorkflowOperation
             Duration = _simulatedDuration,
             Status = "Completed"
         };
-        
+
         foundry.Logger.LogInformation("Monitored operation completed: {OperationName}", _operationName);
-        
+
         return result;
     }
 
@@ -224,11 +221,11 @@ public class SuccessfulOperation : IWorkflowOperation
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Executing successful operation: {OperationName}", _operationName);
-        
+
         await Task.Delay(100, cancellationToken);
-        
+
         foundry.Logger.LogInformation("Successful operation completed: {OperationName}", _operationName);
-        
+
         return "Success";
     }
 
@@ -259,11 +256,11 @@ public class FailingOperation : IWorkflowOperation
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Executing failing operation: {OperationName}", _operationName);
-        
+
         await Task.Delay(75, cancellationToken);
-        
+
         foundry.Logger.LogWarning("Failing operation about to throw exception: {OperationName}", _operationName);
-        
+
         throw new InvalidOperationException($"Simulated failure in operation: {_operationName}");
     }
 
@@ -273,4 +270,4 @@ public class FailingOperation : IWorkflowOperation
     }
 
     public void Dispose() { }
-} 
+}

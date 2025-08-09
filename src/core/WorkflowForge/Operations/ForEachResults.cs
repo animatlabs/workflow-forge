@@ -51,4 +51,4 @@ namespace WorkflowForge.Operations
             return result is T typedResult ? typedResult : default(T);
         }
     }
-} 
+}

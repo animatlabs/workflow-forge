@@ -1,7 +1,4 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using WorkflowForge;
+using WorkflowForge.Configurations;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
@@ -20,13 +17,13 @@ public class ErrorHandlingSample : ISample
     public async Task RunAsync()
     {
         Console.WriteLine("Creating a workflow that demonstrates error handling...");
-        
+
         // Scenario 1: Recoverable errors with retry
         await RunRetryScenario();
-        
+
         // Scenario 2: Error handling with alternative paths
         await RunAlternativePathScenario();
-        
+
         // Scenario 3: Circuit breaker pattern
         await RunCircuitBreakerScenario();
     }
@@ -34,18 +31,18 @@ public class ErrorHandlingSample : ISample
     private static async Task RunRetryScenario()
     {
         Console.WriteLine("\n--- Retry Logic Scenario ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("RetryWorkflow", FoundryConfiguration.Development());
-        
+
         foundry.Properties["max_retries"] = 3;
         foundry.Properties["service_endpoint"] = "https://api.unreliable-service.com";
-        
+
         foundry
             .WithOperation(new InitializeConnectionOperation())
             .WithOperation(new RetryableExternalServiceOperation())
             .WithOperation(new ValidateResponseOperation())
             .WithOperation(new LogSuccessOperation());
-        
+
         try
         {
             Console.WriteLine("Executing workflow with retry logic...");
@@ -60,13 +57,13 @@ public class ErrorHandlingSample : ISample
     private static async Task RunAlternativePathScenario()
     {
         Console.WriteLine("\n--- Alternative Path Scenario ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("AlternativePathWorkflow", FoundryConfiguration.Development());
-        
+
         foundry.Properties["primary_service"] = "MainPaymentGateway";
         foundry.Properties["fallback_service"] = "BackupPaymentGateway";
         foundry.Properties["amount"] = 99.99m;
-        
+
         foundry
             .WithOperation(new PreparePaymentOperation())
             .WithOperation(new TryPrimaryPaymentOperation())
@@ -90,7 +87,7 @@ public class ErrorHandlingSample : ISample
                 // Primary succeeded
                 new LoggingOperation("[SUCCESS] Primary payment succeeded")))
             .WithOperation(new FinalizePaymentOperation());
-        
+
         try
         {
             Console.WriteLine("Executing workflow with alternative paths...");
@@ -105,13 +102,13 @@ public class ErrorHandlingSample : ISample
     private static async Task RunCircuitBreakerScenario()
     {
         Console.WriteLine("\n--- Circuit Breaker Scenario ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("CircuitBreakerWorkflow", FoundryConfiguration.Development());
-        
+
         foundry.Properties["circuit_state"] = "Closed"; // Closed, Open, HalfOpen
         foundry.Properties["failure_count"] = 0;
         foundry.Properties["failure_threshold"] = 3;
-        
+
         foundry
             .WithOperation(new CheckCircuitStateOperation())
             .WithOperation(new ConditionalWorkflowOperation(
@@ -125,7 +122,7 @@ public class ErrorHandlingSample : ISample
                     new UnstableServiceOperation(),
                     new ResetCircuitOperation()
                 }, name: "CircuitClosedPath")));
-        
+
         try
         {
             Console.WriteLine("Executing workflow with circuit breaker...");
@@ -160,19 +157,19 @@ public class RetryableExternalServiceOperation : IWorkflowOperation
                 _attemptCount++;
 
                 Console.WriteLine($"   [RETRY] Attempt {currentAttempt}/{maxRetries + 1} - Calling external service...");
-                
+
                 // Simulate an unreliable service
                 await Task.Delay(100, cancellationToken);
-                
+
                 // Fail the first 2 attempts, succeed on the 3rd
                 if (_attemptCount < 3)
                 {
                     throw new ExternalServiceException($"Service temporarily unavailable (attempt {_attemptCount})");
                 }
-                
+
                 foundry.Properties["service_response"] = "Success";
                 foundry.Properties["response_time"] = DateTime.UtcNow;
-                
+
                 Console.WriteLine($"   [SUCCESS] External service call succeeded on attempt {currentAttempt}");
                 return "Service call successful";
             }
@@ -180,7 +177,7 @@ public class RetryableExternalServiceOperation : IWorkflowOperation
             {
                 lastException = ex;
                 Console.WriteLine($"   [ERROR] Attempt {currentAttempt} failed: {ex.Message}");
-                
+
                 if (currentAttempt <= maxRetries)
                 {
                     var delayMs = (int)Math.Pow(2, currentAttempt) * 100; // Exponential backoff
@@ -215,25 +212,25 @@ public class TryPrimaryPaymentOperation : IWorkflowOperation
     {
         var service = (string)foundry.Properties["primary_service"]!;
         var amount = (decimal)foundry.Properties["amount"]!;
-        
+
         Console.WriteLine($"   [INFO] Attempting payment via {service} for ${amount:F2}...");
-        
+
         await Task.Delay(150, cancellationToken);
-        
+
         // Simulate primary payment failure
         if (Random.Shared.NextDouble() < 0.7) // 70% chance of failure
         {
             foundry.Properties["primary_payment_failed"] = true;
             foundry.Properties["primary_failure_reason"] = "Service temporarily unavailable";
-            
+
             Console.WriteLine($"   [ERROR] Primary payment failed: Service temporarily unavailable");
             return "Primary payment failed";
         }
-        
+
         var transactionId = $"PRI-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
         foundry.Properties["transaction_id"] = transactionId;
         foundry.Properties["payment_method"] = "Primary";
-        
+
         Console.WriteLine($"   [SUCCESS] Primary payment succeeded: {transactionId}");
         return $"Primary payment successful: {transactionId}";
     }
@@ -262,25 +259,25 @@ public class TryFallbackPaymentOperation : IWorkflowOperation
     {
         var service = (string)foundry.Properties["fallback_service"]!;
         var amount = (decimal)foundry.Properties["amount"]!;
-        
+
         Console.WriteLine($"   [RETRY] Attempting fallback payment via {service} for ${amount:F2}...");
-        
+
         await Task.Delay(200, cancellationToken);
-        
+
         // Fallback has better success rate
         if (Random.Shared.NextDouble() < 0.2) // 20% chance of failure
         {
             foundry.Properties["fallback_payment_failed"] = true;
             foundry.Properties["fallback_failure_reason"] = "Insufficient funds";
-            
+
             Console.WriteLine($"   [ERROR] Fallback payment failed: Insufficient funds");
             return "Fallback payment failed";
         }
-        
+
         var transactionId = $"BAK-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
         foundry.Properties["transaction_id"] = transactionId;
         foundry.Properties["payment_method"] = "Fallback";
-        
+
         Console.WriteLine($"   [SUCCESS] Fallback payment succeeded: {transactionId}");
         return $"Fallback payment successful: {transactionId}";
     }
@@ -308,26 +305,26 @@ public class UnstableServiceOperation : IWorkflowOperation
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         Console.WriteLine($"   [INFO] Calling unstable service...");
-        
+
         await Task.Delay(100, cancellationToken);
-        
+
         // Simulate service instability
         if (Random.Shared.NextDouble() < 0.6) // 60% chance of failure
         {
             var failureCount = (int)foundry.Properties["failure_count"]! + 1;
             var threshold = (int)foundry.Properties["failure_threshold"]!;
-            
+
             foundry.Properties["failure_count"] = failureCount;
-            
+
             if (failureCount >= threshold)
             {
                 foundry.Properties["circuit_state"] = "Open";
                 Console.WriteLine($"   [ALERT] Circuit breaker opened after {failureCount} failures");
             }
-            
+
             throw new ExternalServiceException($"Service failure #{failureCount}");
         }
-        
+
         Console.WriteLine($"   [SUCCESS] Service call succeeded");
         return "Service call successful";
     }
@@ -434,7 +431,7 @@ public class FinalizePaymentOperation : IWorkflowOperation
     {
         Console.WriteLine("   [INFO] Finalizing payment...");
         await Task.Delay(60, cancellationToken);
-        
+
         if (foundry.Properties.TryGetValue("transaction_id", out var txnId))
         {
             Console.WriteLine($"   [SUCCESS] Payment finalized: {txnId}");
@@ -443,7 +440,7 @@ public class FinalizePaymentOperation : IWorkflowOperation
         {
             Console.WriteLine($"   [WARNING] Payment requires manual processing");
         }
-        
+
         return "Payment finalized";
     }
     public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
@@ -514,4 +511,4 @@ public class WorkflowExecutionException : Exception
 public class CircuitBreakerOpenException : Exception
 {
     public CircuitBreakerOpenException(string message) : base(message) { }
-} 
+}

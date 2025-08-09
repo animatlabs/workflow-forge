@@ -1,14 +1,11 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
+using WorkflowForge.Extensions.Observability.Performance.Configurations;
 using WorkflowForge.Extensions.Resilience.Polly.Configurations;
-using WorkflowForge.Extensions.Observability.Performance;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -34,8 +31,8 @@ public class OptionsPatternSample : ISample
 
         // Register configuration using Options pattern
         services.AddSingleton(configuration);
-        services.Configure<WorkflowForgeSettings>(
-            configuration.GetSection(WorkflowForgeSettings.SectionName));
+        services.Configure<WorkflowForgeConfiguration>(
+            configuration.GetSection(WorkflowForgeConfiguration.SectionName));
         services.Configure<PollySettings>(
             configuration.GetSection("WorkflowForge:Polly"));
         services.Configure<PerformanceSettings>(
@@ -54,9 +51,9 @@ public class OptionsPatternSample : ISample
         Console.WriteLine("--- Configuration Access Patterns ---");
 
         // Method 1: IOptions<T> - Standard pattern
-        var workflowOptions = serviceProvider.GetRequiredService<IOptions<WorkflowForgeSettings>>();
+        var workflowOptions = serviceProvider.GetRequiredService<IOptions<WorkflowForgeConfiguration>>();
         var workflowSettings = workflowOptions.Value;
-        
+
         Console.WriteLine($"[IOptions] AutoRestore: {workflowSettings.AutoRestore}");
         Console.WriteLine($"[IOptions] MaxConcurrentOperations: {workflowSettings.MaxConcurrentOperations}");
 
@@ -73,7 +70,7 @@ public class OptionsPatternSample : ISample
         var configuration = serviceProvider.GetRequiredService<IConfiguration>();
         var performanceSettings = new PerformanceSettings();
         configuration.GetSection("WorkflowForge:Performance").Bind(performanceSettings);
-        
+
         Console.WriteLine($"[Direct Bind] Performance.MaxDegreeOfParallelism: {performanceSettings.MaxDegreeOfParallelism}");
         Console.WriteLine($"[Direct Bind] Performance.EnableObjectPooling: {performanceSettings.EnableObjectPooling}");
 
@@ -85,9 +82,9 @@ public class OptionsPatternSample : ISample
         Console.WriteLine("\n--- Using Configuration in Workflow Operations ---");
 
         // Get configuration through Options pattern
-        var workflowOptions = serviceProvider.GetRequiredService<IOptions<WorkflowForgeSettings>>();
+        var workflowOptions = serviceProvider.GetRequiredService<IOptions<WorkflowForgeConfiguration>>();
         var pollyOptions = serviceProvider.GetRequiredService<IOptions<PollySettings>>();
-        
+
         // Create foundry with configuration-based settings
         var foundryConfig = new FoundryConfiguration
         {
@@ -96,7 +93,7 @@ public class OptionsPatternSample : ISample
         };
 
         using var foundry = WorkflowForge.CreateFoundry("OptionsPatternWorkflow", foundryConfig);
-        
+
         foundry.Properties["workflow_settings"] = workflowOptions.Value;
         foundry.Properties["polly_settings"] = pollyOptions.Value;
 
@@ -116,7 +113,7 @@ public class OptionsPatternSample : ISample
 
         // Show validation using built-in validation
         var validationResults = pollySettings.Validate(new System.ComponentModel.DataAnnotations.ValidationContext(pollySettings));
-        
+
         if (validationResults.Any())
         {
             Console.WriteLine("[VALIDATION] Configuration validation errors found:");
@@ -149,7 +146,7 @@ public class ConfigurationAwareOperation : IWorkflowOperation
 
         // Access configuration through foundry properties
         if (foundry.Properties.TryGetValue("workflow_settings", out var workflowSettingsObj) &&
-            workflowSettingsObj is WorkflowForgeSettings workflowSettings)
+            workflowSettingsObj is WorkflowForgeConfiguration workflowSettings)
         {
             Console.WriteLine($"   [CONFIG] AutoRestore setting: {workflowSettings.AutoRestore}");
             Console.WriteLine($"   [CONFIG] MaxConcurrentOperations: {workflowSettings.MaxConcurrentOperations}");
@@ -172,7 +169,8 @@ public class ConfigurationAwareOperation : IWorkflowOperation
         return Task.CompletedTask;
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -190,13 +188,13 @@ public class SettingsValidationOperation : IWorkflowOperation
 
         // Example of runtime configuration validation
         if (foundry.Properties.TryGetValue("workflow_settings", out var settingsObj) &&
-            settingsObj is WorkflowForgeSettings settings)
+            settingsObj is WorkflowForgeConfiguration settings)
         {
             if (settings.MaxConcurrentOperations <= 0)
             {
                 throw new InvalidOperationException("MaxConcurrentOperations must be greater than 0");
             }
-            
+
             if (settings.MaxConcurrentOperations > Environment.ProcessorCount * 4)
             {
                 Console.WriteLine("   [WARNING] MaxConcurrentOperations is very high - may impact performance");
@@ -213,5 +211,6 @@ public class SettingsValidationOperation : IWorkflowOperation
         return Task.CompletedTask;
     }
 
-    public void Dispose() { }
-} 
+    public void Dispose()
+    { }
+}

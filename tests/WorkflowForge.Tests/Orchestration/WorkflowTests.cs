@@ -1,10 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
-using Xunit;
-using Moq;
 
 namespace WorkflowForge.Tests.Orchestration
 {
@@ -51,7 +47,7 @@ namespace WorkflowForge.Tests.Orchestration
             var properties = new Dictionary<string, object?>();
 
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
                 new Workflow(null!, "description", "1.0.0", operations, properties));
         }
 
@@ -63,7 +59,7 @@ namespace WorkflowForge.Tests.Orchestration
             var properties = new Dictionary<string, object?>();
 
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
                 new Workflow("TestWorkflow", "description", null!, operations, properties));
         }
 
@@ -74,7 +70,7 @@ namespace WorkflowForge.Tests.Orchestration
             var properties = new Dictionary<string, object?>();
 
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
                 new Workflow("TestWorkflow", "description", "1.0.0", null!, properties));
         }
 
@@ -85,7 +81,7 @@ namespace WorkflowForge.Tests.Orchestration
             var operations = new List<IWorkflowOperation> { CreateMockOperation("Op1").Object };
 
             // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => 
+            Assert.Throws<ArgumentNullException>(() =>
                 new Workflow("TestWorkflow", "description", "1.0.0", operations, null!));
         }
 
@@ -131,7 +127,7 @@ namespace WorkflowForge.Tests.Orchestration
             Assert.Empty(workflow.Properties);
         }
 
-        #endregion
+        #endregion Constructor Tests
 
         #region Property Tests
 
@@ -140,7 +136,7 @@ namespace WorkflowForge.Tests.Orchestration
         {
             // Arrange
             var operations = new List<IWorkflowOperation>
-            { 
+            {
                 CreateMockOperation("Op1", supportsRestore: true).Object,
                 CreateMockOperation("Op2", supportsRestore: true).Object
             };
@@ -155,7 +151,7 @@ namespace WorkflowForge.Tests.Orchestration
         {
             // Arrange
             var operations = new List<IWorkflowOperation>
-            { 
+            {
                 CreateMockOperation("Op1", supportsRestore: true).Object,
                 CreateMockOperation("Op2", supportsRestore: false).Object
             };
@@ -207,7 +203,7 @@ namespace WorkflowForge.Tests.Orchestration
             Assert.Equal(42, propertiesDict["key2"]);
         }
 
-        #endregion
+        #endregion Property Tests
 
         #region Dispose Tests
 
@@ -248,13 +244,13 @@ namespace WorkflowForge.Tests.Orchestration
             var throwingOp = CreateMockOperation("ThrowingOp");
             throwingOp.Setup(op => op.Dispose()).Throws<InvalidOperationException>();
             var normalOp = CreateMockOperation("NormalOp");
-            
+
             var operations = new List<IWorkflowOperation> { throwingOp.Object, normalOp.Object };
             var workflow = CreateWorkflow(operations: operations);
 
             // Act & Assert - The current implementation doesn't catch exceptions
             Assert.Throws<InvalidOperationException>(() => workflow.Dispose());
-            
+
             throwingOp.Verify(op => op.Dispose(), Times.Once);
             // normalOp.Dispose() won't be called because the exception stops execution
         }
@@ -269,7 +265,7 @@ namespace WorkflowForge.Tests.Orchestration
             workflow.Dispose();
         }
 
-        #endregion
+        #endregion Dispose Tests
 
         #region Immutability Tests
 
@@ -306,7 +302,7 @@ namespace WorkflowForge.Tests.Orchestration
             Assert.False(workflow.Properties.ContainsKey("key2"));
         }
 
-        #endregion
+        #endregion Immutability Tests
 
         #region Edge Cases
 
@@ -360,7 +356,7 @@ namespace WorkflowForge.Tests.Orchestration
             Assert.Equal(specialChars, workflow.Version);
         }
 
-        #endregion
+        #endregion Edge Cases
 
         #region Helper Methods
 
@@ -374,7 +370,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         private Workflow CreateWorkflow(
-            string name = "TestWorkflow", 
+            string name = "TestWorkflow",
             string? description = "Test Description",
             string version = "1.0.0",
             List<IWorkflowOperation>? operations = null,
@@ -389,6 +385,6 @@ namespace WorkflowForge.Tests.Orchestration
             );
         }
 
-        #endregion
+        #endregion Helper Methods
     }
-} 
+}

@@ -1,10 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using WorkflowForge.Operations;
 using WorkflowForge.Abstractions;
-using System.Collections.Concurrent;
-using Moq;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Tests;
 
@@ -17,7 +15,7 @@ public class WorkflowOperationsTests
         Action<IWorkflowFoundry> action = foundry => { };
 
         // Act
-        var operation = new ActionWorkflowOperation("TestAction", (input, foundry, ct) => 
+        var operation = new ActionWorkflowOperation("TestAction", (input, foundry, ct) =>
         {
             action(foundry);
             return Task.CompletedTask;
@@ -42,7 +40,7 @@ public class WorkflowOperationsTests
         Action<string, IWorkflowFoundry> action = (input, foundry) => { };
 
         // Act
-        var operation = new ActionWorkflowOperation("TestTypedAction", (input, foundry, ct) => 
+        var operation = new ActionWorkflowOperation("TestTypedAction", (input, foundry, ct) =>
         {
             if (input is string strInput)
                 action(strInput, foundry);
@@ -65,7 +63,7 @@ public class WorkflowOperationsTests
     public void Delegate_WithValidFunc_ReturnsDelegateOperation()
     {
         // Arrange
-        Func<IWorkflowFoundry, CancellationToken, Task<object?>> func = 
+        Func<IWorkflowFoundry, CancellationToken, Task<object?>> func =
             (foundry, cancellationToken) => Task.FromResult<object?>("result");
 
         // Act
@@ -87,7 +85,7 @@ public class WorkflowOperationsTests
     public void Delegate_WithValidTypedFunc_ReturnsTypedDelegateOperation()
     {
         // Arrange
-        Func<string, IWorkflowFoundry, CancellationToken, Task<int>> func = 
+        Func<string, IWorkflowFoundry, CancellationToken, Task<int>> func =
             (input, foundry, cancellationToken) => Task.FromResult(42);
 
         // Act
@@ -167,7 +165,7 @@ public class WorkflowOperationsTests
         var falseOperation = new Mock<IWorkflowOperation>().Object;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             new ConditionalWorkflowOperation((Func<object?, IWorkflowFoundry, bool>)null!, trueOperation, falseOperation, "TestConditional"));
     }
 
@@ -179,7 +177,7 @@ public class WorkflowOperationsTests
         var falseOperation = new Mock<IWorkflowOperation>().Object;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             new ConditionalWorkflowOperation((input, foundry) => predicate(foundry), null!, falseOperation, "TestConditional"));
     }
 
@@ -208,7 +206,7 @@ public class WorkflowOperationsTests
     public void ForEach_WithValidItems_ReturnsForEachOperation()
     {
         // Arrange
-        var operations = new[] { 
+        var operations = new[] {
             new Mock<IWorkflowOperation>().Object,
             new Mock<IWorkflowOperation>().Object,
             new Mock<IWorkflowOperation>().Object
@@ -226,7 +224,7 @@ public class WorkflowOperationsTests
     public void ForEach_WithNullItems_ThrowsArgumentNullException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             new ForEachWorkflowOperation(null!, name: "TestForEach"));
     }
 
@@ -237,7 +235,7 @@ public class WorkflowOperationsTests
         var operations = Array.Empty<IWorkflowOperation>();
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => 
+        Assert.Throws<ArgumentException>(() =>
             new ForEachWorkflowOperation(operations, name: "TestForEach"));
     }
-} 
+}

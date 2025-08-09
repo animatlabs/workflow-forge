@@ -1,14 +1,13 @@
 using System;
 using System.Collections.Concurrent;
-using WorkflowForge.Abstractions;
 
-namespace WorkflowForge
+namespace WorkflowForge.Abstractions
 {
     /// <summary>
     /// The foundry provides operations with access to workflow properties, logging, and services.
     /// It serves as the execution context for workflow operations, maintaining runtime state and services.
     /// In the WorkflowForge metaphor, the foundry is where raw materials (data) are shaped into finished products (results).
-    /// 
+    ///
     /// The foundry maintains a reference to the current workflow being executed and can be reused across multiple workflows
     /// for advanced scenarios like pipeline processing or batch operations.
     /// </summary>
@@ -77,4 +76,4 @@ namespace WorkflowForge
         /// <exception cref="ObjectDisposedException">Thrown when the foundry has been disposed.</exception>
         void AddMiddleware(IWorkflowOperationMiddleware middleware);
     }
-} 
+}

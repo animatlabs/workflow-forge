@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions.Resilience.Abstractions;
 
 namespace WorkflowForge.Extensions.Resilience
 {
@@ -42,7 +43,7 @@ namespace WorkflowForge.Extensions.Resilience
         {
             var operationName = operation.Name;
             object? result = null;
-            
+
             try
             {
                 await _policy.ExecuteAsync(async () =>
@@ -50,13 +51,13 @@ namespace WorkflowForge.Extensions.Resilience
                     foundry.Logger.LogDebug("Executing operation '{OperationName}' through circuit breaker", operationName);
                     result = await next().ConfigureAwait(false);
                 }, cancellationToken).ConfigureAwait(false);
-                
+
                 _logger?.LogDebug("Operation {OperationName} completed successfully through circuit breaker", operationName);
                 return result;
             }
             catch (CircuitBreakerOpenException ex)
             {
-                _logger?.LogWarning("Circuit breaker is open for operation {OperationName}: {Message}", 
+                _logger?.LogWarning("Circuit breaker is open for operation {OperationName}: {Message}",
                     operationName, ex.Message);
                 throw;
             }
@@ -73,4 +74,4 @@ namespace WorkflowForge.Extensions.Resilience
             _policy?.Dispose();
         }
     }
-} 
+}

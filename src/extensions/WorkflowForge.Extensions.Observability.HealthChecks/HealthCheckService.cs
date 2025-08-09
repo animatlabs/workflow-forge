@@ -5,7 +5,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions.Observability.HealthChecks.Abstractions;
 using WorkflowForge.Loggers;
+using WorkflowForge.Constants;
 
 namespace WorkflowForge.Extensions.Observability.HealthChecks
 {
@@ -24,7 +26,7 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <summary>
         /// Gets the results of the last health check execution.
         /// </summary>
-        public IReadOnlyDictionary<string, HealthCheckResult> LastResults { get; private set; } = 
+        public IReadOnlyDictionary<string, HealthCheckResult> LastResults { get; private set; } =
             new Dictionary<string, HealthCheckResult>();
 
         /// <summary>
@@ -68,13 +70,13 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
             if (checkInterval.HasValue)
             {
                 _periodicCheckTimer = new Timer(PeriodicHealthCheck, null, _checkInterval, _checkInterval);
-                
+
                 var startupProperties = new Dictionary<string, string>
                 {
-                    [PropertyNames.ExecutionType] = "HealthCheckService",
+                    [HealthCheckPropertyNames.HealthStatus] = "ServiceStartup",
                     [HealthCheckPropertyNames.MonitoringIntervalMs] = _checkInterval.TotalMilliseconds.ToString("F0")
                 };
-                
+
                 _logger.LogInformation(startupProperties, HealthCheckLogMessages.HealthCheckServiceStarted);
             }
         }
@@ -91,13 +93,13 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
             if (healthCheck == null) throw new ArgumentNullException(nameof(healthCheck));
 
             _healthChecks.AddOrUpdate(healthCheck.Name, healthCheck, (key, existing) => healthCheck);
-            
+
             var registrationProperties = new Dictionary<string, string>
             {
                 [HealthCheckPropertyNames.HealthCheckName] = healthCheck.Name,
                 [HealthCheckPropertyNames.TotalHealthChecks] = _healthChecks.Count.ToString()
             };
-            
+
             _logger.LogInformation(registrationProperties, HealthCheckLogMessages.HealthCheckRegistered);
         }
 
@@ -118,7 +120,7 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
                     [HealthCheckPropertyNames.HealthCheckName] = name,
                     [HealthCheckPropertyNames.TotalHealthChecks] = _healthChecks.Count.ToString()
                 };
-                
+
                 _logger.LogInformation(unregistrationProperties, HealthCheckLogMessages.HealthCheckUnregistered);
             }
             return removed;
@@ -149,7 +151,7 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
                 {
                     [HealthCheckPropertyNames.TotalHealthChecks] = "0"
                 };
-                
+
                 _logger.LogWarning(noChecksProperties, HealthCheckLogMessages.NoHealthChecksRegistered);
                 return results;
             }
@@ -157,17 +159,17 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
             try
             {
                 var completedTasks = await Task.WhenAll(tasks).ConfigureAwait(false);
-                
+
                 foreach (var (name, result) in completedTasks)
                 {
                     results[name] = result;
                 }
 
                 LastResults = results;
-                
+
                 var overallStatus = OverallStatus;
                 var healthyCounts = results.Values.GroupBy(r => r.Status).ToDictionary(g => g.Key, g => g.Count());
-                
+
                 var completionProperties = new Dictionary<string, string>
                 {
                     [HealthCheckPropertyNames.OverallHealthStatus] = overallStatus.ToString(),
@@ -183,7 +185,7 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
             }
             catch (Exception ex)
             {
-                var errorProperties = LoggingContextHelper.CreateErrorProperties(ex, "HealthCheckExecution");
+                var errorProperties = _logger.CreateErrorProperties(ex, "HealthCheckExecution");
                 _logger.LogError(errorProperties, ex, HealthCheckLogMessages.HealthChecksCompletionFailed);
                 throw;
             }
@@ -206,7 +208,7 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
                 {
                     [HealthCheckPropertyNames.HealthCheckName] = name
                 };
-                
+
                 _logger.LogWarning(notFoundProperties, HealthCheckLogMessages.HealthCheckNotFound);
                 return null;
             }
@@ -218,22 +220,22 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         private async Task<(string Name, HealthCheckResult Result)> ExecuteHealthCheckAsync(IHealthCheck healthCheck, CancellationToken cancellationToken)
         {
             var startTime = _timeProvider.UtcNow;
-            
+
             var executionProperties = new Dictionary<string, string>
             {
                 [HealthCheckPropertyNames.HealthCheckName] = healthCheck.Name,
-                [PropertyNames.ExecutionType] = "HealthCheck"
+                [HealthCheckPropertyNames.HealthStatus] = "HealthCheckExecution"
             };
 
             using var healthCheckScope = _logger.BeginScope("HealthCheckExecution", executionProperties);
-            
+
             try
             {
                 _logger.LogDebug(HealthCheckLogMessages.HealthCheckExecutionStarted);
-                
+
                 var result = await healthCheck.CheckHealthAsync(cancellationToken).ConfigureAwait(false);
                 var duration = _timeProvider.UtcNow - startTime;
-                
+
                 // Create a new result with the measured duration
                 var resultWithDuration = new HealthCheckResult(
                     result.Status,
@@ -249,23 +251,23 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
                 };
 
                 _logger.LogDebug(completionProperties, HealthCheckLogMessages.HealthCheckExecutionCompleted);
-                
+
                 return (healthCheck.Name, resultWithDuration);
             }
             catch (Exception ex)
             {
                 var duration = _timeProvider.UtcNow - startTime;
-                var errorProperties = LoggingContextHelper.CreateErrorProperties(ex, "HealthCheck");
+                var errorProperties = _logger.CreateErrorProperties(ex, "HealthCheck");
                 errorProperties[HealthCheckPropertyNames.HealthCheckDurationMs] = duration.TotalMilliseconds.ToString("F0");
-                
+
                 _logger.LogError(errorProperties, ex, HealthCheckLogMessages.HealthCheckExecutionFailed);
-                
+
                 var errorResult = new HealthCheckResult(
                     HealthStatus.Unhealthy,
                     $"Health check execution failed: {ex.Message}",
                     ex,
                     duration: duration);
-                
+
                 return (healthCheck.Name, errorResult);
             }
         }
@@ -289,7 +291,7 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
                 }
                 catch (Exception ex)
                 {
-                    var errorProperties = LoggingContextHelper.CreateErrorProperties(ex, "PeriodicHealthCheck");
+                    var errorProperties = _logger.CreateErrorProperties(ex, "PeriodicHealthCheck");
                     _logger.LogError(errorProperties, ex, HealthCheckLogMessages.PeriodicHealthCheckFailed);
                 }
             });
@@ -304,7 +306,7 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
 
             _disposed = true;
             _periodicCheckTimer?.Dispose();
-            
+
             // Dispose health checks that implement IDisposable
             foreach (var healthCheck in _healthChecks.Values.OfType<IDisposable>())
             {
@@ -318,22 +320,22 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
                     {
                         [HealthCheckPropertyNames.HealthCheckName] = healthCheck.GetType().Name
                     };
-                    var errorProperties = LoggingContextHelper.CreateErrorProperties(ex, "HealthCheckDisposal");
+                    var errorProperties = _logger.CreateErrorProperties(ex, "HealthCheckDisposal");
                     foreach (var kvp in disposalProperties)
                         errorProperties[kvp.Key] = kvp.Value;
-                    
+
                     _logger.LogError(errorProperties, ex, HealthCheckLogMessages.HealthCheckDisposalError);
                 }
             }
-            
+
             _healthChecks.Clear();
-            
+
             var serviceDisposalProperties = new Dictionary<string, string>
             {
-                [PropertyNames.ExecutionType] = "HealthCheckService"
+                [HealthCheckPropertyNames.HealthStatus] = "ServiceDisposed"
             };
-            
+
             _logger.LogInformation(serviceDisposalProperties, HealthCheckLogMessages.HealthCheckServiceDisposed);
         }
     }
-} 
+}

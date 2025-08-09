@@ -1,11 +1,7 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions;
 using WorkflowForge.Middleware;
 using WorkflowForge.Operations;
-using WorkflowForge.Extensions;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -21,13 +17,13 @@ public class MiddlewareSample : ISample
     public async Task RunAsync()
     {
         Console.WriteLine("Demonstrating WorkflowForge middleware components...");
-        
+
         // Scenario 1: Basic built-in middleware
         await RunBuiltInMiddlewareDemo();
-        
+
         // Scenario 2: Custom middleware
         await RunCustomMiddlewareDemo();
-        
+
         // Scenario 3: Middleware pipeline
         await RunMiddlewarePipelineDemo();
     }
@@ -35,72 +31,72 @@ public class MiddlewareSample : ISample
     private static async Task RunBuiltInMiddlewareDemo()
     {
         Console.WriteLine("\n--- Built-in Middleware Demo ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("BuiltInMiddlewareDemo");
-        
+
         // Add built-in middleware components
-        foundry.AddMiddleware(new TimingMiddleware());
-        foundry.AddMiddleware(new LoggingMiddleware(foundry.Logger));
-        
+        // Enable standard timing via configuration if needed; direct TimingMiddleware is internal
+        foundry.UseLogging();
+
         foundry
             .WithOperation(LoggingOperation.Info("Starting middleware demonstration"))
             .WithOperation(DelayOperation.FromMilliseconds(200))
             .WithOperation(new ProcessingOperation("DataProcessor", TimeSpan.FromMilliseconds(300)))
             .WithOperation(DelayOperation.FromMilliseconds(150))
             .WithOperation(LoggingOperation.Info("Middleware demonstration completed"));
-        
+
         await foundry.ForgeAsync();
     }
 
     private static async Task RunCustomMiddlewareDemo()
     {
         Console.WriteLine("\n--- Custom Middleware Demo ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("CustomMiddlewareDemo");
-        
+
         // Add custom middleware
         foundry.AddMiddleware(new SecurityMiddleware());
         foundry.AddMiddleware(new ValidationMiddleware());
         foundry.AddMiddleware(new AuditMiddleware());
-        
+
         foundry.SetProperty("user_id", "user_12345");
         foundry.SetProperty("security_token", "sec_token_abc123");
-        
+
         foundry
             .WithOperation(LoggingOperation.Info("Starting custom middleware demonstration"))
             .WithOperation(new BusinessOperation("CustomerValidation", "CUSTOMER_001"))
             .WithOperation(new BusinessOperation("OrderProcessing", "ORDER_999"))
             .WithOperation(LoggingOperation.Info("Custom middleware demonstration completed"));
-        
+
         await foundry.ForgeAsync();
     }
 
     private static async Task RunMiddlewarePipelineDemo()
     {
         Console.WriteLine("\n--- Middleware Pipeline Demo ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("MiddlewarePipelineDemo");
-        
+
         // Create a comprehensive middleware pipeline
         foundry.AddMiddleware(new SecurityMiddleware());           // First: Security check
         foundry.AddMiddleware(new TimingMiddleware());             // Second: Performance timing
         foundry.AddMiddleware(new ValidationMiddleware());         // Third: Input validation
-        foundry.AddMiddleware(new LoggingMiddleware(foundry.Logger)); // Fourth: Detailed logging
+        foundry.UseLogging(); // Detailed logging
         foundry.AddMiddleware(new AuditMiddleware());              // Fifth: Audit trail
-        
+
         foundry.SetProperty("user_id", "admin_user");
         foundry.SetProperty("security_token", "admin_token_xyz789");
         foundry.SetProperty("validation_rules", new[] { "required_field", "format_check", "business_rules" });
-        
+
         foundry
             .WithOperation(LoggingOperation.Info("Starting comprehensive middleware pipeline"))
             .WithOperation(new BusinessOperation("CriticalOperation", "CRITICAL_DATA"))
             .WithOperation(DelayOperation.FromMilliseconds(100))
             .WithOperation(new BusinessOperation("ReportGeneration", "MONTHLY_REPORT"))
             .WithOperation(LoggingOperation.Info("Middleware pipeline demonstration completed"));
-        
+
         await foundry.ForgeAsync();
-        
+
         Console.WriteLine("   Middleware pipeline executed successfully");
         Console.WriteLine($"   Audit entries created: {foundry.Properties.GetValueOrDefault("audit_count", 0)}");
         Console.WriteLine($"   Security checks performed: {foundry.Properties.GetValueOrDefault("security_checks", 0)}");
@@ -110,18 +106,17 @@ public class MiddlewareSample : ISample
     private static async Task RunConditionalMiddlewareDemo()
     {
         Console.WriteLine("\n--- Conditional Middleware Demo ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("ConditionalMiddlewareDemo");
-        
+
         // Set condition for middleware behavior
         foundry.SetProperty("enable_validation", true);
         foundry.SetProperty("enable_caching", false);
-        
+
         foundry
             .WithOperation(LoggingOperation.Info("Starting conditional middleware demonstration"))
-            .WithMiddleware(new LoggingMiddleware(foundry.Logger))
-            .WithMiddleware(new TimingMiddleware())
-            .WithMiddleware(new LoggingMiddleware(foundry.Logger))
+            .UseLogging()
+            .UseLogging()
             .WithOperation(new ConditionalOperation("DataProcessor"))
             .WithOperation(new ConditionalOperation("ResultValidator"))
             .WithOperation(LoggingOperation.Info("Conditional middleware demonstration completed"));
@@ -134,19 +129,18 @@ public class MiddlewareSample : ISample
     private static async Task RunCustomMiddlewareOrderingDemo()
     {
         Console.WriteLine("\n--- Custom Middleware Ordering Demo ---");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("MiddlewareOrderingDemo");
-        
+
         foundry
-            .WithMiddleware(new LoggingMiddleware(foundry.Logger))
-            .WithMiddleware(new TimingMiddleware())
-            .WithMiddleware(new LoggingMiddleware(foundry.Logger))
+            .UseLogging()
+            .UseLogging()
             .WithOperation(LoggingOperation.Info("Starting middleware ordering demonstration"))
             .WithOperation(new ProcessingOperation("OrderedOperation", TimeSpan.FromMilliseconds(200)))
             .WithOperation(LoggingOperation.Info("Middleware ordering demonstration completed"));
-        
+
         await foundry.ForgeAsync();
-        
+
         Console.WriteLine("   Middleware ordering demonstration completed");
     }
 }
@@ -156,32 +150,32 @@ public class MiddlewareSample : ISample
 /// </summary>
 public class SecurityMiddleware : IWorkflowOperationMiddleware
 {
-    public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData, 
+    public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData,
         Func<Task<object?>> next, CancellationToken cancellationToken = default)
     {
         foundry.TryGetProperty<string>("user_id", out var userId);
         foundry.TryGetProperty<string>("security_token", out var token);
-        
-        foundry.Logger.LogInformation("Security check for operation: {OperationName}, User: {UserId}", 
+
+        foundry.Logger.LogInformation("Security check for operation: {OperationName}, User: {UserId}",
             operation.Name, userId ?? "anonymous");
-        
+
         // Simulate security validation
         if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
         {
             throw new UnauthorizedAccessException("Missing security credentials");
         }
-        
+
         if (!token.StartsWith("sec_token_") && !token.StartsWith("admin_token_"))
         {
             throw new UnauthorizedAccessException("Invalid security token");
         }
-        
+
         // Update security check counter
         var securityChecks = foundry.GetPropertyOrDefault<int>("security_checks", 0);
         foundry.SetProperty("security_checks", securityChecks + 1);
-        
+
         foundry.Logger.LogDebug("Security validation passed for user: {UserId}", userId);
-        
+
         // Call next middleware/operation
         return await next();
     }
@@ -192,35 +186,35 @@ public class SecurityMiddleware : IWorkflowOperationMiddleware
 /// </summary>
 public class ValidationMiddleware : IWorkflowOperationMiddleware
 {
-    public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData, 
+    public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData,
         Func<Task<object?>> next, CancellationToken cancellationToken = default)
     {
         foundry.Logger.LogInformation("Validation check for operation: {OperationName}", operation.Name);
-        
+
         var validationRules = foundry.GetPropertyOrDefault<string[]>("validation_rules");
-        
+
         if (validationRules != null)
         {
             foreach (var rule in validationRules)
             {
                 foundry.Logger.LogDebug("Applying validation rule: {Rule}", rule);
-                
+
                 // Simulate rule validation
                 await Task.Delay(10, cancellationToken);
-                
+
                 if (rule == "business_rules" && operation.Name.Contains("Critical"))
                 {
                     foundry.Logger.LogDebug("Special business rule validation for critical operation");
                 }
             }
         }
-        
+
         // Update validation check counter
         var validationChecks = foundry.GetPropertyOrDefault<int>("validation_checks", 0);
         foundry.SetProperty("validation_checks", validationChecks + 1);
-        
+
         foundry.Logger.LogDebug("Validation completed for operation: {OperationName}", operation.Name);
-        
+
         // Call next middleware/operation
         return await next();
     }
@@ -231,7 +225,7 @@ public class ValidationMiddleware : IWorkflowOperationMiddleware
 /// </summary>
 public class AuditMiddleware : IWorkflowOperationMiddleware
 {
-    public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData, 
+    public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData,
         Func<Task<object?>> next, CancellationToken cancellationToken = default)
     {
         var auditEntry = new
@@ -242,35 +236,35 @@ public class AuditMiddleware : IWorkflowOperationMiddleware
             Timestamp = DateTime.UtcNow,
             WorkflowExecutionId = foundry.ExecutionId
         };
-        
-        foundry.Logger.LogInformation("Audit: Recording operation execution - {OperationName} by {UserId}", 
+
+        foundry.Logger.LogInformation("Audit: Recording operation execution - {OperationName} by {UserId}",
             operation.Name, auditEntry.UserId ?? "unknown");
-        
+
         var startTime = DateTime.UtcNow;
-        
+
         try
         {
             // Call next middleware/operation
             var result = await next();
-            
+
             var duration = DateTime.UtcNow - startTime;
-            
-            foundry.Logger.LogInformation("Audit: Operation completed - {OperationName}, Duration: {Duration}ms", 
+
+            foundry.Logger.LogInformation("Audit: Operation completed - {OperationName}, Duration: {Duration}ms",
                 operation.Name, duration.TotalMilliseconds);
-            
+
             // Update audit counter
             var auditCount = foundry.GetPropertyOrDefault<int>("audit_count", 0);
             foundry.SetProperty("audit_count", auditCount + 1);
-            
+
             return result;
         }
         catch (Exception ex)
         {
             var duration = DateTime.UtcNow - startTime;
-            
-            foundry.Logger.LogError("Audit: Operation failed - {OperationName}, Duration: {Duration}ms, Error: {Error}", 
+
+            foundry.Logger.LogError("Audit: Operation failed - {OperationName}, Duration: {Duration}ms, Error: {Error}",
                 operation.Name, duration.TotalMilliseconds, ex.Message);
-            
+
             throw;
         }
     }
@@ -297,9 +291,9 @@ public class ProcessingOperation : IWorkflowOperation
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Processing operation started: {OperationName}", _operationName);
-        
+
         await Task.Delay(_processingTime, cancellationToken);
-        
+
         var result = new
         {
             OperationName = _operationName,
@@ -307,9 +301,9 @@ public class ProcessingOperation : IWorkflowOperation
             CompletedAt = DateTime.UtcNow,
             Status = "Processed"
         };
-        
+
         foundry.Logger.LogInformation("Processing operation completed: {OperationName}", _operationName);
-        
+
         return result;
     }
 
@@ -318,7 +312,8 @@ public class ProcessingOperation : IWorkflowOperation
         throw new NotSupportedException($"Operation {_operationName} does not support restoration");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -341,12 +336,12 @@ public class BusinessOperation : IWorkflowOperation
 
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        foundry.Logger.LogInformation("Business operation started: {OperationName} with data: {BusinessData}", 
+        foundry.Logger.LogInformation("Business operation started: {OperationName} with data: {BusinessData}",
             _operationName, _businessData);
-        
+
         // Simulate business processing
         await Task.Delay(150, cancellationToken);
-        
+
         var result = new
         {
             OperationName = _operationName,
@@ -355,9 +350,9 @@ public class BusinessOperation : IWorkflowOperation
             CompletedAt = DateTime.UtcNow,
             Status = "BusinessCompleted"
         };
-        
+
         foundry.Logger.LogInformation("Business operation completed: {OperationName}", _operationName);
-        
+
         return result;
     }
 
@@ -366,7 +361,8 @@ public class BusinessOperation : IWorkflowOperation
         throw new NotSupportedException($"Operation {_operationName} does not support restoration");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -390,12 +386,12 @@ public class DemoOperation : IWorkflowOperation
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Executing demo operation: {OperationName}", _operationName);
-        
+
         // Simulate processing time
         await Task.Delay(_processingTime, cancellationToken);
-        
+
         foundry.Logger.LogInformation("Completed demo operation: {OperationName}", _operationName);
-        
+
         return $"Result from {_operationName}";
     }
 
@@ -404,7 +400,8 @@ public class DemoOperation : IWorkflowOperation
         throw new NotSupportedException("This operation does not support restore.");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -427,25 +424,25 @@ public class ConditionalOperation : IWorkflowOperation
     {
         var enableValidation = foundry.GetPropertyOrDefault<bool>("enable_validation", false);
         var enableCaching = foundry.GetPropertyOrDefault<bool>("enable_caching", false);
-        
-        foundry.Logger.LogInformation("Executing conditional operation: {OperationName}, Validation: {ValidationEnabled}, Caching: {CachingEnabled}", 
+
+        foundry.Logger.LogInformation("Executing conditional operation: {OperationName}, Validation: {ValidationEnabled}, Caching: {CachingEnabled}",
             _operationName, enableValidation, enableCaching);
-        
+
         if ((bool)enableValidation)
         {
             foundry.Logger.LogDebug("Performing validation for {OperationName}", _operationName);
             await Task.Delay(50, cancellationToken); // Simulate validation time
         }
-        
+
         if ((bool)enableCaching)
         {
             foundry.Logger.LogDebug("Using cached result for {OperationName}", _operationName);
             return "Cached result";
         }
-        
+
         // Simulate normal processing
         await Task.Delay(100, cancellationToken);
-        
+
         return $"Processed result from {_operationName}";
     }
 
@@ -454,5 +451,6 @@ public class ConditionalOperation : IWorkflowOperation
         throw new NotSupportedException("This operation does not support restore.");
     }
 
-    public void Dispose() { }
-} 
+    public void Dispose()
+    { }
+}

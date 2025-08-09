@@ -29,21 +29,23 @@ dotnet run
 - **Workflow Events** - Listen to workflow lifecycle
 - **Middleware Usage** - Add cross-cutting concerns
 
-### Extensions (13-17)
+### Extensions (13-18)
 - **Serilog Logging** - Structured logging
 - **Polly Resilience** - Retry policies and circuit breakers
 - **OpenTelemetry** - Distributed tracing
 - **Health Checks** - System monitoring
 - **Performance Monitoring** - Metrics and statistics
+- **Persistence (BYO Storage)** - Resumable workflows with pluggable provider
 
-### Advanced (18)
+### Advanced (19-20)
 - **Comprehensive Demo** - Full-featured example with all extensions
+- **Operation Creation Patterns** - All operation creation methods
 
 ## Interactive Menu
 
 The console application provides an easy-to-use menu system:
 
-- **1-18**: Run specific samples
+- **1-20**: Run specific samples
 - **A**: Run ALL samples
 - **B**: Run Basic samples only (1-4)
 - **Q**: Quit
@@ -62,7 +64,7 @@ Samples use `appsettings.json` for environment-specific configuration including 
 
 **Beginners**: Start with samples 1-4 (Basic Workflows)  
 **Intermediate**: Try samples 5-12 (Control Flow & Configuration)  
-**Advanced**: Explore samples 13-18 (Extensions & Advanced)
+**Advanced**: Explore samples 13-20 (Extensions & Advanced)
 
 ## Features Demonstrated
 

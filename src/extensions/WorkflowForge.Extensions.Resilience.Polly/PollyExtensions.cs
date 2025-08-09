@@ -19,8 +19,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <param name="baseDelay">Base delay for exponential backoff.</param>
         /// <param name="maxDelay">Maximum delay between retries.</param>
         /// <returns>The foundry for method chaining.</returns>
-        public static WorkflowFoundry UsePollyRetry(
-            this WorkflowFoundry foundry,
+        public static IWorkflowFoundry UsePollyRetry(
+            this IWorkflowFoundry foundry,
             int maxRetryAttempts = 3,
             TimeSpan? baseDelay = null,
             TimeSpan? maxDelay = null)
@@ -42,8 +42,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <param name="failureThreshold">Number of failures before opening the circuit.</param>
         /// <param name="durationOfBreak">Duration to keep the circuit open.</param>
         /// <returns>The foundry for method chaining.</returns>
-        public static WorkflowFoundry UsePollyCircuitBreaker(
-            this WorkflowFoundry foundry,
+        public static IWorkflowFoundry UsePollyCircuitBreaker(
+            this IWorkflowFoundry foundry,
             int failureThreshold = 5,
             TimeSpan? durationOfBreak = null)
         {
@@ -62,8 +62,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <param name="foundry">The foundry to configure.</param>
         /// <param name="timeout">The timeout duration.</param>
         /// <returns>The foundry for method chaining.</returns>
-        public static WorkflowFoundry UsePollyTimeout(
-            this WorkflowFoundry foundry,
+        public static IWorkflowFoundry UsePollyTimeout(
+            this IWorkflowFoundry foundry,
             TimeSpan timeout)
         {
             var middleware = PollyMiddleware.WithTimeoutPolicy(
@@ -84,8 +84,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <param name="circuitBreakerDuration">Circuit breaker open duration.</param>
         /// <param name="timeoutDuration">Operation timeout duration.</param>
         /// <returns>The foundry for method chaining.</returns>
-        public static WorkflowFoundry UsePollyComprehensive(
-            this WorkflowFoundry foundry,
+        public static IWorkflowFoundry UsePollyComprehensive(
+            this IWorkflowFoundry foundry,
             int maxRetryAttempts = 3,
             TimeSpan? baseDelay = null,
             int circuitBreakerThreshold = 5,
@@ -111,8 +111,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <param name="pipeline">The custom Polly pipeline to apply.</param>
         /// <param name="name">Optional name for the middleware.</param>
         /// <returns>The foundry for method chaining.</returns>
-        public static WorkflowFoundry UsePollyPipeline(
-            this WorkflowFoundry foundry,
+        public static IWorkflowFoundry UsePollyPipeline(
+            this IWorkflowFoundry foundry,
             ResiliencePipeline pipeline,
             string? name = null)
         {
@@ -127,8 +127,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <param name="foundry">The foundry to configure.</param>
         /// <param name="settings">The Polly settings to apply.</param>
         /// <returns>The foundry for method chaining.</returns>
-        public static WorkflowFoundry UsePollyFromSettings(
-            this WorkflowFoundry foundry,
+        public static IWorkflowFoundry UsePollyFromSettings(
+            this IWorkflowFoundry foundry,
             PollySettings settings)
         {
             if (!settings.IsEnabled)
@@ -183,7 +183,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// </summary>
         /// <param name="foundry">The foundry to configure.</param>
         /// <returns>The foundry for method chaining.</returns>
-        public static WorkflowFoundry UsePollyEnterpriseResilience(this WorkflowFoundry foundry)
+        public static IWorkflowFoundry UsePollyEnterpriseResilience(this IWorkflowFoundry foundry)
         {
             var settings = PollySettings.ForEnterprise();
             return foundry.UsePollyFromSettings(settings);
@@ -194,7 +194,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// </summary>
         /// <param name="foundry">The foundry to configure.</param>
         /// <returns>The foundry for method chaining.</returns>
-        public static WorkflowFoundry UsePollyDevelopmentResilience(this WorkflowFoundry foundry)
+        public static IWorkflowFoundry UsePollyDevelopmentResilience(this IWorkflowFoundry foundry)
         {
             var settings = PollySettings.ForDevelopment();
             return foundry.UsePollyFromSettings(settings);
@@ -205,7 +205,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// </summary>
         /// <param name="foundry">The foundry to configure.</param>
         /// <returns>The foundry for method chaining.</returns>
-        public static WorkflowFoundry UsePollyProductionResilience(this WorkflowFoundry foundry)
+        public static IWorkflowFoundry UsePollyProductionResilience(this IWorkflowFoundry foundry)
         {
             var settings = PollySettings.ForProduction();
             return foundry.UsePollyFromSettings(settings);
@@ -216,83 +216,11 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// </summary>
         /// <param name="foundry">The foundry to configure.</param>
         /// <returns>The foundry for method chaining.</returns>
-        public static WorkflowFoundry UsePollyMinimalResilience(this WorkflowFoundry foundry)
+        public static IWorkflowFoundry UsePollyMinimalResilience(this IWorkflowFoundry foundry)
         {
             var settings = PollySettings.Minimal();
             return foundry.UsePollyFromSettings(settings);
         }
 
-        // Interface-based convenience overloads to avoid casts in user code
-
-        public static IWorkflowFoundry UsePollyRetry(
-            this IWorkflowFoundry foundry,
-            int maxRetryAttempts = 3,
-            TimeSpan? baseDelay = null,
-            TimeSpan? maxDelay = null)
-        {
-            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
-                UsePollyRetry(maxRetryAttempts, baseDelay, maxDelay);
-        }
-
-        public static IWorkflowFoundry UsePollyCircuitBreaker(
-            this IWorkflowFoundry foundry,
-            int failureThreshold = 5,
-            TimeSpan? durationOfBreak = null)
-        {
-            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
-                UsePollyCircuitBreaker(failureThreshold, durationOfBreak);
-        }
-
-        public static IWorkflowFoundry UsePollyTimeout(
-            this IWorkflowFoundry foundry,
-            TimeSpan timeout)
-        {
-            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
-                UsePollyTimeout(timeout);
-        }
-
-        public static IWorkflowFoundry UsePollyComprehensive(
-            this IWorkflowFoundry foundry,
-            int maxRetryAttempts = 3,
-            TimeSpan? baseDelay = null,
-            int circuitBreakerThreshold = 5,
-            TimeSpan? circuitBreakerDuration = null,
-            TimeSpan? timeoutDuration = null)
-        {
-            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
-                UsePollyComprehensive(maxRetryAttempts, baseDelay, circuitBreakerThreshold, circuitBreakerDuration, timeoutDuration);
-        }
-
-        public static IWorkflowFoundry UsePollyFromSettings(
-            this IWorkflowFoundry foundry,
-            PollySettings settings)
-        {
-            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
-                UsePollyFromSettings(settings);
-        }
-
-        public static IWorkflowFoundry UsePollyEnterpriseResilience(this IWorkflowFoundry foundry)
-        {
-            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
-                UsePollyEnterpriseResilience();
-        }
-
-        public static IWorkflowFoundry UsePollyDevelopmentResilience(this IWorkflowFoundry foundry)
-        {
-            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
-                UsePollyDevelopmentResilience();
-        }
-
-        public static IWorkflowFoundry UsePollyProductionResilience(this IWorkflowFoundry foundry)
-        {
-            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
-                UsePollyProductionResilience();
-        }
-
-        public static IWorkflowFoundry UsePollyMinimalResilience(this IWorkflowFoundry foundry)
-        {
-            return (foundry as WorkflowFoundry ?? throw new InvalidOperationException("Polly extensions require a WorkflowFoundry instance")).
-                UsePollyMinimalResilience();
-        }
     }
-} 
+}

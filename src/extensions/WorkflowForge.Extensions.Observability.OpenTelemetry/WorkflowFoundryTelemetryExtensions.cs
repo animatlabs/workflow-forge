@@ -81,8 +81,8 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
                 options ??= new WorkflowForgeOpenTelemetryOptions();
 
                 var service = new WorkflowForgeOpenTelemetryService(
-                    options.ServiceName, 
-                    options.ServiceVersion, 
+                    options.ServiceName,
+                    options.ServiceVersion,
                     foundry.Logger);
 
                 foundry.Properties[OpenTelemetryServiceKey] = service;
@@ -157,10 +157,10 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <param name="tags">Additional tags for the metrics.</param>
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
         public static void RecordOperationMetrics(
-            this IWorkflowFoundry foundry, 
-            string operationName, 
-            TimeSpan duration, 
-            bool success, 
+            this IWorkflowFoundry foundry,
+            string operationName,
+            TimeSpan duration,
+            bool success,
             long memoryAllocated = 0,
             params (string Key, object? Value)[] tags)
         {
@@ -190,7 +190,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <param name="tags">Additional tags for the metric.</param>
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
         public static void IncrementActiveOperations(
-            this IWorkflowFoundry foundry, 
+            this IWorkflowFoundry foundry,
             string operationName,
             params (string Key, object? Value)[] tags)
         {
@@ -220,7 +220,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <param name="tags">Additional tags for the metric.</param>
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
         public static void DecrementActiveOperations(
-            this IWorkflowFoundry foundry, 
+            this IWorkflowFoundry foundry,
             string operationName,
             params (string Key, object? Value)[] tags)
         {
@@ -252,7 +252,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <param name="description">The counter description.</param>
         /// <returns>The counter instrument or null if OpenTelemetry is not available.</returns>
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
-        public static Counter<T>? CreateCounter<T>(this IWorkflowFoundry foundry, string name, string? unit = null, string? description = null) 
+        public static Counter<T>? CreateCounter<T>(this IWorkflowFoundry foundry, string name, string? unit = null, string? description = null)
             where T : struct
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
@@ -271,7 +271,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <param name="description">The histogram description.</param>
         /// <returns>The histogram instrument or null if OpenTelemetry is not available.</returns>
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
-        public static Histogram<T>? CreateHistogram<T>(this IWorkflowFoundry foundry, string name, string? unit = null, string? description = null) 
+        public static Histogram<T>? CreateHistogram<T>(this IWorkflowFoundry foundry, string name, string? unit = null, string? description = null)
             where T : struct
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
@@ -293,4 +293,4 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             return foundry.GetOpenTelemetryService() != null;
         }
     }
-} 
+}

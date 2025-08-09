@@ -16,7 +16,7 @@ namespace WorkflowForge
     {
         private readonly List<IWorkflowOperation> _operations = new();
         private readonly IServiceProvider? _serviceProvider;
-        
+
         private string? _name;
         private string? _description;
         private string _version;
@@ -267,4 +267,4 @@ namespace WorkflowForge
             return builder.Build();
         }
     }
-} 
+}

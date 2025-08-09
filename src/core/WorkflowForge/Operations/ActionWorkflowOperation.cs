@@ -1,6 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using WorkflowForge.Abstractions;
+using WorkflowForge.Exceptions;
 
 namespace WorkflowForge.Operations
 {
@@ -8,7 +10,7 @@ namespace WorkflowForge.Operations
     /// A workflow operation that executes a simple action without returning a result.
     /// Useful for side-effects like logging, notifications, or state changes.
     /// </summary>
-    public class ActionWorkflowOperation : WorkflowOperationBase
+    public sealed class ActionWorkflowOperation : WorkflowOperationBase
     {
         private readonly Func<object?, IWorkflowFoundry, CancellationToken, Task> _actionFunc;
         private readonly Func<object?, IWorkflowFoundry, CancellationToken, Task>? _restoreFunc;
@@ -86,7 +88,7 @@ namespace WorkflowForge.Operations
     /// A strongly-typed action workflow operation that executes without returning a result.
     /// </summary>
     /// <typeparam name="TInput">The input data type.</typeparam>
-    public class ActionWorkflowOperation<TInput> : WorkflowOperationBase<TInput, TInput>
+    public sealed class ActionWorkflowOperation<TInput> : WorkflowOperationBase<TInput, TInput>
     {
         private readonly Func<TInput, IWorkflowFoundry, CancellationToken, Task> _actionFunc;
         private readonly Func<TInput, IWorkflowFoundry, CancellationToken, Task>? _restoreFunc;
@@ -159,4 +161,4 @@ namespace WorkflowForge.Operations
             }
         }
     }
-} 
+}

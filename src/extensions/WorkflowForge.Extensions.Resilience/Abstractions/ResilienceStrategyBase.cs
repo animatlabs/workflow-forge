@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 
-namespace WorkflowForge.Extensions.Resilience
+namespace WorkflowForge.Extensions.Resilience.Abstractions
 {
     /// <summary>
     /// Base class for resilience strategies that provides common functionality.
@@ -44,9 +44,9 @@ namespace WorkflowForge.Extensions.Resilience
         /// <inheritdoc />
         public virtual async Task<T> ExecuteAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken)
         {
-            T result = default(T)!;
+            T result = default!;
             await ExecuteAsync(async () => { result = await operation().ConfigureAwait(false); }, cancellationToken).ConfigureAwait(false);
             return result;
         }
     }
-} 
+}

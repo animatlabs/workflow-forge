@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Serilog;
 using Serilog.Context;
 using Serilog.Core;
 using Serilog.Core.Enrichers;
@@ -226,4 +225,4 @@ namespace WorkflowForge.Extensions.Logging.Serilog
             return LogContext.Push(enrichers.ToArray());
         }
     }
-} 
+}

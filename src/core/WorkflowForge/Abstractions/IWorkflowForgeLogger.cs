@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 
 namespace WorkflowForge.Abstractions
 {
@@ -211,4 +209,4 @@ namespace WorkflowForge.Abstractions
         /// <returns><see cref="IDisposable" /> scope.</returns>
         IDisposable BeginScope<TState>(TState state, IDictionary<string, string>? properties = null);
     }
-} 
+}

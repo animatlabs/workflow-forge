@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <Version>1.1.0</Version>
+    <PackageVersion>1.1.0</PackageVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -39,17 +41,21 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
-Initial release v1.0.0 of WorkflowForge:
-- Powerful workflow orchestration framework
-- Extensible architecture with dependency injection
-- Built-in logging, resilience, and observability
-- Production-ready with comprehensive testing
+Minor release v1.1.0:
+- Persistence and Recovery moved to extensions; core API tightened
+- New logging extensions and constants organization
+- Event args base class and exception namespace updates
+- Documentation and samples refreshed; tests expanded
     </PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.OpenTelemetry" />
     <InternalsVisibleTo Include="WorkflowForge.Tests" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Resilience.Tests" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.Performance.Tests" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.HealthChecks.Tests" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Resilience.Polly.Tests" />
   </ItemGroup>
 
   <ItemGroup>

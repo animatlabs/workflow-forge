@@ -212,7 +212,7 @@ Request → Middleware1 → Middleware2 → Operation → Middleware2 → Middle
 ```
 
 ### Built-in Middleware
-- **LoggingMiddleware** - Request/response logging
+- Request/response logging is enabled via `foundry.UseLogging(...)` extensions rather than directly referencing `LoggingMiddleware`.
 - **TimingMiddleware** - Performance measurement
 - **ErrorHandlingMiddleware** - Exception handling
 - **RetryMiddleware** - Automatic retry logic
@@ -269,20 +269,8 @@ public class SecurityMiddleware : IWorkflowOperationMiddleware
 ```
 
 ### 3. Custom Foundries
-Extend `WorkflowFoundry` for specialized execution environments:
-
-```csharp
-public class EnterpiseWorkflowFoundry : WorkflowFoundry
-{
-    public EnterpiseWorkflowFoundry(string name, IServiceProvider serviceProvider) 
-        : base(name, serviceProvider)
-    {
-        // Enterprise-specific initialization
-    }
-    
-    // Additional enterprise features
-}
-```
+Prefer composition over inheritance. Extend behavior by wrapping an `IWorkflowFoundry` and adding functionality via middleware and extensions rather than deriving from `WorkflowFoundry`.
+For cross-process resume and recovery, see the Persistence and Recovery extensions in `docs/extensions.md` and the `persistence` and `recovery-only` samples in the console app.
 
 ## Configuration Architecture
 

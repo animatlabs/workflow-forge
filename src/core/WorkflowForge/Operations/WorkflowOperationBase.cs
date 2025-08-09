@@ -1,41 +1,12 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using WorkflowForge.Abstractions;
 
 namespace WorkflowForge.Operations
 {
     /// <summary>
-    /// Abstract base class for workflow operations that provides default implementations
-    /// and bridges between typed and untyped operation interfaces.
-    /// 
-    /// <para><strong>When to inherit from this class:</strong></para>
-    /// <list type="bullet">
-    /// <item>Creating custom operations with complex business logic</item>
-    /// <item>Operations that need access to workflow context and foundry</item>
-    /// <item>Operations that require custom initialization or state management</item>
-    /// <item>Operations that need specific error handling or logging</item>
-    /// </list>
-    /// 
-    /// <para><strong>For simple delegate-based operations, consider using:</strong></para>
-    /// <list type="bullet">
-    /// <item><see cref="DelegateWorkflowOperation"/> for untyped operations</item>
-    /// <item><see cref="WorkflowOperations"/> factory class for convenience methods</item>
-    /// </list>
-    /// 
-    /// <para><strong>Example custom operation:</strong></para>
-    /// <code>
-    /// public class FileProcessingOperation : WorkflowOperationBase
-    /// {
-    ///     public override string Name => "ProcessFile";
-    ///     
-    ///     public override async Task&lt;object?&gt; ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    ///     {
-    ///         var filePath = (string)inputData;
-    ///         // Complex file processing logic here
-    ///         return processedData;
-    ///     }
-    /// }
-    /// </code>
+    /// Base class for untyped workflow operations providing default behaviors (ID, restore guard, disposal).
     /// </summary>
     public abstract class WorkflowOperationBase : IWorkflowOperation
     {
@@ -56,7 +27,7 @@ namespace WorkflowForge.Operations
         {
             if (!SupportsRestore)
                 throw new NotSupportedException($"Operation '{Name}' does not support restoration.");
-            
+
             return Task.CompletedTask;
         }
 
@@ -68,38 +39,8 @@ namespace WorkflowForge.Operations
     }
 
     /// <summary>
-    /// Abstract base class for strongly-typed workflow operations.
-    /// 
-    /// <para><strong>When to inherit from this class:</strong></para>
-    /// <list type="bullet">
-    /// <item>Creating typed operations with compile-time type safety</item>
-    /// <item>Operations that work with specific input/output types</item>
-    /// <item>Complex transformations that benefit from strong typing</item>
-    /// <item>Operations that need to validate input/output types</item>
-    /// </list>
-    /// 
-    /// <para><strong>For simple typed delegate-based operations, consider using:</strong></para>
-    /// <list type="bullet">
-    /// <item><see cref="DelegateWorkflowOperation{TInput, TOutput}"/> for typed delegate operations</item>
-    /// <item><see cref="WorkflowOperations.Create{TInput, TOutput}(string, Func{TInput, TOutput})"/> factory method</item>
-    /// </list>
-    /// 
-    /// <para><strong>Example custom typed operation:</strong></para>
-    /// <code>
-    /// public class DataTransformOperation : WorkflowOperationBase&lt;InputModel, OutputModel&gt;
-    /// {
-    ///     public override string Name => "TransformData";
-    ///     
-    ///     public override async Task&lt;OutputModel&gt; ForgeAsync(InputModel input, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    ///     {
-    ///         // Complex transformation logic here with full type safety
-    ///         return new OutputModel { ProcessedData = input.RawData.ToUpper() };
-    ///     }
-    /// }
-    /// </code>
+    /// Base class for typed workflow operations providing automatic type conversion for the untyped interface.
     /// </summary>
-    /// <typeparam name="TInput">The input data type.</typeparam>
-    /// <typeparam name="TOutput">The output data type.</typeparam>
     public abstract class WorkflowOperationBase<TInput, TOutput> : WorkflowOperationBase, IWorkflowOperation<TInput, TOutput>
     {
         /// <summary>
@@ -124,7 +65,7 @@ namespace WorkflowForge.Operations
         {
             if (!SupportsRestore)
                 throw new NotSupportedException($"Operation '{Name}' does not support restoration.");
-            
+
             return Task.CompletedTask;
         }
 
@@ -132,11 +73,11 @@ namespace WorkflowForge.Operations
         /// Implements the untyped interface by casting to/from the typed interface.
         /// DO NOT OVERRIDE THIS METHOD - it handles type conversion automatically.
         /// </summary>
-        public sealed override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        public override sealed async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             // Handle type conversion and validation
             TInput typedInput;
-            
+
             if (typeof(TInput) == typeof(object) || inputData is TInput directCast)
             {
                 typedInput = (TInput)inputData!;
@@ -159,14 +100,14 @@ namespace WorkflowForge.Operations
         /// Implements the untyped restoration interface.
         /// DO NOT OVERRIDE THIS METHOD - it handles type conversion automatically.
         /// </summary>
-        public sealed override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        public override sealed async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (!SupportsRestore)
                 throw new NotSupportedException($"Operation '{Name}' does not support restoration.");
 
             // Handle type conversion for output data
             TOutput typedOutput;
-            
+
             if (typeof(TOutput) == typeof(object) || outputData is TOutput directCast)
             {
                 typedOutput = (TOutput)outputData!;
@@ -184,4 +125,4 @@ namespace WorkflowForge.Operations
             await RestoreAsync(typedOutput, foundry, cancellationToken).ConfigureAwait(false);
         }
     }
-} 
+}

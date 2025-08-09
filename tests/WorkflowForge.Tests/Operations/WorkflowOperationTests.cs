@@ -1,3 +1,4 @@
+using WorkflowForge.Exceptions;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,7 +40,7 @@ public class WorkflowOperationBaseTests
         var operation = new TestOperation("Test");
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() => 
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             operation.ForgeAsync("input", null!, CancellationToken.None));
     }
 
@@ -91,7 +92,7 @@ public class WorkflowOperationBaseTests
         var foundry = new Mock<IWorkflowFoundry>().Object;
 
         // Act & Assert
-        await Assert.ThrowsAsync<NotSupportedException>(() => 
+        await Assert.ThrowsAsync<NotSupportedException>(() =>
             operation.RestoreAsync("output", foundry, CancellationToken.None));
     }
 
@@ -120,7 +121,7 @@ public class WorkflowOperationBaseTests
         public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            
+
             var result = inputData?.ToString()?.ToUpper() ?? "";
             return Task.FromResult<object?>(result);
         }
@@ -142,7 +143,7 @@ public class WorkflowOperationBaseTests
         public override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            
+
             await Task.Delay(_delay, cancellationToken);
             return inputData;
         }
@@ -219,7 +220,7 @@ public class ActionWorkflowOperationTests
         var foundry = new Mock<IWorkflowFoundry>().Object;
 
         // Act & Assert
-        await Assert.ThrowsAsync<WorkflowOperationException>(() => 
+        await Assert.ThrowsAsync<WorkflowOperationException>(() =>
             operation.ForgeAsync("input", foundry, CancellationToken.None));
     }
 }
@@ -248,7 +249,7 @@ public class ConditionalWorkflowOperationTests
         var trueOperation = new Mock<IWorkflowOperation>().Object;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             new ConditionalWorkflowOperation((Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>)null!, trueOperation));
     }
 
@@ -259,7 +260,7 @@ public class ConditionalWorkflowOperationTests
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((input, foundry, ct) => Task.FromResult(true));
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => 
+        Assert.Throws<ArgumentNullException>(() =>
             new ConditionalWorkflowOperation(condition, null!));
     }
 
@@ -361,7 +362,7 @@ public class DelegateWorkflowOperationTests
     public async Task ForgeAsync_ExecutesFunctionAndReturnsResult()
     {
         // Arrange
-        var executeFunc = new Func<object?, IWorkflowFoundry, CancellationToken, Task<object?>>((input, foundry, ct) => 
+        var executeFunc = new Func<object?, IWorkflowFoundry, CancellationToken, Task<object?>>((input, foundry, ct) =>
             Task.FromResult<object?>($"Processed: {input}"));
 
         var operation = new DelegateWorkflowOperation("TestDelegate", executeFunc);
@@ -388,7 +389,7 @@ public class DelegateWorkflowOperationTests
         var foundry = new Mock<IWorkflowFoundry>().Object;
 
         // Act & Assert
-        await Assert.ThrowsAsync<WorkflowOperationException>(() => 
+        await Assert.ThrowsAsync<WorkflowOperationException>(() =>
             operation.ForgeAsync("input", foundry, CancellationToken.None));
     }
-} 
+}

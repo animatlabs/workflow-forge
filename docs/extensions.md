@@ -21,6 +21,7 @@ WorkflowForge Extensions
 ├── Resilience
 │   ├── Basic Patterns
 │   └── Polly Integration
+├── Persistence (BYO storage)
 └── Observability
     ├── Performance Monitoring
     ├── Health Checks
@@ -206,6 +207,144 @@ foreach (var opStats in stats.GetAllOperationStatistics())
 {
     Console.WriteLine($"{opStats.OperationName}: {opStats.AverageDuration.TotalMilliseconds:F2}ms average");
 }
+```
+
+### Persistence (Bring Your Own Storage)
+
+Enable resumable workflows without adding dependencies by providing your own storage implementation.
+Package: `WorkflowForge.Extensions.Persistence`
+
+1) Implement the provider interface and plug it in via middleware:
+
+```csharp
+using WorkflowForge.Extensions; // UsePersistence
+using WorkflowForge.Extensions.Persistence.Abstractions; // IWorkflowPersistenceProvider
+using WorkflowForge.Extensions.Persistence.Abstractions; // WorkflowExecutionSnapshot
+
+public sealed class MyPersistenceProvider : IWorkflowPersistenceProvider
+{
+    public Task SaveAsync(WorkflowExecutionSnapshot snapshot, CancellationToken ct = default) => Task.CompletedTask;
+    public Task<WorkflowExecutionSnapshot?> TryLoadAsync(Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default) => Task.FromResult<WorkflowExecutionSnapshot?>(null);
+    public Task DeleteAsync(Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default) => Task.CompletedTask;
+}
+
+// Enable persistence
+var provider = new MyPersistenceProvider();
+using var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
+foundry.UsePersistence(provider);
+```
+
+This middleware checkpoints after each operation and attempts to resume by skipping already-completed operations. Snapshot data includes:
+- `FoundryExecutionId`, `WorkflowId`, `WorkflowName`
+- `NextOperationIndex` (next op to run)
+- `Properties` captured from the foundry
+
+Note: You control storage and serialization. The core remains zero-dependency.
+
+Important:
+- Use a shared provider (e.g., DB/file/queue-backed) for real resume across processes. The in-memory provider in samples is for demonstration only and does not persist across app restarts.
+- Keep snapshots minimal. Only store the properties required to resume safely.
+
+2) Cross-process resume (stable keys):
+
+```csharp
+using WorkflowForge.Extensions;
+using WorkflowForge.Extensions.Persistence;
+
+var options = new PersistenceOptions
+{
+  InstanceId = "order-service-west-1", // maps to a deterministic foundry key
+  WorkflowKey = "ProcessOrder-v1"      // maps to a deterministic workflow key
+};
+
+using var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
+foundry.UsePersistence(provider, options);
+```
+
+Notes:
+- With stable keys and a shared provider, a new process can resume from the last successful step.
+- Properties saved in the snapshot are restored on resume before determining which step to execute next.
+
+#### Recovery (Resume + Retry)
+
+Package: `WorkflowForge.Extensions.Persistence.Recovery`
+
+Adds simple recovery orchestration that first attempts to resume from a snapshot and then runs a fresh execution with configurable retries/backoff. Best used with stable `InstanceId`/`WorkflowKey` and a shared provider (DB, file share, cache) for cross-process/host resume.
+
+```csharp
+using WorkflowForge.Extensions.Persistence.Recovery;
+
+var foundryKey = DeterministicGuid(options.InstanceId!);
+var workflowKey = DeterministicGuid(options.WorkflowKey!);
+
+await smith.ForgeWithRecoveryAsync(
+    workflow,
+    foundry,
+    provider,
+    foundryKey,
+    workflowKey,
+    new RecoveryPolicy { MaxAttempts = 5, BaseDelay = TimeSpan.FromMilliseconds(50), UseExponentialBackoff = true },
+    cancellationToken);
+```
+
+Key points:
+- Resume attempts restore foundry properties and skip completed steps.
+- After resume, a fresh execution is attempted with retries (policy).
+- If resume or execution ultimately fails, the last exception is surfaced to the caller.
+
+##### Using Resilience With Recovery (Unified Experience)
+
+You can combine base Resilience retry middleware with Recovery for a unified experience. The retry middleware handles transient failures during a single run; Recovery resumes from the last checkpoint across runs.
+
+```csharp
+using WorkflowForge.Extensions.Resilience;
+using WorkflowForge.Extensions.Persistence;
+using WorkflowForge.Extensions.Persistence.Recovery;
+
+var provider = new FilePersistenceProvider(checkpointPath);
+var options = new PersistenceOptions { InstanceId = "svc-west-1", WorkflowKey = "Order-v1" };
+var foundryKey = DeterministicGuid(options.InstanceId!);
+var workflowKey = DeterministicGuid(options.WorkflowKey!);
+
+using var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
+foundry.UsePersistence(provider, options);
+foundry.AddMiddleware(
+    RetryMiddleware.WithExponentialBackoff(foundry.Logger,
+        initialDelay: TimeSpan.FromMilliseconds(50),
+        maxDelay: TimeSpan.FromMilliseconds(500),
+        maxAttempts: 2));
+
+await smith.ForgeWithRecoveryAsync(
+    workflow,
+    foundry,
+    provider,
+    foundryKey,
+    workflowKey,
+    new RecoveryPolicy { MaxAttempts = 3, BaseDelay = TimeSpan.FromMilliseconds(100), UseExponentialBackoff = true },
+    cancellationToken);
+```
+
+See interactive sample: `Recovery + Resilience` (menu 22) in `src/samples/WorkflowForge.Samples.BasicConsole`.
+
+Catalog-driven recovery (multiple workflows): implement `IRecoveryCatalog` to enumerate pending snapshots, then use `ResumeAllAsync`:
+
+```csharp
+public sealed class MyRecoveryCatalog : IRecoveryCatalog
+{
+    public Task<IReadOnlyList<WorkflowExecutionSnapshot>> ListPendingAsync(CancellationToken ct = default)
+    {
+        // Query your store for snapshots that need recovery
+        return Task.FromResult<IReadOnlyList<WorkflowExecutionSnapshot>>(pendingList);
+    }
+}
+
+var catalog = new MyRecoveryCatalog();
+var coordinator = new RecoveryCoordinator(provider, new RecoveryPolicy { MaxAttempts = 3 });
+int recovered = await coordinator.ResumeAllAsync(
+    () => WorkflowForge.CreateFoundry("Service"),
+    () => BuildWorkflow(),
+    catalog,
+    cancellationToken);
 ```
 
 #### WorkflowForge.Extensions.Observability.HealthChecks

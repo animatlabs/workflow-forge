@@ -1,6 +1,6 @@
 using System;
 
-namespace WorkflowForge
+namespace WorkflowForge.Abstractions
 {
     /// <summary>
     /// Defines configuration settings for enterprise workflow execution behavior.
@@ -62,4 +62,4 @@ namespace WorkflowForge
         /// </summary>
         string MinimumLogLevel { get; }
     }
-} 
+}

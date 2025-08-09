@@ -193,13 +193,13 @@ namespace WorkflowForge.Loggers
         private string FormatMessageWithProperties(string message, IDictionary<string, string>? properties, params object[] args)
         {
             var formattedMessage = FormatMessage(message, args);
-            
+
             if (properties != null && properties.Count > 0)
             {
                 var propertiesString = string.Join(", ", properties.Select(kvp => $"{kvp.Key}={kvp.Value}"));
                 return $"{formattedMessage} | Properties: {propertiesString}";
             }
-            
+
             return formattedMessage;
         }
 
@@ -207,7 +207,7 @@ namespace WorkflowForge.Loggers
         {
             var timestamp = _timeProvider.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             var originalColor = Console.ForegroundColor;
-            
+
             try
             {
                 Console.ForegroundColor = color;
@@ -225,10 +225,12 @@ namespace WorkflowForge.Loggers
         private sealed class EmptyDisposable : IDisposable
         {
             public static readonly EmptyDisposable Instance = new();
-            
-            private EmptyDisposable() { }
-            
-            public void Dispose() { }
+
+            private EmptyDisposable()
+            { }
+
+            public void Dispose()
+            { }
         }
     }
-} 
+}

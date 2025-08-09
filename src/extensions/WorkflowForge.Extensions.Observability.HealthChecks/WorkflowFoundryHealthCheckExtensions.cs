@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Loggers;
 
 namespace WorkflowForge.Extensions.Observability.HealthChecks
 {
@@ -44,4 +43,4 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
             return healthCheckService.OverallStatus;
         }
     }
-} 
+}

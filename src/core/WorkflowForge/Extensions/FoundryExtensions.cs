@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using WorkflowForge.Abstractions;
 using WorkflowForge.Operations;
 
 namespace WorkflowForge.Extensions
@@ -11,6 +12,35 @@ namespace WorkflowForge.Extensions
     /// </summary>
     public static class FoundryExtensions
     {
+        /// <summary>
+        /// Sets correlation ID in foundry data for tracking across operations.
+        /// </summary>
+        public static void SetCorrelationId(this IWorkflowFoundry foundry, string correlationId)
+        {
+            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            foundry.Properties["CorrelationId"] = correlationId;
+        }
+
+        /// <summary>
+        /// Gets correlation ID from foundry data.
+        /// </summary>
+        public static string? GetCorrelationId(this IWorkflowFoundry foundry)
+        {
+            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            return foundry.Properties.TryGetValue("CorrelationId", out var correlationId)
+                ? correlationId?.ToString()
+                : null;
+        }
+
+        /// <summary>
+        /// Sets parent workflow execution ID for nested workflow tracking.
+        /// </summary>
+        public static void SetParentWorkflowExecutionId(this IWorkflowFoundry foundry, string parentWorkflowExecutionId)
+        {
+            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            foundry.Properties["ParentWorkflowExecutionId"] = parentWorkflowExecutionId;
+        }
+
         /// <summary>
         /// Tries to get a strongly-typed value from the foundry properties.
         /// </summary>
@@ -35,6 +65,14 @@ namespace WorkflowForge.Extensions
         public static T? GetPropertyOrDefault<T>(this IWorkflowFoundry foundry, string key)
         {
             return foundry.TryGetProperty<T>(key, out var value) ? value : default;
+        }
+
+        /// <summary>
+        /// Gets a strongly-typed value from the foundry properties, or the provided default when missing.
+        /// </summary>
+        public static T GetPropertyOrDefault<T>(this IWorkflowFoundry foundry, string key, T defaultValue)
+        {
+            return foundry.TryGetProperty<T>(key, out var value) && value is not null ? value : defaultValue;
         }
 
         /// <summary>
@@ -190,7 +228,7 @@ namespace WorkflowForge.Extensions
         public static async Task ForgeAsync(this IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            
+
             if (foundry is WorkflowFoundry workflowFoundry)
             {
                 await workflowFoundry.ForgeAsync(cancellationToken);
@@ -217,4 +255,4 @@ namespace WorkflowForge.Extensions
             return foundry;
         }
     }
-} 
+}

@@ -307,9 +307,76 @@ var foundry = WorkflowForge.CreateFoundry("OrderProcessing", config);
 
 using WorkflowForge.Extensions.Resilience.Polly;
 
-// Apply Polly resilience to foundry (extension methods are on WorkflowFoundry)
+// Apply Polly resilience to foundry (extension methods are on IWorkflowFoundry)
 var foundry = WorkflowForge.CreateFoundry("OrderProcessing", FoundryConfiguration.ForProduction());
 foundry.UsePollyProductionResilience(); // Retry, circuit breaker, timeout from settings
+```
+
+### Persistence + Recovery Quickstart
+
+```bash
+# Install persistence + recovery extensions
+dotnet add package WorkflowForge.Extensions.Persistence
+dotnet add package WorkflowForge.Extensions.Persistence.Recovery
+```
+
+```csharp
+using WorkflowForge.Extensions; // UsePersistence
+using WorkflowForge.Extensions.Persistence; // PersistenceOptions
+using WorkflowForge.Extensions.Persistence.Abstractions; // IWorkflowPersistenceProvider
+using WorkflowForge.Extensions.Persistence.Recovery; // ForgeWithRecoveryAsync
+
+// Implement your provider (DB/file/etc.). See sample FilePersistenceProvider in samples.
+public sealed class DemoInMemoryProvider : IWorkflowPersistenceProvider
+{
+    private static readonly ConcurrentDictionary<(Guid, Guid), WorkflowExecutionSnapshot> Store = new();
+    public Task SaveAsync(WorkflowExecutionSnapshot snapshot, CancellationToken ct = default)
+    {
+        Store[(snapshot.FoundryExecutionId, snapshot.WorkflowId)] = snapshot;
+        return Task.CompletedTask;
+    }
+    public Task<WorkflowExecutionSnapshot?> TryLoadAsync(Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default)
+    {
+        Store.TryGetValue((foundryExecutionId, workflowId), out var s);
+        return Task.FromResult<WorkflowExecutionSnapshot?>(s);
+    }
+    public Task DeleteAsync(Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default)
+    {
+        Store.TryRemove((foundryExecutionId, workflowId), out _);
+        return Task.CompletedTask;
+    }
+}
+
+// Enable persistence with stable keys and run with recovery
+var provider = new DemoInMemoryProvider();
+var options = new PersistenceOptions
+{
+    InstanceId = "order-service-west-1",
+    WorkflowKey = "ProcessOrder-v1"
+};
+
+using var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
+foundry.UsePersistence(provider, options);
+
+// On startup, the smith can resume or start fresh using recovery:
+using var smith = WorkflowForge.CreateSmith();
+await smith.ForgeWithRecoveryAsync(workflow, foundry, CancellationToken.None);
+
+// Note: For cross-process resume, use a shared provider (e.g., DB or file). See
+// `src/samples/WorkflowForge.Samples.BasicConsole/Samples/FilePersistenceProvider.cs` for a file-based demo.
+```
+
+### Logging-only Quickstart (no external logger)
+
+```csharp
+// Use core logging middleware with the foundry's logger
+using WorkflowForge.Extensions; // UseLogging
+
+using var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
+foundry.UseLogging();
+
+// Optionally provide your own IWorkflowForgeLogger implementation
+// foundry.UseLogging(myLogger);
 ```
 
 ### Performance Monitoring
@@ -415,6 +482,7 @@ Congratulations! You've created your first WorkflowForge workflow. Here's what t
 
 ### 4. **Run Sample Applications**
 - **[Interactive Samples](../src/samples/WorkflowForge.Samples.BasicConsole/README.md)** - Comprehensive examples
+- Quickstarts in samples (menu numbers): Persistence (18), Recovery Only (21), Recovery + Resilience (22)
 - **[Performance Benchmarks](../src/benchmarks/README.md)** - See performance characteristics
 
 ### 5. **Advanced Deployment**

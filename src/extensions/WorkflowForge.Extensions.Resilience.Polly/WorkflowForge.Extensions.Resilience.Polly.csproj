@@ -1,10 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <Version>1.1.0</Version>
+    <PackageVersion>1.1.0</PackageVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
     <AssemblyName>WorkflowForge.Extensions.Resilience.Polly</AssemblyName>
     <RootNamespace>WorkflowForge.Extensions.Resilience.Polly</RootNamespace>
     
@@ -36,11 +39,8 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
-Initial release of WorkflowForge Polly Resilience Extension:
-- Advanced resilience patterns with Polly integration
-- Seamless integration with WorkflowForge core
-- Comprehensive documentation and examples included
-- Enterprise-grade reliability and performance
+Minor release v1.1.0:
+- IWorkflowFoundry-first extension methods; samples and docs aligned
     </PackageReleaseNotes>
   </PropertyGroup>
 

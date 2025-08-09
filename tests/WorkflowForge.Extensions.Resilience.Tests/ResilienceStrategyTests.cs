@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.Resilience;
 using WorkflowForge.Extensions.Resilience.Strategies;
 
 namespace WorkflowForge.Extensions.Resilience.Tests;
@@ -31,7 +29,7 @@ public class ExponentialBackoffStrategyTests
     public void Constructor_WithInvalidBaseDelay_ThrowsArgumentException()
     {
         // Arrange & Act & Assert
-        Assert.Throws<ArgumentOutOfRangeException>(() => 
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
             new ExponentialBackoffStrategy(TimeSpan.FromMilliseconds(-1), TimeSpan.FromSeconds(10), 3));
     }
 
@@ -39,7 +37,7 @@ public class ExponentialBackoffStrategyTests
     public void Constructor_WithInvalidMaxDelay_ThrowsArgumentException()
     {
         // Arrange & Act & Assert
-        Assert.Throws<ArgumentOutOfRangeException>(() => 
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
             new ExponentialBackoffStrategy(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(5), 3));
     }
 
@@ -47,7 +45,7 @@ public class ExponentialBackoffStrategyTests
     public void Constructor_WithInvalidMaxAttempts_ThrowsArgumentException()
     {
         // Arrange & Act & Assert
-        Assert.Throws<ArgumentOutOfRangeException>(() => 
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
             new ExponentialBackoffStrategy(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(10), 0));
     }
 
@@ -56,8 +54,8 @@ public class ExponentialBackoffStrategyTests
     {
         // Arrange
         var strategy = new ExponentialBackoffStrategy(
-            TimeSpan.FromMilliseconds(100), 
-            TimeSpan.FromSeconds(10), 
+            TimeSpan.FromMilliseconds(100),
+            TimeSpan.FromSeconds(10),
             3);
 
         // Act
@@ -72,8 +70,8 @@ public class ExponentialBackoffStrategyTests
     {
         // Arrange
         var strategy = new ExponentialBackoffStrategy(
-            TimeSpan.FromMilliseconds(100), 
-            TimeSpan.FromSeconds(10), 
+            TimeSpan.FromMilliseconds(100),
+            TimeSpan.FromSeconds(10),
             3);
         var exception = new OperationCanceledException();
 
@@ -89,8 +87,8 @@ public class ExponentialBackoffStrategyTests
     {
         // Arrange
         var strategy = new ExponentialBackoffStrategy(
-            TimeSpan.FromMilliseconds(100), 
-            TimeSpan.FromSeconds(10), 
+            TimeSpan.FromMilliseconds(100),
+            TimeSpan.FromSeconds(10),
             3);
         var exception = new InvalidOperationException();
 
@@ -144,8 +142,8 @@ public class ExponentialBackoffStrategyTests
     {
         // Arrange
         var strategy = new ExponentialBackoffStrategy(
-            TimeSpan.FromMilliseconds(10), 
-            TimeSpan.FromSeconds(1), 
+            TimeSpan.FromMilliseconds(10),
+            TimeSpan.FromSeconds(1),
             3);
         var executionCount = 0;
 
@@ -165,8 +163,8 @@ public class ExponentialBackoffStrategyTests
     {
         // Arrange
         var strategy = new ExponentialBackoffStrategy(
-            TimeSpan.FromMilliseconds(10), 
-            TimeSpan.FromSeconds(1), 
+            TimeSpan.FromMilliseconds(10),
+            TimeSpan.FromSeconds(1),
             2); // Only 2 attempts
         var executionCount = 0;
 
@@ -188,8 +186,8 @@ public class ExponentialBackoffStrategyTests
     {
         // Arrange
         var strategy = new ExponentialBackoffStrategy(
-            TimeSpan.FromMilliseconds(10), 
-            TimeSpan.FromSeconds(1), 
+            TimeSpan.FromMilliseconds(10),
+            TimeSpan.FromSeconds(1),
             3);
         const string expectedResult = "test result";
 
@@ -221,7 +219,7 @@ public class FixedIntervalStrategyTests
     public void Constructor_WithNegativeInterval_ThrowsArgumentException()
     {
         // Arrange & Act & Assert
-        Assert.Throws<ArgumentOutOfRangeException>(() => 
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
             new FixedIntervalStrategy(TimeSpan.FromMilliseconds(-1), 3));
     }
 
@@ -293,7 +291,7 @@ public class RandomIntervalStrategyTests
     public void Constructor_WithInvalidMinDelay_ThrowsArgumentException()
     {
         // Arrange & Act & Assert
-        Assert.Throws<ArgumentOutOfRangeException>(() => 
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
             new RandomIntervalStrategy(3, TimeSpan.FromMilliseconds(-1), TimeSpan.FromSeconds(5)));
     }
 
@@ -301,7 +299,7 @@ public class RandomIntervalStrategyTests
     public void Constructor_WithInvalidMaxDelay_ThrowsArgumentException()
     {
         // Arrange & Act & Assert
-        Assert.Throws<ArgumentOutOfRangeException>(() => 
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
             new RandomIntervalStrategy(3, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(1)));
     }
 
@@ -322,7 +320,7 @@ public class RandomIntervalStrategyTests
         }
 
         // Assert
-        Assert.All(delays, delay => 
+        Assert.All(delays, delay =>
         {
             Assert.True(delay >= minDelay);
             Assert.True(delay <= maxDelay);
@@ -339,7 +337,7 @@ public class RandomIntervalStrategyTests
         // Arrange
         var strategy = new RandomIntervalStrategy(
             3,
-            TimeSpan.FromMilliseconds(100), 
+            TimeSpan.FromMilliseconds(100),
             TimeSpan.FromSeconds(1));
         var exception = new OperationCanceledException();
 
@@ -356,7 +354,7 @@ public class RandomIntervalStrategyTests
         // Arrange
         var strategy = new RandomIntervalStrategy(
             3,
-            TimeSpan.FromMilliseconds(100), 
+            TimeSpan.FromMilliseconds(100),
             TimeSpan.FromSeconds(1));
         var exception = new InvalidOperationException();
 
@@ -366,4 +364,4 @@ public class RandomIntervalStrategyTests
         // Assert
         Assert.True(result);
     }
-} 
+}

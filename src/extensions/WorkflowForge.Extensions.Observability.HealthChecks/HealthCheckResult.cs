@@ -105,4 +105,4 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// </summary>
         Unhealthy = 2
     }
-} 
+}

@@ -1,7 +1,6 @@
+using WorkflowForge.Configurations;
 using System;
-using WorkflowForge.Abstractions;
 using WorkflowForge.Loggers;
-using Moq;
 
 namespace WorkflowForge.Tests;
 
@@ -161,4 +160,4 @@ public class FoundryConfigurationTests
         Assert.False(config.EnableDetailedTiming);
         Assert.False(config.AutoDisposeOperations);
     }
-} 
+}

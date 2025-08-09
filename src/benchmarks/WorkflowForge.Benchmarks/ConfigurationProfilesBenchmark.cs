@@ -3,11 +3,11 @@ using BenchmarkDotNet.Engines;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
+using WorkflowForge.Extensions.Observability.Performance.Configurations;
 using WorkflowForge.Extensions.Resilience.Polly.Configurations;
-using WorkflowForge.Extensions.Observability.Performance;
 
 namespace WorkflowForge.Benchmarks;
 
@@ -26,7 +26,7 @@ public class ConfigurationProfilesBenchmark
 {
     private IConfiguration _configuration = null!;
     private IServiceProvider _serviceProvider = null!;
-    private WorkflowForgeSettings _workflowSettings = null!;
+    private WorkflowForgeConfiguration _workflowSettings = null!;
     private PollySettings _pollySettings = null!;
     private PerformanceSettings _performanceSettings = null!;
 
@@ -37,14 +37,14 @@ public class ConfigurationProfilesBenchmark
         var configurationBuilder = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false);
-        
+
         _configuration = configurationBuilder.Build();
 
         // Setup dependency injection with Options pattern
         var services = new ServiceCollection();
         services.AddSingleton(_configuration);
-        services.Configure<WorkflowForgeSettings>(
-            _configuration.GetSection(WorkflowForgeSettings.SectionName));
+        services.Configure<WorkflowForgeConfiguration>(
+            _configuration.GetSection(WorkflowForgeConfiguration.SectionName));
         services.Configure<PollySettings>(
             _configuration.GetSection("WorkflowForge:Polly"));
         services.Configure<PerformanceSettings>(
@@ -53,7 +53,7 @@ public class ConfigurationProfilesBenchmark
         _serviceProvider = services.BuildServiceProvider();
 
         // Pre-load settings for direct comparison
-        _workflowSettings = _serviceProvider.GetRequiredService<IOptions<WorkflowForgeSettings>>().Value;
+        _workflowSettings = _serviceProvider.GetRequiredService<IOptions<WorkflowForgeConfiguration>>().Value;
         _pollySettings = _serviceProvider.GetRequiredService<IOptions<PollySettings>>().Value;
         _performanceSettings = _serviceProvider.GetRequiredService<IOptions<PerformanceSettings>>().Value;
     }
@@ -97,9 +97,9 @@ public class ConfigurationProfilesBenchmark
     [Benchmark]
     public IWorkflowFoundry OptionsPatternConfiguration()
     {
-        var workflowOptions = _serviceProvider.GetRequiredService<IOptions<WorkflowForgeSettings>>();
+        var workflowOptions = _serviceProvider.GetRequiredService<IOptions<WorkflowForgeConfiguration>>();
         var pollyOptions = _serviceProvider.GetRequiredService<IOptions<PollySettings>>();
-        
+
         var config = new FoundryConfiguration
         {
             MaxRetryAttempts = pollyOptions.Value.Retry.MaxRetryAttempts,
@@ -112,18 +112,18 @@ public class ConfigurationProfilesBenchmark
     [Benchmark]
     public IWorkflowFoundry OptionsPatternWithValidation()
     {
-        var workflowOptions = _serviceProvider.GetRequiredService<IOptions<WorkflowForgeSettings>>();
+        var workflowOptions = _serviceProvider.GetRequiredService<IOptions<WorkflowForgeConfiguration>>();
         var pollyOptions = _serviceProvider.GetRequiredService<IOptions<PollySettings>>();
-        
+
         // Perform validation
         var validationResults = pollyOptions.Value.Validate(
             new System.ComponentModel.DataAnnotations.ValidationContext(pollyOptions.Value));
-        
+
         if (validationResults.Any())
         {
             throw new InvalidOperationException("Configuration validation failed");
         }
-        
+
         var config = new FoundryConfiguration
         {
             MaxRetryAttempts = pollyOptions.Value.Retry.MaxRetryAttempts,
@@ -134,22 +134,22 @@ public class ConfigurationProfilesBenchmark
     }
 
     [Benchmark]
-    public WorkflowForgeSettings ConfigurationBinding()
+    public WorkflowForgeConfiguration ConfigurationBinding()
     {
-        var settings = new WorkflowForgeSettings();
-        _configuration.GetSection(WorkflowForgeSettings.SectionName).Bind(settings);
+        var settings = new WorkflowForgeConfiguration();
+        _configuration.GetSection(WorkflowForgeConfiguration.SectionName).Bind(settings);
         return settings;
     }
 
     [Benchmark]
-    public WorkflowForgeSettings OptionsPatternAccess()
+    public WorkflowForgeConfiguration OptionsPatternAccess()
     {
-        var options = _serviceProvider.GetRequiredService<IOptions<WorkflowForgeSettings>>();
+        var options = _serviceProvider.GetRequiredService<IOptions<WorkflowForgeConfiguration>>();
         return options.Value;
     }
 
     [Benchmark]
-    public WorkflowForgeSettings CachedSettingsAccess()
+    public WorkflowForgeConfiguration CachedSettingsAccess()
     {
         return _workflowSettings;
     }
@@ -158,7 +158,7 @@ public class ConfigurationProfilesBenchmark
     public async Task<string> SimpleWorkflowWithMinimalConfig()
     {
         using var foundry = WorkflowForge.CreateFoundry("BenchmarkWorkflow");
-        
+
         foundry.WithOperation("SimpleOperation", async (foundry) =>
         {
             await Task.Delay(1);
@@ -179,7 +179,7 @@ public class ConfigurationProfilesBenchmark
         };
 
         using var foundry = WorkflowForge.CreateFoundry("BenchmarkWorkflow", config);
-        
+
         foundry.WithOperation("SimpleOperation", async (foundry) =>
         {
             await Task.Delay(1);
@@ -189,4 +189,4 @@ public class ConfigurationProfilesBenchmark
         await foundry.ForgeAsync();
         return "Success";
     }
-} 
+}

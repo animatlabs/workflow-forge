@@ -1,16 +1,19 @@
 ﻿param (
-    [string]$CoreVersion = "1.0.1",
-    [string]$SerilogVersion = "1.0.1",
-    [string]$PollyVersion = "1.0.1",
-    [string]$ResilienceVersion = "1.0.1",
-    [string]$PerformanceVersion = "1.0.1",
-    [string]$HealthChecksVersion = "1.0.1",
-    [string]$OpenTelemetryVersion = "1.0.1",
-    [string]$NuGetApiKey
+    [string]$CoreVersion = "1.1.0",
+    [string]$SerilogVersion = "1.1.0",
+    [string]$PollyVersion = "1.1.0",
+    [string]$ResilienceVersion = "1.1.0",
+    [string]$PerformanceVersion = "1.1.0",
+    [string]$HealthChecksVersion = "1.1.0",
+    [string]$OpenTelemetryVersion = "1.1.0",
+    [string]$PersistenceVersion = "1.0.0",
+    [string]$RecoveryVersion = "1.0.0",
+    [string]$NuGetApiKey,
+    [switch]$Publish
 )
 
-if (-not $NuGetApiKey) {
-    Write-Error "NuGet API key is required. Pass it as the -NuGetApiKey parameter."
+if ($Publish -and -not $NuGetApiKey) {
+    Write-Error "NuGet API key is required when -Publish is specified. Pass it as the -NuGetApiKey parameter."
     exit 1
 }
 
@@ -72,9 +75,13 @@ function PackAndPublish {
                 Write-Warning "Could not verify package contents: $_"
             }
             
-            Write-Host "Publishing $PackageName to NuGet..." -ForegroundColor Yellow
-            dotnet nuget push $PackagePath --api-key $NuGetApiKey --source https://api.nuget.org/v3/index.json --timeout 300
-            Write-Host "$PackageName published successfully!" -ForegroundColor Green
+            if ($Publish) {
+                Write-Host "Publishing $PackageName to NuGet..." -ForegroundColor Yellow
+                dotnet nuget push $PackagePath --api-key $NuGetApiKey --source https://api.nuget.org/v3/index.json --timeout 300
+                Write-Host "$PackageName published successfully!" -ForegroundColor Green
+            } else {
+                Write-Host "Pack-only mode: Skipping publish for $PackageName" -ForegroundColor Yellow
+            }
             return $true
         } else {
             Write-Error "Package file not created: $PackagePath"
@@ -117,7 +124,7 @@ catch {
 }
 
 Write-Host ""
-Write-Host "Starting package publishing..." -ForegroundColor Cyan
+Write-Host ("Starting package {0}..." -f ($Publish ? "publishing" : "packing")) -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor DarkGray
 
 $results = @()
@@ -128,7 +135,9 @@ $packages = @(
     @{ Path = "./src/extensions/WorkflowForge.Extensions.Resilience.Polly/WorkflowForge.Extensions.Resilience.Polly.csproj"; Name = "WorkflowForge.Extensions.Resilience.Polly"; Version = $PollyVersion },
     @{ Path = "./src/extensions/WorkflowForge.Extensions.Observability.Performance/WorkflowForge.Extensions.Observability.Performance.csproj"; Name = "WorkflowForge.Extensions.Observability.Performance"; Version = $PerformanceVersion },
     @{ Path = "./src/extensions/WorkflowForge.Extensions.Observability.HealthChecks/WorkflowForge.Extensions.Observability.HealthChecks.csproj"; Name = "WorkflowForge.Extensions.Observability.HealthChecks"; Version = $HealthChecksVersion },
-    @{ Path = "./src/extensions/WorkflowForge.Extensions.Observability.OpenTelemetry/WorkflowForge.Extensions.Observability.OpenTelemetry.csproj"; Name = "WorkflowForge.Extensions.Observability.OpenTelemetry"; Version = $OpenTelemetryVersion }
+    @{ Path = "./src/extensions/WorkflowForge.Extensions.Observability.OpenTelemetry/WorkflowForge.Extensions.Observability.OpenTelemetry.csproj"; Name = "WorkflowForge.Extensions.Observability.OpenTelemetry"; Version = $OpenTelemetryVersion },
+    @{ Path = "./src/extensions/WorkflowForge.Extensions.Persistence/WorkflowForge.Extensions.Persistence.csproj"; Name = "WorkflowForge.Extensions.Persistence"; Version = $PersistenceVersion },
+    @{ Path = "./src/extensions/WorkflowForge.Extensions.Persistence.Recovery/WorkflowForge.Extensions.Persistence.Recovery.csproj"; Name = "WorkflowForge.Extensions.Persistence.Recovery"; Version = $RecoveryVersion }
 )
 
 foreach ($package in $packages) {
@@ -167,15 +176,20 @@ if (Test-Path $corePackagePath) {
         Write-Warning "Could not verify core package contents: $_"
     }
     
-    Write-Host "Publishing WorkflowForge Core to NuGet..." -ForegroundColor Yellow
-    try {
-        dotnet nuget push $corePackagePath --api-key $NuGetApiKey --source https://api.nuget.org/v3/index.json --timeout 300
-        Write-Host "WorkflowForge Core published successfully!" -ForegroundColor Green
+    if ($Publish) {
+        Write-Host "Publishing WorkflowForge Core to NuGet..." -ForegroundColor Yellow
+        try {
+            dotnet nuget push $corePackagePath --api-key $NuGetApiKey --source https://api.nuget.org/v3/index.json --timeout 300
+            Write-Host "WorkflowForge Core published successfully!" -ForegroundColor Green
+            $results += @{ Name = "WorkflowForge"; Version = $CoreVersion; Success = $true }
+        }
+        catch {
+            Write-Error "Failed to publish WorkflowForge Core: $_"
+            $results += @{ Name = "WorkflowForge"; Version = $CoreVersion; Success = $false }
+        }
+    } else {
+        Write-Host "Pack-only mode: Skipping publish for WorkflowForge Core" -ForegroundColor Yellow
         $results += @{ Name = "WorkflowForge"; Version = $CoreVersion; Success = $true }
-    }
-    catch {
-        Write-Error "Failed to publish WorkflowForge Core: $_"
-        $results += @{ Name = "WorkflowForge"; Version = $CoreVersion; Success = $false }
     }
 } else {
     Write-Warning "Core package not found, attempting to build it directly..."
@@ -185,7 +199,7 @@ if (Test-Path $corePackagePath) {
 Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
 
 Write-Host ""
-Write-Host "PUBLISHING SUMMARY" -ForegroundColor Yellow
+Write-Host (("{0} SUMMARY" -f ($Publish ? "PUBLISHING" : "PACKING"))) -ForegroundColor Yellow
 Write-Host "============================================================" -ForegroundColor DarkGray
 
 $successful = ($results | Where-Object { $_.Success }).Count

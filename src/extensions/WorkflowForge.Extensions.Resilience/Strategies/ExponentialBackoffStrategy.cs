@@ -1,8 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions.Resilience.Abstractions;
 
 namespace WorkflowForge.Extensions.Resilience.Strategies
 {
@@ -76,7 +76,7 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
             if (_retryPredicate != null && exception != null)
             {
                 bool shouldRetry = _retryPredicate(exception);
-                Logger?.LogDebug("Custom retry predicate returned {ShouldRetry} for exception {ExceptionType}", 
+                Logger?.LogDebug("Custom retry predicate returned {ShouldRetry} for exception {ExceptionType}",
                     shouldRetry, exception.GetType().Name);
                 return Task.FromResult(shouldRetry);
             }
@@ -184,9 +184,9 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
 
                     lastException = ex;
                     var delay = GetRetryDelay(attemptNumber, ex);
-                    
+
                     Logger?.LogWarning($"Attempt {attemptNumber} failed, retrying in {delay.TotalMilliseconds}ms. Error: {ex.Message}");
-                    
+
                     if (delay > TimeSpan.Zero)
                     {
                         await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
@@ -195,4 +195,4 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
             }
         }
     }
-} 
+}

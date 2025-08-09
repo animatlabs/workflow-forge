@@ -24,4 +24,4 @@ namespace WorkflowForge.Operations
         /// </summary>
         NoInput
     }
-} 
+}

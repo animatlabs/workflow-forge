@@ -1,17 +1,15 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using WorkflowForge.Abstractions;
 
-namespace WorkflowForge
+namespace WorkflowForge.Abstractions
 {
     /// <summary>
     /// Represents a craftsman (smith) that can forge workflows at the foundry.
     /// Smiths are the primary executors that coordinate workflow operations and manage the forging process.
     /// In the WorkflowForge metaphor, smiths are the skilled artisans who transform raw workflows into finished results.
-    /// 
+    ///
     /// Supports both simple pattern (smith manages foundry internally) and advanced pattern (reusable foundry).
     /// </summary>
     public interface IWorkflowSmith : IDisposable
@@ -74,4 +72,4 @@ namespace WorkflowForge
         /// <returns>A new foundry instance with the provided data.</returns>
         IWorkflowFoundry CreateFoundryWithData(ConcurrentDictionary<string, object?> data, IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null);
     }
-} 
+}

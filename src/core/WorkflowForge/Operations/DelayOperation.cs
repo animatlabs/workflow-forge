@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using WorkflowForge.Loggers;
+using WorkflowForge.Abstractions;
 
 namespace WorkflowForge.Operations
 {
@@ -10,18 +10,12 @@ namespace WorkflowForge.Operations
     /// Simple delay operation for workflow pacing and testing.
     /// Useful for introducing controlled delays in workflow execution.
     /// </summary>
-    public class DelayOperation : IWorkflowOperation
+    public sealed class DelayOperation : WorkflowOperationBase
     {
         private readonly TimeSpan _delay;
 
         /// <inheritdoc />
-        public Guid Id { get; } = Guid.NewGuid();
-
-        /// <inheritdoc />
-        public string Name { get; }
-
-        /// <inheritdoc />
-        public bool SupportsRestore => false;
+        public override string Name { get; }
 
         /// <summary>
         /// Initializes a new delay operation.
@@ -32,13 +26,13 @@ namespace WorkflowForge.Operations
         {
             if (delay < TimeSpan.Zero)
                 throw new ArgumentException("Delay duration cannot be negative.", nameof(delay));
-                
+
             _delay = delay;
             Name = name ?? $"Delay {delay.TotalMilliseconds}ms";
         }
 
         /// <inheritdoc />
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        public override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (foundry == null)
                 throw new ArgumentNullException(nameof(foundry));
@@ -57,23 +51,13 @@ namespace WorkflowForge.Operations
             foundry.Logger.LogDebug(loggingProperties, "Starting delay operation");
 
             await Task.Delay(_delay, cancellationToken).ConfigureAwait(false);
-            
+
             foundry.Logger.LogDebug(loggingProperties, "Completed delay operation");
-            
+
             return inputData; // Pass through input data unchanged
         }
 
-        /// <inheritdoc />
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-        {
-            throw new NotSupportedException("Delay operations do not support compensation.");
-        }
-
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            // Nothing to dispose
-        }
+        // Uses base RestoreAsync behavior which throws when SupportsRestore is false
 
         /// <summary>
         /// Creates a delay operation with the specified duration.
@@ -96,4 +80,4 @@ namespace WorkflowForge.Operations
         /// <returns>A delay operation.</returns>
         public static DelayOperation FromMinutes(int minutes) => new(TimeSpan.FromMinutes(minutes));
     }
-} 
+}

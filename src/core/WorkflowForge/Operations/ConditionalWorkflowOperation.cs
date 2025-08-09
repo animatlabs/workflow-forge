@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using WorkflowForge.Abstractions;
 
 namespace WorkflowForge.Operations
 {
@@ -228,4 +229,4 @@ namespace WorkflowForge.Operations
                 name);
         }
     }
-} 
+}

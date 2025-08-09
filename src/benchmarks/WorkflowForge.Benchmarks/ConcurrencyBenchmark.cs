@@ -1,9 +1,8 @@
+using System.Collections.Concurrent;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
-using System.Collections.Concurrent;
-using WorkflowForge;
-using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
+using WorkflowForge.Configurations;
 
 namespace WorkflowForge.Benchmarks;
 
@@ -38,13 +37,13 @@ public class ConcurrencyBenchmark
     public async Task<string> SequentialWorkflows()
     {
         var results = new List<string>();
-        
+
         for (int i = 0; i < ConcurrentWorkflowCount; i++)
         {
             var result = await RunSingleWorkflow($"Sequential_{i}");
             results.Add(result);
         }
-        
+
         return $"Completed {results.Count} workflows sequentially";
     }
 
@@ -52,13 +51,13 @@ public class ConcurrencyBenchmark
     public async Task<string> ConcurrentWorkflows()
     {
         var tasks = new List<Task<string>>();
-        
+
         for (int i = 0; i < ConcurrentWorkflowCount; i++)
         {
             var workflowIndex = i;
             tasks.Add(Task.Run(async () => await RunSingleWorkflow($"Concurrent_{workflowIndex}")));
         }
-        
+
         var results = await Task.WhenAll(tasks);
         return $"Completed {results.Length} workflows concurrently";
     }
@@ -67,7 +66,7 @@ public class ConcurrencyBenchmark
     public async Task<string> ParallelWorkflows()
     {
         var results = new string[ConcurrentWorkflowCount];
-        
+
         await Parallel.ForEachAsync(
             Enumerable.Range(0, ConcurrentWorkflowCount),
             new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
@@ -75,7 +74,7 @@ public class ConcurrencyBenchmark
             {
                 results[index] = await RunSingleWorkflow($"Parallel_{index}");
             });
-        
+
         return $"Completed {results.Length} workflows in parallel";
     }
 
@@ -84,13 +83,13 @@ public class ConcurrencyBenchmark
     {
         var sharedResource = new SharedBenchmarkResource();
         var tasks = new List<Task<string>>();
-        
+
         for (int i = 0; i < ConcurrentWorkflowCount; i++)
         {
             var workflowIndex = i;
             tasks.Add(Task.Run(async () => await RunWorkflowWithSharedResource($"Shared_{workflowIndex}", sharedResource)));
         }
-        
+
         var results = await Task.WhenAll(tasks);
         return $"Completed {results.Length} workflows with shared resource, final counter: {sharedResource.Counter}";
     }
@@ -100,16 +99,16 @@ public class ConcurrencyBenchmark
     {
         var semaphore = new SemaphoreSlim(Environment.ProcessorCount, Environment.ProcessorCount);
         var tasks = new List<Task<string>>();
-        
+
         for (int i = 0; i < ConcurrentWorkflowCount; i++)
         {
             var workflowIndex = i;
             tasks.Add(ExecuteWithSemaphore(semaphore, () => RunSingleWorkflow($"Semaphore_{workflowIndex}")));
         }
-        
+
         var results = await Task.WhenAll(tasks);
         semaphore.Dispose();
-        
+
         return $"Completed {results.Length} workflows with semaphore control";
     }
 
@@ -118,13 +117,13 @@ public class ConcurrencyBenchmark
     {
         var globalProperties = new ConcurrentDictionary<string, object>();
         var tasks = new List<Task<string>>();
-        
+
         for (int i = 0; i < ConcurrentWorkflowCount; i++)
         {
             var workflowIndex = i;
             tasks.Add(Task.Run(async () => await RunWorkflowWithGlobalData($"DataAccess_{workflowIndex}", globalProperties)));
         }
-        
+
         var results = await Task.WhenAll(tasks);
         return $"Completed {results.Length} workflows with concurrent data access, global entries: {globalProperties.Count}";
     }
@@ -134,15 +133,15 @@ public class ConcurrencyBenchmark
     {
         var contentionResource = new HighContentionResource();
         var tasks = new List<Task<string>>();
-        
+
         // Create high contention by having all workflows access the same resource
         for (int i = 0; i < ConcurrentWorkflowCount; i++)
         {
             var workflowIndex = i;
-            tasks.Add(Task.Run(async () => 
+            tasks.Add(Task.Run(async () =>
             {
                 using var foundry = WorkflowForge.CreateFoundry($"Contention_{workflowIndex}", _config);
-                
+
                 for (int j = 0; j < OperationsPerWorkflow; j++)
                 {
                     foundry.WithOperation($"ContentionOp_{j}", async (foundry) =>
@@ -151,12 +150,12 @@ public class ConcurrencyBenchmark
                         foundry.Properties[$"accessed_{j}"] = $"Accessed_{j}";
                     });
                 }
-                
+
                 await foundry.ForgeAsync();
                 return $"Contention workflow {workflowIndex} completed";
             }));
         }
-        
+
         var results = await Task.WhenAll(tasks);
         return $"Completed {results.Length} workflows under high contention, access count: {contentionResource.AccessCount}";
     }
@@ -165,7 +164,7 @@ public class ConcurrencyBenchmark
     public async Task<string> WorkflowChainConcurrency()
     {
         var tasks = new List<Task<string>>();
-        
+
         for (int i = 0; i < ConcurrentWorkflowCount; i++)
         {
             var workflowIndex = i;
@@ -175,11 +174,11 @@ public class ConcurrencyBenchmark
                 var result1 = await RunSingleWorkflow($"Chain1_{workflowIndex}");
                 var result2 = await RunSingleWorkflow($"Chain2_{workflowIndex}");
                 var result3 = await RunSingleWorkflow($"Chain3_{workflowIndex}");
-                
+
                 return $"Chain {workflowIndex}: {result1} -> {result2} -> {result3}";
             }));
         }
-        
+
         var results = await Task.WhenAll(tasks);
         return $"Completed {results.Length} workflow chains";
     }
@@ -187,10 +186,10 @@ public class ConcurrencyBenchmark
     private async Task<string> RunSingleWorkflow(string workflowName)
     {
         using var foundry = WorkflowForge.CreateFoundry(workflowName, _config);
-        
+
         foundry.Properties["start_time"] = DateTime.UtcNow;
         foundry.Properties["operation_count"] = 0;
-        
+
         for (int i = 0; i < OperationsPerWorkflow; i++)
         {
             var operationIndex = i;
@@ -202,9 +201,9 @@ public class ConcurrencyBenchmark
                 foundry.Properties[$"op_{operationIndex}_result"] = $"Op_{operationIndex}_Result";
             });
         }
-        
+
         await foundry.ForgeAsync();
-        
+
         var duration = DateTime.UtcNow - (DateTime)foundry.Properties["start_time"]!;
         return $"{workflowName} completed in {duration.TotalMilliseconds:F0}ms";
     }
@@ -212,7 +211,7 @@ public class ConcurrencyBenchmark
     private async Task<string> RunWorkflowWithSharedResource(string workflowName, SharedBenchmarkResource sharedResource)
     {
         using var foundry = WorkflowForge.CreateFoundry(workflowName, _config);
-        
+
         for (int i = 0; i < OperationsPerWorkflow; i++)
         {
             var operationIndex = i;
@@ -223,7 +222,7 @@ public class ConcurrencyBenchmark
                 foundry.Properties[$"shared_{operationIndex}"] = $"Shared_{operationIndex}";
             });
         }
-        
+
         await foundry.ForgeAsync();
         return $"{workflowName} completed with shared resource";
     }
@@ -231,7 +230,7 @@ public class ConcurrencyBenchmark
     private async Task<string> RunWorkflowWithGlobalData(string workflowName, ConcurrentDictionary<string, object> globalData)
     {
         using var foundry = WorkflowForge.CreateFoundry(workflowName, _config);
-        
+
         for (int i = 0; i < OperationsPerWorkflow; i++)
         {
             var operationIndex = i;
@@ -239,12 +238,12 @@ public class ConcurrencyBenchmark
             {
                 globalData[$"{workflowName}_op_{operationIndex}"] = DateTime.UtcNow;
                 globalData[$"{workflowName}_data_{operationIndex}"] = $"Data_{operationIndex}";
-                
+
                 await Task.Delay(1);
                 foundry.Properties[$"global_{operationIndex}"] = $"Global_{operationIndex}";
             });
         }
-        
+
         await foundry.ForgeAsync();
         return $"{workflowName} completed with global data";
     }
@@ -307,4 +306,4 @@ public class HighContentionResource
             _semaphore.Release();
         }
     }
-} 
+}

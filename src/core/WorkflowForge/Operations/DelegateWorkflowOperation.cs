@@ -1,6 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using WorkflowForge.Abstractions;
+using WorkflowForge.Exceptions;
 
 namespace WorkflowForge.Operations
 {
@@ -327,4 +329,4 @@ namespace WorkflowForge.Operations
             return DelegateWorkflowOperation.FromAsyncAction(name, action);
         }
     }
-} 
+}

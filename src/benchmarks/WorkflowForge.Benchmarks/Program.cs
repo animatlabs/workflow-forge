@@ -1,18 +1,17 @@
 using BenchmarkDotNet.Running;
-using WorkflowForge.Benchmarks;
 
 namespace WorkflowForge.Benchmarks;
 
 /// <summary>
 /// WorkflowForge Benchmarks Runner
-/// 
+///
 /// Benchmarks various WorkflowForge scenarios including:
 /// - Configuration profiles performance
 /// - Workflow operation throughput
 /// - Memory allocation patterns
 /// - Concurrency scenarios
 /// - Extension overhead analysis
-/// 
+///
 /// Usage:
 ///   dotnet run -c Release                    # Run all benchmarks
 ///   dotnet run -c Release --filter "*Config*" # Run configuration benchmarks only
@@ -40,4 +39,4 @@ public class Program
 
         switcher.Run(args);
     }
-} 
+}

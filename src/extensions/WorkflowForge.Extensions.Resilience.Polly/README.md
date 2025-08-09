@@ -13,9 +13,9 @@ dotnet add package WorkflowForge.Extensions.Resilience.Polly
 ```csharp
 using WorkflowForge.Extensions.Resilience.Polly;
 
-// Create foundry and apply Polly resilience (extension methods are on WorkflowFoundry)
+// Create foundry and apply Polly resilience (extension methods are on IWorkflowFoundry)
 var config = FoundryConfiguration.ForProduction();
-var foundry = (WorkflowFoundry)WorkflowForge.CreateFoundry("MyWorkflow", config);
+var foundry = WorkflowForge.CreateFoundry("MyWorkflow", config);
 
 // Preset:
 foundry.UsePollyProductionResilience();

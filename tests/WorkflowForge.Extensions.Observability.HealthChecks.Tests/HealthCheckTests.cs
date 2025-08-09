@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.Observability.HealthChecks;
 using WorkflowForge.Loggers;
 
 namespace WorkflowForge.Extensions.Observability.HealthChecks.Tests;
@@ -46,7 +44,7 @@ public class MemoryHealthCheckTests
         cts.Cancel();
 
         // Act & Assert
-        await Assert.ThrowsAsync<OperationCanceledException>(() => 
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
             healthCheck.CheckHealthAsync(cts.Token));
     }
 }
@@ -91,7 +89,7 @@ public class GarbageCollectorHealthCheckTests
         cts.Cancel();
 
         // Act & Assert
-        await Assert.ThrowsAsync<OperationCanceledException>(() => 
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
             healthCheck.CheckHealthAsync(cts.Token));
     }
 }
@@ -136,7 +134,7 @@ public class ThreadPoolHealthCheckTests
         cts.Cancel();
 
         // Act & Assert
-        await Assert.ThrowsAsync<OperationCanceledException>(() => 
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
             healthCheck.CheckHealthAsync(cts.Token));
     }
 }
@@ -279,7 +277,7 @@ public class HealthCheckServiceTests
         cts.Cancel();
 
         // Act & Assert
-        await Assert.ThrowsAsync<OperationCanceledException>(() => 
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
             service.CheckHealthAsync(cts.Token));
     }
 }
@@ -341,4 +339,4 @@ public class HealthCheckResultTests
         Assert.Equal(HealthStatus.Healthy, result.Status);
         Assert.Equal("All good", result.Description);
     }
-} 
+}

@@ -1,16 +1,14 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Middleware;
-using WorkflowForge.Operations;
-using Xunit;
-using Xunit.Abstractions;
 using WorkflowForge.Loggers;
-using Moq;
+using WorkflowForge.Configurations;
+using WorkflowForge.Operations;
+using WorkflowForge.Exceptions;
+using Xunit.Abstractions;
 
 namespace WorkflowForge.Tests;
 
@@ -170,7 +168,7 @@ public class WorkflowFoundryTests
         Assert.NotNull(foundry.Logger);
     }
 
-    #endregion
+    #endregion Constructor and Basic Properties Tests
 
     #region Property Management Tests
 
@@ -332,7 +330,7 @@ public class WorkflowFoundryTests
         }
     }
 
-    #endregion
+    #endregion Property Management Tests
 
     #region Data Access Tests (using Properties)
 
@@ -435,7 +433,7 @@ public class WorkflowFoundryTests
         Assert.Null(value);
     }
 
-    #endregion
+    #endregion Data Access Tests (using Properties)
 
     #region Operation Management Tests
 
@@ -558,7 +556,7 @@ public class WorkflowFoundryTests
         await Assert.ThrowsAsync<ObjectDisposedException>(() => foundry.ForgeAsync());
     }
 
-    #endregion
+    #endregion Operation Management Tests
 
     #region Middleware Tests
 
@@ -662,7 +660,7 @@ public class WorkflowFoundryTests
         Assert.Equal(2, foundry.MiddlewareCount);
     }
 
-    #endregion
+    #endregion Middleware Tests
 
     #region Disposal Tests
 
@@ -692,7 +690,7 @@ public class WorkflowFoundryTests
         Assert.NotNull(foundry); // Basic check that disposal completed
     }
 
-    #endregion
+    #endregion Disposal Tests
 
     #region Configuration Tests
 
@@ -710,7 +708,7 @@ public class WorkflowFoundryTests
         Assert.Equal(enableTiming, foundry.Configuration.EnableDetailedTiming);
     }
 
-    #endregion
+    #endregion Configuration Tests
 
     #region Error Handling Tests
 
@@ -733,7 +731,7 @@ public class WorkflowFoundryTests
         Assert.IsType<InvalidOperationException>(exception.InnerException);
     }
 
-    #endregion
+    #endregion Error Handling Tests
 
     #region Helper Methods
 
@@ -787,5 +785,5 @@ public class WorkflowFoundryTests
         }
     }
 
-    #endregion
-} 
+    #endregion Helper Methods
+}

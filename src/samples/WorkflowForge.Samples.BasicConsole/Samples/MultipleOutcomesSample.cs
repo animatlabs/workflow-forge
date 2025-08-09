@@ -1,7 +1,4 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using WorkflowForge;
+using WorkflowForge.Configurations;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
@@ -20,16 +17,16 @@ public class MultipleOutcomesSample : ISample
     public async Task RunAsync()
     {
         Console.WriteLine("Creating a workflow that demonstrates multiple outcomes...");
-        
+
         using var foundry = WorkflowForge.CreateFoundry("MultipleOutcomesWorkflow", FoundryConfiguration.Development());
-        
+
         // Set test data for different scenarios
         foundry.Properties["credit_score"] = 720;
         foundry.Properties["income"] = 85000m;
         foundry.Properties["debt_ratio"] = 0.25m;
-        
+
         Console.WriteLine($"Applicant data - Credit Score: {foundry.Properties["credit_score"]}, Income: ${foundry.Properties["income"]:N0}, Debt Ratio: {foundry.Properties["debt_ratio"]:P0}");
-        
+
         foundry
             .WithOperation(new CreditCheckOperation())
             .WithOperation(new ConditionalWorkflowOperation(
@@ -57,14 +54,14 @@ public class MultipleOutcomesSample : ISample
             .WithOperation(new ConditionalWorkflowOperation(
                 // Check loan processing outcome (only if credit was approved)
                 (inputData, foundry, cancellationToken) => Task.FromResult(
-                    foundry.Properties.ContainsKey("loan_decision") && 
+                    foundry.Properties.ContainsKey("loan_decision") &&
                     ((string)foundry.Properties["loan_decision"]!).Equals("APPROVED", StringComparison.OrdinalIgnoreCase)),
                 // If loan approved
                 new GenerateLoanDocumentsOperation(),
                 // If loan rejected or not processed
                 new LoggingOperation("[ERROR] Loan processing failed or not applicable - sending rejection notice")))
             .WithOperation(new NotifyApplicantOperation());
-        
+
         Console.WriteLine("\nExecuting workflow with multiple outcome paths...");
         await foundry.ForgeAsync();
     }
@@ -79,18 +76,18 @@ public class CreditCheckOperation : IWorkflowOperation
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         Console.WriteLine("   [INFO] Performing credit check...");
-        
+
         // Simulate credit check processing
         await Task.Delay(150, cancellationToken);
-        
+
         var creditScore = (int)foundry.Properties["credit_score"]!;
         var income = (decimal)foundry.Properties["income"]!;
         var debtRatio = (decimal)foundry.Properties["debt_ratio"]!;
-        
+
         // Multiple outcome logic
         string decision;
         string reason;
-        
+
         if (creditScore >= 750 && income >= 50000m && debtRatio <= 0.3m)
         {
             decision = "APPROVED";
@@ -116,13 +113,13 @@ public class CreditCheckOperation : IWorkflowOperation
             decision = "DECLINED";
             reason = "Multiple risk factors identified";
         }
-        
+
         foundry.Properties["credit_decision"] = decision;
         foundry.Properties["decline_reason"] = reason;
         foundry.Properties["credit_check_date"] = DateTime.UtcNow;
-        
+
         Console.WriteLine($"   [INFO] Credit decision: {decision} - {reason}");
-        
+
         return decision;
     }
 
@@ -146,17 +143,17 @@ public class LoanProcessingOperation : IWorkflowOperation
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         Console.WriteLine("   [INFO] Processing loan application...");
-        
+
         await Task.Delay(200, cancellationToken);
-        
+
         var income = (decimal)foundry.Properties["income"]!;
         var debtRatio = (decimal)foundry.Properties["debt_ratio"]!;
-        
+
         // Loan-specific processing with multiple outcomes
         string loanDecision;
         decimal maxLoanAmount;
         decimal interestRate;
-        
+
         if (income >= 100000m && debtRatio <= 0.2m)
         {
             loanDecision = "APPROVED";
@@ -181,12 +178,12 @@ public class LoanProcessingOperation : IWorkflowOperation
             maxLoanAmount = 0m;
             interestRate = 0m;
         }
-        
+
         foundry.Properties["loan_decision"] = loanDecision;
         foundry.Properties["max_loan_amount"] = maxLoanAmount;
         foundry.Properties["interest_rate"] = interestRate;
         foundry.Properties["loan_processing_date"] = DateTime.UtcNow;
-        
+
         if (loanDecision == "APPROVED")
         {
             Console.WriteLine($"   [SUCCESS] Loan approved! Max amount: ${maxLoanAmount:N0} at {interestRate}% APR");
@@ -195,7 +192,7 @@ public class LoanProcessingOperation : IWorkflowOperation
         {
             Console.WriteLine($"   [ERROR] Loan declined during processing");
         }
-        
+
         return loanDecision;
     }
 
@@ -220,19 +217,19 @@ public class GenerateLoanDocumentsOperation : IWorkflowOperation
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         Console.WriteLine("   [INFO] Generating loan documents...");
-        
+
         await Task.Delay(100, cancellationToken);
-        
+
         var loanAmount = (decimal)foundry.Properties["max_loan_amount"]!;
         var interestRate = (decimal)foundry.Properties["interest_rate"]!;
-        
+
         var documentId = $"LOAN-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
         foundry.Properties["loan_document_id"] = documentId;
         foundry.Properties["final_status"] = "APPROVED_WITH_DOCUMENTS";
-        
+
         Console.WriteLine($"   [INFO] Loan documents generated: {documentId}");
         Console.WriteLine($"   [INFO] Final loan terms: ${loanAmount:N0} at {interestRate}% APR");
-        
+
         return $"Documents generated: {documentId}";
     }
 
@@ -255,11 +252,11 @@ public class OfferAlternativesOperation : IWorkflowOperation
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         Console.WriteLine("   [INFO] Generating alternative offers...");
-        
+
         await Task.Delay(120, cancellationToken);
-        
+
         var income = (decimal)foundry.Properties["income"]!;
-        
+
         // Offer alternative products
         var alternatives = new[]
         {
@@ -267,16 +264,16 @@ public class OfferAlternativesOperation : IWorkflowOperation
             "Financial counseling services",
             "Reapply in 6 months with improved credit"
         };
-        
+
         foundry.Properties["alternatives_offered"] = alternatives;
         foundry.Properties["final_status"] = "DECLINED_WITH_ALTERNATIVES";
-        
+
         Console.WriteLine("   [INFO] Alternative options offered:");
         foreach (var alternative in alternatives)
         {
             Console.WriteLine($"      • {alternative}");
         }
-        
+
         return "Alternatives offered";
     }
 
@@ -299,23 +296,23 @@ public class NotifyApplicantOperation : IWorkflowOperation
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         Console.WriteLine("   [INFO] Sending notification to applicant...");
-        
+
         await Task.Delay(80, cancellationToken);
-        
+
         var finalStatus = foundry.Properties.TryGetValue("final_status", out var status) ? (string)status! : "PROCESSED";
-        
+
         foundry.Properties["notification_sent"] = true;
         foundry.Properties["notification_date"] = DateTime.UtcNow;
-        
+
         var message = finalStatus switch
         {
             "APPROVED_WITH_DOCUMENTS" => "[SUCCESS] Congratulations! Your loan has been approved. Documents are being prepared.",
             "DECLINED_WITH_ALTERNATIVES" => "[INFO] While we cannot approve your loan at this time, we have alternative options for you.",
             _ => "[INFO] Your application has been processed. Please check your account for details."
         };
-        
+
         Console.WriteLine($"   [INFO] {message}");
-        
+
         return "Notification sent";
     }
 
@@ -327,4 +324,4 @@ public class NotifyApplicantOperation : IWorkflowOperation
     }
 
     public void Dispose() { }
-} 
+}

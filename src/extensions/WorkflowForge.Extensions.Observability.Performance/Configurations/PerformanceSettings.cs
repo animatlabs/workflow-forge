@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace WorkflowForge.Extensions.Observability.Performance
+namespace WorkflowForge.Extensions.Observability.Performance.Configurations
 {
     /// <summary>
     /// Configuration settings for WorkflowForge performance monitoring.
@@ -80,4 +80,4 @@ namespace WorkflowForge.Extensions.Observability.Performance
             };
         }
     }
-} 
+}

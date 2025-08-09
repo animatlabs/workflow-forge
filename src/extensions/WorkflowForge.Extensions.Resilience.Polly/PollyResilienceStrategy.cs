@@ -3,10 +3,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Polly;
 using Polly.CircuitBreaker;
-using Polly.Timeout;
 using Polly.Retry;
+using Polly.Timeout;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.Resilience;
+using WorkflowForge.Extensions.Resilience.Abstractions;
 
 namespace WorkflowForge.Extensions.Resilience.Polly
 {
@@ -269,4 +269,4 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             return new PollyResilienceStrategy(pipeline, $"PollyTimeout({timeout.TotalSeconds}s)", logger);
         }
     }
-} 
+}

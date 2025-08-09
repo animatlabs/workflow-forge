@@ -428,7 +428,7 @@ public class FoundryConfigurationFactory : IFoundryConfigurationFactory
 ### Strongly-Typed Configuration
 
 ```csharp
-public class WorkflowForgeSettings
+public class WorkflowForgeConfiguration
 {
     public const string SectionName = "WorkflowForge";
 
@@ -474,18 +474,18 @@ public static class ConfigurationExtensions
         IConfiguration configuration)
     {
         // Configure with validation
-        services.Configure<WorkflowForgeSettings>(configuration.GetSection(WorkflowForgeSettings.SectionName));
+        services.Configure<WorkflowForgeConfiguration>(configuration.GetSection(WorkflowForgeConfiguration.SectionName));
         
         // Add validation
-        services.AddSingleton<IValidateOptions<WorkflowForgeSettings>, WorkflowForgeSettingsValidator>();
+        services.AddSingleton<IValidateOptions<WorkflowForgeConfiguration>, WorkflowForgeConfigurationValidator>();
         
         return services;
     }
 }
 
-public class WorkflowForgeSettingsValidator : IValidateOptions<WorkflowForgeSettings>
+public class WorkflowForgeConfigurationValidator : IValidateOptions<WorkflowForgeConfiguration>
 {
-    public ValidateOptionsResult Validate(string name, WorkflowForgeSettings options)
+    public ValidateOptionsResult Validate(string name, WorkflowForgeConfiguration options)
     {
         var errors = new List<string>();
 
@@ -575,16 +575,16 @@ var configuration = new ConfigurationBuilder()
 ```csharp
 public class ConfigurableFoundryService
 {
-    private readonly IOptionsMonitor<WorkflowForgeSettings> _optionsMonitor;
+    private readonly IOptionsMonitor<WorkflowForgeConfiguration> _optionsMonitor;
     private IDisposable? _optionsChangeListener;
 
-    public ConfigurableFoundryService(IOptionsMonitor<WorkflowForgeSettings> optionsMonitor)
+    public ConfigurableFoundryService(IOptionsMonitor<WorkflowForgeConfiguration> optionsMonitor)
     {
         _optionsMonitor = optionsMonitor;
         _optionsChangeListener = _optionsMonitor.OnChange(OnConfigurationChanged);
     }
 
-    private void OnConfigurationChanged(WorkflowForgeSettings newSettings)
+    private void OnConfigurationChanged(WorkflowForgeConfiguration newSettings)
     {
         // Reconfigure foundries with new settings
         ReconfigureFoundries(newSettings);
@@ -707,7 +707,7 @@ public class ConfigurableFoundryService
 3. **Missing required configuration**
    ```csharp
    // Use IValidateOptions<T> for validation
-   services.AddSingleton<IValidateOptions<WorkflowForgeSettings>, WorkflowForgeSettingsValidator>();
+    services.AddSingleton<IValidateOptions<WorkflowForgeConfiguration>, WorkflowForgeConfigurationValidator>();
    ```
 
 ## Related Documentation

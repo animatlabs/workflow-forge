@@ -1,12 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Middleware;
+using WorkflowForge.Configurations;
 using WorkflowForge.Loggers;
 
 namespace WorkflowForge
@@ -16,7 +15,7 @@ namespace WorkflowForge
     /// Provides thread-safe workflow execution with foundry property management.
     /// Simplified, dependency-free implementation focused on core functionality.
     /// </summary>
-    public sealed class WorkflowFoundry : IWorkflowFoundry
+    internal sealed class WorkflowFoundry : IWorkflowFoundry
     {
         private readonly List<IWorkflowOperation> _operations = new();
         private readonly FoundryConfiguration _configuration;
@@ -80,10 +79,10 @@ namespace WorkflowForge
             IWorkflowForgeLogger logger,
             IServiceProvider? serviceProvider = null,
             IWorkflow? currentWorkflow = null)
-            : this(executionId, properties, new FoundryConfiguration 
-            { 
-                Logger = logger, 
-                ServiceProvider = serviceProvider 
+            : this(executionId, properties, new FoundryConfiguration
+            {
+                Logger = logger,
+                ServiceProvider = serviceProvider
             }, currentWorkflow)
         {
         }
@@ -188,6 +187,7 @@ namespace WorkflowForge
                 await ExecuteOperationWithMiddleware(operation, null, cancellationToken).ConfigureAwait(false);
             }
         }
+
         /// <summary>
         /// Executes a single operation through the middleware pipeline.
         /// </summary>
@@ -196,8 +196,8 @@ namespace WorkflowForge
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The output data from the operation.</returns>
         private async Task<object?> ExecuteOperationWithMiddleware(
-            IWorkflowOperation operation, 
-            object? inputData, 
+            IWorkflowOperation operation,
+            object? inputData,
             CancellationToken cancellationToken)
         {
             if (_middlewares.Count == 0)
@@ -218,6 +218,7 @@ namespace WorkflowForge
 
             return await next().ConfigureAwait(false);
         }
+
         /// <inheritdoc />
         public void Dispose()
         {
@@ -244,4 +245,4 @@ namespace WorkflowForge
             GC.SuppressFinalize(this);
         }
     }
-} 
+}

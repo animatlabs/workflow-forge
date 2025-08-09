@@ -1,5 +1,5 @@
 using Serilog;
-using WorkflowForge;
+using WorkflowForge.Configurations;
 
 namespace WorkflowForge.Extensions.Logging.Serilog
 {
@@ -15,7 +15,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog
         /// <param name="serilogLogger">The configured Serilog ILogger instance.</param>
         /// <returns>The configuration for method chaining.</returns>
         public static FoundryConfiguration UseSerilog(
-            this FoundryConfiguration configuration, 
+            this FoundryConfiguration configuration,
             ILogger serilogLogger)
         {
             var workflowLogger = new SerilogWorkflowForgeLogger(serilogLogger);
@@ -29,7 +29,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog
         /// <param name="configuration">The WorkflowForge configuration.</param>
         /// <returns>The configuration for method chaining.</returns>
         /// <remarks>
-        /// This method uses Log.Logger as the Serilog instance. 
+        /// This method uses Log.Logger as the Serilog instance.
         /// Ensure Serilog is properly configured before calling this method.
         /// </remarks>
         public static FoundryConfiguration UseSerilog(
@@ -38,4 +38,4 @@ namespace WorkflowForge.Extensions.Logging.Serilog
             return configuration.UseSerilog(Log.Logger);
         }
     }
-} 
+}

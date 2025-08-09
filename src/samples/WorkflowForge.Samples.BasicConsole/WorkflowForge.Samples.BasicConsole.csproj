@@ -8,6 +8,7 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors />
     <WarningsNotAsErrors>CS8981</WarningsNotAsErrors>
+    <NoWarn>$(NoWarn);CS1998;CS8601;CS8604</NoWarn>
     <AssemblyName>WorkflowForge.Samples.BasicConsole</AssemblyName>
     <RootNamespace>WorkflowForge.Samples.BasicConsole</RootNamespace>
   </PropertyGroup>
@@ -20,6 +21,8 @@
     <ProjectReference Include="..\..\extensions\WorkflowForge.Extensions.Observability.OpenTelemetry\WorkflowForge.Extensions.Observability.OpenTelemetry.csproj" />
     <ProjectReference Include="..\..\extensions\WorkflowForge.Extensions.Resilience\WorkflowForge.Extensions.Resilience.csproj" />
     <ProjectReference Include="..\..\extensions\WorkflowForge.Extensions.Resilience.Polly\WorkflowForge.Extensions.Resilience.Polly.csproj" />
+    <ProjectReference Include="..\..\extensions\WorkflowForge.Extensions.Persistence\WorkflowForge.Extensions.Persistence.csproj" />
+    <ProjectReference Include="..\..\extensions\WorkflowForge.Extensions.Persistence.Recovery\WorkflowForge.Extensions.Persistence.Recovery.csproj" />
   </ItemGroup>
 
   <ItemGroup>

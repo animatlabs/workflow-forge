@@ -1,6 +1,7 @@
 using System;
+using WorkflowForge.Events;
 
-namespace WorkflowForge
+namespace WorkflowForge.Abstractions
 {
     /// <summary>
     /// Defines events that can be raised during workflow execution.
@@ -38,4 +39,4 @@ namespace WorkflowForge
         /// </summary>
         event EventHandler<OperationFailedEventArgs>? OperationFailed;
     }
-} 
+}

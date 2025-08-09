@@ -1,6 +1,6 @@
 using System;
 
-namespace WorkflowForge.Extensions.Observability.Performance
+namespace WorkflowForge.Extensions.Observability.Performance.Abstractions
 {
     /// <summary>
     /// Represents performance statistics for a foundry execution.
@@ -148,4 +148,4 @@ namespace WorkflowForge.Extensions.Observability.Performance
         /// </summary>
         long AverageMemoryPerExecution { get; }
     }
-} 
+}

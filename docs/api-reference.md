@@ -400,15 +400,15 @@ public static FoundryConfiguration UseSerilog(this FoundryConfiguration config);
 public static FoundryConfiguration UseSerilog(this FoundryConfiguration config, ILogger logger);
 
 // Resilience (Polly) on foundry
-public static WorkflowFoundry UsePollyRetry(this WorkflowFoundry foundry, int maxRetryAttempts = 3, TimeSpan? baseDelay = null, TimeSpan? maxDelay = null);
-public static WorkflowFoundry UsePollyCircuitBreaker(this WorkflowFoundry foundry, int failureThreshold = 5, TimeSpan? durationOfBreak = null);
-public static WorkflowFoundry UsePollyTimeout(this WorkflowFoundry foundry, TimeSpan timeout);
-public static WorkflowFoundry UsePollyComprehensive(this WorkflowFoundry foundry, int maxRetryAttempts = 3, TimeSpan? baseDelay = null, int circuitBreakerThreshold = 5, TimeSpan? circuitBreakerDuration = null, TimeSpan? timeoutDuration = null);
-public static WorkflowFoundry UsePollyFromSettings(this WorkflowFoundry foundry, PollySettings settings);
-public static WorkflowFoundry UsePollyEnterpriseResilience(this WorkflowFoundry foundry);
-public static WorkflowFoundry UsePollyDevelopmentResilience(this WorkflowFoundry foundry);
-public static WorkflowFoundry UsePollyProductionResilience(this WorkflowFoundry foundry);
-public static WorkflowFoundry UsePollyMinimalResilience(this WorkflowFoundry foundry);
+public static IWorkflowFoundry UsePollyRetry(this IWorkflowFoundry foundry, int maxRetryAttempts = 3, TimeSpan? baseDelay = null, TimeSpan? maxDelay = null);
+public static IWorkflowFoundry UsePollyCircuitBreaker(this IWorkflowFoundry foundry, int failureThreshold = 5, TimeSpan? durationOfBreak = null);
+public static IWorkflowFoundry UsePollyTimeout(this IWorkflowFoundry foundry, TimeSpan timeout);
+public static IWorkflowFoundry UsePollyComprehensive(this IWorkflowFoundry foundry, int maxRetryAttempts = 3, TimeSpan? baseDelay = null, int circuitBreakerThreshold = 5, TimeSpan? circuitBreakerDuration = null, TimeSpan? timeoutDuration = null);
+public static IWorkflowFoundry UsePollyFromSettings(this IWorkflowFoundry foundry, PollySettings settings);
+public static IWorkflowFoundry UsePollyEnterpriseResilience(this IWorkflowFoundry foundry);
+public static IWorkflowFoundry UsePollyDevelopmentResilience(this IWorkflowFoundry foundry);
+public static IWorkflowFoundry UsePollyProductionResilience(this IWorkflowFoundry foundry);
+public static IWorkflowFoundry UsePollyMinimalResilience(this IWorkflowFoundry foundry);
 
 // Performance monitoring on foundry
 public static bool EnablePerformanceMonitoring(this IWorkflowFoundry foundry);
@@ -421,6 +421,42 @@ public static Task<HealthStatus> CheckFoundryHealthAsync(this IWorkflowFoundry f
 // OpenTelemetry on foundry
 public static bool EnableOpenTelemetry(this IWorkflowFoundry foundry, WorkflowForgeOpenTelemetryOptions? options = null);
 public static bool DisableOpenTelemetry(this IWorkflowFoundry foundry);
+
+// Persistence (BYO storage) on foundry
+public static IWorkflowFoundry UsePersistence(this IWorkflowFoundry foundry, IWorkflowPersistenceProvider provider);
+public static IWorkflowFoundry UsePersistence(this IWorkflowFoundry foundry, IWorkflowPersistenceProvider provider, PersistenceOptions options);
+
+// Recovery (resume + retry)
+public static Task ForgeWithRecoveryAsync(this IWorkflowSmith smith,
+    IWorkflow workflow,
+    IWorkflowFoundry foundry,
+    IWorkflowPersistenceProvider provider,
+    Guid foundryKey,
+    Guid workflowKey,
+    RecoveryPolicy? policy = null,
+    CancellationToken cancellationToken = default);
+
+// Recovery coordinator and catalog (multi-resume)
+public interface IRecoveryCatalog
+{
+    Task<IReadOnlyList<WorkflowExecutionSnapshot>> ListPendingAsync(CancellationToken cancellationToken = default);
+}
+
+public interface IRecoveryCoordinator
+{
+    Task ResumeAsync(
+        Func<IWorkflowFoundry> foundryFactory,
+        Func<IWorkflow> workflowFactory,
+        Guid foundryKey,
+        Guid workflowKey,
+        CancellationToken cancellationToken = default);
+
+    Task<int> ResumeAllAsync(
+        Func<IWorkflowFoundry> foundryFactory,
+        Func<IWorkflow> workflowFactory,
+        IRecoveryCatalog catalog,
+        CancellationToken cancellationToken = default);
+}
 ```
 
 ---

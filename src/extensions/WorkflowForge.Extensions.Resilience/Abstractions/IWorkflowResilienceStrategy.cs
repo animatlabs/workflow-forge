@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace WorkflowForge.Extensions.Resilience
+namespace WorkflowForge.Extensions.Resilience.Abstractions
 {
     /// <summary>
     /// Interface for resilience strategies that handle retry logic and failure recovery for workflows.
@@ -48,4 +48,4 @@ namespace WorkflowForge.Extensions.Resilience
         /// <returns>A task representing the asynchronous operation with a result.</returns>
         Task<T> ExecuteAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken);
     }
-} 
+}

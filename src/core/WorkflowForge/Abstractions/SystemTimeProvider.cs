@@ -1,6 +1,6 @@
 using System;
 
-namespace WorkflowForge
+namespace WorkflowForge.Abstractions
 {
     /// <summary>
     /// Default implementation of <see cref="ISystemTimeProvider"/> that provides real system time.
@@ -13,7 +13,8 @@ namespace WorkflowForge
         public static readonly SystemTimeProvider Instance = new();
 
         // Private constructor to enforce singleton pattern
-        private SystemTimeProvider() { }
+        private SystemTimeProvider()
+        { }
 
         /// <inheritdoc />
         public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
@@ -24,4 +25,4 @@ namespace WorkflowForge
         /// <inheritdoc />
         public DateTimeOffset Today => DateTimeOffset.Now.Date;
     }
-} 
+}

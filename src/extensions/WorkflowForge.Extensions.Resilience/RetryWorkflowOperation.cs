@@ -2,8 +2,10 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Operations;
+using WorkflowForge.Extensions.Resilience.Abstractions;
+using WorkflowForge.Extensions.Resilience.Configurations;
 using WorkflowForge.Extensions.Resilience.Strategies;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Extensions.Resilience
 {
@@ -24,14 +26,14 @@ namespace WorkflowForge.Extensions.Resilience
         /// <param name="name">Optional name for the retry operation.</param>
         /// <param name="id">Optional operation ID.</param>
         public RetryWorkflowOperation(
-            IWorkflowOperation operation, 
+            IWorkflowOperation operation,
             IWorkflowResilienceStrategy retryStrategy,
             string? name = null,
             Guid? id = null)
         {
             _operation = operation ?? throw new ArgumentNullException(nameof(operation));
             _retryStrategy = retryStrategy ?? throw new ArgumentNullException(nameof(retryStrategy));
-            
+
             Id = id ?? Guid.NewGuid();
             Name = name ?? $"Retry({_operation.Name})";
         }
@@ -130,9 +132,9 @@ namespace WorkflowForge.Extensions.Resilience
         {
             var delay = baseDelay ?? TimeSpan.FromSeconds(1);
             var maxDelayValue = maxDelay ?? TimeSpan.FromSeconds(30);
-            
+
             var strategy = new ExponentialBackoffStrategy(
-                delay, maxDelayValue, maxAttempts, backoffMultiplier, 
+                delay, maxDelayValue, maxAttempts, backoffMultiplier,
                 retryPredicate, enableJitter, logger);
             return new RetryWorkflowOperation(operation, strategy, name);
         }
@@ -184,17 +186,17 @@ namespace WorkflowForge.Extensions.Resilience
             {
                 RetryStrategyType.FixedInterval => new FixedIntervalStrategy(
                     settings.BaseDelay, settings.MaxAttempts, retryPredicate, logger),
-                
+
                 RetryStrategyType.ExponentialBackoff => new ExponentialBackoffStrategy(
-                    settings.BaseDelay, settings.MaxDelay, settings.MaxAttempts, 
+                    settings.BaseDelay, settings.MaxDelay, settings.MaxAttempts,
                     settings.BackoffMultiplier, retryPredicate, settings.UseJitter, logger),
-                
+
                 RetryStrategyType.RandomInterval => new RandomIntervalStrategy(
                     settings.MaxAttempts, settings.BaseDelay, settings.MaxDelay, retryPredicate, logger),
-                
+
                 RetryStrategyType.None => throw new ArgumentException(
                     "Cannot create retry operation with RetryStrategyType.None", nameof(settings)),
-                
+
                 _ => throw new ArgumentException($"Unsupported retry strategy type: {settings.StrategyType}", nameof(settings))
             };
 
@@ -210,8 +212,8 @@ namespace WorkflowForge.Extensions.Resilience
         /// <param name="logger">Optional logger for retry events.</param>
         /// <returns>A new retry operation instance.</returns>
         public static RetryWorkflowOperation Create(
-            IWorkflowOperation operation, 
-            int maxAttempts = 3, 
+            IWorkflowOperation operation,
+            int maxAttempts = 3,
             string? name = null,
             IWorkflowForgeLogger? logger = null)
         {
@@ -252,4 +254,4 @@ namespace WorkflowForge.Extensions.Resilience
         {
         }
     }
-} 
+}

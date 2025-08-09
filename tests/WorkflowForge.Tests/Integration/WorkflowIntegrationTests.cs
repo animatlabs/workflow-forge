@@ -1,13 +1,11 @@
+using WorkflowForge.Exceptions;
 using System;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Operations;
-using Xunit;
 using Xunit.Abstractions;
 
 namespace WorkflowForge.Tests.Integration;
@@ -37,7 +35,7 @@ public class WorkflowIntegrationTests
             .AddOperation(new DataProcessingOperation())
             .AddOperation(new DataPersistenceOperation())
             .Build();
-        
+
         var foundry = WorkflowForge.CreateFoundry("CompleteWorkflow");
         var smith = WorkflowForge.CreateSmith();
 
@@ -59,7 +57,7 @@ public class WorkflowIntegrationTests
         var workflow = WorkflowForge.CreateWorkflow("MiddlewareTest")
             .AddOperation(new LoggingOperation("MainOp", executionLog))
             .Build();
-        
+
         var foundry = WorkflowForge.CreateFoundry("MiddlewareTest");
         var smith = WorkflowForge.CreateSmith();
 
@@ -70,7 +68,7 @@ public class WorkflowIntegrationTests
         Assert.Contains("MainOp-Execute", executionLog);
     }
 
-    #endregion
+    #endregion Basic Integration Tests
 
     #region Complex Workflow Scenarios
 
@@ -94,7 +92,7 @@ public class WorkflowIntegrationTests
                 return Task.CompletedTask;
             })
             .Build();
-        
+
         var foundry = WorkflowForge.CreateFoundry("DataProcessingWorkflow");
         var smith = WorkflowForge.CreateSmith();
 
@@ -126,7 +124,7 @@ public class WorkflowIntegrationTests
                 return Task.CompletedTask;
             })
             .Build();
-        
+
         var foundry = WorkflowForge.CreateFoundry("ConditionalWorkflow");
         var smith = WorkflowForge.CreateSmith();
 
@@ -138,7 +136,7 @@ public class WorkflowIntegrationTests
         Assert.True((bool)foundry.Properties["finalized"]!);
     }
 
-    #endregion
+    #endregion Complex Workflow Scenarios
 
     #region Error Handling Integration Tests
 
@@ -151,7 +149,7 @@ public class WorkflowIntegrationTests
             .AddOperation(new FailingOperation("FailingStep"))
             .AddOperation(new SuccessfulOperation("Step3"))
             .Build();
-        
+
         var foundry = WorkflowForge.CreateFoundry("ErrorHandlingWorkflow");
         var smith = WorkflowForge.CreateSmith();
 
@@ -168,7 +166,7 @@ public class WorkflowIntegrationTests
             .AddOperation(new FailingOperation("FailingOp"))
             .AddOperation(new SuccessfulOperation("RecoveryOp"))
             .Build();
-        
+
         var foundry = WorkflowForge.CreateFoundry("ErrorRecoveryTest");
         var smith = WorkflowForge.CreateSmith();
 
@@ -176,7 +174,7 @@ public class WorkflowIntegrationTests
         await Assert.ThrowsAsync<InvalidOperationException>(() => smith.ForgeAsync(workflow, foundry));
     }
 
-    #endregion
+    #endregion Error Handling Integration Tests
 
     #region Performance and Concurrency Tests
 
@@ -185,7 +183,7 @@ public class WorkflowIntegrationTests
     {
         // Arrange
         var workflowBuilder = WorkflowForge.CreateWorkflow("HighVolumeWorkflow");
-        
+
         for (int i = 0; i < 50; i++)
         {
             var index = i;
@@ -195,7 +193,7 @@ public class WorkflowIntegrationTests
                 return Task.CompletedTask;
             });
         }
-        
+
         var workflow = workflowBuilder.Build();
         var foundry = WorkflowForge.CreateFoundry("HighVolumeWorkflow");
         var smith = WorkflowForge.CreateSmith();
@@ -207,7 +205,7 @@ public class WorkflowIntegrationTests
 
         // Assert
         Assert.True(stopwatch.ElapsedMilliseconds < 5000); // Should complete within 5 seconds
-        
+
         // Verify all operations executed
         for (int i = 0; i < 50; i++)
         {
@@ -222,7 +220,7 @@ public class WorkflowIntegrationTests
         // Arrange
         var sharedCounter = new SharedCounter();
         var tasks = new List<Task>();
-        
+
         for (int i = 0; i < 10; i++)
         {
             tasks.Add(Task.Run(async () =>
@@ -230,7 +228,7 @@ public class WorkflowIntegrationTests
                 var workflow = WorkflowForge.CreateWorkflow($"ConcurrentWorkflow-{i}")
                     .AddOperation(new CounterIncrementOperation(sharedCounter))
                     .Build();
-                
+
                 var foundry = WorkflowForge.CreateFoundry($"ConcurrentWorkflow-{i}");
                 var smith = WorkflowForge.CreateSmith();
                 await smith.ForgeAsync(workflow, foundry);
@@ -244,7 +242,7 @@ public class WorkflowIntegrationTests
         Assert.Equal(10, sharedCounter.Value); // All increments should be reflected
     }
 
-    #endregion
+    #endregion Performance and Concurrency Tests
 
     #region Real-world Scenarios
 
@@ -257,13 +255,13 @@ public class WorkflowIntegrationTests
             .AddOperation(new PaymentProcessingOperation())
             .AddOperation(new ShippingOperation())
             .Build();
-        
+
         var foundry = WorkflowForge.CreateFoundry("OrderProcessingWorkflow");
         foundry.Properties["orderId"] = "ORD-123";
         foundry.Properties["customerId"] = "CUST-456";
         foundry.Properties["items"] = new[] { "Item1", "Item2" };
         foundry.Properties["amount"] = 99.99m;
-        
+
         var smith = WorkflowForge.CreateSmith();
 
         // Act
@@ -285,11 +283,11 @@ public class WorkflowIntegrationTests
             .AddOperation(new TextExtractionOperation())
             .AddOperation(new ContentAnalysisOperation())
             .Build();
-        
+
         var foundry = WorkflowForge.CreateFoundry("DocumentProcessingWorkflow");
         foundry.Properties["documentPath"] = "/path/to/document.pdf";
         foundry.Properties["expectedFormat"] = "PDF";
-        
+
         var smith = WorkflowForge.CreateSmith();
 
         // Act
@@ -302,7 +300,7 @@ public class WorkflowIntegrationTests
         Assert.Equal("Document processed successfully", foundry.Properties["status"]);
     }
 
-    #endregion
+    #endregion Real-world Scenarios
 
     #region Helper Classes
 
@@ -326,7 +324,7 @@ public class WorkflowIntegrationTests
         {
             if (!foundry.Properties.ContainsKey("initialized"))
                 throw new InvalidOperationException("Data not initialized");
-            
+
             foundry.Properties["validated"] = true;
             return Task.FromResult<object?>("validated");
         }
@@ -340,7 +338,7 @@ public class WorkflowIntegrationTests
         {
             if (!foundry.Properties.ContainsKey("validated"))
                 throw new InvalidOperationException("Data not validated");
-            
+
             foundry.Properties["processed"] = true;
             foundry.Properties["processedAt"] = DateTime.UtcNow;
             return Task.FromResult<object?>("processed");
@@ -355,7 +353,7 @@ public class WorkflowIntegrationTests
         {
             if (!foundry.Properties.ContainsKey("processed"))
                 throw new InvalidOperationException("Data not processed");
-            
+
             foundry.Properties["persisted"] = true;
             foundry.Properties["persistedAt"] = DateTime.UtcNow;
             return Task.FromResult<object?>("persisted");
@@ -525,7 +523,7 @@ public class WorkflowIntegrationTests
         {
             var documentPath = foundry.Properties["documentPath"] as string;
             var expectedFormat = foundry.Properties["expectedFormat"] as string;
-            
+
             // Simulate document validation
             foundry.Properties["documentContent"] = "Sample document content for processing";
             foundry.Properties["documentValid"] = !string.IsNullOrEmpty(documentPath) && expectedFormat == "PDF";
@@ -554,14 +552,14 @@ public class WorkflowIntegrationTests
         {
             var text = foundry.Properties["extractedText"] as string ?? "";
             var wordCount = text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
-            
+
             var analysis = new Dictionary<string, object>
             {
                 { "wordCount", wordCount },
                 { "characterCount", text.Length },
                 { "analysisTimestamp", DateTime.UtcNow }
             };
-            
+
             foundry.Properties["analysisResults"] = analysis;
             foundry.Properties["analysisComplete"] = true;
             foundry.Properties["status"] = "Document processed successfully";
@@ -645,7 +643,7 @@ public class WorkflowIntegrationTests
                 return Task.CompletedTask;
             })
             .Build();
-        
+
         var foundry = WorkflowForge.CreateFoundry("DebugWorkflow");
         var smith = WorkflowForge.CreateSmith();
 
@@ -659,5 +657,5 @@ public class WorkflowIntegrationTests
         Assert.Equal("executed after executed", foundry.Properties["step2"]);
     }
 
-    #endregion
-} 
+    #endregion Helper Classes
+}

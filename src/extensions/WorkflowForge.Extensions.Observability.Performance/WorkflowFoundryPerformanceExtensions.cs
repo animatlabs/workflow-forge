@@ -1,4 +1,6 @@
 using System;
+using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions.Observability.Performance.Abstractions;
 
 namespace WorkflowForge.Extensions.Observability.Performance
 {
@@ -90,4 +92,4 @@ namespace WorkflowForge.Extensions.Observability.Performance
         /// </summary>
         bool IsPerformanceMonitoringEnabled { get; }
     }
-} 
+}

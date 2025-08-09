@@ -15,12 +15,17 @@ cd src/samples/WorkflowForge.Samples.BasicConsole
 dotnet run
 ```
 
-**Learning Path:** 18 hands-on examples from basic to advanced
+**Learning Path:** 22 hands-on examples from basic to advanced
 - **Beginner (1-4)**: Hello World, Data Passing, Conditions, Inline Operations
 - **Intermediate (5-12)**: Control Flow, Error Handling, Configuration, Middleware
-- **Advanced (13-18)**: Extensions, Observability, Resilience, Comprehensive Integration
+- **Advanced (13-18, 21-22)**: Extensions, Observability, Resilience, Persistence (18), Recovery Only (21), Recovery + Resilience (22), Comprehensive Integration
 
 [View Complete Sample Collection](../src/samples/WorkflowForge.Samples.BasicConsole/)
+
+Quick sample pointers:
+- Persistence (BYO Storage): Menu item 18
+- Recovery Only (resume + retry): Menu item 21
+- Recovery + Resilience (unified): Menu item 22
 
 ### Core Documentation
 - **[Getting Started Guide](getting-started.md)** - Step-by-step introduction

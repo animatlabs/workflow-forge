@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <MicrosoftNETTestSdkVersion>17.14.1</MicrosoftNETTestSdkVersion>
+  </PropertyGroup>
+</Project>
+
+

@@ -1,16 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Loggers;
 using WorkflowForge.Operations;
-using Xunit;
-using Moq;
 
 namespace WorkflowForge.Tests.Operations;
 
@@ -65,7 +60,7 @@ public class DelayOperationTests
         Assert.Equal("Delay 0ms", operation.Name);
     }
 
-    #endregion
+    #endregion Constructor Tests
 
     #region Static Factory Methods Tests
 
@@ -144,7 +139,7 @@ public class DelayOperationTests
         Assert.Equal("Delay 0ms", operation.Name);
     }
 
-    #endregion
+    #endregion Static Factory Methods Tests
 
     #region ForgeAsync Tests
 
@@ -155,7 +150,7 @@ public class DelayOperationTests
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(10));
 
         // Act & Assert
-        await Assert.ThrowsAsync<ArgumentNullException>(() => 
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             operation.ForgeAsync("input", null!, CancellationToken.None));
     }
 
@@ -260,7 +255,7 @@ public class DelayOperationTests
         var executionId = Guid.NewGuid();
         var workflowName = "TestWorkflow";
         foundry.Setup(f => f.ExecutionId).Returns(executionId);
-        
+
         var mockWorkflow = new Mock<IWorkflow>();
         mockWorkflow.Setup(w => w.Name).Returns(workflowName);
         foundry.Setup(f => f.CurrentWorkflow).Returns(mockWorkflow.Object);
@@ -301,7 +296,7 @@ public class DelayOperationTests
         Assert.Equal("null", loggedProperties["InputType"]);
     }
 
-    #endregion
+    #endregion ForgeAsync Tests
 
     #region Cancellation Tests
 
@@ -331,7 +326,7 @@ public class DelayOperationTests
         cts.Cancel();
 
         // Act & Assert
-        await Assert.ThrowsAsync<TaskCanceledException>(() => 
+        await Assert.ThrowsAsync<TaskCanceledException>(() =>
             operation.ForgeAsync("input", foundry.Object, cts.Token));
     }
 
@@ -364,7 +359,7 @@ public class DelayOperationTests
         Assert.True(stopwatch.ElapsedMilliseconds < 1000);
     }
 
-    #endregion
+    #endregion Cancellation Tests
 
     #region RestoreAsync Tests
 
@@ -376,7 +371,7 @@ public class DelayOperationTests
         var foundry = CreateMockFoundry();
 
         // Act & Assert
-        await Assert.ThrowsAsync<NotSupportedException>(() => 
+        await Assert.ThrowsAsync<NotSupportedException>(() =>
             operation.RestoreAsync("output", foundry.Object));
     }
 
@@ -387,11 +382,11 @@ public class DelayOperationTests
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(10));
 
         // Act & Assert
-        await Assert.ThrowsAsync<NotSupportedException>(() => 
+        await Assert.ThrowsAsync<NotSupportedException>(() =>
             operation.RestoreAsync("output", null!));
     }
 
-    #endregion
+    #endregion RestoreAsync Tests
 
     #region Dispose Tests
 
@@ -432,7 +427,7 @@ public class DelayOperationTests
         Assert.Equal("input", result);
     }
 
-    #endregion
+    #endregion Dispose Tests
 
     #region Edge Cases and Performance Tests
 
@@ -507,7 +502,7 @@ public class DelayOperationTests
         Assert.True(stopwatch.ElapsedMilliseconds <= delayMs + 100); // Reasonable upper bound
     }
 
-    #endregion
+    #endregion Edge Cases and Performance Tests
 
     #region Helper Methods
 
@@ -515,10 +510,10 @@ public class DelayOperationTests
     {
         var foundry = new Mock<IWorkflowFoundry>();
         var logger = new Mock<IWorkflowForgeLogger>();
-        
+
         foundry.Setup(f => f.Logger).Returns(logger.Object);
         foundry.Setup(f => f.ExecutionId).Returns(Guid.NewGuid());
-        
+
         var mockWorkflow = new Mock<IWorkflow>();
         mockWorkflow.Setup(w => w.Name).Returns("TestWorkflow");
         foundry.Setup(f => f.CurrentWorkflow).Returns(mockWorkflow.Object);
@@ -526,5 +521,5 @@ public class DelayOperationTests
         return foundry;
     }
 
-    #endregion
-} 
+    #endregion Helper Methods
+}

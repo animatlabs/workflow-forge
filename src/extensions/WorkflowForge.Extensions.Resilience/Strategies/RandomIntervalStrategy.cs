@@ -1,8 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions.Resilience.Abstractions;
 
 namespace WorkflowForge.Extensions.Resilience.Strategies
 {
@@ -44,7 +44,7 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
             _maxInterval = maxInterval;
             _maxAttempts = maxAttempts;
             _retryPredicate = retryPredicate;
-            
+
             // Use thread-safe random with different seed per instance
             _random = new Random(Environment.TickCount + GetHashCode());
         }
@@ -70,7 +70,7 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
             if (_retryPredicate != null && exception != null)
             {
                 bool shouldRetry = _retryPredicate(exception);
-                Logger?.LogDebug("Custom retry predicate returned {ShouldRetry} for exception {ExceptionType}", 
+                Logger?.LogDebug("Custom retry predicate returned {ShouldRetry} for exception {ExceptionType}",
                     shouldRetry, exception.GetType().Name);
                 return Task.FromResult(shouldRetry);
             }
@@ -125,9 +125,9 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
                     }
 
                     var delay = GetRetryDelay(attemptNumber, ex);
-                    
+
                     Logger?.LogWarning($"Attempt {attemptNumber} failed, retrying in {delay.TotalMilliseconds}ms. Error: {ex.Message}");
-                    
+
                     if (delay > TimeSpan.Zero)
                     {
                         await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
@@ -177,9 +177,9 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
         /// <param name="logger">Optional logger for the strategy.</param>
         /// <returns>A new random interval strategy instance.</returns>
         public static RandomIntervalStrategy WithJitter(
-            TimeSpan baseInterval, 
-            double jitterPercent = 0.2, 
-            int maxAttempts = 3, 
+            TimeSpan baseInterval,
+            double jitterPercent = 0.2,
+            int maxAttempts = 3,
             IWorkflowForgeLogger? logger = null)
         {
             if (jitterPercent < 0.0 || jitterPercent > 1.0)
@@ -213,4 +213,4 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
             return new RandomIntervalStrategy(maxAttempts: 3, minInterval, maxInterval, retryPredicate: null, logger: null);
         }
     }
-} 
+}

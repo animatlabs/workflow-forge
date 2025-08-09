@@ -1,9 +1,7 @@
-using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace WorkflowForge.Extensions.Observability.HealthChecks
+namespace WorkflowForge.Extensions.Observability.HealthChecks.Abstractions
 {
     /// <summary>
     /// Represents a health check that can be executed to determine the health status of a component.
@@ -27,4 +25,4 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <returns>A task representing the health check result.</returns>
         Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default);
     }
-} 
+}

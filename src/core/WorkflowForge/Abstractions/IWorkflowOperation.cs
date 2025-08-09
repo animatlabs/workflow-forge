@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace WorkflowForge
+namespace WorkflowForge.Abstractions
 {
     /// <summary>
     /// Represents a single operation within a workflow that can be forged (executed) in the foundry.
@@ -84,4 +84,4 @@ namespace WorkflowForge
         /// <exception cref="ObjectDisposedException">Thrown when the operation has been disposed.</exception>
         Task RestoreAsync(TOutput output, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
     }
-} 
+}

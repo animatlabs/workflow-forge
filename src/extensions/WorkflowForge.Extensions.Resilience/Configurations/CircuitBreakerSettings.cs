@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace WorkflowForge.Extensions.Resilience
+namespace WorkflowForge.Extensions.Resilience.Configurations
 {
     /// <summary>
     /// Configuration settings for circuit breaker behavior in WorkflowForge operations.
@@ -23,14 +23,14 @@ namespace WorkflowForge.Extensions.Resilience
         /// <summary>
         /// Gets or sets the time window for failure counting.
         /// </summary>
-        [Range(typeof(TimeSpan), "00:00:01", "01:00:00", 
+        [Range(typeof(TimeSpan), "00:00:01", "01:00:00",
                ErrorMessage = "TimeWindow must be between 1 second and 1 hour")]
         public TimeSpan TimeWindow { get; set; } = TimeSpan.FromMinutes(1);
 
         /// <summary>
         /// Gets or sets the duration to keep the circuit open.
         /// </summary>
-        [Range(typeof(TimeSpan), "00:00:01", "01:00:00", 
+        [Range(typeof(TimeSpan), "00:00:01", "01:00:00",
                ErrorMessage = "OpenDuration must be between 1 second and 1 hour")]
         public TimeSpan OpenDuration { get; set; } = TimeSpan.FromSeconds(30);
 
@@ -75,4 +75,4 @@ namespace WorkflowForge.Extensions.Resilience
             };
         }
     }
-} 
+}

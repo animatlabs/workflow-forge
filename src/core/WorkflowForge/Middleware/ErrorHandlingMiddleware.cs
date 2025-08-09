@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Loggers;
+using WorkflowForge.Constants;
 
 namespace WorkflowForge.Middleware
 {
@@ -11,7 +11,7 @@ namespace WorkflowForge.Middleware
     /// Middleware that handles exceptions thrown during operation execution.
     /// Provides centralized error handling with optional exception swallowing.
     /// </summary>
-    public sealed class ErrorHandlingMiddleware : IWorkflowOperationMiddleware
+    internal sealed class ErrorHandlingMiddleware : IWorkflowOperationMiddleware
     {
         private readonly IWorkflowForgeLogger _logger;
         private readonly bool _rethrowExceptions;
@@ -25,8 +25,8 @@ namespace WorkflowForge.Middleware
         /// <param name="defaultReturnValue">Default value to return when swallowing exceptions.</param>
         /// <exception cref="ArgumentNullException">Thrown when logger is null.</exception>
         public ErrorHandlingMiddleware(
-            IWorkflowForgeLogger logger, 
-            bool rethrowExceptions = true, 
+            IWorkflowForgeLogger logger,
+            bool rethrowExceptions = true,
             object? defaultReturnValue = null)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -56,14 +56,14 @@ namespace WorkflowForge.Middleware
                 // Create error handling scope
                 var errorProperties = new Dictionary<string, string>
                 {
-                    [PropertyNames.ExceptionType] = ex.GetType().Name,
-                    [PropertyNames.ErrorCode] = ex.HResult.ToString(),
-                    [PropertyNames.ErrorCategory] = GetErrorCategory(ex)
+                    [PropertyNameConstants.ExceptionType] = ex.GetType().Name,
+                    [PropertyNameConstants.ErrorCode] = ex.HResult.ToString(),
+                    [PropertyNameConstants.ErrorCategory] = GetErrorCategory(ex)
                 };
 
                 using var errorScope = _logger.BeginScope("ErrorHandling", errorProperties);
-                
-                _logger.LogError(ex, WorkflowLogMessages.ErrorHandlingTriggered);
+
+                _logger.LogError(ex, WorkflowLogMessageConstants.ErrorHandlingTriggered);
 
                 // Store error information in foundry properties for potential recovery
                 var operationName = operation?.Name ?? "Unknown";
@@ -82,8 +82,8 @@ namespace WorkflowForge.Middleware
                     ["RecoveryAction"] = "ExceptionSwallowed",
                     ["DefaultReturnValue"] = _defaultReturnValue?.ToString() ?? "null"
                 };
-                
-                _logger.LogWarning(recoveryProperties, WorkflowLogMessages.ErrorRecoveryAttempted);
+
+                _logger.LogWarning(recoveryProperties, WorkflowLogMessageConstants.ErrorRecoveryAttempted);
 
                 return _defaultReturnValue;
             }
@@ -108,4 +108,4 @@ namespace WorkflowForge.Middleware
             };
         }
     }
-} 
+}

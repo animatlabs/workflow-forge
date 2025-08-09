@@ -1,9 +1,9 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
+using WorkflowForge.Configurations;
 
 namespace WorkflowForge.Benchmarks;
 
@@ -70,7 +70,7 @@ public class OperationPerformanceBenchmark
     [Benchmark]
     public async Task<object?> LoggingOperationExecution()
     {
-        var operation = new LoggingOperation("Benchmark log message", LogLevel.Information);
+        var operation = new LoggingOperation("Benchmark log message", WorkflowForgeLogLevel.Information);
         return await operation.ForgeAsync(null, _foundry);
     }
 
@@ -175,13 +175,13 @@ public class OperationPerformanceBenchmark
     public async Task<string> OperationWithRestoration()
     {
         var operation = new RestorationTestOperation();
-        
+
         // Execute operation
         await operation.ForgeAsync(null, _foundry);
-        
+
         // Perform restoration
         await operation.RestoreAsync("test_context", _foundry);
-        
+
         return "Restoration completed";
     }
 
@@ -197,7 +197,7 @@ public class OperationPerformanceBenchmark
     public async Task<string> ChainedOperationsExecution()
     {
         using var foundry = WorkflowForge.CreateFoundry("ChainedBenchmark", _config);
-        
+
         foundry
             .WithOperation(new FastBenchmarkOperation())
             .WithOperation(new FastBenchmarkOperation())
@@ -211,7 +211,7 @@ public class OperationPerformanceBenchmark
     public async Task<string> OperationExceptionHandling()
     {
         var operation = new ExceptionTestOperation();
-        
+
         try
         {
             await operation.ForgeAsync(null, _foundry);
@@ -220,7 +220,7 @@ public class OperationPerformanceBenchmark
         {
             // Expected exception
         }
-        
+
         return "Exception handled";
     }
 }
@@ -245,7 +245,8 @@ public class FastBenchmarkOperation : IWorkflowOperation
         return Task.CompletedTask;
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -270,7 +271,8 @@ public class RestorationTestOperation : IWorkflowOperation
         foundry.Properties.TryRemove("restoration_test", out _);
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -285,18 +287,18 @@ public class DataManipulationOperation : IWorkflowOperation
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         await Task.Yield();
-        
+
         // Simulate data manipulation
         foundry.Properties["data_timestamp"] = DateTime.UtcNow;
         foundry.Properties["data_size"] = 1024;
         foundry.Properties["data_processed"] = true;
-        
+
         // Simulate some processing time
         for (int i = 0; i < 100; i++)
         {
             foundry.Properties[$"item_{i}"] = $"value_{i}";
         }
-        
+
         return "Data processed";
     }
 
@@ -305,7 +307,8 @@ public class DataManipulationOperation : IWorkflowOperation
         return Task.CompletedTask;
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -328,5 +331,6 @@ public class ExceptionTestOperation : IWorkflowOperation
         return Task.CompletedTask;
     }
 
-    public void Dispose() { }
-} 
+    public void Dispose()
+    { }
+}

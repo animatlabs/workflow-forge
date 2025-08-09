@@ -1,20 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using WorkflowForge;
+using WorkflowForge.Configurations;
+using WorkflowForge.Extensions.Observability.Performance.Configurations;
 using WorkflowForge.Extensions.Resilience.Polly.Configurations;
-using WorkflowForge.Extensions.Observability.Performance;
 using WorkflowForge.Samples.BasicConsole.Samples;
 
 namespace WorkflowForge.Samples.BasicConsole;
 
 /// <summary>
 /// WorkflowForge Samples Console Application
-/// 
+///
 /// Simple interactive menu to run WorkflowForge examples and demonstrations.
 /// </summary>
 public static class Program
@@ -29,29 +25,32 @@ public static class Program
         ["2"] = new DataPassingSample(),
         ["3"] = new MultipleOutcomesSample(),
         ["4"] = new InlineOperationsSample(),
-        
+
         // Control Flow Samples (5-8)
         ["5"] = new ConditionalWorkflowSample(),
         ["6"] = new ForEachLoopSample(),
         ["7"] = new ErrorHandlingSample(),
         ["8"] = new BuiltInOperationsSample(),
-        
+
         // Configuration & Middleware Samples (9-12)
         ["9"] = new OptionsPatternSample(),
         ["10"] = new ConfigurationProfilesSample(),
         ["11"] = new WorkflowEventsSample(),
         ["12"] = new MiddlewareSample(),
-        
-        // Extension Samples (13-17)
+
+        // Extension Samples (13-18)
         ["13"] = new SerilogIntegrationSample(),
         ["14"] = new PollyResilienceSample(),
         ["15"] = new OpenTelemetryObservabilitySample(),
         ["16"] = new HealthChecksSample(),
         ["17"] = new PerformanceMonitoringSample(),
-        
-        // Advanced Samples (18-19)
-        ["18"] = new ComprehensiveIntegrationSample(),
-        ["19"] = new OperationCreationPatternsSample(),
+        ["18"] = new PersistenceSample(),
+        ["21"] = new RecoveryOnlySample(),
+        ["22"] = new ResilienceRecoverySample(),
+
+        // Advanced Samples (19-20)
+        ["19"] = new ComprehensiveIntegrationSample(),
+        ["20"] = new OperationCreationPatternsSample(),
     };
 
     public static async Task Main(string[] args)
@@ -62,26 +61,26 @@ public static class Program
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development"}.json", optional: true)
             .AddEnvironmentVariables();
-        
+
         Configuration = configurationBuilder.Build();
 
         // Setup services
         var services = new ServiceCollection();
         services.AddSingleton(Configuration);
-        services.Configure<WorkflowForgeSettings>(Configuration.GetSection(WorkflowForgeSettings.SectionName));
+        services.Configure<WorkflowForgeConfiguration>(Configuration.GetSection(WorkflowForgeConfiguration.SectionName));
         services.Configure<PollySettings>(Configuration.GetSection("WorkflowForge:Polly"));
         services.Configure<PerformanceSettings>(Configuration.GetSection("WorkflowForge:Performance"));
-        services.AddLogging(builder => 
+        services.AddLogging(builder =>
         {
             builder.AddConfiguration(Configuration.GetSection("Logging"));
             builder.AddConsole();
         });
-        
+
         ServiceProvider = services.BuildServiceProvider();
 
         Console.Clear();
         PrintHeader();
-        
+
         try
         {
             await RunInteractiveMenu();
@@ -105,7 +104,7 @@ public static class Program
     private static async Task RunInteractiveMenu()
     {
         bool running = true;
-        
+
         while (running)
         {
             Console.WriteLine();
@@ -136,10 +135,13 @@ public static class Program
             Console.WriteLine("  15. OpenTelemetry           - Distributed tracing");
             Console.WriteLine("  16. Health Checks           - System monitoring");
             Console.WriteLine("  17. Performance Monitoring  - Metrics and statistics");
+            Console.WriteLine("  18. Persistence (BYO Storage) - Resumable workflows");
+            Console.WriteLine("  21. Recovery Only            - Resume + retry without re-running completed steps");
+            Console.WriteLine("  22. Recovery + Resilience    - Unified resume plus retry via Resilience middleware");
             Console.WriteLine();
             Console.WriteLine("ADVANCED:");
-            Console.WriteLine("  18. Comprehensive Demo      - Full-featured example");
-            Console.WriteLine("  19. Operation Creation Patterns - All operation creation methods");
+            Console.WriteLine("  19. Comprehensive Demo      - Full-featured example");
+            Console.WriteLine("  20. Operation Creation Patterns - All operation creation methods");
             Console.WriteLine();
             Console.WriteLine("========================================");
             Console.WriteLine("Quick Options:");
@@ -149,9 +151,9 @@ public static class Program
             Console.WriteLine("========================================");
             Console.WriteLine();
             Console.Write("Enter your choice: ");
-            
+
             var input = Console.ReadLine()?.Trim().ToUpperInvariant();
-            
+
             if (string.IsNullOrEmpty(input))
             {
                 Console.WriteLine("Please enter a valid choice.");
@@ -166,17 +168,17 @@ public static class Program
                     running = false;
                     Console.WriteLine("Goodbye!");
                     break;
-                
+
                 case "A":
                 case "ALL":
                     await RunAllSamples();
                     break;
-                
+
                 case "B":
                 case "BASIC":
                     await RunBasicSamples();
                     break;
-                
+
                 default:
                     if (Samples.ContainsKey(input))
                     {
@@ -185,7 +187,7 @@ public static class Program
                     else
                     {
                         Console.WriteLine($"Invalid choice: {input}");
-                        Console.WriteLine("Please enter a number (1-19), A for all, B for basic, or Q to quit.");
+                        Console.WriteLine("Please enter a number (1-22), A for all, B for basic, or Q to quit.");
                     }
                     break;
             }
@@ -206,13 +208,13 @@ public static class Program
         Console.WriteLine();
         Console.WriteLine("Running ALL samples...");
         Console.WriteLine("======================");
-        
+
         foreach (var kvp in Samples)
         {
             await RunSample(kvp.Key, kvp.Value);
             Console.WriteLine();
         }
-        
+
         Console.WriteLine("All samples completed successfully.");
         Console.WriteLine();
         Console.WriteLine("Press any key to return to menu...");
@@ -226,7 +228,7 @@ public static class Program
         Console.WriteLine();
         Console.WriteLine("Running Basic samples (1-4)...");
         Console.WriteLine("===============================");
-        
+
         for (int i = 1; i <= 4; i++)
         {
             if (Samples.ContainsKey(i.ToString()))
@@ -235,7 +237,7 @@ public static class Program
                 Console.WriteLine();
             }
         }
-        
+
         Console.WriteLine("Basic samples completed successfully.");
         Console.WriteLine();
         Console.WriteLine("Press any key to return to menu...");
@@ -247,11 +249,11 @@ public static class Program
     private static async Task RunSample(string number, ISample sample)
     {
         var sampleName = sample.GetType().Name.Replace("Sample", "");
-        
+
         Console.WriteLine();
         Console.WriteLine($"[RUNNING] Sample {number}: {sampleName}");
         Console.WriteLine($"{"".PadLeft(50, '-')}");
-        
+
         try
         {
             await sample.RunAsync();
@@ -266,4 +268,4 @@ public static class Program
             }
         }
     }
-} 
+}

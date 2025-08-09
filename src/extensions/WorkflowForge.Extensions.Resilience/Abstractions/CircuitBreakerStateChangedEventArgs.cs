@@ -1,7 +1,7 @@
-using WorkflowForge;
 using System;
+using WorkflowForge.Abstractions;
 
-namespace WorkflowForge.Extensions.Resilience
+namespace WorkflowForge.Extensions.Resilience.Abstractions
 {
     /// <summary>
     /// Event arguments for circuit breaker state changes.
@@ -43,4 +43,4 @@ namespace WorkflowForge.Extensions.Resilience
         /// </summary>
         public DateTimeOffset Timestamp { get; }
     }
-} 
+}

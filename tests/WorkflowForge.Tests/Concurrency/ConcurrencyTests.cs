@@ -1,16 +1,12 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Operations;
-using Xunit;
 using Xunit.Abstractions;
-using Moq;
 
 namespace WorkflowForge.Tests.Concurrency;
 
@@ -105,12 +101,12 @@ public class ConcurrencyTests
                 {
                     var key = $"thread{threadIndex}_item{j}";
                     foundry.Properties[key] = $"value_{threadIndex}_{j}";
-                    
+
                     await Task.Yield(); // Allow other threads to interleave
-                    
+
                     var value = foundry.Properties[key];
                     Assert.Equal($"value_{threadIndex}_{j}", value);
-                    
+
                     foundry.Properties[$"prop_{key}"] = threadIndex;
                     var prop = (int)(foundry.Properties[$"prop_{key}"] ?? 0);
                     Assert.Equal(threadIndex, prop);
@@ -141,12 +137,12 @@ public class ConcurrencyTests
             operations.Add(new DelegateWorkflowOperation<object, int>($"IncrementOperation{i}", async (input, foundryRef, cancellationToken) =>
             {
                 await Task.Delay(1); // Small delay to increase chance of race conditions
-                
+
                 // Simulate non-atomic increment
                 var current = (int)(foundryRef.Properties["counter"] ?? 0);
                 await Task.Delay(1);
                 foundryRef.Properties["counter"] = current + 1;
-                
+
                 return current + 1;
             }));
         }
@@ -161,7 +157,7 @@ public class ConcurrencyTests
 
         // Assert
         var finalCount = (int)(foundry.Properties["counter"] ?? 0);
-        
+
         // Note: This test might reveal race conditions in data access
         // The count might be less than 100 due to race conditions
         _output.WriteLine($"Final counter value: {finalCount}");
@@ -229,17 +225,17 @@ public class ConcurrencyTests
                 {
                     var key = $"thread{threadId}_prop{i}";
                     var value = $"value_{threadId}_{i}";
-                    
+
                     foundry.Properties[key] = value;
                     await Task.Yield();
-                    
+
                     var retrieved = (string?)foundry.Properties[key];
                     Assert.Equal(value, retrieved);
-                    
+
                     // Test property updates
                     var updatedValue = $"updated_{value}";
                     foundry.Properties[key] = updatedValue;
-                    
+
                     var finalValue = (string?)foundry.Properties[key];
                     Assert.Equal(updatedValue, finalValue);
                 }
@@ -251,7 +247,7 @@ public class ConcurrencyTests
         var totalExpectedProperties = threadCount * operationsPerThread;
         var actualProperties = foundry.Properties.Count;
         Assert.Equal(totalExpectedProperties, actualProperties);
-        
+
         _output.WriteLine($"Total properties created: {actualProperties}");
     }
 
@@ -280,7 +276,7 @@ public class ConcurrencyTests
 
             // Small delay to increase concurrency
             if (i % 2 == 0) await Task.Delay(1);
-            
+
             foundry.AddOperation(operation);
         });
 
@@ -289,12 +285,12 @@ public class ConcurrencyTests
 
         // Assert
         Assert.Equal(operationCount, executionOrder.Count);
-        
+
         // Operations should execute in the order they were added (FIFO)
         // Due to concurrency in adding, we can't guarantee exact order, but all should execute
         var uniqueOperations = executionOrder.Distinct().Count();
         Assert.Equal(operationCount, uniqueOperations);
-        
+
         _output.WriteLine($"Execution order sample: [{string.Join(", ", executionOrder.Take(10))}...]");
     }
 
@@ -327,7 +323,7 @@ public class ConcurrencyTests
                         // Simulate work with data access - use unique keys to avoid overwriting
                         foundryRef.Properties[$"result_{operationIndex}"] = $"processed_{operationIndex}";
                         foundryRef.Properties[$"timestamp_{operationIndex}"] = DateTime.UtcNow;
-                        
+
                         await Task.Delay(Random.Shared.Next(1, 5));
                         return $"Completed operation {operationIndex}";
                     });
@@ -365,7 +361,7 @@ public class ConcurrencyTests
         // Sequential execution
         var data1 = new ConcurrentDictionary<string, object?>();
         var foundry1 = new WorkflowFoundry(Guid.NewGuid(), data1);
-        
+
         for (int i = 0; i < operationCount; i++)
         {
             var operation = new DelegateWorkflowOperation<object, string>($"SeqOp{i}", async (input, foundryRef, cancellationToken) =>
@@ -391,13 +387,13 @@ public class ConcurrencyTests
             {
                 var data = new ConcurrentDictionary<string, object?>();
                 var foundry = new WorkflowFoundry(Guid.NewGuid(), data);
-                
+
                 var operation = new DelegateWorkflowOperation<object, string>($"ParOp{index}", async (input, foundryRef, cancellationToken) =>
                 {
                     await Task.Delay(delayMs);
                     return $"Parallel result {index}";
                 });
-                
+
                 foundry.AddOperation(operation);
                 await foundry.ForgeAsync();
             }));
@@ -412,7 +408,7 @@ public class ConcurrencyTests
         _output.WriteLine($"Speedup ratio: {sequentialDuration.TotalMilliseconds / parallelDuration.TotalMilliseconds:F2}x");
 
         // Parallel should be significantly faster (though exact timing depends on system)
-        Assert.True(parallelDuration < sequentialDuration, 
+        Assert.True(parallelDuration < sequentialDuration,
             $"Parallel execution ({parallelDuration.TotalMilliseconds}ms) should be faster than sequential ({sequentialDuration.TotalMilliseconds}ms)");
     }
-} 
+}

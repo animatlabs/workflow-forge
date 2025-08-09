@@ -1,11 +1,6 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using WorkflowForge;
-using WorkflowForge.Abstractions;
+using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 using WorkflowForge.Loggers;
 
@@ -25,7 +20,7 @@ public class ConfigurationProfilesSample : ISample
     {
         Console.WriteLine("Demonstrating different WorkflowForge configuration profiles...");
         Console.WriteLine("Including both code-based and Options pattern configurations");
-        
+
         // Run the same workflow with different configurations
         await RunWithMinimalConfiguration();
         await RunWithDevelopmentConfiguration();
@@ -38,13 +33,13 @@ public class ConfigurationProfilesSample : ISample
     private static async Task RunWithMinimalConfiguration()
     {
         Console.WriteLine("\n--- Minimal Configuration (Zero Setup) ---");
-        
+
         // Minimal configuration - just create foundry with defaults
         using var foundry = WorkflowForge.CreateFoundry("MinimalConfig");
-        
+
         foundry.Properties["config_type"] = "Minimal";
         foundry.Properties["start_time"] = DateTime.UtcNow;
-        
+
         foundry
             .WithOperation("InitConfig", async (foundry) =>
             {
@@ -64,21 +59,21 @@ public class ConfigurationProfilesSample : ISample
                 Console.WriteLine($"   [SUCCESS] Minimal workflow completed in {duration.TotalMilliseconds:F0}ms");
                 await Task.Delay(20);
             });
-        
+
         await foundry.ForgeAsync();
     }
 
     private static async Task RunWithDevelopmentConfiguration()
     {
         Console.WriteLine("\n--- Development Configuration ---");
-        
+
         var config = FoundryConfiguration.Development();
         using var foundry = WorkflowForge.CreateFoundry("DevelopmentConfig", config);
-        
+
         foundry.Properties["config_type"] = "Development";
         foundry.Properties["start_time"] = DateTime.UtcNow;
         foundry.Properties["debug_mode"] = true;
-        
+
         foundry
             .WithOperation("InitConfig", async (foundry) =>
             {
@@ -103,22 +98,22 @@ public class ConfigurationProfilesSample : ISample
                 Console.WriteLine($"   [DEBUG] Debug data available: {foundry.Properties["debug_info"]}");
                 await Task.Delay(30);
             });
-        
+
         await foundry.ForgeAsync();
     }
 
     private static async Task RunWithProductionConfiguration()
     {
         Console.WriteLine("\n--- Production Configuration ---");
-        
+
         var config = FoundryConfiguration.ForProduction();
         using var foundry = WorkflowForge.CreateFoundry("ProductionConfig", config);
-        
+
         foundry.Properties["config_type"] = "Production";
         foundry.Properties["start_time"] = DateTime.UtcNow;
         foundry.Properties["environment"] = "prod";
         foundry.Properties["correlation_id"] = Guid.NewGuid().ToString("N")[..8];
-        
+
         foundry
             .WithOperation("InitConfig", async (foundry) =>
             {
@@ -145,21 +140,21 @@ public class ConfigurationProfilesSample : ISample
                 Console.WriteLine("   [METRICS] Metrics sent to monitoring system");
                 await Task.Delay(25);
             });
-        
+
         await foundry.ForgeAsync();
     }
 
     private static async Task RunWithHighPerformanceConfiguration()
     {
         Console.WriteLine("\n--- High Performance Configuration ---");
-        
+
         var config = FoundryConfiguration.HighPerformance();
         using var foundry = WorkflowForge.CreateFoundry("HighPerformanceConfig", config);
-        
+
         foundry.Properties["config_type"] = "HighPerformance";
         foundry.Properties["start_time"] = DateTime.UtcNow;
         foundry.Properties["batch_id"] = $"BATCH-{DateTime.UtcNow:yyyyMMddHHmmss}";
-        
+
         foundry
             .WithOperation("InitConfig", async (foundry) =>
             {
@@ -186,7 +181,7 @@ public class ConfigurationProfilesSample : ISample
                 Console.WriteLine("   [INFO] Performance metrics: Memory efficient, CPU optimized");
                 await Task.Delay(10); // Minimal completion overhead
             });
-        
+
         await foundry.ForgeAsync();
     }
 
@@ -196,17 +191,17 @@ public class ConfigurationProfilesSample : ISample
 
         // Get configuration from the global configuration
         var configuration = Program.Configuration;
-        
+
         // Setup services with Options pattern
         var services = new ServiceCollection();
         services.AddSingleton(configuration);
-        services.Configure<WorkflowForgeSettings>(
-            configuration.GetSection(WorkflowForgeSettings.SectionName));
+        services.Configure<WorkflowForgeConfiguration>(
+            configuration.GetSection(WorkflowForgeConfiguration.SectionName));
 
         using var serviceProvider = services.BuildServiceProvider();
 
         // Get configuration through Options pattern
-        var workflowOptions = serviceProvider.GetRequiredService<IOptions<WorkflowForgeSettings>>();
+        var workflowOptions = serviceProvider.GetRequiredService<IOptions<WorkflowForgeConfiguration>>();
         var settings = workflowOptions.Value;
 
         // Create foundry with settings from appsettings.json
@@ -218,13 +213,13 @@ public class ConfigurationProfilesSample : ISample
         };
 
         using var foundry = WorkflowForge.CreateFoundry("OptionsPatternConfig", config);
-        
+
         foundry.Properties["config_type"] = "OptionsPattern";
         foundry.Properties["start_time"] = DateTime.UtcNow;
         foundry.Properties["settings_source"] = "appsettings.json";
         foundry.Properties["auto_restore"] = settings.AutoRestore;
         foundry.Properties["max_concurrent"] = settings.MaxConcurrentOperations;
-        
+
         foundry
             .WithOperation("InitConfig", async (foundry) =>
             {
@@ -251,36 +246,36 @@ public class ConfigurationProfilesSample : ISample
                 Console.WriteLine("   [INFO] Configuration was loaded from appsettings.json and validated");
                 await Task.Delay(40);
             });
-        
+
         await foundry.ForgeAsync();
     }
 
     private static async Task RunWithCustomConfiguration()
     {
         Console.WriteLine("\n--- Custom Configuration ---");
-        
+
         // Create a custom configuration combining different aspects
         var config = new FoundryConfiguration
         {
             Logger = new ConsoleLogger("CustomWorkflow")
         };
-        
+
         using var foundry = WorkflowForge.CreateFoundry("CustomConfig", config);
-        
+
         foundry.Properties["config_type"] = "Custom";
         foundry.Properties["start_time"] = DateTime.UtcNow;
         foundry.Properties["custom_features"] = new[] { "CustomLogging", "SpecializedProcessing", "FlexibleConfiguration" };
-        
+
         foundry
             .WithOperation("InitConfig", async (foundry) =>
             {
                 Console.WriteLine("   [CONFIG] Custom configuration initialized");
                 Console.WriteLine("   [INFO] Features: Custom logger, specialized operations, flexible setup");
                 Console.WriteLine("   [INFO] Best for: Specific business requirements, custom integrations");
-                
+
                 var features = (string[])foundry.Properties["custom_features"]!;
                 Console.WriteLine($"   [FEATURES] Enabled features: {string.Join(", ", features)}");
-                
+
                 await Task.Delay(70);
             })
             .WithOperation("ProcessData", async (foundry) =>
@@ -288,9 +283,9 @@ public class ConfigurationProfilesSample : ISample
                 Console.WriteLine("   [INFO] Processing with custom business logic...");
                 Console.WriteLine("   [VALIDATION] Custom validation rules applied");
                 Console.WriteLine("   [TRANSFORM] Specialized data transformations");
-                
+
                 await Task.Delay(110);
-                
+
                 foundry.Properties["data_processed"] = true;
                 foundry.Properties["custom_validation"] = "passed";
                 foundry.Properties["transformation_applied"] = "specialized_format";
@@ -303,9 +298,9 @@ public class ConfigurationProfilesSample : ISample
                 Console.WriteLine($"   [TRANSFORM] Transformation: {foundry.Properties["transformation_applied"]}");
                 await Task.Delay(35);
             });
-        
+
         await foundry.ForgeAsync();
-        
+
         Console.WriteLine("\n[INFO] Configuration Summary:");
         Console.WriteLine("  • Minimal: Zero setup, basic features, fastest startup");
         Console.WriteLine("  • Development: Rich debugging, verbose logging, developer-friendly");
@@ -313,4 +308,4 @@ public class ConfigurationProfilesSample : ISample
         Console.WriteLine("  • High Performance: Optimized for speed and throughput");
         Console.WriteLine("  • Custom: Tailored to specific business requirements");
     }
-} 
+}

@@ -4,10 +4,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Polly;
 using Polly.CircuitBreaker;
-using Polly.Timeout;
 using Polly.Retry;
+using Polly.Timeout;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Loggers;
+using WorkflowForge.Constants;
 
 namespace WorkflowForge.Extensions.Resilience.Polly
 {
@@ -49,17 +50,17 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         {
             var policyProperties = new Dictionary<string, string>
             {
-                [PropertyNames.ExecutionName] = operation.Name,
-                [PropertyNames.ExecutionType] = "ResiliencePolicy",
+                [ResiliencePropertyNames.PolicyType] = "ResiliencePolicy",
+                [ResiliencePropertyNames.PolicyName] = _name,
                 [ResiliencePropertyNames.PolicyName] = _name
             };
 
             using var policyScope = _logger.BeginScope("ResiliencePolicyExecution", policyProperties);
-            
+
             try
             {
                 _logger.LogDebug(ResilienceLogMessages.PolicyPipelineExecutionStarted);
-                
+
                 var result = await _pipeline.ExecuteAsync(async (ct) =>
                 {
                     return await next().ConfigureAwait(false);
@@ -73,9 +74,9 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                 var circuitProperties = new Dictionary<string, string>
                 {
                     [ResiliencePropertyNames.CircuitState] = "Open",
-                    [PropertyNames.ExceptionType] = nameof(BrokenCircuitException)
+                    [ResiliencePropertyNames.RetryReason] = nameof(BrokenCircuitException)
                 };
-                
+
                 _logger.LogWarning(circuitProperties, ex, ResilienceLogMessages.CircuitBreakerRejected);
                 throw new BrokenCircuitException(
                     $"Circuit breaker is open for operation '{operation.Name}'", ex);
@@ -85,15 +86,15 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                 var timeoutProperties = new Dictionary<string, string>
                 {
                     [ResiliencePropertyNames.TimedOut] = "true",
-                    [PropertyNames.ExceptionType] = nameof(TimeoutRejectedException)
+                    [ResiliencePropertyNames.RetryReason] = nameof(TimeoutRejectedException)
                 };
-                
+
                 _logger.LogError(timeoutProperties, ex, ResilienceLogMessages.OperationTimedOut);
                 throw;
             }
             catch (Exception ex)
             {
-                var errorProperties = LoggingContextHelper.CreateErrorProperties(ex, "ResiliencePolicy");
+                var errorProperties = _logger.CreateErrorProperties(ex, "ResiliencePolicy");
                 _logger.LogError(errorProperties, ex, ResilienceLogMessages.PolicyPipelineExecutionFailed);
                 throw;
             }
@@ -135,8 +136,15 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                             [ResiliencePropertyNames.RetryDelayMs] = args.RetryDelay.TotalMilliseconds.ToString("F0"),
                             [ResiliencePropertyNames.RetryReason] = args.Outcome.Exception?.GetType().Name ?? "Unknown"
                         };
-                        
-                        logger.LogWarning(retryProperties, args.Outcome.Exception, ResilienceLogMessages.RetryAttemptStarted);
+
+                        if (args.Outcome.Exception is Exception ex)
+                        {
+                            logger.LogWarning(retryProperties, ex, ResilienceLogMessages.RetryAttemptStarted);
+                        }
+                        else
+                        {
+                            logger.LogWarning(retryProperties, ResilienceLogMessages.RetryAttemptStarted);
+                        }
                         return default;
                     }
                 })
@@ -176,7 +184,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                             [ResiliencePropertyNames.BreakDurationMs] = breakDuration.TotalMilliseconds.ToString("F0"),
                             [ResiliencePropertyNames.FailureThreshold] = failureThreshold.ToString()
                         };
-                        
+
                         logger.LogWarning(openProperties, ResilienceLogMessages.CircuitBreakerOpened);
                         return default;
                     },
@@ -186,7 +194,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                         {
                             [ResiliencePropertyNames.CircuitState] = "Closed"
                         };
-                        
+
                         logger.LogInformation(closedProperties, ResilienceLogMessages.CircuitBreakerReset);
                         return default;
                     },
@@ -196,7 +204,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                         {
                             [ResiliencePropertyNames.CircuitState] = "HalfOpen"
                         };
-                        
+
                         logger.LogInformation(halfOpenProperties, ResilienceLogMessages.CircuitBreakerHalfOpen);
                         return default;
                     }
@@ -223,7 +231,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                 [ResiliencePropertyNames.TimeoutMs] = timeout.TotalMilliseconds.ToString("F0"),
                 [ResiliencePropertyNames.PolicyType] = "Timeout"
             };
-            
+
             logger.LogDebug(timeoutProperties, ResilienceLogMessages.TimeoutPolicyApplied);
 
             var pipeline = new ResiliencePipelineBuilder()
@@ -265,7 +273,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                 [ResiliencePropertyNames.TimeoutMs] = timeout.TotalMilliseconds.ToString("F0"),
                 [ResiliencePropertyNames.PolicyCount] = "3"
             };
-            
+
             logger.LogDebug(comprehensiveProperties, ResilienceLogMessages.ResiliencePolicyApplied);
 
             var pipeline = new ResiliencePipelineBuilder()
@@ -285,8 +293,15 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                             [ResiliencePropertyNames.RetryDelayMs] = args.RetryDelay.TotalMilliseconds.ToString("F0"),
                             [ResiliencePropertyNames.RetryReason] = args.Outcome.Exception?.GetType().Name ?? "Unknown"
                         };
-                        
-                        logger.LogWarning(retryProperties, args.Outcome.Exception, ResilienceLogMessages.RetryAttemptStarted);
+
+                        if (args.Outcome.Exception is Exception ex)
+                        {
+                            logger.LogWarning(retryProperties, ex, ResilienceLogMessages.RetryAttemptStarted);
+                        }
+                        else
+                        {
+                            logger.LogWarning(retryProperties, ResilienceLogMessages.RetryAttemptStarted);
+                        }
                         return default;
                     }
                 })
@@ -303,7 +318,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                             [ResiliencePropertyNames.CircuitState] = "Open",
                             [ResiliencePropertyNames.BreakDurationMs] = breakDuration.TotalMilliseconds.ToString("F0")
                         };
-                        
+
                         logger.LogWarning(openProperties, ResilienceLogMessages.CircuitBreakerOpened);
                         return default;
                     },
@@ -313,7 +328,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                         {
                             [ResiliencePropertyNames.CircuitState] = "Closed"
                         };
-                        
+
                         logger.LogInformation(closedProperties, ResilienceLogMessages.CircuitBreakerReset);
                         return default;
                     }
@@ -323,4 +338,4 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             return new PollyMiddleware(pipeline, logger, name ?? "PollyComprehensive");
         }
     }
-} 
+}

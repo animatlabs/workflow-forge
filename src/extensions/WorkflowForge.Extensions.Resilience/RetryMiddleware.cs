@@ -1,9 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions.Resilience.Abstractions;
 using WorkflowForge.Extensions.Resilience.Strategies;
 
 namespace WorkflowForge.Extensions.Resilience
@@ -110,4 +109,4 @@ namespace WorkflowForge.Extensions.Resilience
             return WithFixedInterval(logger, TimeSpan.FromSeconds(1), 3);
         }
     }
-} 
+}

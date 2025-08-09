@@ -1,11 +1,8 @@
+using WorkflowForge.Configurations;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Loggers;
-using Xunit;
-using Moq;
 
 namespace WorkflowForge.Tests.Configuration
 {
@@ -35,7 +32,7 @@ namespace WorkflowForge.Tests.Configuration
             Assert.True(config.AutoDisposeOperations);
         }
 
-        #endregion
+        #endregion Constructor Tests
 
         #region Property Tests
 
@@ -177,7 +174,7 @@ namespace WorkflowForge.Tests.Configuration
             Assert.False(config.AutoDisposeOperations);
         }
 
-        #endregion
+        #endregion Property Tests
 
         #region Factory Method Tests
 
@@ -281,7 +278,7 @@ namespace WorkflowForge.Tests.Configuration
             Assert.Equal(Environment.ProcessorCount, config.MaxDegreeOfParallelism);
         }
 
-        #endregion
+        #endregion Factory Method Tests
 
         #region Configuration Scenarios Tests
 
@@ -330,7 +327,7 @@ namespace WorkflowForge.Tests.Configuration
             Assert.NotSame(development, minimal);
             Assert.NotSame(production, minimal);
             Assert.NotSame(minimal, highPerformance);
-            
+
             // Development should have conservative settings
             Assert.True(development.EnableDetailedTiming);
             Assert.False(development.EnableParallelExecution);
@@ -347,7 +344,7 @@ namespace WorkflowForge.Tests.Configuration
             Assert.Equal(Environment.ProcessorCount * 2, highPerformance.MaxDegreeOfParallelism);
         }
 
-        #endregion
+        #endregion Configuration Scenarios Tests
 
         #region Edge Cases
 
@@ -407,7 +404,7 @@ namespace WorkflowForge.Tests.Configuration
             Assert.Equal(veryHighParallelism, config.MaxDegreeOfParallelism);
         }
 
-        #endregion
+        #endregion Edge Cases
 
         #region Thread Safety Tests
 
@@ -421,7 +418,7 @@ namespace WorkflowForge.Tests.Configuration
 
             // Act
             var tasks = new List<System.Threading.Tasks.Task>();
-            
+
             for (int i = 0; i < 10; i++)
             {
                 int threadId = i;
@@ -455,6 +452,6 @@ namespace WorkflowForge.Tests.Configuration
             Assert.Empty(exceptions);
         }
 
-        #endregion
+        #endregion Thread Safety Tests
     }
-} 
+}
