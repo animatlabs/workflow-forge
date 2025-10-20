@@ -1,13 +1,15 @@
 ﻿param (
-    [string]$CoreVersion = "1.1.0",
-    [string]$SerilogVersion = "1.1.0",
-    [string]$PollyVersion = "1.1.0",
-    [string]$ResilienceVersion = "1.1.0",
-    [string]$PerformanceVersion = "1.1.0",
-    [string]$HealthChecksVersion = "1.1.0",
-    [string]$OpenTelemetryVersion = "1.1.0",
-    [string]$PersistenceVersion = "1.0.0",
-    [string]$RecoveryVersion = "1.0.0",
+    [string]$CoreVersion = "2.0.0",
+    [string]$SerilogVersion = "2.0.0",
+    [string]$PollyVersion = "2.0.0",
+    [string]$ResilienceVersion = "2.0.0",
+    [string]$PerformanceVersion = "2.0.0",
+    [string]$HealthChecksVersion = "2.0.0",
+    [string]$OpenTelemetryVersion = "2.0.0",
+    [string]$PersistenceVersion = "2.0.0",
+    [string]$RecoveryVersion = "2.0.0",
+    [string]$ValidationVersion = "2.0.0",
+    [string]$AuditVersion = "2.0.0",
     [string]$NuGetApiKey,
     [switch]$Publish
 )
@@ -131,6 +133,8 @@ Write-Host "============================================================" -Foreg
 $results = @()
 
 $packages = @(
+    @{ Path = "./src/extensions/WorkflowForge.Extensions.Validation/WorkflowForge.Extensions.Validation.csproj"; Name = "WorkflowForge.Extensions.Validation"; Version = $ValidationVersion },
+    @{ Path = "./src/extensions/WorkflowForge.Extensions.Audit/WorkflowForge.Extensions.Audit.csproj"; Name = "WorkflowForge.Extensions.Audit"; Version = $AuditVersion },
     @{ Path = "./src/extensions/WorkflowForge.Extensions.Logging.Serilog/WorkflowForge.Extensions.Logging.Serilog.csproj"; Name = "WorkflowForge.Extensions.Logging.Serilog"; Version = $SerilogVersion },
     @{ Path = "./src/extensions/WorkflowForge.Extensions.Resilience/WorkflowForge.Extensions.Resilience.csproj"; Name = "WorkflowForge.Extensions.Resilience"; Version = $ResilienceVersion },
     @{ Path = "./src/extensions/WorkflowForge.Extensions.Resilience.Polly/WorkflowForge.Extensions.Resilience.Polly.csproj"; Name = "WorkflowForge.Extensions.Resilience.Polly"; Version = $PollyVersion },

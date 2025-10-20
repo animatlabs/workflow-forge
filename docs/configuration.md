@@ -710,12 +710,106 @@ public class ConfigurableFoundryService
     services.AddSingleton<IValidateOptions<WorkflowForgeConfiguration>, WorkflowForgeConfigurationValidator>();
    ```
 
+## New Extensions in 2.0.0
+
+### Validation Extension Configuration
+
+```csharp
+using WorkflowForge.Extensions.Validation;
+
+// Add validation middleware to foundry
+var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
+
+// Define validator
+public class OrderValidator : AbstractValidator<Order>
+{
+    public OrderValidator()
+    {
+        RuleFor(x => x.CustomerId).NotEmpty();
+        RuleFor(x => x.Amount).GreaterThan(0);
+    }
+}
+
+// Configure validation
+foundry.SetProperty("Order", new Order { /* ... */ });
+foundry.AddValidation(
+    new OrderValidator(),
+    f => f.GetPropertyOrDefault<Order>("Order"),
+    throwOnFailure: true);  // Throw exception on validation failure
+
+// With ASP.NET Core DI
+services.AddSingleton<IValidator<Order>, OrderValidator>();
+
+// In controller/service
+var validator = serviceProvider.GetRequiredService<IValidator<Order>>();
+foundry.AddValidation(validator, f => f.GetPropertyOrDefault<Order>("Order"));
+```
+
+**Zero version conflicts**: Uses Costura.Fody to embed FluentValidation - your app can use ANY version!
+
+### Audit Extension Configuration
+
+```csharp
+using WorkflowForge.Extensions.Audit;
+
+// Implement audit provider
+public class DatabaseAuditProvider : IAuditProvider
+{
+    private readonly DbContext _dbContext;
+    
+    public DatabaseAuditProvider(DbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+    
+    public async Task WriteAuditEntryAsync(
+        AuditEntry entry,
+        CancellationToken cancellationToken = default)
+    {
+        await _dbContext.AuditLog.AddAsync(entry, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+    
+    public Task FlushAsync(CancellationToken cancellationToken = default)
+    {
+        return _dbContext.SaveChangesAsync(cancellationToken);
+    }
+}
+
+// Configure audit logging
+var auditProvider = new DatabaseAuditProvider(dbContext);
+foundry.EnableAuditLogging(
+    auditProvider,
+    userId: "user@example.com",
+    sessionId: Guid.NewGuid().ToString());
+
+// With ASP.NET Core DI
+services.AddSingleton<IAuditProvider, DatabaseAuditProvider>();
+
+// In controller/service
+var auditProvider = serviceProvider.GetRequiredService<IAuditProvider>();
+var userId = User.Identity.Name;
+var sessionId = HttpContext.Session.Id;
+foundry.EnableAuditLogging(auditProvider, userId, sessionId);
+```
+
+**Zero dependencies**: Pure WorkflowForge extension - bring your own storage implementation!
+
+### Configuration Best Practices for 2.0.0
+
+1. **Extension Isolation**: Extensions with embedded dependencies (Validation, Serilog, Polly, OpenTelemetry) won't conflict with your app's versions
+2. **Event Interfaces**: Use the new 3-tier event model (`IWorkflowLifecycleEvents`, `IOperationLifecycleEvents`, `ICompensationLifecycleEvents`)
+3. **ISystemTimeProvider**: Inject via DI for testability
+4. **Middleware Ordering**: Validation → Timing → Error Handling → Business Logic
+5. **Audit Providers**: Implement `IAuditProvider` for your storage (database, file, cloud)
+
 ## Related Documentation
 
 - **[Getting Started](getting-started.md)** - Basic configuration setup
-- **[Architecture](architecture.md)** - Configuration architecture
-- **[Extensions](extensions.md)** - Extension configuration
-- **[Troubleshooting](troubleshooting.md)** - Configuration issues
+- **[Architecture](architecture.md)** - Configuration architecture & Costura explanation
+- **[Extensions](extensions.md)** - All 10 extensions with zero-conflict details
+- **[Validation Extension](../src/extensions/WorkflowForge.Extensions.Validation/README.md)** - Detailed validation configuration
+- **[Audit Extension](../src/extensions/WorkflowForge.Extensions.Audit/README.md)** - Detailed audit configuration
 
 ---
 

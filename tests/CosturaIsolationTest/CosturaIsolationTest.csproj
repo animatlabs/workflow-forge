@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <StartupObject>Program</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Install DIFFERENT version of FluentValidation than extension uses (11.10.0 vs 11.9.0) -->
+    <PackageReference Include="FluentValidation" Version="11.10.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reference BUILT DLLs directly, NOT project references -->
+    <!-- This simulates a real NuGet package scenario -->
+    <Reference Include="WorkflowForge">
+      <HintPath>../../src/core/WorkflowForge/bin/Release/netstandard2.0/WorkflowForge.dll</HintPath>
+    </Reference>
+    <Reference Include="WorkflowForge.Extensions.Validation">
+      <HintPath>../../src/extensions/WorkflowForge.Extensions.Validation/bin/Release/netstandard2.0/WorkflowForge.Extensions.Validation.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
+

@@ -8,6 +8,18 @@ Advanced distributed tracing and observability extension for WorkflowForge using
 dotnet add package WorkflowForge.Extensions.Observability.OpenTelemetry
 ```
 
+## Zero Version Conflicts
+
+**This extension uses Costura.Fody to embed OpenTelemetry dependencies.** This means:
+
+- **NO DLL Hell** - Use ANY version of OpenTelemetry in your project  
+- **NO Conflicts** - Your app's OpenTelemetry version won't clash with this extension  
+- **Clean Deployment** - Professional-grade dependency isolation
+
+**Example**: Your app uses OpenTelemetry 1.10.x, this extension uses 1.9.x - both coexist perfectly with zero conflicts!
+
+**How it works**: OpenTelemetry libraries are embedded as compressed resources at build time and loaded automatically at runtime, completely isolated from your application's dependencies.
+
 ## Quick Start
 
 ```csharp

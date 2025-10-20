@@ -8,6 +8,16 @@ Comprehensive health monitoring extension for WorkflowForge applications with bu
 dotnet add package WorkflowForge.Extensions.Observability.HealthChecks
 ```
 
+## Zero Dependencies - Zero Conflicts
+
+**This extension has ZERO external dependencies.** This means:
+
+- **NO DLL Hell** - No third-party dependencies to conflict with  
+- **NO Conflicts** - Works with any versions of your application dependencies  
+- **Clean Deployment** - Pure WorkflowForge extension with no baggage
+
+**Lightweight architecture**: Built entirely on WorkflowForge core with no external libraries.
+
 ## Quick Start
 
 ```csharp

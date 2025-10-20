@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>1.1.0</Version>
-    <PackageVersion>1.1.0</PackageVersion>
+    <Version>2.0.0</Version>
+    <PackageVersion>2.0.0</PackageVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -42,8 +42,12 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
-Minor release v1.1.0:
-- Docs alignment and minor stability improvements
+Major release v2.0.0:
+- ZERO VERSION CONFLICTS: Dependencies embedded via Costura.Fody (where applicable)
+- Users can use ANY version of third-party libraries
+- ISystemTimeProvider integrated for testability
+- Enhanced documentation and samples
+- Enterprise-ready for production workflows
     </PackageReleaseNotes>
   </PropertyGroup>
 
@@ -54,6 +58,13 @@ Minor release v1.1.0:
   <ItemGroup>
     <PackageReference Include="OpenTelemetry.Api" Version="1.13.1" />
     <PackageReference Include="OpenTelemetry" Version="1.13.1" />
+    <PackageReference Include="Fody" Version="6.9.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Costura.Fody" Version="6.0.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 
@@ -62,4 +73,4 @@ Minor release v1.1.0:
     <None Include="../../../icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-</Project> 
+</Project>

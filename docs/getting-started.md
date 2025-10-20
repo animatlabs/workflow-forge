@@ -2,6 +2,26 @@
 
 Welcome to WorkflowForge! This guide will walk you through installing, configuring, and creating your first workflow in just a few minutes.
 
+## What's New in 2.0.0
+
+**WorkflowForge 2.0.0** introduces major improvements and new capabilities:
+
+### Zero Version Conflicts
+Extensions now use **Costura.Fody** to embed dependencies, eliminating DLL hell. Use ANY version of Serilog, Polly, FluentValidation, or OpenTelemetry in your app without conflicts!
+
+### New Extensions
+- **Validation**: FluentValidation bridge for comprehensive validation
+- **Audit**: Enterprise-ready audit logging with pluggable providers
+
+### Breaking Changes
+- **Event System**: Refactored from single `IWorkflowEvents` to three focused interfaces (`IWorkflowLifecycleEvents`, `IOperationLifecycleEvents`, `ICompensationLifecycleEvents`) for SRP compliance. See [Events Guide](events.md) for migration.
+- **ISystemTimeProvider**: Now injected via DI instead of static instance
+
+### Enhancements
+- 446 comprehensive tests (100% passing)
+- Improved documentation and samples
+- Better testability with DI throughout
+
 ## Prerequisites
 
 Before you begin, ensure you have:

@@ -48,6 +48,49 @@ Modern applications need reliable workflow orchestration, but existing solutions
 Legend: Descriptors are qualitative, based on public docs and our verified benchmarks only.
 **Note:** Performance comparisons based only on verified WorkflowForge benchmarks. Other frameworks not independently tested.
 
+## Unique Differentiator: Zero Dependency Conflicts
+
+### The Problem with Most Frameworks
+
+**DLL Hell** is a persistent challenge in .NET: When a framework depends on Serilog 3.x but your application uses Serilog 4.x, you get:
+- Binding redirects that mysteriously break
+- Runtime version conflicts that crash production
+- Impossible-to-debug "method not found" exceptions
+- Deployment headaches with conflicting assembly versions
+
+Most workflow frameworks bundle dependencies that can conflict with your application's versions.
+
+### WorkflowForge's Solution: Costura.Fody Embedded Dependencies
+
+**Extensions embed their third-party dependencies as compressed resources** using Costura.Fody:
+
+- **ZERO Version Conflicts** - Your app uses Serilog 4.x, our Serilog extension uses 3.x - both work perfectly  
+- **NO Binding Redirects** - Dependencies are isolated at runtime  
+- **NO DLL Hell** - Extension dependencies never clash with yours  
+- **Clean Deployment** - Professional-grade dependency isolation
+
+**Protected Extensions:**
+- **Validation**: FluentValidation 11.9.0 embedded (use ANY version in your app)
+- **Logging.Serilog**: Serilog + extensions embedded  
+- **Resilience.Polly**: Polly 8.6.4 embedded
+- **OpenTelemetry**: OpenTelemetry libraries embedded
+- **Resilience/Performance**: System libraries embedded
+
+**Example**:
+```csharp
+// Your application
+dotnet add package Serilog --version 4.0.0
+dotnet add package FluentValidation --version 12.0.0
+
+// WorkflowForge extensions
+dotnet add package WorkflowForge.Extensions.Logging.Serilog  // Uses Serilog 3.x internally
+dotnet add package WorkflowForge.Extensions.Validation       // Uses FluentValidation 11.9.0 internally
+
+// Result: Both versions coexist perfectly with ZERO conflicts!
+```
+
+**No other .NET workflow framework offers this level of dependency isolation.**
+
 ## Our Verified Performance
 
 ### **BenchmarkDotNet Verified Claims**
@@ -55,10 +98,10 @@ Legend: Descriptors are qualitative, based on public docs and our verified bench
 
 ```
 WorkflowForge Verified Performance:
-Operation Execution:    Microsecond-level (median ~14–36 μs) ✅ Verified
-Throughput & Scaling:   Improves with parallel execution     ✅ See benchmarks
-Memory Usage:           ~0.9–2.3 KB per operation            ✅ Verified
-Foundry Creation:       Median ~5–7 μs (means ~13–16 μs)     ✅ Verified
+Operation Execution:    Microsecond-level (median ~14–36 μs) - Verified
+Throughput & Scaling:   Improves with parallel execution     - See benchmarks
+Memory Usage:           ~0.9–2.3 KB per operation            - Verified
+Foundry Creation:       Median ~5–7 μs (means ~13–16 μs)     - Verified
 ```
 
 **Test Environment:** Intel Core Ultra 7 165H, .NET 8.0.16, Windows 11

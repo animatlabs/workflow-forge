@@ -645,12 +645,176 @@ public class TransformOrderOperation : IWorkflowOperation<Order, OrderDto>
 }
 ```
 
+## Validation Operations (NEW in 2.0.0)
+
+WorkflowForge 2.0.0 introduces the **Validation extension** for comprehensive validation using FluentValidation.
+
+### Using Validation Middleware
+
+The recommended pattern is to use validation middleware:
+
+```csharp
+using WorkflowForge.Extensions.Validation;
+
+// Define validator
+public class OrderValidator : AbstractValidator<Order>
+{
+    public OrderValidator()
+    {
+        RuleFor(x => x.CustomerId).NotEmpty();
+        RuleFor(x => x.Amount).GreaterThan(0);
+        RuleFor(x => x.Currency).Must(c => c == "USD" || c == "EUR");
+    }
+}
+
+// Add validation to foundry
+var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
+foundry.SetProperty("Order", new Order { /* ... */ });
+
+var validator = new OrderValidator();
+foundry.AddValidation(
+    validator,
+    f => f.GetPropertyOrDefault<Order>("Order"),
+    throwOnFailure: true);
+
+// Validation runs automatically before each operation
+var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
+    .AddOperation(new ProcessOrderOperation())
+    .AddOperation(new ChargePaymentOperation())
+    .Build();
+
+using var smith = WorkflowForge.CreateSmith();
+await smith.ForgeAsync(workflow, foundry);
+```
+
+### Manual Validation in Operations
+
+For operation-specific validation:
+
+```csharp
+public class ProcessOrderOperation : IWorkflowOperation
+{
+    public async Task<object?> ForgeAsync(
+        IWorkflowFoundry foundry,
+        object? inputData,
+        CancellationToken cancellationToken)
+    {
+        var order = foundry.GetPropertyOrDefault<Order>("Order");
+        var validator = new OrderValidator();
+        
+        // Manual validation
+        var result = await foundry.ValidateAsync(validator, order, cancellationToken);
+        
+        if (!result.IsValid)
+        {
+            throw new WorkflowValidationException(
+                "Order validation failed",
+                result.Errors);
+        }
+        
+        // Continue processing...
+        return null;
+    }
+    
+    public Task<object?> RestoreAsync(
+        IWorkflowFoundry foundry,
+        object? inputData,
+        CancellationToken cancellationToken)
+    {
+        return Task.FromResult<object?>(null);
+    }
+    
+    public void Dispose() { }
+}
+```
+
+### Custom Validators
+
+Implement `IWorkflowValidator<T>` for custom validation logic:
+
+```csharp
+public class BusinessRuleValidator : IWorkflowValidator<Order>
+{
+    public async Task<ValidationResult> ValidateAsync(
+        Order data,
+        CancellationToken cancellationToken)
+    {
+        if (data.Amount > 10000 && !data.RequiresApproval)
+        {
+            return ValidationResult.Failure(
+                new ValidationError("RequiresApproval", 
+                    "Orders over $10,000 require approval"));
+        }
+        
+        return ValidationResult.Success;
+    }
+}
+```
+
+See the **[Validation Extension README](../src/extensions/WorkflowForge.Extensions.Validation/README.md)** for complete documentation.
+
+## Audit Operations (NEW in 2.0.0)
+
+WorkflowForge 2.0.0 introduces the **Audit extension** for compliance and operational monitoring.
+
+### Using Audit Middleware
+
+```csharp
+using WorkflowForge.Extensions.Audit;
+
+// Implement audit provider
+public class DatabaseAuditProvider : IAuditProvider
+{
+    private readonly DbContext _dbContext;
+    
+    public async Task WriteAuditEntryAsync(
+        AuditEntry entry,
+        CancellationToken cancellationToken = default)
+    {
+        await _dbContext.AuditLog.AddAsync(entry, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+    
+    public Task FlushAsync(CancellationToken cancellationToken = default)
+    {
+        return _dbContext.SaveChangesAsync(cancellationToken);
+    }
+}
+
+// Enable audit logging
+var auditProvider = new DatabaseAuditProvider(dbContext);
+var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
+
+foundry.EnableAuditLogging(
+    auditProvider,
+    userId: "user@example.com",
+    sessionId: Guid.NewGuid().ToString());
+
+// Audit entries automatically recorded for all operations
+var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
+    .AddOperation(new ValidateOrderOperation())
+    .AddOperation(new ChargePaymentOperation())
+    .Build();
+
+using var smith = WorkflowForge.CreateSmith();
+await smith.ForgeAsync(workflow, foundry);
+
+// Audit log contains:
+// - Workflow start/completion/failure
+// - Each operation start/completion/failure
+// - User ID, session ID, timestamps
+// - Property snapshots (before/after)
+```
+
+See the **[Audit Extension README](../src/extensions/WorkflowForge.Extensions.Audit/README.md)** for complete documentation.
+
 ## Related Documentation
 
 - **[Getting Started](getting-started.md)** - Basic operation usage
 - **[Architecture](architecture.md)** - Operation architecture
-- **[Middleware](middleware.md)** - Cross-cutting concerns
-- **[Testing](testing.md)** - Testing strategies
+- **[Extensions Guide](extensions.md)** - All available extensions
+- **[Validation Extension](../src/extensions/WorkflowForge.Extensions.Validation/README.md)** - Detailed validation patterns
+- **[Audit Extension](../src/extensions/WorkflowForge.Extensions.Audit/README.md)** - Detailed audit patterns
 
 ---
 

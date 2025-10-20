@@ -459,6 +459,103 @@ public interface IRecoveryCoordinator
 }
 ```
 
+## WorkflowForge.Extensions.Validation (NEW in 2.0.0)
+
+### IWorkflowValidator<T>
+
+```csharp
+public interface IWorkflowValidator<T>
+{
+    Task<ValidationResult> ValidateAsync(T data, CancellationToken cancellationToken = default);
+}
+```
+
+### Extension Methods
+
+```csharp
+public static IWorkflowFoundry AddValidation<T>(
+    this IWorkflowFoundry foundry,
+    IValidator<T> validator,
+    Func<IWorkflowFoundry, T> dataExtractor,
+    bool throwOnFailure = true);
+
+public static Task<ValidationResult> ValidateAsync<T>(
+    this IWorkflowFoundry foundry,
+    IValidator<T> validator,
+    T data,
+    CancellationToken cancellationToken = default);
+```
+
+## WorkflowForge.Extensions.Audit (NEW in 2.0.0)
+
+### IAuditProvider
+
+```csharp
+public interface IAuditProvider
+{
+    Task WriteAuditEntryAsync(AuditEntry entry, CancellationToken cancellationToken = default);
+    Task FlushAsync(CancellationToken cancellationToken = default);
+}
+```
+
+### AuditEntry
+
+```csharp
+public class AuditEntry
+{
+    public Guid Id { get; set; }
+    public DateTime Timestamp { get; set; }
+    public string EventType { get; set; }
+    public string WorkflowName { get; set; }
+    public string? OperationName { get; set; }
+    public string UserId { get; set; }
+    public string SessionId { get; set; }
+    public Dictionary<string, object?>? Properties { get; set; }
+    public string? ExceptionMessage { get; set; }
+    public TimeSpan? Duration { get; set; }
+}
+```
+
+### Extension Methods
+
+```csharp
+public static IWorkflowFoundry EnableAuditLogging(
+    this IWorkflowFoundry foundry,
+    IAuditProvider auditProvider,
+    string userId,
+    string sessionId);
+```
+
+## Event Interfaces (Refactored in 2.0.0)
+
+**Breaking Change from 1.x**: Single `IWorkflowEvents` split into three focused interfaces.
+
+### IWorkflowLifecycleEvents (IWorkflowSmith)
+
+```csharp
+event EventHandler<WorkflowStartedEventArgs> WorkflowStarted;
+event EventHandler<WorkflowCompletedEventArgs> WorkflowCompleted;
+event EventHandler<WorkflowFailedEventArgs> WorkflowFailed;
+```
+
+### IOperationLifecycleEvents (IWorkflowFoundry)
+
+```csharp
+event EventHandler<OperationStartedEventArgs> OperationStarted;
+event EventHandler<OperationCompletedEventArgs> OperationCompleted;
+event EventHandler<OperationFailedEventArgs> OperationFailed;
+```
+
+### ICompensationLifecycleEvents (IWorkflowSmith)
+
+```csharp
+event EventHandler<CompensationTriggeredEventArgs> CompensationTriggered;
+event EventHandler<OperationRestoreStartedEventArgs> OperationRestoreStarted;
+event EventHandler<OperationRestoreCompletedEventArgs> OperationRestoreCompleted;
+event EventHandler<OperationRestoreFailed EventArgs> OperationRestoreFailed;
+event EventHandler<CompensationCompletedEventArgs> CompensationCompleted;
+```
+
 ---
 
 *Complete API reference for WorkflowForge* 

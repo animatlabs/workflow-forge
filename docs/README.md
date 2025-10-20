@@ -36,6 +36,7 @@ Quick sample pointers:
 ### Reference Documentation
 - **[API Reference](api-reference.md)** - Complete API documentation
 - **[Extensions Overview](extensions.md)** - Available extensions and usage
+- **Costura/Fody Integration** - Dependency embedding and zero version conflicts
 
 ## Why WorkflowForge?
 

@@ -8,6 +8,16 @@ Comprehensive audit logging extension for WorkflowForge providing detailed track
 dotnet add package WorkflowForge.Extensions.Audit
 ```
 
+## Zero Dependencies - Zero Conflicts
+
+**This extension has ZERO external dependencies.** This means:
+
+- **NO DLL Hell** - No third-party dependencies to conflict with  
+- **NO Conflicts** - Works with any versions of your application dependencies  
+- **Clean Deployment** - Pure WorkflowForge extension with no baggage
+
+**Pluggable architecture**: Bring your own storage (database, file, cloud) via the `IAuditProvider` interface.
+
 ## Quick Start
 
 ### 1. Implement an Audit Provider

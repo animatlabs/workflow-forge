@@ -1,8 +1,24 @@
-WorkflowForge Persistence Extension (Bring Your Own Storage)
+# WorkflowForge.Extensions.Persistence
 
 Add resumable workflows to WorkflowForge via a pluggable provider without introducing external dependencies. You implement storage; we provide the middleware and hooks.
 
-Quick start
+## Installation
+
+```bash
+dotnet add package WorkflowForge.Extensions.Persistence
+```
+
+## Zero Dependencies - Zero Conflicts
+
+**This extension has ZERO external dependencies.** This means:
+
+- **NO DLL Hell** - No third-party dependencies to conflict with  
+- **NO Conflicts** - Works with any versions of your application dependencies  
+- **Clean Deployment** - Pure WorkflowForge extension with no baggage
+
+**Pluggable architecture**: Bring your own storage (database, file, cloud) via the `IWorkflowPersistenceProvider` interface.
+
+## Quick Start
 
 1) Implement the provider interface
 

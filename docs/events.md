@@ -4,6 +4,53 @@
 
 WorkflowForge provides a comprehensive event system based on the Single Responsibility Principle, allowing you to monitor and react to workflow execution at multiple levels.
 
+## Breaking Changes in 2.0.0
+
+**IMPORTANT**: Version 2.0.0 introduced a breaking change to the event system for better SRP compliance.
+
+### What Changed
+
+**Before (1.x)**: Single `IWorkflowEvents` interface with all 11 events  
+**After (2.0.0)**: Three focused interfaces:
+- `IWorkflowLifecycleEvents` (3 events)
+- `IOperationLifecycleEvents` (3 events)  
+- `ICompensationLifecycleEvents` (5 events)
+
+### Migration Guide
+
+**1.x Code**:
+```csharp
+// Old: Single interface
+IWorkflowEvents events = smith;
+events.WorkflowStarted += ...;
+events.OperationStarted += ...;
+events.CompensationTriggered += ...;
+```
+
+**2.0.0 Code**:
+```csharp
+// New: Three focused interfaces
+IWorkflowLifecycleEvents workflowEvents = smith;
+workflowEvents.WorkflowStarted += ...;
+
+IOperationLifecycleEvents operationEvents = foundry;
+operationEvents.OperationStarted += ...;
+
+ICompensationLifecycleEvents compensationEvents = smith;
+compensationEvents.CompensationTriggered += ...;
+
+// Or directly on instances
+smith.WorkflowStarted += ...;
+foundry.OperationStarted += ...;
+smith.CompensationTriggered += ...;
+```
+
+**Why This Change?**
+- **Single Responsibility**: Each interface has a single, focused concern
+- **Clarity**: Consumers only see relevant events
+- **Type Safety**: Compile-time enforcement of event source
+- **Testability**: Easier to mock specific event sources
+
 ## Event Architecture
 
 ### Three-Tier Event Model

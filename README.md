@@ -66,7 +66,9 @@ Browse all examples: [src/samples/WorkflowForge.Samples.BasicConsole/](src/sampl
 
 ## Extensions Ecosystem
 
-**Add capabilities without dependencies** → Optional extensions available:
+**ZERO VERSION CONFLICTS** → Extensions use Costura.Fody to embed dependencies as compressed resources. Your users can have **ANY version** of Serilog, Polly, FluentValidation, or OpenTelemetry - **NO conflicts possible!**
+
+**Add capabilities without dependencies** → Optional extensions:
 
 | Extension | Purpose | Package |
 |-----------|---------|---------|

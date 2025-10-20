@@ -8,6 +8,18 @@ FluentValidation bridge extension for WorkflowForge providing comprehensive vali
 dotnet add package WorkflowForge.Extensions.Validation
 ```
 
+## Zero Version Conflicts
+
+**This extension uses Costura.Fody to embed FluentValidation.** This means:
+
+- **NO DLL Hell** - Use ANY version of FluentValidation in your project  
+- **NO Conflicts** - Your app's FluentValidation version won't clash with this extension  
+- **Clean Deployment** - Professional-grade dependency isolation
+
+**Example**: Your app uses FluentValidation 12.x, this extension uses 11.9.0 - both coexist perfectly with zero conflicts!
+
+**How it works**: FluentValidation is embedded as a compressed resource at build time and loaded automatically at runtime, completely isolated from your application's dependencies.
+
 ## Quick Start
 
 ### 1. Define Your Validator

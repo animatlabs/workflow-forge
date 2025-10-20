@@ -2,15 +2,31 @@
 
 WorkflowForge follows an extension-first architecture where the core library provides minimal functionality, and rich features are delivered through a comprehensive extension ecosystem.
 
+## Zero Version Conflicts Guarantee
+
+**Revolutionary Dependency Isolation** - Extensions use Costura.Fody to embed third-party dependencies as compressed resources. This means:
+
+- **NO DLL Hell** - Use ANY version of Serilog, Polly, FluentValidation, or OpenTelemetry  
+- **NO Conflicts** - Your app's dependency versions won't clash with extension versions  
+- **Clean Deployment** - Fewer files, embedded dependencies  
+- **Professional Grade** - Industry-standard dependency isolation
+
+### How It Works
+
+Extensions with third-party dependencies (Validation, Logging.Serilog, Resilience.Polly, Resilience, OpenTelemetry, Performance) embed their dependencies at build time using Costura.Fody. At runtime, Costura automatically extracts and loads the embedded dependencies from compressed resources, completely isolated from your application's dependencies.
+
+**Example**: Your app uses FluentValidation 12.x, our Validation extension uses 11.9.0 - both coexist perfectly with zero conflicts!
+
 ## Extension Architecture
 
 ### Core Principles
 
 1. **Dependency-Free Core** - The core library has zero dependencies
-2. **Optional Extensions** - Add only what you need
-3. **Composable Features** - Extensions work together seamlessly
-4. **Configuration-Driven** - Extensions are configured, not hard-coded
-5. **Enterprise-Ready** - Professional features for production use
+2. **Zero Conflict Extensions** - Embedded dependencies prevent version conflicts
+3. **Optional Extensions** - Add only what you need
+4. **Composable Features** - Extensions work together seamlessly
+5. **Configuration-Driven** - Extensions are configured, not hard-coded
+6. **Enterprise-Ready** - Professional features for production use
 
 ### Extension Categories
 

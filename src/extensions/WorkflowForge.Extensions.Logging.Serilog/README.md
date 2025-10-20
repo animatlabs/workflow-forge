@@ -8,6 +8,18 @@ Professional structured logging extension for WorkflowForge using Serilog.
 dotnet add package WorkflowForge.Extensions.Logging.Serilog
 ```
 
+## Zero Version Conflicts
+
+**This extension uses Costura.Fody to embed Serilog dependencies.** This means:
+
+- **NO DLL Hell** - Use ANY version of Serilog in your project  
+- **NO Conflicts** - Your app's Serilog version won't clash with this extension  
+- **Clean Deployment** - Professional-grade dependency isolation
+
+**Example**: Your app uses Serilog 4.x, this extension uses 3.x - both coexist perfectly with zero conflicts!
+
+**How it works**: Serilog is embedded as a compressed resource at build time and loaded automatically at runtime, completely isolated from your application's dependencies.
+
 ## Quick Start
 
 ```csharp

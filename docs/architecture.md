@@ -24,6 +24,54 @@ Core functionality is minimal, with rich features provided through extensions:
 - **Pluggable components** - Replace or customize any part
 - **Future-proof** - New capabilities without breaking changes
 
+### 4. Zero-Conflict Extension Architecture (NEW in 2.0.0)
+
+WorkflowForge 2.0.0 introduces **Costura.Fody-based dependency isolation** for extensions with third-party dependencies.
+
+#### The DLL Hell Problem
+Traditional .NET extensions create conflicts:
+```
+Your App: Serilog 4.0.0
+Extension: Serilog 3.1.0
+Result: ERROR - Binding redirect failures, runtime crashes, "method not found" errors
+```
+
+#### WorkflowForge Solution: Embedded Dependencies
+Extensions embed third-party dependencies as **compressed resources** at build time:
+
+```
+Extension DLL structure:
+  WorkflowForge.Extensions.Validation.dll
+  ├─ Extension code
+  └─ costura.fluentvalidation.dll.compressed (embedded resource)
+```
+
+At runtime, Costura automatically:
+1. Extracts the embedded dependency to memory
+2. Loads it in isolated context
+3. Your app's version remains untouched
+
+```
+Your App: FluentValidation 12.0.0
+Extension: FluentValidation 11.9.0 (embedded)
+Result: Both coexist perfectly with ZERO conflicts!
+```
+
+#### Protected Extensions
+Six extensions use Costura.Fody for dependency isolation:
+- **Validation**: FluentValidation 11.9.0
+- **Logging.Serilog**: Serilog + Serilog.Extensions.Logging
+- **Resilience.Polly**: Polly 8.6.4
+- **Resilience**: System.Threading.Tasks.Extensions  
+- **OpenTelemetry**: OpenTelemetry + OpenTelemetry.Api
+- **Performance**: System.Diagnostics.DiagnosticSource
+
+#### Zero-Dependency Extensions
+Four extensions have no external dependencies:
+- **Audit**, **HealthChecks**, **Persistence**, **Persistence.Recovery**
+
+**This architecture is unique to WorkflowForge** - no other .NET workflow framework provides this level of dependency isolation.
+
 ## Industrial Metaphor
 
 WorkflowForge uses foundry and metalworking terminology for intuitive understanding:
