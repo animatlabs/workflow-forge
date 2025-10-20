@@ -528,10 +528,25 @@ var workflow = WorkflowForge.CreateWorkflow()
 
 ### Parallel Processing
 ```csharp
-// Note: Built-in parallel operations coming in future releases
-// For now, use Task.WhenAll within operations for parallel work
+// Use ForEachWorkflowOperation for parallel execution of collections
+foundry.SetProperty("items", new[] { "Item1", "Item2", "Item3" });
+
+var parallelOp = ForEachWorkflowOperation.Create(
+    WorkflowOperations.CreateAsync("ProcessItem", async item =>
+    {
+        // Each item processed in parallel
+        return await ProcessItemAsync(item);
+    })
+);
+
 var workflow = WorkflowForge.CreateWorkflow()
     .WithName("ParallelProcessing")
+    .AddOperation(parallelOp)
+    .Build();
+
+// Or use Task.WhenAll within operations for ad-hoc parallel work
+var workflow2 = WorkflowForge.CreateWorkflow()
+    .WithName("AdHocParallel")
     .AddOperation("ParallelTasks", async (input, foundry, ct) =>
     {
         var tasks = new[]
@@ -546,6 +561,83 @@ var workflow = WorkflowForge.CreateWorkflow()
     })
     .Build();
 ```
+
+## Data Flow Patterns
+
+### Core Principle: Explicit Data Flow
+
+All workflow data should live in `foundry.Properties` (thread-safe dictionary). Direct object passing between operations creates implicit dependencies and maintenance issues.
+
+### Pattern: Shared Foundry Properties (Recommended)
+
+```csharp
+public class ValidateOrderOperation : IWorkflowOperation
+{
+    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+    {
+        // Read from properties
+        var orderId = foundry.GetPropertyOrDefault<int>("order_id");
+        var total = foundry.GetPropertyOrDefault<decimal>("order_total");
+        
+        // Validate
+        if (total <= 0)
+            throw new InvalidOperationException("Order total must be positive");
+        
+        // Write to properties
+        foundry.SetProperty("order_validated", true);
+        foundry.SetProperty("validation_timestamp", DateTime.UtcNow);
+        
+        return "Validation complete";
+    }
+}
+
+public class ProcessPaymentOperation : IWorkflowOperation
+{
+    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+    {
+        // Read results from previous operation
+        var validated = foundry.GetPropertyOrDefault<bool>("order_validated");
+        if (!validated)
+            throw new InvalidOperationException("Order not validated");
+        
+        var total = foundry.GetPropertyOrDefault<decimal>("order_total");
+        
+        // Process payment
+        var paymentId = await ProcessPaymentAsync(total);
+        
+        // Write results
+        foundry.SetProperty("payment_id", paymentId);
+        foundry.SetProperty("payment_processed", true);
+        
+        return "Payment processed";
+    }
+}
+
+// Usage
+var foundry = smith.CreateFoundry();
+foundry.SetProperty("order_id", 123);
+foundry.SetProperty("order_total", 99.99m);
+
+var workflow = WorkflowForge.CreateWorkflow()
+    .WithName("OrderProcessing")
+    .AddOperation(new ValidateOrderOperation())
+    .AddOperation(new ProcessPaymentOperation())
+    .Build();
+
+await smith.ForgeAsync(workflow, foundry);
+
+// Access final results
+var paymentId = foundry.GetPropertyOrDefault<string>("payment_id");
+```
+
+### Best Practices
+
+1. Always document properties your operation uses
+2. Use `GetPropertyOrDefault<T>(key, defaultValue)` for safe access
+3. Implement `RestoreAsync` to clean up properties if operation fails
+4. Use consistent property naming conventions
+
+---
 
 ## Troubleshooting
 

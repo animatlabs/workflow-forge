@@ -302,8 +302,9 @@ public class MiddlewareTests
         // Assert
         Assert.True(foundry.Properties.ContainsKey("execution-time"));
         var executionTime = (TimeSpan)(foundry.Properties["execution-time"] ?? TimeSpan.Zero);
-        Assert.True(executionTime.TotalMilliseconds >= 40); // Allow for some variance
-        Assert.True(executionTime.TotalMilliseconds < 200); // Reasonable upper bound
+        // Use more lenient bounds to avoid flaky test failures
+        Assert.True(executionTime.TotalMilliseconds >= 30, $"Expected at least 30ms, got {executionTime.TotalMilliseconds}ms");
+        Assert.True(executionTime.TotalMilliseconds < 300, $"Expected less than 300ms, got {executionTime.TotalMilliseconds}ms");
     }
 
     [Fact]

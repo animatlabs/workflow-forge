@@ -118,5 +118,3 @@ public class ResilienceRecoverySample : ISample
         return new Guid(guidBytes);
     }
 }
-
-

@@ -1,6 +1,6 @@
-using WorkflowForge.Configurations;
 using Serilog;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Logging.Serilog;
 using WorkflowForge.Extensions.Observability.OpenTelemetry;
@@ -217,7 +217,8 @@ public class OrderValidationWithResilienceOperation : IWorkflowOperation
         foundry.Logger.LogInformation("Order validation restoration completed");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -295,7 +296,8 @@ public class PaymentProcessingWithRetryOperation : IWorkflowOperation
         foundry.Logger.LogInformation("Payment reversal completed for payment {PaymentId}", paymentId);
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -357,7 +359,8 @@ public class InventoryReservationOperation : IWorkflowOperation
         foundry.Logger.LogInformation("Inventory reservation released: {ReservationId}", reservationId);
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -412,7 +415,8 @@ public class ShippingArrangementOperation : IWorkflowOperation
         throw new NotSupportedException("Shipping arrangement does not support restoration");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -496,7 +500,8 @@ public class NotificationDispatchOperation : IWorkflowOperation
         throw new NotSupportedException("Notification dispatch does not support restoration");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -572,5 +577,6 @@ public class OrderFinalizationOperation : IWorkflowOperation
         throw new NotSupportedException("Order finalization does not support restoration");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }

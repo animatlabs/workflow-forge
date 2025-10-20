@@ -480,198 +480,167 @@ public class ParallelExecutionSettings
 }
 ```
 
-## Operation Testing
+## Advanced Patterns
 
-### Unit Testing Operations
+### Error Handling Strategies
 
+**Fail Fast (Default)**
 ```csharp
-public class EmailNotificationOperationTests
+public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
 {
-    [Fact]
-    public async Task Should_Send_Email_Successfully()
+    try
     {
-        // Arrange
-        var mockEmailService = new Mock<IEmailService>();
-        var mockFoundry = new Mock<IWorkflowFoundry>();
-        var mockLogger = new Mock<IWorkflowForgeLogger>();
-
-        mockFoundry.Setup(x => x.Logger).Returns(mockLogger.Object);
-        mockFoundry.Setup(x => x.GetService<IEmailService>()).Returns(mockEmailService.Object);
-        mockEmailService.Setup(x => x.SendAsync(It.IsAny<EmailRequest>(), It.IsAny<CancellationToken>()))
-                       .ReturnsAsync("MSG123");
-
-        var operation = new EmailNotificationOperation();
-        var emailRequest = new EmailRequest { Recipient = "test@example.com", Subject = "Test" };
-
-        // Act
-        var result = await operation.ForgeAsync(emailRequest, mockFoundry.Object, CancellationToken.None);
-
-        // Assert
-        var response = Assert.IsType<EmailResponse>(result);
-        Assert.Equal("MSG123", response.MessageId);
-        Assert.True(response.Success);
-
-        mockEmailService.Verify(x => x.SendAsync(emailRequest, It.IsAny<CancellationToken>()), Times.Once);
-        mockFoundry.Verify(x => x.SetProperty("EmailMessageId", "MSG123"), Times.Once);
-    }
-
-    [Fact]
-    public async Task Should_Rollback_Email_When_Restored()
-    {
-        // Arrange
-        var mockEmailService = new Mock<IEmailService>();
-        var mockFoundry = new Mock<IWorkflowFoundry>();
-        var mockLogger = new Mock<IWorkflowForgeLogger>();
-
-        mockFoundry.Setup(x => x.Logger).Returns(mockLogger.Object);
-        mockFoundry.Setup(x => x.GetService<IEmailService>()).Returns(mockEmailService.Object);
-        mockFoundry.Setup(x => x.GetPropertyOrDefault<string>("EmailMessageId")).Returns("MSG123");
-
-        var operation = new EmailNotificationOperation();
-
-        // Act
-        await operation.RestoreAsync(null, mockFoundry.Object, CancellationToken.None);
-
-        // Assert
-        mockEmailService.Verify(x => x.RecallAsync("MSG123", It.IsAny<CancellationToken>()), Times.Once);
-    }
-}
-```
-
-### Integration Testing
-
-```csharp
-public class OperationIntegrationTests
-{
-    [Fact]
-    public async Task Should_Execute_Operation_In_Workflow()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        services.AddSingleton<IEmailService, MockEmailService>();
-        var serviceProvider = services.BuildServiceProvider();
-
-        var foundry = WorkflowForge.CreateFoundry("TestWorkflow", serviceProvider);
-        
-        var workflow = WorkflowForge.CreateWorkflow()
-            .WithName("EmailWorkflow")
-            .AddOperation(new EmailNotificationOperation())
-            .Build();
-
-        var smith = WorkflowForge.CreateSmith();
-        var emailRequest = new EmailRequest { Recipient = "test@example.com", Subject = "Integration Test" };
-
-        // Act
-        var result = await smith.ForgeAsync(workflow, emailRequest, foundry);
-
-        // Assert
-        var response = Assert.IsType<EmailResponse>(result);
-        Assert.True(response.Success);
-    }
-}
-```
-
-## Operation Best Practices
-
-### 1. Resource Management
-
-```csharp
-public class DatabaseOperation : IWorkflowOperation, IDisposable
-{
-    private readonly IDbConnection _connection;
-    private bool _disposed = false;
-
-    public DatabaseOperation(IDbConnection connection)
-    {
-        _connection = connection;
-    }
-
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        if (_connection.State != ConnectionState.Open)
-        {
-            await _connection.OpenAsync(cancellationToken);
-        }
-
-        // Database operations
-        using var command = _connection.CreateCommand();
-        // ... implementation
-
+        var result = await DoWorkAsync();
         return result;
     }
-
-    public void Dispose()
+    catch (Exception ex)
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposed && disposing)
-        {
-            _connection?.Dispose();
-            _disposed = true;
-        }
+        foundry.Logger.LogError(ex, "Operation failed");
+        throw; // Stop workflow, trigger compensation
     }
 }
 ```
 
-### 2. Error Handling
-
+**Collect Errors and Continue**
 ```csharp
-public class RobustOperation : IWorkflowOperation
+public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
 {
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    var items = foundry.GetPropertyOrDefault<List<Item>>("items");
+    var errors = new List<string>();
+    var validItems = new List<Item>();
+    
+    foreach (var item in items)
     {
         try
         {
-            // Operation logic
-            return await ProcessAsync(inputData, foundry, cancellationToken);
-        }
-        catch (OperationCanceledException)
-        {
-            foundry.Logger.LogWarning("Operation was cancelled");
-            throw;
-        }
-        catch (ValidationException ex)
-        {
-            foundry.Logger.LogError(ex, "Validation failed for operation");
-            throw new WorkflowOperationException("Input validation failed", ex);
+            if (await ValidateItemAsync(item))
+                validItems.Add(item);
         }
         catch (Exception ex)
         {
-            foundry.Logger.LogError(ex, "Unexpected error in operation");
-            throw new WorkflowOperationException("Operation failed unexpectedly", ex);
+            errors.Add($"Item {item.Id}: {ex.Message}");
+        }
+    }
+    
+    foundry.SetProperty("valid_items", validItems);
+    foundry.SetProperty("validation_errors", errors);
+    
+    return validItems.Count > 0 ? "Partial success" : "All items failed";
+}
+```
+
+### Compensation Design Patterns
+
+**State-Based Compensation**
+```csharp
+public class UpdateStateOperation : IWorkflowOperation
+{
+    public bool SupportsRestore => true;
+    
+    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+    {
+        var previousState = await GetCurrentStateAsync();
+        foundry.SetProperty("previous_state", previousState);
+        
+        await ModifyStateAsync();
+        foundry.SetProperty("state_modified", true);
+        
+        return "State updated";
+    }
+    
+    public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken ct)
+    {
+        if (foundry.GetPropertyOrDefault<bool>("state_modified"))
+        {
+            var previousState = foundry.GetPropertyOrDefault<State>("previous_state");
+            if (previousState != null)
+                await RestoreStateAsync(previousState);
         }
     }
 }
 ```
 
-### 3. Performance Optimization
-
+**Idempotent Compensation**
 ```csharp
-public class OptimizedOperation : IWorkflowOperation
+public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken ct)
 {
-    private static readonly ObjectPool<StringBuilder> StringBuilderPool = 
-        new DefaultObjectPool<StringBuilder>(new StringBuilderPooledObjectPolicy());
-
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    var alreadyCompensated = foundry.GetPropertyOrDefault<bool>("compensated");
+    if (!alreadyCompensated)
     {
-        // Use object pooling for frequently allocated objects
-        var sb = StringBuilderPool.Get();
-        try
-        {
-            // Process using pooled object
-            sb.Append(inputData?.ToString());
-            // ... processing
+        await UndoChangesAsync();
+        foundry.SetProperty("compensated", true);
+    }
+}
+```
 
-            return sb.ToString();
-        }
-        finally
+### Performance Optimization
+
+**Lazy Loading**
+```csharp
+private static readonly MemoryCache _cache = new();
+
+public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+{
+    var key = foundry.GetPropertyOrDefault<string>("lookup_key");
+    
+    if (!_cache.TryGetValue(key, out var cached))
+    {
+        cached = await FetchExpensiveDataAsync(key);
+        _cache.Set(key, cached, TimeSpan.FromMinutes(5));
+        foundry.SetProperty("cache_hit", false);
+    }
+    else
+    {
+        foundry.SetProperty("cache_hit", true);
+    }
+    
+    foundry.SetProperty("lookup_result", cached);
+    return "Data loaded";
+}
+```
+
+**Batch Processing**
+```csharp
+public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+{
+    var items = foundry.GetPropertyOrDefault<List<Item>>("items");
+    var batchSize = 100;
+    var results = new List<Result>();
+    
+    for (int i = 0; i < items.Count; i += batchSize)
+    {
+        var batch = items.Skip(i).Take(batchSize).ToList();
+        var batchResults = await ProcessBatchAsync(batch);
+        results.AddRange(batchResults);
+    }
+    
+    foundry.SetProperty("batch_results", results);
+    return $"Processed {results.Count} items in batches";
+}
+```
+
+### Type Safety
+
+**Strongly Typed Generic Operations**
+```csharp
+public class TransformOrderOperation : IWorkflowOperation<Order, OrderDto>
+{
+    public string Name => "TransformOrder";
+    
+    public async Task<OrderDto> ForgeAsync(
+        Order order,
+        IWorkflowFoundry foundry,
+        CancellationToken ct)
+    {
+        var dto = new OrderDto
         {
-            StringBuilderPool.Return(sb);
-        }
+            Id = order.Id,
+            Total = order.Items.Sum(i => i.Price),
+            ItemCount = order.Items.Count
+        };
+        
+        foundry.SetProperty("order_dto", dto);
+        return dto;
     }
 }
 ```

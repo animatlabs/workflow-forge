@@ -24,6 +24,65 @@ Core functionality is minimal, with rich features provided through extensions:
 - **Pluggable components** - Replace or customize any part
 - **Future-proof** - New capabilities without breaking changes
 
+## Industrial Metaphor
+
+WorkflowForge uses foundry and metalworking terminology for intuitive understanding:
+
+| Real Foundry | WorkflowForge | Purpose |
+|---|---|---|
+| Master Blueprint | Workflow (IWorkflow) | Defines what needs to be done |
+| The Forge | WorkflowForge (factory) | Creates workflows and components |
+| The Foundry | Execution context (IWorkflowFoundry) | Where work happens |
+| The Smiths | Orchestrators (IWorkflowSmith) | Manage the forging process |
+| Individual Tasks | Operations (IWorkflowOperation) | Executable units of work |
+| Raw Materials | Input data (properties) | Starting point |
+| Finished Product | Results/output | Completed work |
+| Quality Inspectors | Middleware | Cross-cutting concerns |
+| Mistakes → Rollback | Compensation (RestoreAsync) | Undo operations (Saga pattern) |
+
+This metaphor helps think about workflows naturally: define steps, execute through orchestrator, handle failures through compensation.
+
+## Event Architecture (SRP-Compliant)
+
+### Event Segregation
+
+WorkflowForge implements a three-tier event model following the Single Responsibility Principle:
+
+#### IWorkflowLifecycleEvents
+Workflow-level events exposed by `IWorkflowSmith`:
+- `WorkflowStarted` - Workflow execution begins
+- `WorkflowCompleted` - Workflow execution succeeds
+- `WorkflowFailed` - Workflow execution fails
+
+#### IOperationLifecycleEvents  
+Operation-level events exposed by `IWorkflowFoundry`:
+- `OperationStarted` - Individual operation starts
+- `OperationCompleted` - Individual operation completes
+- `OperationFailed` - Individual operation fails
+
+#### ICompensationLifecycleEvents
+Compensation events exposed by `IWorkflowSmith`:
+- `CompensationTriggered` - Rollback begins
+- `OperationRestoreStarted` - Operation compensation starts
+- `OperationRestoreCompleted` - Operation compensation succeeds
+- `OperationRestoreFailed` - Operation compensation fails
+- `CompensationCompleted` - All compensation finished
+
+### Event Sources
+
+| Interface | Inherits | Purpose |
+|-----------|----------|---------|
+| IWorkflowSmith | IWorkflowLifecycleEvents + ICompensationLifecycleEvents | Orchestration & rollback events |
+| IWorkflowFoundry | IOperationLifecycleEvents | Operation execution events |
+
+This architecture ensures:
+- **Clear separation**: Each interface exposes only events it fires
+- **Focused subscriptions**: Consumers subscribe only to relevant events
+- **Type safety**: No access to events outside component's scope
+- **Maintainability**: Easy to extend without affecting other layers
+
+See [Event System Documentation](events.md) for detailed usage.
+
 ## Core Abstractions
 
 ### IWorkflow
@@ -204,18 +263,31 @@ public interface IWorkflowOperationMiddleware
 }
 ```
 
-### Middleware Chain
-Middleware executes in the order registered:
+### Middleware Execution Order: Russian Doll Pattern
 
+Middleware executes in REVERSE order of addition (industry standard pattern used by ASP.NET, Express.js, Node.js):
+
+```csharp
+// Middleware added in this order
+foundry.AddMiddleware(new TimingMiddleware());        // Added 1st
+foundry.AddMiddleware(new ErrorHandlingMiddleware()); // Added 2nd
+foundry.AddMiddleware(new RetryMiddleware());         // Added 3rd
+
+// Execution becomes (Russian Doll wrapping):
+Timing → ErrorHandling → Retry → Operation → Retry → ErrorHandling → Timing
 ```
-Request → Middleware1 → Middleware2 → Operation → Middleware2 → Middleware1 → Response
-```
+
+**Why this pattern?** Last middleware added wraps first (innermost), allowing proper nesting of concerns. Outer layers wrap inner layers, so timing measures everything including error handling and retries.
+
+**Best Practices:**
+1. Add observability middleware first (Timing, Logging) - measures everything
+2. Add error handling second - wraps resilience logic
+3. Add retry/resilience last - closest to operation
 
 ### Built-in Middleware
-- Request/response logging is enabled via `foundry.UseLogging(...)` extensions rather than directly referencing `LoggingMiddleware`.
 - **TimingMiddleware** - Performance measurement
 - **ErrorHandlingMiddleware** - Exception handling
-- **RetryMiddleware** - Automatic retry logic
+- Logging can be enabled via `foundry.UseLogging(...)` extensions
 
 ## Extension Points
 

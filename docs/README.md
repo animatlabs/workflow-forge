@@ -45,11 +45,11 @@ Quick sample pointers:
 - **Maximum compatibility** across .NET versions
 - **Lightweight containers** and edge deployments
 
-### Performance That Scales
-- **Microsecond-level operations** - Typical medians ~14–36 μs; see benchmarks
-- **Parallel throughput** - Improves with concurrent execution; see throughput benchmarks
-- **Memory efficient** - ~0.9–2.3 KB per operation (benchmarks)
-- **Concurrent execution** with excellent parallel performance
+### Performance Characteristics
+- **Microsecond-level operations** - Median 14-36 μs per operation
+- **Parallel execution** - `ForEachWorkflowOperation` supports concurrent processing
+- **Memory footprint** - ~0.9-2.3 KB per operation, ~2.2 KB per foundry
+- **Benchmarked** - See `src/benchmarks/WorkflowForge.Benchmarks/` for details
 
 ### Feature-Rich Architecture
 - **Built-in compensation** (saga pattern) for automatic rollback

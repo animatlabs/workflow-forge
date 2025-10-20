@@ -46,7 +46,7 @@ await smith.ForgeAsync(workflow, foundry);
 ## Learn & Explore
 
 ### Start Here: Interactive Samples
-**Best way to learn** → Run 22 progressive examples from basic to advanced:
+**Best way to learn** → Run 24 progressive examples from basic to advanced:
 
 ```bash
 cd src/samples/WorkflowForge.Samples.BasicConsole
@@ -58,7 +58,9 @@ Browse all examples: [src/samples/WorkflowForge.Samples.BasicConsole/](src/sampl
 ### Documentation Hub
 **Complete guides and reference** → **[docs/](docs/)** folder contains:
 - **[Getting Started Guide](docs/getting-started.md)** - Step-by-step tutorial
-- **[Architecture Overview](docs/architecture.md)** - Core design principles  
+- **[Samples Guide](docs/samples-guide.md)** - All 24 samples explained with best practices
+- **[Architecture Overview](docs/architecture.md)** - Core design principles & SRP event model
+- **[Event System Guide](docs/events.md)** - Comprehensive event handling & monitoring
 - **[API Reference](docs/api-reference.md)** - Complete API documentation
 - **[Extensions Guide](docs/extensions.md)** - Available extensions
 
@@ -69,7 +71,12 @@ Browse all examples: [src/samples/WorkflowForge.Samples.BasicConsole/](src/sampl
 | Extension | Purpose | Package |
 |-----------|---------|---------|
 | **Serilog Logging** | Structured logging | `WorkflowForge.Extensions.Logging.Serilog` |
-| **Polly Resilience** | Circuit breakers, retries | `WorkflowForge.Extensions.Resilience.Polly` |
+| **Resilience** | Core retry abstractions | `WorkflowForge.Extensions.Resilience` |
+| **Polly Resilience** | Circuit breakers, retries via Polly | `WorkflowForge.Extensions.Resilience.Polly` |
+| **Validation** | Input validation, FluentValidation bridge | `WorkflowForge.Extensions.Validation` |
+| **Audit Logging** | Compliance & audit trails | `WorkflowForge.Extensions.Audit` |
+| **Persistence** | Workflow state storage | `WorkflowForge.Extensions.Persistence` |
+| **Persistence Recovery** | Resume interrupted workflows | `WorkflowForge.Extensions.Persistence.Recovery` |
 | **Performance Monitoring** | Metrics & profiling | `WorkflowForge.Extensions.Observability.Performance` |
 | **Health Checks** | Application health | `WorkflowForge.Extensions.Observability.HealthChecks` |
 | **OpenTelemetry** | Distributed tracing | `WorkflowForge.Extensions.Observability.OpenTelemetry` |
@@ -100,7 +107,7 @@ WorkflowForge uses an **industrial metaphor** for intuitive understanding:
 | Resource | Description |
 |----------|-------------|
 | **[Getting Started](docs/getting-started.md)** | Step-by-step tutorial |
-| **[Interactive Samples](src/samples/WorkflowForge.Samples.BasicConsole/)** | 22 hands-on examples |
+| **[Interactive Samples](src/samples/WorkflowForge.Samples.BasicConsole/)** | 24 hands-on examples |
 | **[Complete Documentation](docs/)** | Comprehensive guides |
 | **[Extensions](docs/extensions.md)** | Available extensions |
 | **[Benchmarks](src/benchmarks/WorkflowForge.Benchmarks/)** | Performance analysis |

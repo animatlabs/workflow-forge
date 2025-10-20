@@ -1,8 +1,8 @@
-using System.Collections.Concurrent;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
-using WorkflowForge.Extensions;
+using System.Collections.Concurrent;
 using WorkflowForge.Configurations;
+using WorkflowForge.Extensions;
 
 namespace WorkflowForge.Benchmarks;
 

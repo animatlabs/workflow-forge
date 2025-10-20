@@ -1,6 +1,6 @@
-using WorkflowForge.Configurations;
 using Serilog;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Logging.Serilog;
 

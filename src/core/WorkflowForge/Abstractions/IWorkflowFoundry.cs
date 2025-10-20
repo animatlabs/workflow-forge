@@ -16,7 +16,7 @@ namespace WorkflowForge.Abstractions
     /// It provides thread-safe access to shared properties, logging capabilities, and dependency injection services.
     /// Each foundry instance represents an execution context that can host one or more workflow executions.
     /// </remarks>
-    public interface IWorkflowFoundry : IDisposable
+    public interface IWorkflowFoundry : IDisposable, IOperationLifecycleEvents
     {
         /// <summary>
         /// Gets the unique identifier for the current foundry execution instance.

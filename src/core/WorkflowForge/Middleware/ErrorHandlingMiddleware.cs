@@ -14,6 +14,7 @@ namespace WorkflowForge.Middleware
     internal sealed class ErrorHandlingMiddleware : IWorkflowOperationMiddleware
     {
         private readonly IWorkflowForgeLogger _logger;
+        private readonly ISystemTimeProvider _timeProvider;
         private readonly bool _rethrowExceptions;
         private readonly object? _defaultReturnValue;
 
@@ -23,15 +24,18 @@ namespace WorkflowForge.Middleware
         /// <param name="logger">The logger to use for error events.</param>
         /// <param name="rethrowExceptions">Whether to re-throw exceptions after logging.</param>
         /// <param name="defaultReturnValue">Default value to return when swallowing exceptions.</param>
+        /// <param name="timeProvider">The time provider to use for timestamps.</param>
         /// <exception cref="ArgumentNullException">Thrown when logger is null.</exception>
         public ErrorHandlingMiddleware(
             IWorkflowForgeLogger logger,
             bool rethrowExceptions = true,
-            object? defaultReturnValue = null)
+            object? defaultReturnValue = null,
+            ISystemTimeProvider? timeProvider = null)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _rethrowExceptions = rethrowExceptions;
             _defaultReturnValue = defaultReturnValue;
+            _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
         }
 
         /// <inheritdoc />
@@ -69,7 +73,7 @@ namespace WorkflowForge.Middleware
                 var operationName = operation?.Name ?? "Unknown";
                 foundry.Properties[$"Error.{operationName}.Exception"] = ex;
                 foundry.Properties[$"Error.{operationName}.Message"] = ex.Message;
-                foundry.Properties[$"Error.{operationName}.OccurredAt"] = DateTimeOffset.UtcNow;
+                foundry.Properties[$"Error.{operationName}.OccurredAt"] = _timeProvider.UtcNow;
                 foundry.Properties[$"Error.{operationName}.Type"] = ex.GetType().Name;
 
                 if (_rethrowExceptions)

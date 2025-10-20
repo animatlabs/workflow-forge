@@ -32,50 +32,50 @@ public class WorkflowEventsSample : ISample
     {
         Console.WriteLine("\n--- Basic Workflow Events Demo ---");
 
-        using var foundry = WorkflowForge.CreateFoundry("WorkflowEventsDemo");
+        using var smith = WorkflowForge.CreateSmith();
+        using var foundry = smith.CreateFoundry();
 
-        // Subscribe to workflow events
-        if (foundry is IWorkflowEvents workflowEvents)
-        {
-            workflowEvents.WorkflowStarted += OnWorkflowStarted;
-            workflowEvents.WorkflowCompleted += OnWorkflowCompleted;
-            workflowEvents.WorkflowFailed += OnWorkflowFailed;
-        }
+        // Subscribe to workflow events via smith
+        smith.WorkflowStarted += OnWorkflowStarted;
+        smith.WorkflowCompleted += OnWorkflowCompleted;
+        smith.WorkflowFailed += OnWorkflowFailed;
 
-        foundry
-            .WithOperation(LoggingOperation.Info("Step 1: Initializing workflow"))
-            .WithOperation(DelayOperation.FromMilliseconds(200))
-            .WithOperation(LoggingOperation.Info("Step 2: Processing data"))
-            .WithOperation(DelayOperation.FromMilliseconds(150))
-            .WithOperation(LoggingOperation.Info("Step 3: Finalizing workflow"));
+        var workflow = WorkflowForge.CreateWorkflow()
+            .WithName("WorkflowEventsDemo")
+            .AddOperation(LoggingOperation.Info("Step 1: Initializing workflow"))
+            .AddOperation(DelayOperation.FromMilliseconds(200))
+            .AddOperation(LoggingOperation.Info("Step 2: Processing data"))
+            .AddOperation(DelayOperation.FromMilliseconds(150))
+            .AddOperation(LoggingOperation.Info("Step 3: Finalizing workflow"))
+            .Build();
 
-        await foundry.ForgeAsync();
+        await smith.ForgeAsync(workflow, foundry);
     }
 
     private static async Task RunOperationEventsDemo()
     {
         Console.WriteLine("\n--- Operation Events Demo ---");
 
-        using var foundry = WorkflowForge.CreateFoundry("OperationEventsDemo");
+        using var smith = WorkflowForge.CreateSmith();
+        using var foundry = smith.CreateFoundry();
 
-        // Subscribe to operation events
-        if (foundry is IWorkflowEvents workflowEvents)
-        {
-            workflowEvents.OperationStarted += OnOperationStarted;
-            workflowEvents.OperationCompleted += OnOperationCompleted;
-            workflowEvents.OperationFailed += OnOperationFailed;
-        }
+        // Subscribe to operation events via foundry
+        foundry.OperationStarted += OnOperationStarted;
+        foundry.OperationCompleted += OnOperationCompleted;
+        foundry.OperationFailed += OnOperationFailed;
 
         foundry.SetProperty("operation_count", 0);
         foundry.SetProperty("total_duration", TimeSpan.Zero);
 
-        foundry
-            .WithOperation(new MonitoredOperation("InitializeSystem", TimeSpan.FromMilliseconds(100)))
-            .WithOperation(new MonitoredOperation("ProcessRecords", TimeSpan.FromMilliseconds(250)))
-            .WithOperation(new MonitoredOperation("ValidateResults", TimeSpan.FromMilliseconds(150)))
-            .WithOperation(new MonitoredOperation("GenerateReport", TimeSpan.FromMilliseconds(200)));
+        var workflow = WorkflowForge.CreateWorkflow()
+            .WithName("OperationEventsDemo")
+            .AddOperation(new MonitoredOperation("InitializeSystem", TimeSpan.FromMilliseconds(100)))
+            .AddOperation(new MonitoredOperation("ProcessRecords", TimeSpan.FromMilliseconds(250)))
+            .AddOperation(new MonitoredOperation("ValidateResults", TimeSpan.FromMilliseconds(150)))
+            .AddOperation(new MonitoredOperation("GenerateReport", TimeSpan.FromMilliseconds(200)))
+            .Build();
 
-        await foundry.ForgeAsync();
+        await smith.ForgeAsync(workflow, foundry);
 
         Console.WriteLine($"   Total operations executed: {foundry.GetPropertyOrDefault<int>("operation_count")}");
         Console.WriteLine($"   Total processing time: {foundry.GetPropertyOrDefault<TimeSpan>("total_duration").TotalMilliseconds:F0}ms");
@@ -85,28 +85,31 @@ public class WorkflowEventsSample : ISample
     {
         Console.WriteLine("\n--- Error Handling Events Demo ---");
 
-        using var foundry = WorkflowForge.CreateFoundry("ErrorEventsDemo");
+        using var smith = WorkflowForge.CreateSmith();
+        using var foundry = smith.CreateFoundry();
 
-        // Subscribe to all events for comprehensive monitoring
-        if (foundry is IWorkflowEvents workflowEvents)
-        {
-            workflowEvents.WorkflowStarted += OnWorkflowStarted;
-            workflowEvents.WorkflowCompleted += OnWorkflowCompleted;
-            workflowEvents.WorkflowFailed += OnWorkflowFailed;
-            workflowEvents.OperationStarted += OnOperationStarted;
-            workflowEvents.OperationCompleted += OnOperationCompleted;
-            workflowEvents.OperationFailed += OnOperationFailed;
-        }
+        // Subscribe to workflow-level events (via smith)
+        smith.WorkflowStarted += OnWorkflowStarted;
+        smith.WorkflowCompleted += OnWorkflowCompleted;
+        smith.WorkflowFailed += OnWorkflowFailed;
+        smith.CompensationTriggered += OnCompensationTriggered;
 
-        foundry
-            .WithOperation(LoggingOperation.Info("Starting error handling demo"))
-            .WithOperation(new SuccessfulOperation("NormalOperation"))
-            .WithOperation(new FailingOperation("SimulatedFailure"))
-            .WithOperation(LoggingOperation.Info("This step should not execute due to failure"));
+        // Subscribe to operation-level events (via foundry)
+        foundry.OperationStarted += OnOperationStarted;
+        foundry.OperationCompleted += OnOperationCompleted;
+        foundry.OperationFailed += OnOperationFailed;
+
+        var workflow = WorkflowForge.CreateWorkflow()
+            .WithName("ErrorEventsDemo")
+            .AddOperation(LoggingOperation.Info("Starting error handling demo"))
+            .AddOperation(new SuccessfulOperation("NormalOperation"))
+            .AddOperation(new FailingOperation("SimulatedFailure"))
+            .AddOperation(LoggingOperation.Info("This step should not execute due to failure"))
+            .Build();
 
         try
         {
-            await foundry.ForgeAsync();
+            await smith.ForgeAsync(workflow, foundry);
         }
         catch (Exception ex)
         {
@@ -122,12 +125,18 @@ public class WorkflowEventsSample : ISample
 
     private static void OnWorkflowCompleted(object? sender, WorkflowCompletedEventArgs e)
     {
-        Console.WriteLine($"   [WORKFLOW COMPLETED] Foundry: {e.Foundry?.CurrentWorkflow?.Name ?? "Unknown"}, Duration: {e.Duration}, Result: {e.ResultData}");
+        var resultCount = e.FinalProperties?.Count ?? 0;
+        Console.WriteLine($"   [WORKFLOW COMPLETED] Foundry: {e.Foundry?.CurrentWorkflow?.Name ?? "Unknown"}, Duration: {e.Duration}, Properties: {resultCount}");
     }
 
     private static void OnWorkflowFailed(object? sender, WorkflowFailedEventArgs e)
     {
         Console.WriteLine($"   [WORKFLOW FAILED] Foundry: {e.Foundry?.CurrentWorkflow?.Name ?? "Unknown"}, Exception: {e.Exception.Message}");
+    }
+
+    private static void OnCompensationTriggered(object? sender, CompensationTriggeredEventArgs e)
+    {
+        Console.WriteLine($"   [COMPENSATION TRIGGERED] Reason: {e.Reason}, Failed Operation: {e.FailedOperationName}");
     }
 
     private static void OnOperationStarted(object? sender, OperationStartedEventArgs e)
@@ -152,7 +161,7 @@ public class WorkflowEventsSample : ISample
 
     private static void OnOperationFailed(object? sender, OperationFailedEventArgs e)
     {
-        Console.WriteLine($"   EVENT: Operation failed - {e.Operation.Name}, Error: {e.Exception.Message}, Duration: {e.Duration.TotalMilliseconds:F0}ms");
+        Console.WriteLine($"   EVENT: Operation failed - {e.Operation.Name}, Error: {e.Exception?.Message ?? "Unknown"}, Duration: {e.Duration.TotalMilliseconds:F0}ms");
     }
 }
 
@@ -199,7 +208,8 @@ public class MonitoredOperation : IWorkflowOperation
         throw new NotSupportedException($"Operation {_operationName} does not support restoration");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -234,7 +244,8 @@ public class SuccessfulOperation : IWorkflowOperation
         throw new NotSupportedException($"Operation {_operationName} does not support restoration");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -269,5 +280,6 @@ public class FailingOperation : IWorkflowOperation
         throw new NotSupportedException($"Operation {_operationName} does not support restoration");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
