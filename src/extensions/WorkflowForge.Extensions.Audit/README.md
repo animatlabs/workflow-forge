@@ -144,7 +144,7 @@ public class AzureAuditProvider : IAuditProvider
 - **[Getting Started](../../../docs/getting-started.md)**
 - **[Configuration Guide](../../../docs/configuration.md#audit-extension)**
 - **[Extensions Overview](../../../docs/extensions.md)**
-- **[Sample 24: Audit](../../samples/WorkflowForge.Samples.BasicConsole/)**
+- **[Sample 24: Audit](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
 
 ---
 

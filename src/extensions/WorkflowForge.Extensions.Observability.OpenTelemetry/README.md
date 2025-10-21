@@ -180,7 +180,7 @@ View traces in:
 - **[Getting Started](../../../docs/getting-started.md)**
 - **[Configuration Guide](../../../docs/configuration.md#opentelemetry-extension)**
 - **[Extensions Overview](../../../docs/extensions.md)**
-- **[Sample 15: OpenTelemetry](../../samples/WorkflowForge.Samples.BasicConsole/)**
+- **[Sample 15: OpenTelemetry](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
 
 ---
 

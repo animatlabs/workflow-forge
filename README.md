@@ -180,7 +180,7 @@ WorkflowForge excels at:
 - All 10 extensions (Serilog, Polly, OpenTelemetry, Validation, Audit, etc.)
 - Advanced patterns (comprehensive integration, operation creation patterns)
 
-[Sample Applications](src/samples/WorkflowForge.Samples.BasicConsole/) | [Samples Guide](docs/samples-guide.md)
+[Sample Applications](src/samples/WorkflowForge.Samples.BasicConsole/README.md) | [Samples Guide](docs/samples-guide.md)
 
 ---
 
@@ -197,7 +197,7 @@ WorkflowForge excels at:
 - [Competitive Analysis](docs/competitive-analysis.md) - vs. Workflow Core and Elsa
 - [Samples Guide](docs/samples-guide.md) - Learning path through 24 samples
 
-[Full Documentation](docs/)
+[Full Documentation](docs/README.md)
 
 ---
 

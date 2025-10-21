@@ -456,7 +456,7 @@ public class WorkflowTests
 - **[Events System](../../../docs/events.md)** - Lifecycle events and monitoring
 - **[Configuration](../../../docs/configuration.md)** - All configuration options
 - **[Extensions](../../../docs/extensions.md)** - Available extensions
-- **[Samples](../../samples/WorkflowForge.Samples.BasicConsole/)** - 24 hands-on examples
+- **[Samples](../../samples/WorkflowForge.Samples.BasicConsole/README.md)** - 24 hands-on examples
 - **[API Reference](../../../docs/api-reference.md)** - Complete API documentation
 
 ## Extensions

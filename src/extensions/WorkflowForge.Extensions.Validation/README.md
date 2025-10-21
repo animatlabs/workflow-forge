@@ -123,7 +123,7 @@ foundry.AddMiddleware(new ValidationMiddleware<Order>(
 - **[Getting Started](../../../docs/getting-started.md)**
 - **[Configuration Guide](../../../docs/configuration.md#validation-extension)**
 - **[Extensions Overview](../../../docs/extensions.md)**
-- **[Sample 23: Validation](../../samples/WorkflowForge.Samples.BasicConsole/)**
+- **[Sample 23: Validation](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
 
 ---
 

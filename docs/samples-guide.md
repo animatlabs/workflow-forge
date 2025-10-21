@@ -5,7 +5,7 @@
 </p>
 
 **Total Samples**: 24  
-**Project**: `src/samples/WorkflowForge.Samples.BasicConsole/`
+**Project**: `src/samples/WorkflowForge.Samples.BasicConsole`
 
 ## Table of Contents
 

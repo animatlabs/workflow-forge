@@ -129,7 +129,7 @@ Health checks can be monitored via:
 - **[Getting Started](../../../docs/getting-started.md)**
 - **[Configuration Guide](../../../docs/configuration.md#health-checks-extension)**
 - **[Extensions Overview](../../../docs/extensions.md)**
-- **[Sample 16: Health Checks](../../samples/WorkflowForge.Samples.BasicConsole/)**
+- **[Sample 16: Health Checks](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
 
 ---
 

@@ -162,7 +162,7 @@ foundry.Logger.LogInformation(
 - **[Getting Started](../../../docs/getting-started.md)**
 - **[Configuration Guide](../../../docs/configuration.md#serilog-extension)**
 - **[Extensions Overview](../../../docs/extensions.md)**
-- **[Sample 13: Serilog Integration](../../samples/WorkflowForge.Samples.BasicConsole/)**
+- **[Sample 13: Serilog Integration](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
 
 ---
 

@@ -10,7 +10,7 @@
 
 ### 1. Basic Console Samples (24 Examples)
 
-**Location**: `WorkflowForge.Samples.BasicConsole/`
+**Location**: `WorkflowForge.Samples.BasicConsole`
 
 Interactive console application with 24 hands-on examples covering:
 
@@ -42,7 +42,7 @@ The application provides an interactive menu to run individual samples or all sa
 
 ## Learning Path
 
-**Beginners**: Start with [Basic Console Samples 1-4](WorkflowForge.Samples.BasicConsole/)  
+**Beginners**: Start with [Basic Console Samples 1-4](WorkflowForge.Samples.BasicConsole/README.md)  
 **Intermediate**: Explore samples 5-12 for control flow and configuration  
 **Advanced**: Study samples 13-24 for extensions and production patterns  
 

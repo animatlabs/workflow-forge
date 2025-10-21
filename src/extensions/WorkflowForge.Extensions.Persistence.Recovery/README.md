@@ -204,8 +204,8 @@ catch (RecoveryException ex)
 - **[Getting Started](../../../docs/getting-started.md)**
 - **[Configuration Guide](../../../docs/configuration.md#recovery-extension)**
 - **[Extensions Overview](../../../docs/extensions.md)**
-- **[Persistence Extension](../Persistence/)** - Required for state storage
-- **[Sample 21: Recovery](../../samples/WorkflowForge.Samples.BasicConsole/)**
+- **[Persistence Extension](../WorkflowForge.Extensions.Persistence/README.md)** - Required for state storage
+- **[Sample 21: Recovery](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
 
 ---
 

@@ -173,8 +173,8 @@ if (state != null)
 - **[Getting Started](../../../docs/getting-started.md)**
 - **[Configuration Guide](../../../docs/configuration.md#persistence-extensions)**
 - **[Extensions Overview](../../../docs/extensions.md)**
-- **[Sample 18: Persistence](../../samples/WorkflowForge.Samples.BasicConsole/)**
-- **[Recovery Extension](../Persistence.Recovery/)** - Recovery orchestration on top of persistence
+- **[Sample 18: Persistence](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
+- **[Recovery Extension](../WorkflowForge.Extensions.Persistence.Recovery/README.md)** - Recovery orchestration on top of persistence
 
 ---
 
