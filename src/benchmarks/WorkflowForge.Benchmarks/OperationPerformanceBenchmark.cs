@@ -15,7 +15,7 @@ namespace WorkflowForge.Benchmarks;
 /// - Restoration/compensation performance
 /// </summary>
 [MemoryDiagnoser]
-[SimpleJob(RunStrategy.Monitoring, iterationCount: 200)]
+[SimpleJob(RunStrategy.Monitoring, iterationCount: 25)]
 [MarkdownExporter]
 [HtmlExporter]
 public class OperationPerformanceBenchmark

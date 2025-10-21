@@ -15,7 +15,7 @@ namespace WorkflowForge.Benchmarks;
 /// - Memory-optimized configurations
 /// </summary>
 [MemoryDiagnoser]
-[SimpleJob(RunStrategy.Monitoring, iterationCount: 50)]
+[SimpleJob(RunStrategy.Monitoring, iterationCount: 25)]
 [MarkdownExporter]
 [HtmlExporter]
 public class MemoryAllocationBenchmark

@@ -19,7 +19,7 @@ namespace WorkflowForge.Benchmarks;
 /// - Configuration validation impact
 /// </summary>
 [MemoryDiagnoser]
-[SimpleJob(RunStrategy.Monitoring, iterationCount: 100)]
+[SimpleJob(RunStrategy.Monitoring, iterationCount: 25)]
 [MarkdownExporter]
 [HtmlExporter]
 public class ConfigurationProfilesBenchmark

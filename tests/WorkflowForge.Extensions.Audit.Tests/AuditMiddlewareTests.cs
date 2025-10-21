@@ -143,7 +143,8 @@ namespace WorkflowForge.Extensions.Audit.Tests
                 return Task.CompletedTask;
             }
 
-            public void Dispose() { }
+            public void Dispose()
+            { }
         }
     }
 }
