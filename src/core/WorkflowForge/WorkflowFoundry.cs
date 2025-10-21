@@ -205,14 +205,14 @@ namespace WorkflowForge
 
                 try
                 {
-                    // 🎯 FIRE: OperationStarted event
+                    // FIRE: OperationStarted event
                     OperationStarted?.Invoke(this, new OperationStartedEventArgs(operation, this, null));
 
                     var result = await ExecuteOperationWithMiddleware(operation, null, cancellationToken).ConfigureAwait(false);
 
                     var operationDuration = _timeProvider.UtcNow - operationStartTime;
 
-                    // 🎯 FIRE: OperationCompleted event
+                    // FIRE: OperationCompleted event
                     OperationCompleted?.Invoke(this, new OperationCompletedEventArgs(
                         operation,
                         this,
@@ -224,7 +224,7 @@ namespace WorkflowForge
                 {
                     var operationDuration = _timeProvider.UtcNow - operationStartTime;
 
-                    // 🎯 FIRE: OperationFailed event
+                    // FIRE: OperationFailed event
                     OperationFailed?.Invoke(this, new OperationFailedEventArgs(
                         operation,
                         this,

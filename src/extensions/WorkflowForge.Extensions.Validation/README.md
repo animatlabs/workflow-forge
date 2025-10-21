@@ -1,6 +1,22 @@
 # WorkflowForge.Extensions.Validation
 
-FluentValidation bridge extension for WorkflowForge providing comprehensive validation capabilities for workflow operations, inputs, and data flow.
+<p align="center">
+  <img src="../../../icon.png" alt="WorkflowForge" width="120" height="120">
+</p>
+
+Validation extension for WorkflowForge with FluentValidation integration for comprehensive input validation.
+
+[![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Validation.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Validation/)
+
+## Zero Version Conflicts
+
+**This extension uses Costura.Fody to embed FluentValidation.** This means:
+
+- NO DLL Hell - No conflicts with your application's FluentValidation version
+- NO Version Conflicts - Works with ANY version of FluentValidation in your app
+- Clean Deployment - Professional dependency isolation
+
+**How it works**: FluentValidation is embedded as compressed resources at build time and loaded at runtime, completely isolated from your application.
 
 ## Installation
 
@@ -8,331 +24,107 @@ FluentValidation bridge extension for WorkflowForge providing comprehensive vali
 dotnet add package WorkflowForge.Extensions.Validation
 ```
 
-## Zero Version Conflicts
-
-**This extension uses Costura.Fody to embed FluentValidation.** This means:
-
-- **NO DLL Hell** - Use ANY version of FluentValidation in your project  
-- **NO Conflicts** - Your app's FluentValidation version won't clash with this extension  
-- **Clean Deployment** - Professional-grade dependency isolation
-
-**Example**: Your app uses FluentValidation 12.x, this extension uses 11.9.0 - both coexist perfectly with zero conflicts!
-
-**How it works**: FluentValidation is embedded as a compressed resource at build time and loaded automatically at runtime, completely isolated from your application's dependencies.
+**Requires**: .NET Standard 2.0 or later
 
 ## Quick Start
 
-### 1. Define Your Validator
-
 ```csharp
+using WorkflowForge.Extensions.Validation;
 using FluentValidation;
 
-public class OrderRequest
-{
-    public string CustomerId { get; set; }
-    public decimal Amount { get; set; }
-    public string Currency { get; set; }
-}
-
-public class OrderValidator : AbstractValidator<OrderRequest>
+// Define validator
+public class OrderValidator : AbstractValidator<Order>
 {
     public OrderValidator()
     {
-        RuleFor(x => x.CustomerId)
-            .NotEmpty()
-            .WithMessage("Customer ID is required");
-
-        RuleFor(x => x.Amount)
-            .GreaterThan(0)
-            .WithMessage("Amount must be greater than 0");
-
-        RuleFor(x => x.Currency)
-            .Must(c => c == "USD" || c == "EUR" || c == "GBP")
-            .WithMessage("Invalid currency code");
+        RuleFor(x => x.CustomerId).NotEmpty().WithMessage("Customer ID required");
+        RuleFor(x => x.Amount).GreaterThan(0).WithMessage("Amount must be positive");
+        RuleFor(x => x.Items).NotEmpty().WithMessage("Order must have items");
     }
 }
-```
 
-### 2. Add Validation to Your Workflow
+// Configure validation
+using var foundry = WorkflowForge.CreateFoundry("ValidatedWorkflow");
+foundry.SetProperty("Order", order);
 
-```csharp
-using WorkflowForge;
-using WorkflowForge.Extensions.Validation;
-
-var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
-
-// Store order request in foundry properties
-foundry.SetProperty("OrderRequest", new OrderRequest
-{
-    CustomerId = "CUST-123",
-    Amount = 99.99m,
-    Currency = "USD"
-});
-
-// Add validation middleware
 var validator = new OrderValidator();
-foundry.AddValidation(
+foundry.AddMiddleware(new ValidationMiddleware<Order>(
     validator,
-    f => f.GetPropertyOrDefault<OrderRequest>("OrderRequest"),
-    throwOnFailure: true);
+    f => f.GetPropertyOrDefault<Order>("Order"),
+    throwOnFailure: true
+));
 
-// Build and execute workflow
-var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
-    .AddOperation(new ValidateOrderOperation())
-    .AddOperation(new ChargePaymentOperation())
-    .AddOperation(new FulfillOrderOperation())
-    .Build();
-
-using var smith = WorkflowForge.CreateSmith();
+// Validation runs before every operation
 await smith.ForgeAsync(workflow, foundry);
 ```
 
 ## Key Features
 
-- **FluentValidation Bridge**: Seamless integration with FluentValidation library
-- **Middleware-Based**: Validation executes as part of the middleware pipeline
-- **Flexible Error Handling**: Choose to throw exceptions or log and continue
-- **Property-Based**: Validation results stored in foundry properties
-- **Type-Safe**: Full generic type support for validation
-- **Custom Validators**: Support for both FluentValidation and custom validators
+- **FluentValidation Integration**: Full FluentValidation API access
+- **Middleware-Based**: Validates before operations execute
+- **Flexible Extraction**: Custom data extraction from foundry
+- **Configurable Behavior**: Throw or log validation failures
+- **Property Validation**: Validate foundry properties
+- **Rich Error Messages**: Detailed validation error information
 
-## Usage Patterns
-
-### Middleware Validation (Recommended)
-
-Validation executes before each operation:
+## Configuration
 
 ```csharp
-foundry.AddValidation(
-    new CustomerValidator(),
-    f => f.GetPropertyOrDefault<Customer>("Customer"),
-    throwOnFailure: true);
+// From foundry properties
+var validator = new OrderValidator();
+foundry.AddMiddleware(new ValidationMiddleware<Order>(
+    validator,
+    f => f.GetPropertyOrDefault<Order>("Order"),
+    throwOnFailure: true  // Throw ValidationException on failure
+));
 ```
 
-### Manual Validation
+See [Configuration Guide](../../../docs/configuration.md#validation-extension) for complete options.
 
-Validate data explicitly within operations:
+## Validation Examples
 
-```csharp
-public class ProcessCustomerOperation : IWorkflowOperation
-{
-    public async Task<object?> ForgeAsync(
-        IWorkflowFoundry foundry,
-        object? inputData,
-        CancellationToken cancellationToken)
-    {
-        var customer = foundry.GetPropertyOrDefault<Customer>("Customer");
-        var validator = new CustomerValidator();
-        
-        var result = await foundry.ValidateAsync(validator, customer);
-        
-        if (!result.IsValid)
-        {
-            throw new WorkflowValidationException(
-                "Customer validation failed",
-                result.Errors);
-        }
-        
-        // Continue processing...
-        return null;
-    }
-}
-```
-
-### Custom Validators
-
-Implement `IWorkflowValidator<T>` for custom validation logic:
-
-```csharp
-public class CustomBusinessRuleValidator : IWorkflowValidator<Order>
-{
-    public async Task<ValidationResult> ValidateAsync(
-        Order data,
-        CancellationToken cancellationToken)
-    {
-        // Custom validation logic
-        if (data.Amount > 10000 && !data.RequiresApproval)
-        {
-            return ValidationResult.Failure(
-                new ValidationError("RequiresApproval", 
-                    "Orders over $10,000 require approval"));
-        }
-        
-        return ValidationResult.Success;
-    }
-}
-
-// Use custom validator
-foundry.AddValidation(
-    new CustomBusinessRuleValidator(),
-    f => f.GetPropertyOrDefault<Order>("Order"));
-```
-
-## Error Handling
-
-### Throw on Failure (Default)
-
-```csharp
-foundry.AddValidation(validator, dataExtractor, throwOnFailure: true);
-// Throws WorkflowValidationException on validation failure
-```
-
-### Log and Continue
-
-```csharp
-foundry.AddValidation(validator, dataExtractor, throwOnFailure: false);
-// Logs error and continues execution
-// Check validation status in foundry properties
-```
-
-### Accessing Validation Results
-
-```csharp
-var isValid = foundry.GetPropertyOrDefault<bool>(
-    "Validation.MyOperation.Status");
-
-var errors = foundry.GetPropertyOrDefault<IReadOnlyList<ValidationError>>(
-    "Validation.MyOperation.Errors");
-```
-
-## Advanced Scenarios
-
-### Multi-Step Validation
-
-```csharp
-// Validate at different stages
-foundry.AddValidation(
-    new InputValidator(),
-    f => f.GetPropertyOrDefault<InputData>("Input"));
-
-foundry.AddValidation(
-    new BusinessRuleValidator(),
-    f => f.GetPropertyOrDefault<ProcessedData>("Processed"));
-
-foundry.AddValidation(
-    new OutputValidator(),
-    f => f.GetPropertyOrDefault<OutputData>("Output"));
-```
-
-### Conditional Validation
-
-```csharp
-public class ConditionalValidationOperation : IWorkflowOperation
-{
-    public async Task<object?> ForgeAsync(
-        IWorkflowFoundry foundry,
-        object? inputData,
-        CancellationToken cancellationToken)
-    {
-        var orderType = foundry.GetPropertyOrDefault<string>("OrderType");
-        
-        IValidator<Order> validator = orderType switch
-        {
-            "Standard" => new StandardOrderValidator(),
-            "Express" => new ExpressOrderValidator(),
-            "International" => new InternationalOrderValidator(),
-            _ => new DefaultOrderValidator()
-        };
-        
-        var order = foundry.GetPropertyOrDefault<Order>("Order");
-        var result = await foundry.ValidateAsync(validator, order);
-        
-        if (!result.IsValid)
-        {
-            throw new WorkflowValidationException(
-                $"Order validation failed for type {orderType}",
-                result.Errors);
-        }
-        
-        return null;
-    }
-}
-```
-
-### Validation with Dependencies
+### Complex Validation Rules
 
 ```csharp
 public class OrderValidator : AbstractValidator<Order>
 {
-    private readonly ICustomerRepository _customerRepo;
-    
-    public OrderValidator(ICustomerRepository customerRepo)
+    public OrderValidator()
     {
-        _customerRepo = customerRepo;
-        
         RuleFor(x => x.CustomerId)
-            .MustAsync(async (id, ct) => await CustomerExists(id, ct))
-            .WithMessage("Customer not found");
-    }
-    
-    private async Task<bool> CustomerExists(
-        string customerId,
-        CancellationToken cancellationToken)
-    {
-        return await _customerRepo.ExistsAsync(customerId, cancellationToken);
+            .NotEmpty()
+            .Length(5, 20);
+            
+        RuleFor(x => x.Amount)
+            .GreaterThan(0)
+            .LessThan(10000);
+            
+        RuleFor(x => x.Email)
+            .EmailAddress()
+            .When(x => !string.IsNullOrEmpty(x.Email));
+            
+        RuleForEach(x => x.Items)
+            .SetValidator(new OrderItemValidator());
     }
 }
-
-// Register validator with DI
-var customerRepo = serviceProvider.GetRequiredService<ICustomerRepository>();
-var validator = new OrderValidator(customerRepo);
-foundry.AddValidation(validator, f => f.GetPropertyOrDefault<Order>("Order"));
 ```
 
-## Best Practices
-
-1. **Validate Early**: Add validation middleware early in the pipeline
-2. **Use FluentValidation**: Leverage the rich FluentValidation ecosystem
-3. **Store in Properties**: Keep validated data in foundry properties
-4. **Type Safety**: Use strongly-typed validators
-5. **Clear Messages**: Provide meaningful error messages
-6. **Test Validators**: Unit test validators separately
-7. **Fail Fast**: Throw on validation failure in critical paths
-8. **Log Everything**: Validation results are automatically logged
-
-## Integration with WorkflowForge
-
-### Middleware Ordering
+### Custom Error Handling
 
 ```csharp
-// Best practice: Validation before other middleware
-foundry.AddValidation(validator, dataExtractor);      // Validates first
-foundry.AddMiddleware(new TimingMiddleware());        // Times valid operations
-foundry.AddMiddleware(new ErrorHandlingMiddleware()); // Handles validation exceptions
+foundry.AddMiddleware(new ValidationMiddleware<Order>(
+    validator,
+    f => f.GetPropertyOrDefault<Order>("Order"),
+    throwOnFailure: false  // Log instead of throw
+));
 ```
 
-### Event Handling
+## Documentation
 
-```csharp
-foundry.OperationFailed += (sender, args) =>
-{
-    if (args.Exception is WorkflowValidationException validationEx)
-    {
-        foreach (var error in validationEx.Errors)
-        {
-            Console.WriteLine($"Validation Error: {error}");
-        }
-    }
-};
-```
+- **[Getting Started](../../../docs/getting-started.md)**
+- **[Configuration Guide](../../../docs/configuration.md#validation-extension)**
+- **[Extensions Overview](../../../docs/extensions.md)**
+- **[Sample 23: Validation](../../samples/WorkflowForge.Samples.BasicConsole/)**
 
-## Comparison with Other Approaches
+---
 
-| Approach | Pros | Cons |
-|----------|------|------|
-| Middleware Validation | Centralized, consistent, reusable | Less flexible per-operation |
-| Manual Validation | Full control, operation-specific | Code duplication, inconsistent |
-| Custom Validators | No external dependencies | More code to maintain |
-| FluentValidation | Rich API, community support, testable | External dependency |
-
-## Performance Considerations
-
-- Validation adds ~1-5ms overhead per operation
-- Async validators support cancellation
-- Validation results cached in foundry properties
-- FluentValidation is optimized for performance
-
-## License
-
-MIT License - See LICENSE file for details
-
+**WorkflowForge.Extensions.Validation** - *Build workflows with industrial strength*

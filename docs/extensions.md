@@ -1,19 +1,40 @@
 # WorkflowForge Extension System
 
+<p align="center">
+  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
+</p>
+
 WorkflowForge follows an extension-first architecture where the core library provides minimal functionality, and rich features are delivered through a comprehensive extension ecosystem.
 
-## Zero Version Conflicts Guarantee
+## Table of Contents
 
-**Revolutionary Dependency Isolation** - Extensions use Costura.Fody to embed third-party dependencies as compressed resources. This means:
+- [Dependency-Free Core and Zero Version Conflicts](#dependency-free-core-and-zero-version-conflicts)
+- [Extension Architecture](#extension-architecture)
+- [Available Extensions](#available-extensions)
+  - [Logging Extensions](#logging-extensions)
+  - [Resilience Extensions](#resilience-extensions)
+  - [Observability Extensions](#observability-extensions)
+  - [Persistence Extensions](#persistence-extensions)
+  - [Validation Extension](#validation-extension)
+  - [Audit Extension](#audit-extension)
+- [Extension Configuration Patterns](#extension-configuration-patterns)
+- [Creating Custom Extensions](#creating-custom-extensions)
+- [Extension Best Practices](#extension-best-practices)
 
-- **NO DLL Hell** - Use ANY version of Serilog, Polly, FluentValidation, or OpenTelemetry  
-- **NO Conflicts** - Your app's dependency versions won't clash with extension versions  
-- **Clean Deployment** - Fewer files, embedded dependencies  
-- **Professional Grade** - Industry-standard dependency isolation
+---
+
+## Dependency-Free Core and Zero Version Conflicts
+
+WorkflowForge core is zero-dependency. Extensions use Costura.Fody to embed third-party dependencies as compressed resources. This ensures:
+
+- No DLL conflicts with your application dependencies
+- Your app can use any version of Serilog, Polly, FluentValidation, or OpenTelemetry
+- Clean deployment (fewer files) due to embedded dependencies
+- Industry-standard isolation using Fody/Costura
 
 ### How It Works
 
-Extensions with third-party dependencies (Validation, Logging.Serilog, Resilience.Polly, Resilience, OpenTelemetry, Performance) embed their dependencies at build time using Costura.Fody. At runtime, Costura automatically extracts and loads the embedded dependencies from compressed resources, completely isolated from your application's dependencies.
+Extensions with third-party dependencies (Validation, Logging.Serilog, Resilience.Polly, Resilience, OpenTelemetry, Performance) embed their dependencies at build time. At runtime, Costura automatically resolves these from embedded resources, isolated from your application's dependency graph.
 
 **Example**: Your app uses FluentValidation 12.x, our Validation extension uses 11.9.0 - both coexist perfectly with zero conflicts!
 
@@ -26,7 +47,7 @@ Extensions with third-party dependencies (Validation, Logging.Serilog, Resilienc
 3. **Optional Extensions** - Add only what you need
 4. **Composable Features** - Extensions work together seamlessly
 5. **Configuration-Driven** - Extensions are configured, not hard-coded
-6. **Enterprise-Ready** - Professional features for production use
+6. **Production-Ready** - Professional features for production use
 
 ### Extension Categories
 
@@ -1099,6 +1120,9 @@ public class ExtensionIntegrationTests
 - **[Getting Started](getting-started.md)** - Basic extension usage
 - **[Architecture](architecture.md)** - Extension architecture details
 - **[Configuration](configuration.md)** - Configuration patterns
+- **[Operations Guide](operations.md)** - Custom operation patterns
+- **[Events System](events.md)** - Event-driven integration
+
 Refer to extension package READMEs for details:
 - Core logging integration: `src/core/WorkflowForge/README.md`
 - Serilog: `src/extensions/WorkflowForge.Extensions.Logging.Serilog/README.md`
@@ -1112,4 +1136,4 @@ Refer to extension package READMEs for details:
 
 ---
 
-**WorkflowForge Extensions** - *Enhance your workflows with professional capabilities* 
+**← Back to [Documentation Home](README.md)** 

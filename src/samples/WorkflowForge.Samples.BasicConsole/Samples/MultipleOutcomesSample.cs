@@ -48,7 +48,7 @@ public class MultipleOutcomesSample : ISample
                         // Soft decline - offer alternatives
                         new OfferAlternativesOperation(),
                         // Hard decline - final rejection
-                        new LoggingOperation("🚫 Hard decline - no alternatives available")
+                        new LoggingOperation("Hard decline - no alternatives available")
                     )
                 }, name: "RejectedPath")))
             .WithOperation(new ConditionalWorkflowOperation(

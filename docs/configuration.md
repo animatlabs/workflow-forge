@@ -1,816 +1,1021 @@
-# WorkflowForge Configuration Guide
+# WorkflowForge Configuration
 
-This guide covers configuration strategies for WorkflowForge across different environments and use cases.
+<p align="center">
+  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
+</p>
 
-## Configuration Principles
+Complete configuration guide for WorkflowForge workflows across all environments.
 
-### 1. Environment-Specific Configuration
-WorkflowForge supports different configuration profiles for different environments:
-- **Development** - Verbose logging, detailed metrics, minimal resilience
-- **Production** - Optimized performance, essential logging, comprehensive resilience
-- **Enterprise** - Full observability, comprehensive monitoring, advanced security
+---
 
-### 2. Configuration Sources
-WorkflowForge can be configured through multiple sources:
-- **appsettings.json** - Base configuration
-- **Environment variables** - Override for deployment
-- **Code-based configuration** - Programmatic setup
-- **External configuration** - Azure App Configuration, AWS Systems Manager, etc.
+## Table of Contents
 
-## Basic Configuration
+- [Overview](#overview)
+- [Core Settings](#core-settings)
+- [Configuration Methods](#configuration-methods)
+  - [Method 1: appsettings.json (Recommended)](#method-1-appsettingsjson-recommended)
+  - [Method 2: Programmatic Configuration](#method-2-programmatic-configuration)
+- [Configuration Patterns](#configuration-patterns)
+- [Extension Configuration](#extension-configuration)
+- [Environment Strategies](#environment-strategies)
+- [Best Practices](#best-practices)
 
-### appsettings.json Structure
+---
+
+## Overview
+
+WorkflowForge provides flexible configuration through multiple mechanisms:
+
+1. **appsettings.json Configuration**: Options pattern with strongly-typed classes (recommended for production)
+2. **Programmatic Configuration**: Direct API calls for dynamic scenarios
+3. **Service Provider Integration**: DI-based configuration
+4. **Property-Based Configuration**: Runtime configuration via foundry properties
+5. **Extension Configuration**: Per-extension settings
+
+### Configuration Philosophy
+
+- **Explicit over Implicit**: Clear, compile-time configuration
+- **Code over Config Files**: Type-safe programmatic configuration
+- **Sensible Defaults**: Zero-config for simple scenarios
+- **Extension Points**: Customization without modification
+
+---
+
+## Core Settings
+
+WorkflowForge configuration is defined in `WorkflowForgeConfiguration` class and can be configured via `appsettings.json` or programmatically.
+
+### WorkflowForgeConfiguration Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `AutoRestore` | bool | true | Automatically trigger compensation/rollback on workflow failure |
+| `MaxConcurrentOperations` | int | ProcessorCount * 2 | Global limit for concurrent operations (1-1000) |
+
+**Configuration Section**: `"WorkflowForge"` in `appsettings.json`
+
+---
+
+## Configuration Methods
+
+### Method 1: appsettings.json (Recommended)
+
+**Best for**: Production applications, ASP.NET Core, containerized deployments
+
+#### Step 1: Create appsettings.json
 
 ```json
 {
   "WorkflowForge": {
-    "Core": {
-      "DefaultTimeout": "00:05:00",
-      "EnableCompensation": true,
-      "MaxConcurrentWorkflows": 10
-    },
-    "Logging": {
-      "Provider": "Serilog",
-      "MinimumLevel": "Information",
-      "Configuration": {
-        "WriteTo": [
-          { "Name": "Console" },
-          { 
-            "Name": "File", 
-            "Args": { 
-              "path": "logs/workflow-.txt",
-              "rollingInterval": "Day" 
-            } 
-          }
-        ]
-      }
-    },
-    "Resilience": {
-      "Provider": "Polly",
-      "Polly": {
-        "Retry": {
-          "MaxAttempts": 3,
-          "BaseDelay": "00:00:01",
-          "UseExponentialBackoff": true,
-          "UseJitter": true
-        },
-        "CircuitBreaker": {
-          "FailureThreshold": 5,
-          "BreakDuration": "00:01:00",
-          "MinimumThroughput": 10
-        },
-        "Timeout": {
-          "DefaultTimeout": "00:00:30"
-        }
-      }
-    },
-    "Observability": {
-      "Performance": {
-        "Enabled": true,
-        "TrackMemoryUsage": true,
-        "SampleSize": 1000
+    "AutoRestore": true,
+    "MaxConcurrentOperations": 4,
+    "Polly": {
+      "IsEnabled": true,
+      "EnableDetailedLogging": true,
+      "Retry": {
+        "IsEnabled": true,
+        "MaxRetryAttempts": 3,
+        "BaseDelay": "00:00:01",
+        "MaxDelay": "00:00:30",
+        "UseJitter": true
       },
-      "HealthChecks": {
-        "Enabled": true,
-        "CheckInterval": "00:01:00",
-        "Checks": {
-          "Memory": { "Enabled": true, "ThresholdMB": 1024 },
-          "GarbageCollector": { "Enabled": true },
-          "ThreadPool": { "Enabled": true }
-        }
+      "CircuitBreaker": {
+        "IsEnabled": false,
+        "FailureThreshold": 5,
+        "DurationOfBreak": "00:00:30"
       },
-      "OpenTelemetry": {
-        "Enabled": false,
-        "ServiceName": "WorkflowForge",
-        "ServiceVersion": "1.0.0",
-        "Exporters": {
-          "Console": { "Enabled": true },
-          "Jaeger": { 
-            "Enabled": false,
-            "Endpoint": "http://localhost:14268"
-          }
-        }
+      "Timeout": {
+        "IsEnabled": true,
+        "TimeoutDuration": "00:02:00"
       }
+    },
+    "Performance": {
+      "MaxDegreeOfParallelism": 4,
+      "EnableObjectPooling": true,
+      "MaxQueuedOperations": 1000,
+      "BatchSize": 10
+    }
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "WorkflowForge": "Information"
     }
   }
 }
 ```
 
-## Environment-Specific Configurations
+#### Step 2: Register Configuration in Startup
 
-### Development Configuration
+```csharp
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using WorkflowForge.Configurations;
+using WorkflowForge.Extensions.Resilience.Polly.Configurations;
+using WorkflowForge.Extensions.Observability.Performance.Configurations;
 
-**appsettings.Development.json:**
-```json
+// Build configuration
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(AppContext.BaseDirectory)
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{environment}.json", optional: true)
+    .AddEnvironmentVariables()
+    .Build();
+
+// Register configuration with Options pattern
+var services = new ServiceCollection();
+services.AddSingleton<IConfiguration>(configuration);
+
+// Core WorkflowForge settings
+services.Configure<WorkflowForgeConfiguration>(
+    configuration.GetSection(WorkflowForgeConfiguration.SectionName));
+
+// Extension settings
+services.Configure<PollySettings>(
+    configuration.GetSection("WorkflowForge:Polly"));
+services.Configure<PerformanceSettings>(
+    configuration.GetSection("WorkflowForge:Performance"));
+
+var serviceProvider = services.BuildServiceProvider();
+```
+
+#### Step 3: Use Configuration in Application
+
+```csharp
+using Microsoft.Extensions.Options;
+
+public class OrderWorkflowService
 {
-  "WorkflowForge": {
-    "Logging": {
-      "MinimumLevel": "Debug",
-      "Configuration": {
-        "WriteTo": [
-          { 
-            "Name": "Console",
-            "Args": {
-              "outputTemplate": "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}"
-            }
-          }
-        ]
-      }
-    },
-    "Resilience": {
-      "Polly": {
-        "Retry": {
-          "MaxAttempts": 1
-        },
-        "CircuitBreaker": {
-          "Enabled": false
-        }
-      }
-    },
-    "Observability": {
-      "Performance": {
-        "Enabled": true,
-        "TrackMemoryUsage": true,
-        "DetailedMetrics": true
-      },
-      "HealthChecks": {
-        "CheckInterval": "00:00:30"
-      }
+    private readonly IOptions<WorkflowForgeConfiguration> _workflowOptions;
+    private readonly IOptions<PollySettings> _pollyOptions;
+    private readonly IServiceProvider _serviceProvider;
+    
+    public OrderWorkflowService(
+        IOptions<WorkflowForgeConfiguration> workflowOptions,
+        IOptions<PollySettings> pollyOptions,
+        IServiceProvider serviceProvider)
+    {
+        _workflowOptions = workflowOptions;
+        _pollyOptions = pollyOptions;
+        _serviceProvider = serviceProvider;
     }
-  }
+    
+    public async Task ProcessOrderAsync(Order order)
+    {
+        // Configuration is automatically loaded from appsettings.json
+        var settings = _workflowOptions.Value;
+        Console.WriteLine($"AutoRestore: {settings.AutoRestore}");
+        Console.WriteLine($"MaxConcurrentOperations: {settings.MaxConcurrentOperations}");
+        
+        // Create foundry with service provider (includes configuration)
+        using var foundry = WorkflowForge.CreateFoundry(
+            $"Order-{order.Id}",
+            _serviceProvider);
+        
+        foundry.SetProperty("Order", order);
+        
+        var workflow = BuildOrderWorkflow();
+        using var smith = WorkflowForge.CreateSmith();
+        await smith.ForgeAsync(workflow, foundry);
+    }
 }
 ```
 
-### Production Configuration
+#### Benefits of appsettings.json Configuration
 
-**appsettings.Production.json:**
-```json
+- **Environment-specific**: Different settings for dev/test/prod without code changes
+- **Container-friendly**: Override via environment variables in Docker/Kubernetes
+- **Strongly-typed**: Compile-time type safety with configuration classes
+- **Validation**: Built-in validation with `IOptions<T>.Value`
+- **Reloadable**: Hot-reload configuration without restarting application
+- **Centralized**: All settings in one place
+
+### Method 2: Programmatic Configuration
+
+**Best for**: Dynamic scenarios, testing, simple console applications
+
+---
+
+## Core Settings (Legacy)
+
+### IWorkflowSettings Interface
+
+WorkflowForge core uses `IWorkflowSettings` for execution behavior:
+
+```csharp
+public interface IWorkflowSettings
 {
-  "WorkflowForge": {
-    "Core": {
-      "MaxConcurrentWorkflows": 50
-    },
-    "Logging": {
-      "MinimumLevel": "Information",
-      "Configuration": {
-        "WriteTo": [
-          { 
-            "Name": "File", 
-            "Args": { 
-              "path": "/var/log/workflow/workflow-.txt",
-              "rollingInterval": "Hour",
-              "retainedFileCountLimit": 168
-            } 
-          },
-          {
-            "Name": "Seq",
-            "Args": {
-              "serverUrl": "https://seq.company.com"
-            }
-          }
-        ]
-      }
-    },
-    "Resilience": {
-      "Polly": {
-        "Retry": {
-          "MaxAttempts": 5,
-          "BaseDelay": "00:00:02"
-        },
-        "CircuitBreaker": {
-          "FailureThreshold": 10,
-          "BreakDuration": "00:02:00"
-        },
-        "RateLimit": {
-          "PermitLimit": 100,
-          "Window": "00:00:01"
-        }
-      }
-    },
-    "Observability": {
-      "Performance": {
-        "Enabled": false
-      },
-      "HealthChecks": {
-        "CheckInterval": "00:02:00"
-      },
-      "OpenTelemetry": {
-        "Enabled": true,
-        "Exporters": {
-          "Console": { "Enabled": false },
-          "Jaeger": { 
-            "Enabled": true,
-            "Endpoint": "https://jaeger.company.com"
-          }
-        }
-      }
-    }
-  }
+    bool AutoRestore { get; }                    // Auto-compensation on failure
+    bool ContinueOnRestorationFailure { get; }   // Continue rollback on errors
+    int MaxConcurrentFlows { get; }              // Concurrent workflow limit
+    int RestorationRetryAttempts { get; }        // Compensation retry count
+    TimeSpan OperationTimeout { get; }           // Per-operation timeout
+    TimeSpan FlowTimeout { get; }                // Workflow timeout
+    bool EnableMetrics { get; }                  // Performance metrics
+    bool EnableTracing { get; }                  // Distributed tracing
+    string MinimumLogLevel { get; }              // Log level filter
 }
 ```
 
-### Enterprise Configuration
+**Current Implementation**: These settings are defined but not yet fully wired into `WorkflowSmith` execution. Version 2.0 focuses on the foundation; full settings integration is planned for 2.1.
 
-**appsettings.Enterprise.json:**
-```json
-{
-  "WorkflowForge": {
-    "Core": {
-      "MaxConcurrentWorkflows": 100,
-      "EnableAuditLogging": true,
-      "CorrelationIdHeader": "X-Correlation-ID"
-    },
-    "Logging": {
-      "Configuration": {
-        "WriteTo": [
-          {
-            "Name": "Splunk",
-            "Args": {
-              "host": "splunk.company.com",
-              "port": 8088,
-              "token": "{SPLUNK_TOKEN}"
-            }
-          }
-        ],
-        "Enrich": [
-          "FromLogContext",
-          "WithMachineName",
-          "WithEnvironmentUserName",
-          "WithCorrelationId"
-        ]
-      }
-    },
-    "Security": {
-      "EnableEncryption": true,
-      "EncryptionKey": "{ENCRYPTION_KEY}",
-      "RequireAuthentication": true,
-      "AuditAllOperations": true
-    },
-    "Observability": {
-      "Performance": {
-        "Enabled": true,
-        "ExportToMetrics": true,
-        "MetricsEndpoint": "https://metrics.company.com"
-      },
-      "HealthChecks": {
-        "CheckInterval": "00:01:00",
-        "Checks": {
-          "Database": { 
-            "Enabled": true,
-            "ConnectionString": "{DATABASE_CONNECTION}",
-            "Timeout": "00:00:10"
-          },
-          "ExternalServices": { "Enabled": true },
-          "DiskSpace": { 
-            "Enabled": true,
-            "ThresholdPercent": 85 
-          }
-        }
-      },
-      "OpenTelemetry": {
-        "Enabled": true,
-        "Sampling": {
-          "Type": "TraceIdRatioBased",
-          "Ratio": 0.1
-        },
-        "Exporters": {
-          "OTLP": {
-            "Enabled": true,
-            "Endpoint": "https://otel-collector.company.com"
-          }
-        }
-      }
-    }
-  }
-}
-```
+### Default Behavior
 
-## Programmatic Configuration
+Without explicit settings, WorkflowForge operates with:
 
-### Fluent Configuration API
+- **No automatic compensation**: `RestoreAsync` must be called explicitly
+- **No timeouts**: Operations run until completion or exception
+- **No concurrency limits**: Limited only by system resources
+- **Minimal logging**: Via injected `IWorkflowForgeLogger`
+
+---
+
+## Configuration Patterns
+
+### Pattern 1: Basic Configuration
 
 ```csharp
 using WorkflowForge;
-using WorkflowForge.Extensions.Logging.Serilog;
-using WorkflowForge.Extensions.Resilience.Polly;
-using WorkflowForge.Extensions.Observability.Performance;
 
-public static class FoundryConfigurations
-{
-    public static IWorkflowFoundry CreateDevelopmentFoundry(string name)
-    {
-        var config = FoundryConfiguration.ForDevelopment().UseSerilog(CreateDevelopmentLogger());
-        var foundry = WorkflowForge.CreateFoundry(name, config)
-            .UsePollyDevelopmentResilience();
-        // Enable performance monitoring
-        foundry.EnablePerformanceMonitoring();
-        // Health checks service
-        var healthService = foundry.CreateHealthCheckService(TimeSpan.FromSeconds(30));
-        return foundry;
-    }
+// Simple workflow with defaults
+var workflow = WorkflowForge.CreateWorkflow("SimpleWorkflow")
+    .AddOperation(new CalculateTotal())
+    .AddOperation(new SendNotification())
+    .Build();
 
-    public static IWorkflowFoundry CreateOptimizedFoundry(string name)
-    {
-        var config = FoundryConfiguration.ForProduction().UseSerilog(CreateOptimizedLogger());
-        var foundry = WorkflowForge.CreateFoundry(name, config)
-            .UsePollyProductionResilience();
-        // Enable OpenTelemetry with available options type
-        foundry.EnableOpenTelemetry(new WorkflowForge.Extensions.Observability.OpenTelemetry.WorkflowForgeOpenTelemetryOptions
-        {
-            ServiceName = "OptimizedService",
-            ServiceVersion = "1.0.0"
-        });
-        return foundry;
-    }
-
-    public static IWorkflowFoundry CreateAdvancedFoundry(string name, IServiceProvider serviceProvider)
-    {
-        var config = FoundryConfiguration.ForProduction().UseSerilog(CreateAdvancedLogger());
-        var foundry = WorkflowForge.CreateFoundry(name, config)
-            .UsePollyEnterpriseResilience();
-        foundry.EnablePerformanceMonitoring();
-        var healthService = foundry.CreateHealthCheckService(TimeSpan.FromMinutes(1));
-        foundry.EnableOpenTelemetry(new WorkflowForge.Extensions.Observability.OpenTelemetry.WorkflowForgeOpenTelemetryOptions
-        {
-            ServiceName = "AdvancedService",
-            ServiceVersion = "1.0.0"
-        });
-        return foundry;
-    }
-
-    private static ILogger CreateDevelopmentLogger()
-    {
-        return new LoggerConfiguration()
-            .MinimumLevel.Debug()
-            .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
-            .CreateLogger();
-    }
-
-    private static ILogger CreateOptimizedLogger()
-    {
-        return new LoggerConfiguration()
-            .MinimumLevel.Information()
-            .WriteTo.File("/var/log/workflow/workflow-.txt", 
-                rollingInterval: RollingInterval.Hour,
-                retainedFileCountLimit: 168)
-            .WriteTo.Seq("https://seq.company.com")
-            .Enrich.FromLogContext()
-            .Enrich.WithMachineName()
-            .CreateLogger();
-    }
-
-    private static ILogger CreateAdvancedLogger()
-    {
-        return new LoggerConfiguration()
-            .MinimumLevel.Information()
-            .WriteTo.Splunk("splunk.company.com", 8088, Environment.GetEnvironmentVariable("SPLUNK_TOKEN"))
-            .Enrich.FromLogContext()
-            .Enrich.WithMachineName()
-            .Enrich.WithEnvironmentUserName()
-            .Enrich.WithCorrelationId()
-            .CreateLogger();
-    }
-}
+using var smith = WorkflowForge.CreateSmith();
+await smith.ForgeAsync(workflow);
 ```
 
-### Configuration Factory Pattern
+### Pattern 2: Foundry with Properties
 
 ```csharp
-public interface IFoundryConfigurationFactory
-{
-    IWorkflowFoundry CreateFoundry(string name, string environment);
-}
+// Configure via foundry properties
+using var foundry = WorkflowForge.CreateFoundry("ConfiguredWorkflow");
 
-public class FoundryConfigurationFactory : IFoundryConfigurationFactory
+// Set execution context
+foundry.SetProperty("OrderId", orderId);
+foundry.SetProperty("CustomerId", customerId);
+foundry.SetProperty("Environment", "Production");
+
+// Execute workflow
+using var smith = WorkflowForge.CreateSmith();
+await smith.ForgeAsync(workflow, foundry);
+
+// Read results
+var total = foundry.GetPropertyOrDefault<decimal>("Total");
+```
+
+### Pattern 3: Service Provider Integration
+
+```csharp
+// ASP.NET Core / DI integration
+public class OrderWorkflowService
 {
-    private readonly IConfiguration _configuration;
     private readonly IServiceProvider _serviceProvider;
-
-    public FoundryConfigurationFactory(IConfiguration configuration, IServiceProvider serviceProvider)
+    private readonly ILogger<OrderWorkflowService> _logger;
+    
+    public OrderWorkflowService(
+        IServiceProvider serviceProvider,
+        ILogger<OrderWorkflowService> logger)
     {
-        _configuration = configuration;
         _serviceProvider = serviceProvider;
+        _logger = logger;
     }
-
-    public IWorkflowFoundry CreateFoundry(string name, string environment)
+    
+    public async Task ProcessOrderAsync(Order order)
     {
-        var foundry = WorkflowForge.CreateFoundry(name, _serviceProvider);
+        // Create foundry with service provider
+        using var foundry = WorkflowForge.CreateFoundry(
+            $"Order-{order.Id}",
+            _serviceProvider);
+        
+        foundry.SetProperty("Order", order);
+        
+        var workflow = BuildOrderWorkflow();
+        
+        using var smith = WorkflowForge.CreateSmith();
+        await smith.ForgeAsync(workflow, foundry);
+    }
+    
+    private IWorkflow BuildOrderWorkflow()
+    {
+        return WorkflowForge.CreateWorkflow("OrderProcessing")
+            .AddOperation(new ValidateOrderOperation())
+            .AddOperation(new ChargePaymentOperation())
+            .AddOperation(new ReserveInventoryOperation())
+            .AddOperation(new CreateShipmentOperation())
+            .Build();
+    }
+}
+```
 
-        // Apply environment-specific configuration
-        return environment.ToLowerInvariant() switch
+### Pattern 4: Event-Based Configuration
+
+```csharp
+// Subscribe to events for monitoring
+using var smith = WorkflowForge.CreateSmith();
+using var foundry = WorkflowForge.CreateFoundry("MonitoredWorkflow");
+
+// Configure workflow events
+smith.WorkflowStarted += (s, e) =>
+    _logger.LogInformation("Workflow started: {Name}", e.WorkflowName);
+
+smith.WorkflowCompleted += (s, e) =>
+    _logger.LogInformation("Workflow completed in {Duration}ms", 
+        e.Duration.TotalMilliseconds);
+
+smith.WorkflowFailed += (s, e) =>
+    _logger.LogError(e.Exception, "Workflow failed: {Name}", e.WorkflowName);
+
+// Configure operation events
+foundry.OperationStarted += (s, e) =>
+    _logger.LogDebug("Operation started: {Name}", e.OperationName);
+
+foundry.OperationCompleted += (s, e) =>
+    _metrics.RecordOperationDuration(e.OperationName, e.Duration);
+
+await smith.ForgeAsync(workflow, foundry);
+```
+
+### Pattern 5: Middleware Configuration
+
+```csharp
+// Configure operation middleware
+using var foundry = WorkflowForge.CreateFoundry("MiddlewareExample");
+
+// Add timing middleware (from Performance extension)
+foundry.AddMiddleware(new TimingMiddleware(logger));
+
+// Add error handling middleware
+foundry.AddMiddleware(new ErrorHandlingMiddleware(logger));
+
+// Add validation middleware (from Validation extension)
+foundry.AddMiddleware(new ValidationMiddleware<Order>(
+    validator, 
+    f => f.GetPropertyOrDefault<Order>("Order")));
+
+await smith.ForgeAsync(workflow, foundry);
+```
+
+---
+
+## Extension Configuration
+
+### Serilog Extension
+
+```csharp
+using WorkflowForge.Extensions.Logging.Serilog;
+using Serilog;
+
+// Configure Serilog logger
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console()
+    .WriteTo.File("logs/workflow-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+// Create foundry with Serilog
+using var foundry = WorkflowForge.CreateFoundry("MyWorkflow");
+foundry.UseSerilogLogger(Log.Logger);
+
+// Or use extension method
+var logger = foundry.CreateSerilogLogger();
+```
+
+**Dependency Isolation**: Uses Costura.Fody to embed Serilog. Your app can use any Serilog version without conflicts.
+
+### Resilience Extension
+
+```csharp
+using WorkflowForge.Extensions.Resilience;
+using WorkflowForge.Extensions.Resilience.Strategies;
+
+// Wrap operations with retry logic
+var resilientOperation = RetryWorkflowOperation.WithExponentialBackoff(
+    operation: myOperation,
+    baseDelay: TimeSpan.FromMilliseconds(100),
+    maxDelay: TimeSpan.FromSeconds(30),
+    maxAttempts: 3);
+
+// Or use specific strategies
+var strategy = new ExponentialBackoffStrategy(
+    maxAttempts: 5,
+    baseDelay: TimeSpan.FromSeconds(1),
+    maxDelay: TimeSpan.FromSeconds(60),
+    logger: logger);
+
+var resilientOp = new RetryWorkflowOperation(myOperation, strategy);
+
+// Add to workflow
+var workflow = WorkflowForge.CreateWorkflow("ResilientProcess")
+    .AddOperation("ProcessWithRetry", resilientOp)
+    .Build();
+```
+
+**Strategies Available**:
+- `ExponentialBackoffStrategy` - Best for external services
+- `FixedIntervalStrategy` - Best for databases
+- `RandomIntervalStrategy` - Prevents thundering herd
+
+**Zero Dependencies**: Pure WorkflowForge extension with no external dependencies.
+
+### Polly Extension
+
+```csharp
+using WorkflowForge.Extensions.Resilience.Polly;
+using Polly;
+
+// Configure retry policy
+var retryPolicy = Policy
+    .Handle<HttpRequestException>()
+    .WaitAndRetryAsync(
+        retryCount: 3,
+        sleepDurationProvider: attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+        onRetry: (exception, timeSpan, retryCount, context) =>
         {
-            "development" => ConfigureForDevelopment(foundry),
-            "staging" => ConfigureForStaging(foundry),
-            "optimized" => ConfigureForOptimized(foundry),
-            "advanced" => ConfigureForAdvanced(foundry),
-            _ => throw new ArgumentException($"Unknown environment: {environment}")
-        };
-    }
+            logger.LogWarning("Retry {RetryCount} after {Delay}ms", 
+                retryCount, timeSpan.TotalMilliseconds);
+        });
 
-    private IWorkflowFoundry ConfigureForDevelopment(IWorkflowFoundry foundry)
-    {
-        var config = _configuration.GetSection("WorkflowForge:Development");
-        
-        return foundry
-            .ConfigureFromSection(config)
-            .UseSerilog()
-            .UsePollyDevelopmentResilience()
-            .EnablePerformanceMonitoring()
-            .EnableHealthChecks();
-    }
+// Wrap operation with policy
+var operation = new PollyWrappedOperation<HttpResponseMessage>(
+    new CallExternalApiOperation(),
+    retryPolicy);
 
-    // Other environment configurations...
-}
-```
-
-## Configuration Validation
-
-### Strongly-Typed Configuration
-
-```csharp
-public class WorkflowForgeConfiguration
-{
-    public const string SectionName = "WorkflowForge";
-
-    [Required]
-    public CoreSettings Core { get; set; } = new();
-    
-    public LoggingSettings Logging { get; set; } = new();
-    
-    public ResilienceSettings Resilience { get; set; } = new();
-    
-    public ObservabilitySettings Observability { get; set; } = new();
-}
-
-public class CoreSettings
-{
-    [Range(1, 1000)]
-    public int MaxConcurrentWorkflows { get; set; } = 10;
-    
-    [Required]
-    public TimeSpan DefaultTimeout { get; set; } = TimeSpan.FromMinutes(5);
-    
-    public bool EnableCompensation { get; set; } = true;
-}
-
-public class LoggingSettings
-{
-    [Required]
-    public string Provider { get; set; } = "Serilog";
-    
-    public string MinimumLevel { get; set; } = "Information";
-    
-    public Dictionary<string, object> Configuration { get; set; } = new();
-}
-```
-
-### Configuration Validation
-
-```csharp
-public static class ConfigurationExtensions
-{
-    public static IServiceCollection AddWorkflowForgeConfiguration(
-        this IServiceCollection services, 
-        IConfiguration configuration)
-    {
-        // Configure with validation
-        services.Configure<WorkflowForgeConfiguration>(configuration.GetSection(WorkflowForgeConfiguration.SectionName));
-        
-        // Add validation
-        services.AddSingleton<IValidateOptions<WorkflowForgeConfiguration>, WorkflowForgeConfigurationValidator>();
-        
-        return services;
-    }
-}
-
-public class WorkflowForgeConfigurationValidator : IValidateOptions<WorkflowForgeConfiguration>
-{
-    public ValidateOptionsResult Validate(string name, WorkflowForgeConfiguration options)
-    {
-        var errors = new List<string>();
-
-        if (options.Core.MaxConcurrentWorkflows <= 0)
-            errors.Add("MaxConcurrentWorkflows must be greater than 0");
-
-        if (options.Core.DefaultTimeout <= TimeSpan.Zero)
-            errors.Add("DefaultTimeout must be greater than zero");
-
-        if (string.IsNullOrEmpty(options.Logging.Provider))
-            errors.Add("Logging provider must be specified");
-
-        return errors.Any() 
-            ? ValidateOptionsResult.Fail(errors)
-            : ValidateOptionsResult.Success;
-    }
-}
-```
-
-## Configuration Best Practices
-
-### 1. Use Configuration Profiles
-
-```csharp
-public static class ConfigurationProfiles
-{
-    public static readonly FoundryProfile Development = new()
-    {
-        LogLevel = LogLevel.Debug,
-        EnablePerformanceMonitoring = true,
-        EnableDetailedLogging = true,
-        MaxRetryAttempts = 1,
-        EnableCircuitBreaker = false
-    };
-
-    public static readonly FoundryProfile Production = new()
-    {
-        LogLevel = LogLevel.Information,
-        EnablePerformanceMonitoring = false,
-        EnableDetailedLogging = false,
-        MaxRetryAttempts = 5,
-        EnableCircuitBreaker = true
-    };
-}
-```
-
-### 2. Environment Variable Overrides
-
-```csharp
-var configuration = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: false)
-    .AddJsonFile($"appsettings.{environment}.json", optional: true)
-    .AddEnvironmentVariables("WORKFLOWFORGE_")
+var workflow = WorkflowForge.CreateWorkflow("ResilientWorkflow")
+    .AddOperation(operation)
     .Build();
 ```
 
-**Environment Variables:**
-```bash
-WORKFLOWFORGE_Core__MaxConcurrentWorkflows=50
-WORKFLOWFORGE_Logging__MinimumLevel=Warning
-WORKFLOWFORGE_Resilience__Polly__Retry__MaxAttempts=3
-```
+**Dependency Isolation**: Polly is embedded. Your app can use any Polly version without conflicts.
 
-### 3. Secrets Management
+### OpenTelemetry Extension
 
 ```csharp
-// Azure Key Vault
-var configuration = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json")
-    .AddAzureKeyVault(keyVaultEndpoint, credential)
-    .Build();
+using WorkflowForge.Extensions.Observability.OpenTelemetry;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
 
-// AWS Systems Manager
-var configuration = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json")
-    .AddSystemsManager(configureSource => 
+// Configure OpenTelemetry
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .AddSource("WorkflowForge")
+    .AddConsoleExporter()
+    .AddJaegerExporter(options =>
     {
-        configureSource.Path = "/workflowforge/";
-        configureSource.Optional = true;
+        options.AgentHost = "localhost";
+        options.AgentPort = 6831;
     })
     .Build();
+
+// Create foundry with tracing
+using var foundry = WorkflowForge.CreateFoundry("TracedWorkflow");
+var tracer = tracerProvider.GetTracer("WorkflowForge");
+
+// Operations will create spans
+await smith.ForgeAsync(workflow, foundry);
 ```
 
-### 4. Configuration Hot Reload
+**Dependency Isolation**: OpenTelemetry is embedded. Your app can use any OpenTelemetry version without conflicts.
+
+### Performance Extension
 
 ```csharp
-public class ConfigurableFoundryService
-{
-    private readonly IOptionsMonitor<WorkflowForgeConfiguration> _optionsMonitor;
-    private IDisposable? _optionsChangeListener;
+using WorkflowForge.Extensions.Observability.Performance;
 
-    public ConfigurableFoundryService(IOptionsMonitor<WorkflowForgeConfiguration> optionsMonitor)
-    {
-        _optionsMonitor = optionsMonitor;
-        _optionsChangeListener = _optionsMonitor.OnChange(OnConfigurationChanged);
-    }
+// Add timing middleware
+using var foundry = WorkflowForge.CreateFoundry("PerformanceMonitored");
+foundry.AddMiddleware(new TimingMiddleware(logger));
 
-    private void OnConfigurationChanged(WorkflowForgeConfiguration newSettings)
-    {
-        // Reconfigure foundries with new settings
-        ReconfigureFoundries(newSettings);
-    }
+// Timing data is logged per operation
+await smith.ForgeAsync(workflow, foundry);
 
-    public void Dispose()
-    {
-        _optionsChangeListener?.Dispose();
-    }
-}
+// Output:
+// [INF] Operation 'CalculateTotal' started
+// [INF] Operation 'CalculateTotal' completed in 23.4ms
 ```
 
-## Configuration Examples
+**Zero Dependencies**: Pure WorkflowForge extension.
 
-### Microservices Configuration
-
-```json
-{
-  "WorkflowForge": {
-    "Core": {
-      "ServiceName": "OrderProcessingService",
-      "MaxConcurrentWorkflows": 20
-    },
-    "Observability": {
-      "OpenTelemetry": {
-        "Enabled": true,
-        "ServiceName": "order-processing",
-        "ServiceVersion": "2.1.0",
-        "Exporters": {
-          "OTLP": {
-            "Enabled": true,
-            "Endpoint": "http://jaeger-collector:14268"
-          }
-        }
-      }
-    },
-    "Resilience": {
-      "Polly": {
-        "CircuitBreaker": {
-          "FailureThreshold": 5,
-          "BreakDuration": "00:01:00"
-        }
-      }
-    }
-  }
-}
-```
-
-### High-Throughput Configuration
-
-```json
-{
-  "WorkflowForge": {
-    "Core": {
-      "MaxConcurrentWorkflows": 200,
-      "DefaultTimeout": "00:00:30"
-    },
-    "Logging": {
-      "MinimumLevel": "Warning"
-    },
-    "Observability": {
-      "Performance": {
-        "Enabled": true,
-        "SampleSize": 10000,
-        "TrackMemoryUsage": false
-      }
-    }
-  }
-}
-```
-
-### Compliance Configuration
-
-```json
-{
-  "WorkflowForge": {
-    "Security": {
-      "EnableEncryption": true,
-      "RequireAuthentication": true,
-      "AuditAllOperations": true,
-      "DataRetentionDays": 2555
-    },
-    "Logging": {
-      "Configuration": {
-        "WriteTo": [
-          {
-            "Name": "AuditLog",
-            "Args": {
-              "path": "/audit/workflow-audit-.txt",
-              "rollingInterval": "Day",
-              "retainedFileCountLimit": 2555
-            }
-          }
-        ]
-      }
-    }
-  }
-}
-```
-
-## Troubleshooting Configuration
-
-### Common Configuration Issues
-
-1. **Invalid JSON syntax**
-   ```bash
-   # Validate JSON syntax
-   cat appsettings.json | jq .
-   ```
-
-2. **Environment variable not loading**
-   ```csharp
-   // Debug configuration sources
-   foreach (var source in configuration.AsEnumerable())
-   {
-       Console.WriteLine($"{source.Key} = {source.Value}");
-   }
-   ```
-
-3. **Missing required configuration**
-   ```csharp
-   // Use IValidateOptions<T> for validation
-    services.AddSingleton<IValidateOptions<WorkflowForgeConfiguration>, WorkflowForgeConfigurationValidator>();
-   ```
-
-## New Extensions in 2.0.0
-
-### Validation Extension Configuration
+### Validation Extension
 
 ```csharp
 using WorkflowForge.Extensions.Validation;
-
-// Add validation middleware to foundry
-var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
+using FluentValidation;
 
 // Define validator
 public class OrderValidator : AbstractValidator<Order>
 {
     public OrderValidator()
     {
-        RuleFor(x => x.CustomerId).NotEmpty();
-        RuleFor(x => x.Amount).GreaterThan(0);
+        RuleFor(x => x.CustomerId).NotEmpty().WithMessage("Customer ID required");
+        RuleFor(x => x.Amount).GreaterThan(0).WithMessage("Amount must be positive");
+        RuleFor(x => x.Items).NotEmpty().WithMessage("Order must have items");
     }
 }
 
 // Configure validation
-foundry.SetProperty("Order", new Order { /* ... */ });
-foundry.AddValidation(
-    new OrderValidator(),
+using var foundry = WorkflowForge.CreateFoundry("ValidatedWorkflow");
+foundry.SetProperty("Order", order);
+
+var validator = new OrderValidator();
+foundry.AddMiddleware(new ValidationMiddleware<Order>(
+    validator,
     f => f.GetPropertyOrDefault<Order>("Order"),
-    throwOnFailure: true);  // Throw exception on validation failure
+    throwOnFailure: true  // Throw ValidationException on failure
+));
 
-// With ASP.NET Core DI
-services.AddSingleton<IValidator<Order>, OrderValidator>();
-
-// In controller/service
-var validator = serviceProvider.GetRequiredService<IValidator<Order>>();
-foundry.AddValidation(validator, f => f.GetPropertyOrDefault<Order>("Order"));
+// Validation runs before every operation
+await smith.ForgeAsync(workflow, foundry);
 ```
 
-**Zero version conflicts**: Uses Costura.Fody to embed FluentValidation - your app can use ANY version!
+**Dependency Isolation**: FluentValidation is embedded. Your app can use any FluentValidation version without conflicts.
 
-### Audit Extension Configuration
+### Audit Extension
 
 ```csharp
 using WorkflowForge.Extensions.Audit;
 
 // Implement audit provider
-public class DatabaseAuditProvider : IAuditProvider
+public class FileAuditProvider : IAuditProvider
 {
-    private readonly DbContext _dbContext;
+    private readonly string _logPath;
+    private readonly SemaphoreSlim _writeLock = new(1, 1);
     
-    public DatabaseAuditProvider(DbContext dbContext)
+    public FileAuditProvider(string logPath)
     {
-        _dbContext = dbContext;
+        _logPath = logPath;
     }
     
     public async Task WriteAuditEntryAsync(
         AuditEntry entry,
         CancellationToken cancellationToken = default)
     {
-        await _dbContext.AuditLog.AddAsync(entry, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _writeLock.WaitAsync(cancellationToken);
+        try
+        {
+            var json = JsonSerializer.Serialize(entry);
+            await File.AppendAllTextAsync(_logPath, json + Environment.NewLine, cancellationToken);
+        }
+        finally
+        {
+            _writeLock.Release();
+        }
     }
     
     public Task FlushAsync(CancellationToken cancellationToken = default)
     {
-        return _dbContext.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 }
 
 // Configure audit logging
-var auditProvider = new DatabaseAuditProvider(dbContext);
-foundry.EnableAuditLogging(
+var auditProvider = new FileAuditProvider("audit.log");
+var auditLogger = new AuditLogger(
     auditProvider,
     userId: "user@example.com",
-    sessionId: Guid.NewGuid().ToString());
+    sessionId: Guid.NewGuid().ToString(),
+    timeProvider: new SystemTimeProvider());
 
-// With ASP.NET Core DI
-services.AddSingleton<IAuditProvider, DatabaseAuditProvider>();
+// Subscribe to events
+smith.WorkflowStarted += async (s, e) => 
+    await auditLogger.LogWorkflowStartedAsync(e);
+smith.WorkflowCompleted += async (s, e) => 
+    await auditLogger.LogWorkflowCompletedAsync(e);
+foundry.OperationCompleted += async (s, e) => 
+    await auditLogger.LogOperationCompletedAsync(e);
 
-// In controller/service
-var auditProvider = serviceProvider.GetRequiredService<IAuditProvider>();
-var userId = User.Identity.Name;
-var sessionId = HttpContext.Session.Id;
-foundry.EnableAuditLogging(auditProvider, userId, sessionId);
+await smith.ForgeAsync(workflow, foundry);
 ```
 
-**Zero dependencies**: Pure WorkflowForge extension - bring your own storage implementation!
+**Zero Dependencies**: Pure WorkflowForge extension. Implement `IAuditProvider` for your storage.
 
-### Configuration Best Practices for 2.0.0
+### Persistence Extensions
 
-1. **Extension Isolation**: Extensions with embedded dependencies (Validation, Serilog, Polly, OpenTelemetry) won't conflict with your app's versions
-2. **Event Interfaces**: Use the new 3-tier event model (`IWorkflowLifecycleEvents`, `IOperationLifecycleEvents`, `ICompensationLifecycleEvents`)
-3. **ISystemTimeProvider**: Inject via DI for testability
-4. **Middleware Ordering**: Validation → Timing → Error Handling → Business Logic
-5. **Audit Providers**: Implement `IAuditProvider` for your storage (database, file, cloud)
+```csharp
+using WorkflowForge.Extensions.Persistence.InMemory;
+using WorkflowForge.Extensions.Persistence.SQLite;
 
-## Related Documentation
+// In-memory persistence (development/testing)
+var inMemoryProvider = new InMemoryPersistenceProvider();
+await inMemoryProvider.SaveWorkflowStateAsync(executionId, state);
+var loadedState = await inMemoryProvider.LoadWorkflowStateAsync(executionId);
 
-- **[Getting Started](getting-started.md)** - Basic configuration setup
-- **[Architecture](architecture.md)** - Configuration architecture & Costura explanation
-- **[Extensions](extensions.md)** - All 10 extensions with zero-conflict details
-- **[Validation Extension](../src/extensions/WorkflowForge.Extensions.Validation/README.md)** - Detailed validation configuration
-- **[Audit Extension](../src/extensions/WorkflowForge.Extensions.Audit/README.md)** - Detailed audit configuration
+// SQLite persistence (production)
+var sqliteProvider = new SQLitePersistenceProvider("workflows.db");
+await sqliteProvider.SaveWorkflowStateAsync(executionId, state);
+var loadedState = await sqliteProvider.LoadWorkflowStateAsync(executionId);
+
+// Use in workflow
+foundry.SetProperty("PersistenceProvider", sqliteProvider);
+
+// Save checkpoints during execution
+var checkpointOp = new DelegateWorkflowOperation(async (foundry, ct) =>
+{
+    var provider = foundry.GetPropertyOrDefault<IPersistenceProvider>("PersistenceProvider");
+    var state = new WorkflowState { /* ... */ };
+    await provider.SaveWorkflowStateAsync(foundry.ExecutionId, state, ct);
+});
+```
+
+**Zero Dependencies (InMemory)**: Pure WorkflowForge extension.  
+**Dependency Isolation (SQLite)**: Microsoft.Data.Sqlite embedded.
+
+### Recovery Extension
+
+```csharp
+using WorkflowForge.Extensions.Persistence.Recovery;
+using WorkflowForge.Extensions.Persistence.Abstractions;
+
+// Configure recovery policy
+var policy = new RecoveryPolicy
+{
+    MaxAttempts = 3,
+    BaseDelay = TimeSpan.FromSeconds(1),
+    UseExponentialBackoff = true
+};
+
+// Create recovery coordinator
+var provider = new SQLitePersistenceProvider("workflows.db");
+var coordinator = new RecoveryCoordinator(provider, policy);
+
+// Resume from last checkpoint
+await coordinator.ResumeAsync(
+    foundryFactory: () => WorkflowForge.CreateFoundry("OrderService"),
+    workflowFactory: BuildProcessOrderWorkflow,
+    foundryKey: stableFoundryKey,
+    workflowKey: stableWorkflowKey);
+
+// Or use extension method for automatic recovery
+await smith.ForgeWithRecoveryAsync(
+    workflow,
+    foundry,
+    provider,
+    foundryKey,
+    workflowKey,
+    policy);
+```
+
+**Recovery Features**:
+- Resume from last checkpoint
+- Exponential backoff for retry
+- Skip already-completed operations
+- Catalog-based batch recovery
+
+**Zero Dependencies**: Pure WorkflowForge extension built on Persistence abstractions.
+
+### Health Checks Extension
+
+```csharp
+using WorkflowForge.Extensions.Observability.HealthChecks;
+
+// Configure health checks
+var healthCheck = new WorkflowHealthCheck(
+    timeProvider: new SystemTimeProvider(),
+    unhealthyThresholdSeconds: 30);
+
+// Register workflow execution
+smith.WorkflowStarted += (s, e) => healthCheck.RecordWorkflowExecution();
+smith.WorkflowCompleted += (s, e) => healthCheck.RecordWorkflowExecution();
+
+// Check health
+var healthStatus = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+
+if (healthStatus.Status == HealthStatus.Unhealthy)
+{
+    logger.LogWarning("WorkflowForge health check failed: {Description}", 
+        healthStatus.Description);
+}
+```
+
+**Zero Dependencies**: Pure WorkflowForge extension. Implements `IHealthCheck` from Microsoft.Extensions.Diagnostics.HealthChecks (interface only, no DLL dependency).
 
 ---
 
-**WorkflowForge Configuration** - *Configure workflows for every environment* 
+## Environment Strategies
+
+### Development Environment
+
+```csharp
+public static class DevelopmentConfiguration
+{
+    public static IWorkflowFoundry CreateFoundry(string name, IServiceProvider serviceProvider)
+    {
+        var foundry = WorkflowForge.CreateFoundry(name, serviceProvider);
+        
+        // Detailed logging
+        var logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Console(outputTemplate: 
+                "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .CreateLogger();
+        foundry.UseSerilogLogger(logger);
+        
+        // Performance monitoring
+        foundry.AddMiddleware(new TimingMiddleware(logger));
+        
+        // Event logging
+        var smith = WorkflowForge.CreateSmith();
+        smith.WorkflowStarted += (s, e) => 
+            Console.WriteLine($"Started: {e.WorkflowName}");
+        smith.WorkflowCompleted += (s, e) => 
+            Console.WriteLine($"Completed in {e.Duration.TotalMilliseconds}ms");
+        
+        return foundry;
+    }
+}
+```
+
+### Production Environment
+
+```csharp
+public static class ProductionConfiguration
+{
+    public static IWorkflowFoundry CreateFoundry(
+        string name, 
+        IServiceProvider serviceProvider,
+        IConfiguration configuration)
+    {
+        var foundry = WorkflowForge.CreateFoundry(name, serviceProvider);
+        
+        // Production logging (file + structured)
+        var logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .WriteTo.File(
+                "/var/log/workflowforge/workflow-.txt",
+                rollingInterval: RollingInterval.Hour,
+                retainedFileCountLimit: 168)
+            .Enrich.FromLogContext()
+            .Enrich.WithMachineName()
+            .CreateLogger();
+        foundry.UseSerilogLogger(logger);
+        
+        // Resilience policies
+        var retryPolicy = Policy
+            .Handle<Exception>()
+            .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+        
+        // Validation (if order processing)
+        if (configuration.GetValue<bool>("EnableValidation"))
+        {
+            var validator = serviceProvider.GetRequiredService<IValidator<Order>>();
+            foundry.AddMiddleware(new ValidationMiddleware<Order>(
+                validator,
+                f => f.GetPropertyOrDefault<Order>("Order")));
+        }
+        
+        // Audit logging
+        var auditProvider = serviceProvider.GetRequiredService<IAuditProvider>();
+        var auditLogger = new AuditLogger(
+            auditProvider,
+            userId: "system",
+            sessionId: Guid.NewGuid().ToString(),
+            timeProvider: serviceProvider.GetRequiredService<ISystemTimeProvider>());
+        
+        var smith = WorkflowForge.CreateSmith();
+        smith.WorkflowStarted += async (s, e) => 
+            await auditLogger.LogWorkflowStartedAsync(e);
+        smith.WorkflowCompleted += async (s, e) => 
+            await auditLogger.LogWorkflowCompletedAsync(e);
+        
+        return foundry;
+    }
+}
+```
+
+### Production Environment
+
+```csharp
+public static class ProductionConfiguration
+{
+    public static IWorkflowFoundry CreateFoundry(
+        string name,
+        IServiceProvider serviceProvider,
+        IConfiguration configuration,
+        TracerProvider tracerProvider)
+    {
+        var foundry = WorkflowForge.CreateFoundry(name, serviceProvider);
+        
+        // Production logging (Splunk/ELK)
+        var logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .WriteTo.Splunk(
+                configuration["Splunk:Host"],
+                configuration.GetValue<int>("Splunk:Port"),
+                configuration["Splunk:Token"])
+            .Enrich.FromLogContext()
+            .Enrich.WithMachineName()
+            .Enrich.WithCorrelationId()
+            .CreateLogger();
+        foundry.UseSerilogLogger(logger);
+        
+        // Distributed tracing
+        var tracer = tracerProvider.GetTracer("WorkflowForge");
+        
+        // Comprehensive resilience
+        var resiliencePipeline = new ResiliencePipelineBuilder()
+            .AddRetry(new RetryStrategyOptions { MaxRetryAttempts = 5 })
+            .AddCircuitBreaker(new CircuitBreakerStrategyOptions 
+            { 
+                FailureRatio = 0.5, 
+                BreakDuration = TimeSpan.FromMinutes(1) 
+            })
+            .AddTimeout(TimeSpan.FromSeconds(30))
+            .Build();
+        
+        // Full audit trail
+        var auditProvider = serviceProvider.GetRequiredService<IAuditProvider>();
+        var auditLogger = new AuditLogger(
+            auditProvider,
+            userId: configuration["Audit:SystemUserId"],
+            sessionId: Guid.NewGuid().ToString(),
+            timeProvider: serviceProvider.GetRequiredService<ISystemTimeProvider>());
+        
+        // Health checks
+        var healthCheck = serviceProvider.GetRequiredService<WorkflowHealthCheck>();
+        
+        var smith = WorkflowForge.CreateSmith();
+        smith.WorkflowStarted += async (s, e) =>
+        {
+            await auditLogger.LogWorkflowStartedAsync(e);
+            healthCheck.RecordWorkflowExecution();
+        };
+        
+        return foundry;
+    }
+}
+```
+
+---
+
+## Best Practices
+
+### 1. Use Service Provider for Dependencies
+
+```csharp
+// Good: DI-based
+public class OrderOperation : WorkflowOperationBase
+{
+    public override async Task<object?> ForgeAsync(
+        IWorkflowFoundry foundry,
+        CancellationToken cancellationToken = default)
+    {
+        // Get service from foundry's service provider
+        var orderService = foundry.ServiceProvider
+            .GetRequiredService<IOrderService>();
+        
+        var order = foundry.GetPropertyOrDefault<Order>("Order");
+        await orderService.ProcessAsync(order, cancellationToken);
+        
+        return null;
+    }
+}
+
+// Bad: Static dependencies
+public class OrderOperation : WorkflowOperationBase
+{
+    private static readonly HttpClient _httpClient = new(); // Don't do this
+    
+    // ...
+}
+```
+
+### 2. Configure Middleware in Order
+
+```csharp
+// Correct order: Validation → Timing → Error Handling → Business Logic
+foundry.AddMiddleware(new ValidationMiddleware<Order>(...));  // First
+foundry.AddMiddleware(new TimingMiddleware(...));             // Second
+foundry.AddMiddleware(new ErrorHandlingMiddleware(...));      // Third
+// Operations execute last
+```
+
+### 3. Use Properties for Context, Not Input Data
+
+```csharp
+// Good: Context in properties
+foundry.SetProperty("OrderId", orderId);
+foundry.SetProperty("CustomerId", customerId);
+foundry.SetProperty("CorrelationId", correlationId);
+
+var workflow = WorkflowForge.CreateWorkflow("OrderWorkflow")
+    .AddOperation(new FetchOrderOperation())    // Reads OrderId from properties
+    .AddOperation(new ProcessPaymentOperation()) // Reads order data from properties
+    .Build();
+
+// Bad: Passing data as input (only use for generic operations)
+var data = new { OrderId = orderId, CustomerId = customerId };
+await operation.ForgeAsync(data, foundry, cancellationToken); // Avoid unless IWorkflowOperation<TInput, TOutput>
+```
+
+### 4. Dispose Resources Properly
+
+```csharp
+// Good: Using statement
+using var foundry = WorkflowForge.CreateFoundry("MyWorkflow");
+using var smith = WorkflowForge.CreateSmith();
+await smith.ForgeAsync(workflow, foundry);
+// Automatic disposal
+
+// Also good: Try-finally
+var foundry = WorkflowForge.CreateFoundry("MyWorkflow");
+try
+{
+    await smith.ForgeAsync(workflow, foundry);
+}
+finally
+{
+    foundry.Dispose();
+}
+```
+
+### 5. Inject ISystemTimeProvider for Testability
+
+```csharp
+// Good: Inject time provider
+public class TimeSensitiveOperation : WorkflowOperationBase
+{
+    private readonly ISystemTimeProvider _timeProvider;
+    
+    public TimeSensitiveOperation(ISystemTimeProvider timeProvider)
+    {
+        _timeProvider = timeProvider;
+    }
+    
+    public override async Task<object?> ForgeAsync(
+        IWorkflowFoundry foundry,
+        CancellationToken cancellationToken = default)
+    {
+        var now = _timeProvider.UtcNow; // Testable!
+        // ...
+    }
+}
+
+// Bad: Direct DateTime usage
+var now = DateTime.UtcNow; // Can't mock in tests
+```
+
+### 6. Use Events for Observability, Not Control Flow
+
+```csharp
+// Good: Events for monitoring
+smith.WorkflowCompleted += (s, e) => _metrics.RecordDuration(e.Duration);
+
+// Bad: Events for control flow
+smith.WorkflowCompleted += (s, e) => 
+{
+    // Don't do complex business logic in event handlers
+    StartAnotherWorkflow(); // Use operations instead
+};
+```
+
+### 7. Version Your Workflows
+
+```csharp
+// Good: Include version in workflow name
+var workflow = WorkflowForge.CreateWorkflow("OrderProcessing_v2")
+    .AddOperation(new ValidateOrderV2())
+    .AddOperation(new ProcessPaymentV2())
+    .Build();
+
+// Track version in properties
+foundry.SetProperty("WorkflowVersion", "2.0");
+```
+
+### 8. Test with Mock Implementations
+
+```csharp
+// Create testable time provider
+public class MockTimeProvider : ISystemTimeProvider
+{
+    private DateTimeOffset _currentTime;
+    
+    public DateTimeOffset UtcNow => _currentTime;
+    
+    public void SetTime(DateTimeOffset time) => _currentTime = time;
+    public void Advance(TimeSpan duration) => _currentTime += duration;
+}
+
+// Use in tests
+var mockTime = new MockTimeProvider();
+mockTime.SetTime(new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero));
+
+var operation = new TimeSensitiveOperation(mockTime);
+// Test with controlled time
+```
+
+---
+
+## Next Steps
+
+- **[Getting Started](getting-started.md)** - Initial setup and first workflow
+- **[Architecture](architecture.md)** - Understanding the configuration model
+- **[Operations](operations.md)** - Creating configurable operations
+- **[Events](events.md)** - Event-based configuration
+- **[Extensions](extensions.md)** - All 10 extensions with configuration examples
+- **[Samples Guide](samples-guide.md)** - 24 practical configuration examples
+
+---
+
+[Back to Documentation Hub](README.md)

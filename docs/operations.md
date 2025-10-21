@@ -1,15 +1,33 @@
-# Building Workflow Operations
+# WorkflowForge Operations Guide
 
-This guide covers creating custom workflow operations in WorkflowForge, from simple inline operations to sophisticated robust components.
+<p align="center">
+  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
+</p>
 
-## Operation Fundamentals
+Complete guide to creating and using operations in WorkflowForge.
 
-### The IWorkflowOperation Interface
+---
 
-All operations implement the `IWorkflowOperation` interface:
+## Table of Contents
+
+- [Overview](#overview)
+- [Built-in Operations](#built-in-operations)
+- [Creating Custom Operations](#creating-custom-operations)
+- [Operation Patterns](#operation-patterns)
+- [Data Flow Between Operations](#data-flow-between-operations)
+- [Compensation and Rollback](#compensation-and-rollback)
+- [Best Practices](#best-practices)
+
+---
+
+## Overview
+
+Operations are the fundamental building blocks of WorkflowForge workflows. Each operation represents a discrete task that transforms data, performs side effects, or makes decisions.
+
+### IWorkflowOperation Interface
 
 ```csharp
-public interface IWorkflowOperation
+public interface IWorkflowOperation : IDisposable
 {
     Guid Id { get; }
     string Name { get; }
@@ -20,802 +38,661 @@ public interface IWorkflowOperation
 }
 ```
 
-### Key Properties
+### Key Concepts
 
-- **Id**: Unique identifier for tracking and logging
-- **Name**: Human-readable name for debugging and monitoring
-- **SupportsRestore**: Whether the operation can be rolled back (compensation)
+- **ForgeAsync**: Main execution method
+- **RestoreAsync**: Compensation/rollback logic (optional)
+- **SupportsRestore**: Indicates if operation can be rolled back
+- **Foundry**: Provides execution context, logging, and services
 
-### Key Methods
+---
 
-- **ForgeAsync**: Execute the operation with input data
-- **RestoreAsync**: Rollback the operation (compensation logic)
+## Built-in Operations
 
-## Operation Types
+WorkflowForge provides 7 built-in operation types:
 
-### 1. Inline Operations
+### 1. DelegateWorkflowOperation
 
-Quick operations defined using lambdas:
+Lambda-based operations for quick, inline logic.
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
-    .WithName("SimpleProcessing")
-    .AddOperation("ProcessData", async (input, foundry, ct) =>
-    {
-        var data = (string)input!;
-        foundry.Logger.LogInformation("Processing: {Data}", data);
+    .WithName("ProcessOrder")
+    .AddOperation("ValidateOrder", async (input, foundry, ct) => {
+        var order = (Order)input;
+        foundry.Logger.LogInformation("Validating order {OrderId}", order.Id);
         
-        // Simple processing logic
-        await Task.Delay(100, ct);
-        
-        return data.ToUpperInvariant();
+        if (order.Amount <= 0)
+            throw new InvalidOperationException("Invalid order amount");
+            
+        return order;
     })
     .Build();
 ```
 
-### 2. Class-Based Operations
+**When to Use**: Simple operations, prototyping, one-off logic
 
-Reusable operations with full lifecycle support:
+**Features**:
+- Inline lambda syntax
+- Quick to write
+- Good for simple transformations
+
+### 2. ActionWorkflowOperation
+
+Side-effect operations that don't return values.
 
 ```csharp
-public class EmailNotificationOperation : IWorkflowOperation
-{
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "SendEmailNotification";
-    public bool SupportsRestore => true;
-
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        var emailRequest = (EmailRequest)inputData!;
-        
-        foundry.Logger.LogInformation("Sending email to {Recipient}", emailRequest.Recipient);
-        
-        // Send email logic
-         var emailService = (IEmailService)foundry.ServiceProvider!.GetService(typeof(IEmailService))!;
-        var messageId = await emailService.SendAsync(emailRequest, cancellationToken);
-        
-        // Store message ID for potential rollback
-         foundry.Properties["EmailMessageId"] = messageId;
-        
-        foundry.Logger.LogInformation("Email sent successfully, MessageId: {MessageId}", messageId);
-        
-        return new EmailResponse
-        {
-            MessageId = messageId,
-            SentAt = DateTime.UtcNow,
-            Success = true
-        };
-    }
-
-    public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        if (foundry.Properties.TryGetValue("EmailMessageId", out var msg) && msg is string messageId && !string.IsNullOrEmpty(messageId))
-        {
-            foundry.Logger.LogWarning("Attempting to recall email {MessageId}", messageId);
-            
-            var emailService = (IEmailService)foundry.ServiceProvider!.GetService(typeof(IEmailService))!;
-            await emailService.RecallAsync(messageId, cancellationToken);
-            
-            foundry.Logger.LogInformation("Email recall completed for {MessageId}", messageId);
-        }
-    }
-}
+var workflow = WorkflowForge.CreateWorkflow()
+    .WithName("Notifications")
+    .AddOperation("SendEmail", async (input, foundry, ct) => {
+        var email = foundry.Properties["CustomerEmail"] as string;
+        await _emailService.SendAsync(email, "Order Confirmed");
+        foundry.Logger.LogInformation("Email sent to {Email}", email);
+    })
+    .Build();
 ```
 
-### 3. Configurable Operations
+**When to Use**: Logging, notifications, audit trails, cleanup
 
-Operations that accept configuration:
+**Features**:
+- No return value (returns input unchanged)
+- Focus on side effects
+- Clean separation of concerns
 
-```csharp
-public class HttpRequestOperation : IWorkflowOperation
-{
-    private readonly HttpRequestSettings _settings;
-    private readonly IHttpClientFactory _httpClientFactory;
+### 3. ConditionalWorkflowOperation
 
-    public HttpRequestOperation(HttpRequestSettings settings, IHttpClientFactory httpClientFactory)
-    {
-        _settings = settings;
-        _httpClientFactory = httpClientFactory;
-    }
-
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => $"HttpRequest_{_settings.Method}_{_settings.Endpoint}";
-    public bool SupportsRestore => false; // HTTP requests typically can't be undone
-
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        foundry.Logger.LogInformation("Making HTTP {Method} request to {Endpoint}", 
-            _settings.Method, _settings.Endpoint);
-
-        var httpClient = _httpClientFactory.CreateClient(_settings.ClientName);
-        
-        // Set timeout
-        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeoutCts.CancelAfter(_settings.Timeout);
-
-        HttpResponseMessage response;
-        
-        switch (_settings.Method.ToUpperInvariant())
-        {
-            case "GET":
-                response = await httpClient.GetAsync(_settings.Endpoint, timeoutCts.Token);
-                break;
-            case "POST":
-                var content = new StringContent(JsonSerializer.Serialize(inputData), Encoding.UTF8, "application/json");
-                response = await httpClient.PostAsync(_settings.Endpoint, content, timeoutCts.Token);
-                break;
-            default:
-                throw new NotSupportedException($"HTTP method {_settings.Method} is not supported");
-        }
-
-        var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-        
-        if (!response.IsSuccessStatusCode)
-        {
-            foundry.Logger.LogError("HTTP request failed: {StatusCode} {ReasonPhrase}", 
-                response.StatusCode, response.ReasonPhrase);
-            throw new HttpRequestException($"HTTP {response.StatusCode}: {response.ReasonPhrase}");
-        }
-
-        foundry.Logger.LogInformation("HTTP request completed successfully: {StatusCode}", response.StatusCode);
-        
-        return new HttpResponse
-        {
-            StatusCode = response.StatusCode,
-            Content = responseContent,
-            Headers = response.Headers.ToDictionary(h => h.Key, h => string.Join(", ", h.Value))
-        };
-    }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        // HTTP requests typically cannot be rolled back
-        foundry.Logger.LogWarning("HTTP request operation does not support rollback");
-        return Task.CompletedTask;
-    }
-}
-
-public class HttpRequestSettings
-{
-    public string Method { get; set; } = "GET";
-    public string Endpoint { get; set; } = string.Empty;
-    public string ClientName { get; set; } = "default";
-    public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
-}
-```
-
-## Advanced Operation Patterns
-
-### 1. Stateful Operations
-
-Operations that maintain state across workflow executions:
+If-then-else decision logic.
 
 ```csharp
-public class BatchProcessingOperation : IWorkflowOperation
-{
-    private readonly IBatchProcessor _processor;
-    private readonly BatchSettings _settings;
-
-    public BatchProcessingOperation(IBatchProcessor processor, BatchSettings settings)
-    {
-        _processor = processor;
-        _settings = settings;
-    }
-
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "BatchProcessing";
-    public bool SupportsRestore => true;
-
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        var items = (IEnumerable<object>)inputData!;
-        var batchId = Guid.NewGuid();
-        
-        foundry.Logger.LogInformation("Starting batch processing for {ItemCount} items, BatchId: {BatchId}", 
-            items.Count(), batchId);
-
-        // Store batch ID for tracking
-        foundry.Properties["BatchId"] = batchId;
-        foundry.Properties["ProcessedItems"] = new List<object>();
-
-        var processedItems = new List<object>();
-        var batch = new List<object>();
-
-        foreach (var item in items)
-        {
-            batch.Add(item);
-
-            if (batch.Count >= _settings.BatchSize)
-            {
-                var batchResult = await ProcessBatch(batch, foundry, cancellationToken);
-                processedItems.AddRange(batchResult);
-                
-                // Update progress
-                foundry.Properties["ProcessedItems"] = processedItems;
-                
-                batch.Clear();
-                
-                // Respect cancellation
-                cancellationToken.ThrowIfCancellationRequested();
+var workflow = WorkflowForge.CreateWorkflow()
+    .WithName("OrderProcessing")
+    .AddOperation(new ConditionalWorkflowOperation(
+        name: "CheckOrderValue",
+        condition: (input, foundry, ct) => {
+            var amount = (decimal)foundry.Properties["OrderAmount"];
+            return Task.FromResult(amount > 1000);
+        },
+        trueOperation: new DelegateWorkflowOperation(
+            "HighValueProcessing",
+            async (input, foundry, ct) => {
+                foundry.Logger.LogInformation("High-value order processing");
+                foundry.Properties["RequiresApproval"] = true;
+                return input;
             }
-        }
+        ),
+        falseOperation: new DelegateWorkflowOperation(
+            "StandardProcessing",
+            async (input, foundry, ct) => {
+                foundry.Logger.LogInformation("Standard order processing");
+                return input;
+            }
+        )
+    ))
+    .Build();
+```
 
-        // Process remaining items
-        if (batch.Any())
-        {
-            var batchResult = await ProcessBatch(batch, foundry, cancellationToken);
-            processedItems.AddRange(batchResult);
-        }
+**When to Use**: Branching logic, routing, decision points
 
-        foundry.Logger.LogInformation("Batch processing completed, BatchId: {BatchId}, ProcessedCount: {ProcessedCount}", 
-            batchId, processedItems.Count);
+**Features**:
+- Clean if-then-else semantics
+- Nested operations
+- Condition evaluation with foundry access
 
-        return new BatchResult
-        {
-            BatchId = batchId,
-            ProcessedItems = processedItems,
-            TotalProcessed = processedItems.Count
-        };
-    }
+### 4. ForEachWorkflowOperation
 
-    public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+Process collections sequentially or in parallel.
+
+```csharp
+var workflow = WorkflowForge.CreateWorkflow()
+    .WithName("ProcessOrderItems")
+    .AddOperation(new ForEachWorkflowOperation<OrderItem>(
+        name: "ProcessItems",
+        itemsSource: (input, foundry, ct) => {
+            var items = foundry.Properties["OrderItems"] as IEnumerable<OrderItem>;
+            return Task.FromResult(items);
+        },
+        itemOperation: new DelegateWorkflowOperation<OrderItem, OrderItem>(
+            "ProcessSingleItem",
+            async (item, foundry, ct) => {
+                foundry.Logger.LogInformation("Processing item {ItemId}", item.Id);
+                await _inventoryService.ReserveAsync(item.ProductId, item.Quantity);
+                item.Reserved = true;
+                return item;
+            }
+        ),
+        parallel: false  // Set to true for parallel execution
+    ))
+    .Build();
+```
+
+**When to Use**: Collection processing, batch operations, aggregations
+
+**Features**:
+- Sequential or parallel execution
+- Individual item processing
+- Results aggregation
+- Progress tracking
+
+### 5. DelayOperation
+
+Introduce async delays into workflows.
+
+```csharp
+var workflow = WorkflowForge.CreateWorkflow()
+    .WithName("PollingWorkflow")
+    .AddOperation("CheckStatus", async (input, foundry, ct) => {
+        var status = await _service.GetStatusAsync();
+        foundry.Properties["Status"] = status;
+        return status;
+    })
+    .AddOperation(new DelayOperation("WaitBeforeRetry", TimeSpan.FromSeconds(5)))
+    .AddOperation("RetryCheck", async (input, foundry, ct) => {
+        // Retry logic
+        return input;
+    })
+    .Build();
+```
+
+**When to Use**: Polling, rate limiting, scheduled delays
+
+**Features**:
+- Configurable delay duration
+- Async/await compatible
+- Cancellation token support
+
+### 6. LoggingOperation
+
+Structured logging at specific workflow points.
+
+```csharp
+var workflow = WorkflowForge.CreateWorkflow()
+    .WithName("AuditedWorkflow")
+    .AddOperation(new LoggingOperation(
+        "LogStart",
+        WorkflowForgeLogLevel.Information,
+        "Workflow started for order {OrderId}",
+        foundry => new object[] { foundry.Properties["OrderId"] }
+    ))
+    .AddOperation("ProcessOrder", async (input, foundry, ct) => {
+        // Processing logic
+        return input;
+    })
+    .AddOperation(new LoggingOperation(
+        "LogCompletion",
+        WorkflowForgeLogLevel.Information,
+        "Workflow completed successfully"
+    ))
+    .Build();
+```
+
+**When to Use**: Audit points, debugging, progress tracking
+
+**Features**:
+- Structured logging
+- Log level control
+- Property access for dynamic messages
+
+### 7. Custom Operations (WorkflowOperationBase)
+
+For complex business logic, create custom operation classes.
+
+```csharp
+public class ValidateOrderOperation : WorkflowOperationBase<Order, ValidationResult>
+{
+    private readonly IOrderValidator _validator;
+    
+    public ValidateOrderOperation(IOrderValidator validator)
     {
-        var batchId = foundry.GetPropertyOrDefault<Guid>("BatchId");
-        var processedItems = foundry.GetPropertyOrDefault<List<object>>("ProcessedItems");
-
-        if (processedItems?.Any() == true)
-        {
-            foundry.Logger.LogWarning("Rolling back batch processing, BatchId: {BatchId}, ItemCount: {ItemCount}", 
-                batchId, processedItems.Count);
-
-            await _processor.RollbackBatchAsync(batchId, processedItems, cancellationToken);
-            
-            foundry.Logger.LogInformation("Batch rollback completed, BatchId: {BatchId}", batchId);
-        }
+        _validator = validator;
     }
-
-    private async Task<IEnumerable<object>> ProcessBatch(List<object> batch, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    
+    public override string Name => "ValidateOrder";
+    public override bool SupportsRestore => false;
+    
+    public override async Task<ValidationResult> ForgeAsync(
+        Order input, 
+        IWorkflowFoundry foundry, 
+        CancellationToken cancellationToken)
     {
-        foundry.Logger.LogDebug("Processing batch of {BatchSize} items", batch.Count);
+        foundry.Logger.LogInformation("Validating order {OrderId}", input.Id);
         
-        var result = await _processor.ProcessBatchAsync(batch, cancellationToken);
+        var result = await _validator.ValidateAsync(input, cancellationToken);
         
-        foundry.Logger.LogDebug("Batch processing completed, ResultCount: {ResultCount}", result.Count());
+        foundry.Properties["ValidationResult"] = result;
         
         return result;
     }
 }
+
+// Usage
+var workflow = WorkflowForge.CreateWorkflow()
+    .WithName("TypeSafeWorkflow")
+    .AddOperation(new ValidateOrderOperation(orderValidator))
+    .Build();
 ```
 
-### 2. Conditional Operations
+**When to Use**: Complex business logic, testable operations, reusable components
 
-Operations that execute conditionally:
+**Features**:
+- Type safety
+- Dependency injection
+- Unit testable
+- Clean separation of concerns
+
+---
+
+## Creating Custom Operations
+
+### Method 1: Inherit from WorkflowOperationBase
+
+For untyped operations:
 
 ```csharp
-public class ConditionalWorkflowOperation : IWorkflowOperation
+public class CustomOperation : WorkflowOperationBase
 {
-    private readonly Func<object?, IWorkflowFoundry, bool> _condition;
-    private readonly IWorkflowOperation _trueOperation;
-    private readonly IWorkflowOperation? _falseOperation;
-
-    public ConditionalWorkflowOperation(
-        Func<object?, IWorkflowFoundry, bool> condition,
-        IWorkflowOperation trueOperation,
-        IWorkflowOperation? falseOperation = null)
+    public override string Name => "CustomOperation";
+    public override bool SupportsRestore => true;
+    
+    public override async Task<object?> ForgeAsync(
+        object? inputData, 
+        IWorkflowFoundry foundry, 
+        CancellationToken cancellationToken)
     {
-        _condition = condition;
-        _trueOperation = trueOperation;
-        _falseOperation = falseOperation;
-    }
-
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "ConditionalOperation";
-    public bool SupportsRestore => true;
-
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        var conditionResult = _condition(inputData, foundry);
+        // Your logic here
+        foundry.Logger.LogInformation("Executing custom operation");
         
-        foundry.Logger.LogInformation("Condition evaluated to: {ConditionResult}", conditionResult);
-        foundry.Properties["ConditionResult"] = conditionResult;
-
-        if (conditionResult)
-        {
-            foundry.Properties["ExecutedOperation"] = "True";
-            return await _trueOperation.ForgeAsync(inputData, foundry, cancellationToken);
-        }
-        else if (_falseOperation != null)
-        {
-            foundry.Properties["ExecutedOperation"] = "False";
-            return await _falseOperation.ForgeAsync(inputData, foundry, cancellationToken);
-        }
-        else
-        {
-            foundry.Properties["ExecutedOperation"] = "None";
-            foundry.Logger.LogInformation("Condition was false and no false operation provided");
-            return inputData;
-        }
-    }
-
-    public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        var executedOperation = foundry.GetPropertyOrDefault<string>("ExecutedOperation");
+        // Access foundry properties
+        foundry.Properties["Result"] = "Success";
         
-        switch (executedOperation)
-        {
-            case "True" when _trueOperation.SupportsRestore:
-                await _trueOperation.RestoreAsync(outputData, foundry, cancellationToken);
-                break;
-            case "False" when _falseOperation?.SupportsRestore == true:
-                await _falseOperation.RestoreAsync(outputData, foundry, cancellationToken);
-                break;
-            default:
-                foundry.Logger.LogInformation("No restoration needed for conditional operation");
-                break;
-        }
+        // Return result
+        return inputData;
+    }
+    
+    public override async Task RestoreAsync(
+        object? outputData, 
+        IWorkflowFoundry foundry, 
+        CancellationToken cancellationToken)
+    {
+        // Compensation logic
+        foundry.Logger.LogInformation("Rolling back custom operation");
+        foundry.Properties.TryRemove("Result", out _);
     }
 }
 ```
 
-### 3. Parallel Operations
+### Method 2: Inherit from WorkflowOperationBase<TInput, TOutput>
 
-Operations that execute multiple tasks in parallel:
+For typed operations:
 
 ```csharp
-public class ParallelWorkflowOperation : IWorkflowOperation
+public class ProcessOrderOperation : WorkflowOperationBase<Order, ProcessResult>
 {
-    private readonly IEnumerable<IWorkflowOperation> _operations;
-    private readonly ParallelExecutionSettings _settings;
-
-    public ParallelWorkflowOperation(IEnumerable<IWorkflowOperation> operations, ParallelExecutionSettings settings)
+    private readonly IOrderService _orderService;
+    
+    public ProcessOrderOperation(IOrderService orderService)
     {
-        _operations = operations;
-        _settings = settings;
+        _orderService = orderService;
     }
-
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "ParallelExecution";
-    public bool SupportsRestore => true;
-
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    
+    public override string Name => "ProcessOrder";
+    public override bool SupportsRestore => true;
+    
+    public override async Task<ProcessResult> ForgeAsync(
+        Order input, 
+        IWorkflowFoundry foundry, 
+        CancellationToken cancellationToken)
     {
-        foundry.Logger.LogInformation("Starting parallel execution of {OperationCount} operations", _operations.Count());
+        var result = await _orderService.ProcessAsync(input, cancellationToken);
+        
+        // Store for restoration
+        foundry.Properties["ProcessedOrderId"] = result.OrderId;
+        
+        return result;
+    }
+    
+    public override async Task RestoreAsync(
+        ProcessResult output, 
+        IWorkflowFoundry foundry, 
+        CancellationToken cancellationToken)
+    {
+        var orderId = (string)foundry.Properties["ProcessedOrderId"];
+        await _orderService.CancelAsync(orderId, cancellationToken);
+    }
+}
+```
 
-        var semaphore = new SemaphoreSlim(_settings.MaxConcurrency, _settings.MaxConcurrency);
-        var completedOperations = new ConcurrentBag<(IWorkflowOperation Operation, object? Result)>();
-        var exceptions = new ConcurrentBag<Exception>();
+---
 
-        var tasks = _operations.Select(async operation =>
-        {
-            await semaphore.WaitAsync(cancellationToken);
-            try
-            {
-                foundry.Logger.LogDebug("Starting operation: {OperationName}", operation.Name);
-                
-                var result = await operation.ForgeAsync(inputData, foundry, cancellationToken);
-                completedOperations.Add((operation, result));
-                
-                foundry.Logger.LogDebug("Completed operation: {OperationName}", operation.Name);
-            }
-            catch (Exception ex)
-            {
-                foundry.Logger.LogError(ex, "Operation failed: {OperationName}", operation.Name);
-                exceptions.Add(ex);
-                
-                if (_settings.FailFast)
-                {
-                    throw;
-                }
-            }
-            finally
-            {
-                semaphore.Release();
-            }
-        });
+## Operation Patterns
 
-        try
-        {
-            await Task.WhenAll(tasks);
-        }
-        catch when (!_settings.FailFast)
-        {
-            // Continue if not fail-fast
-        }
+### Pattern 1: Chain of Transformations
 
-        // Store completed operations for potential rollback
-        foundry.Properties["CompletedOperations"] = completedOperations.ToList();
+Each operation transforms data and passes it to the next.
 
-        if (exceptions.Any() && _settings.FailFast)
-        {
-            throw new AggregateException("Parallel operation failed", exceptions);
-        }
+```csharp
+var workflow = WorkflowForge.CreateWorkflow()
+    .WithName("DataPipeline")
+    .AddOperation("LoadData", async (input, foundry, ct) => {
+        var data = await _repository.LoadAsync();
+        foundry.Properties["RawData"] = data;
+        return data;
+    })
+    .AddOperation("TransformData", async (input, foundry, ct) => {
+        var raw = foundry.Properties["RawData"] as RawData;
+        var transformed = Transform(raw);
+        foundry.Properties["TransformedData"] = transformed;
+        return transformed;
+    })
+    .AddOperation("SaveData", async (input, foundry, ct) => {
+        var data = foundry.Properties["TransformedData"] as TransformedData;
+        await _repository.SaveAsync(data);
+        return data;
+    })
+    .Build();
+```
 
-        foundry.Logger.LogInformation("Parallel execution completed. Success: {SuccessCount}, Failed: {FailedCount}", 
-            completedOperations.Count, exceptions.Count);
+### Pattern 2: Aggregation
 
-        return new ParallelExecutionResult
-        {
-            Results = completedOperations.ToDictionary(x => x.Operation.Name, x => x.Result),
-            SuccessCount = completedOperations.Count,
-            FailureCount = exceptions.Count,
-            Exceptions = exceptions.ToList()
+Collect results from multiple operations.
+
+```csharp
+var workflow = WorkflowForge.CreateWorkflow()
+    .WithName("Aggregation")
+    .AddOperation("FetchUserData", async (input, foundry, ct) => {
+        var user = await _userService.GetAsync(userId);
+        foundry.Properties["User"] = user;
+        return input;
+    })
+    .AddOperation("FetchOrderData", async (input, foundry, ct) => {
+        var orders = await _orderService.GetForUserAsync(userId);
+        foundry.Properties["Orders"] = orders;
+        return input;
+    })
+    .AddOperation("AggregateResults", async (input, foundry, ct) => {
+        var user = foundry.Properties["User"] as User;
+        var orders = foundry.Properties["Orders"] as List<Order>;
+        
+        var result = new AggregatedData {
+            User = user,
+            Orders = orders,
+            TotalSpent = orders.Sum(o => o.Amount)
         };
-    }
+        
+        return result;
+    })
+    .Build();
+```
 
-    public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        var completedOperations = foundry.GetPropertyOrDefault<List<(IWorkflowOperation Operation, object? Result)>>("CompletedOperations");
+### Pattern 3: Conditional Routing
 
-        if (completedOperations?.Any() == true)
-        {
-            foundry.Logger.LogWarning("Rolling back {OperationCount} completed operations", completedOperations.Count);
+Route workflow based on runtime conditions.
 
-            // Rollback in reverse order
-            var rollbackTasks = completedOperations
-                .Where(x => x.Operation.SupportsRestore)
-                .Reverse()
-                .Select(async x =>
-                {
-                    try
-                    {
-                        await x.Operation.RestoreAsync(x.Result, foundry, cancellationToken);
-                        foundry.Logger.LogDebug("Rolled back operation: {OperationName}", x.Operation.Name);
-                    }
-                    catch (Exception ex)
-                    {
-                        foundry.Logger.LogError(ex, "Failed to rollback operation: {OperationName}", x.Operation.Name);
-                    }
-                });
+```csharp
+var workflow = WorkflowForge.CreateWorkflow()
+    .WithName("ConditionalRouting")
+    .AddOperation("ClassifyRequest", async (input, foundry, ct) => {
+        var request = input as Request;
+        foundry.Properties["RequestType"] = request.Type;
+        return input;
+    })
+    .AddOperation(new ConditionalWorkflowOperation(
+        "RouteByType",
+        (input, foundry, ct) => {
+            var type = (RequestType)foundry.Properties["RequestType"];
+            return Task.FromResult(type == RequestType.Premium);
+        },
+        trueOperation: new DelegateWorkflowOperation(
+            "PremiumProcessing",
+            async (input, foundry, ct) => { /* Premium logic */ return input; }
+        ),
+        falseOperation: new DelegateWorkflowOperation(
+            "StandardProcessing",
+            async (input, foundry, ct) => { /* Standard logic */ return input; }
+        )
+    ))
+    .Build();
+```
 
-            await Task.WhenAll(rollbackTasks);
-            foundry.Logger.LogInformation("Parallel operation rollback completed");
-        }
-    }
-}
+### Pattern 4: Fork-Join
 
-public class ParallelExecutionSettings
+Process items in parallel then join results.
+
+```csharp
+var workflow = WorkflowForge.CreateWorkflow()
+    .WithName("ParallelProcessing")
+    .AddOperation(new ForEachWorkflowOperation<Item>(
+        "ProcessInParallel",
+        (input, foundry, ct) => Task.FromResult(items),
+        new DelegateWorkflowOperation<Item, Result>(
+            "ProcessItem",
+            async (item, foundry, ct) => await ProcessAsync(item)
+        ),
+        parallel: true  // Parallel execution
+    ))
+    .AddOperation("JoinResults", async (input, foundry, ct) => {
+        var results = foundry.Properties["ProcessInParallel_Results"] as List<Result>;
+        var aggregated = Aggregate(results);
+        return aggregated;
+    })
+    .Build();
+```
+
+---
+
+## Data Flow Between Operations
+
+### Primary: Dictionary-Based (Recommended)
+
+Store all workflow data in `foundry.Properties`:
+
+```csharp
+// Operation 1: Store data
+foundry.Properties["CustomerId"] = customerId;
+foundry.Properties["OrderDate"] = DateTime.UtcNow;
+foundry.Properties["Items"] = orderItems;
+
+// Operation 2: Retrieve data
+var customerId = (string)foundry.Properties["CustomerId"];
+var orderDate = (DateTime)foundry.Properties["OrderDate"];
+var items = foundry.Properties["Items"] as List<OrderItem>;
+```
+
+**Advantages**:
+- Flexible - add/remove properties dynamically
+- No type constraints
+- Easy debugging
+
+**Best Practices**:
+- Use consistent key names
+- Store primitive types or serializable objects
+- Consider using constants for key names
+
+### Secondary: Type-Safe Input/Output
+
+Pass data directly between typed operations:
+
+```csharp
+// This pattern chains operations with type safety
+var result1 = await operation1.ForgeAsync(input, foundry, ct);   // Returns Order
+var result2 = await operation2.ForgeAsync(result1, foundry, ct); // Takes Order, returns ValidationResult
+```
+
+**Advantages**:
+- Compile-time type safety
+- IntelliSense support
+- Clear contracts
+
+**Best Practices**:
+- Use for operations with stable contracts
+- Document expected input/output types
+- Consider immutable types for safety
+
+---
+
+## Compensation and Rollback
+
+### Implementing Compensation
+
+```csharp
+public class CreateOrderOperation : WorkflowOperationBase
 {
-    public int MaxConcurrency { get; set; } = Environment.ProcessorCount;
-    public bool FailFast { get; set; } = true;
+    public override bool SupportsRestore => true;
+    
+    public override async Task<object?> ForgeAsync(
+        object? inputData, 
+        IWorkflowFoundry foundry, 
+        CancellationToken cancellationToken)
+    {
+        var orderId = await _orderService.CreateAsync();
+        
+        // Store for potential rollback
+        foundry.Properties["CreatedOrderId"] = orderId;
+        foundry.Logger.LogInformation("Order {OrderId} created", orderId);
+        
+        return orderId;
+    }
+    
+    public override async Task RestoreAsync(
+        object? outputData, 
+        IWorkflowFoundry foundry, 
+        CancellationToken cancellationToken)
+    {
+        var orderId = (string)foundry.Properties["CreatedOrderId"];
+        await _orderService.DeleteAsync(orderId);
+        foundry.Logger.LogInformation("Order {OrderId} rolled back", orderId);
+    }
 }
 ```
 
-## Advanced Patterns
+### Compensation Flow
 
-### Error Handling Strategies
+1. Workflow executes operations sequentially
+2. Operation fails
+3. WorkflowSmith triggers compensation
+4. Executes `RestoreAsync` in **reverse order** on completed operations
+5. Only operations with `SupportsRestore = true` are compensated
 
-**Fail Fast (Default)**
+---
+
+## Best Practices
+
+### 1. Keep Operations Focused
+
+Each operation should do one thing well:
+
 ```csharp
-public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+// Good: Focused operations
+.AddOperation("ValidateOrder", ValidateAsync)
+.AddOperation("ReserveInventory", ReserveAsync)
+.AddOperation("ProcessPayment", ProcessPaymentAsync)
+
+// Bad: God operation
+.AddOperation("ProcessEverything", async (input, foundry, ct) => {
+    // Validation, inventory, payment all mixed together
+})
+```
+
+### 2. Use Foundry Properties for Shared State
+
+```csharp
+// Good: Store in foundry
+foundry.Properties["OrderId"] = orderId;
+foundry.Properties["ProcessedAt"] = DateTime.UtcNow;
+
+// Bad: Hidden state
+private static string _orderId; // Don't do this
+```
+
+### 3. Log Important Events
+
+```csharp
+public override async Task<object?> ForgeAsync(...)
 {
+    foundry.Logger.LogInformation("Processing order {OrderId}", orderId);
+    
     try
     {
-        var result = await DoWorkAsync();
+        var result = await ProcessAsync(orderId);
+        foundry.Logger.LogInformation("Order {OrderId} processed successfully", orderId);
         return result;
     }
     catch (Exception ex)
     {
-        foundry.Logger.LogError(ex, "Operation failed");
-        throw; // Stop workflow, trigger compensation
+        foundry.Logger.LogError(ex, "Failed to process order {OrderId}", orderId);
+        throw;
     }
 }
 ```
 
-**Collect Errors and Continue**
+### 4. Implement Compensation for Critical Operations
+
 ```csharp
-public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+// Operations that modify state should support restoration
+public override bool SupportsRestore => true;  // For: Create, Update, Delete
+public override bool SupportsRestore => false; // For: Read, Query, Log
+```
+
+### 5. Use Type-Safe Operations for Complex Business Logic
+
+```csharp
+// Good: Testable, maintainable
+public class ComplexBusinessLogic : WorkflowOperationBase<Input, Output>
 {
-    var items = foundry.GetPropertyOrDefault<List<Item>>("items");
-    var errors = new List<string>();
-    var validItems = new List<Item>();
+    // Can be unit tested
+    // Dependencies injected
+    // Clear contracts
+}
+
+// Okay: Simple inline logic
+.AddOperation("SimpleTransform", async (input, foundry, ct) => Transform(input))
+```
+
+### 6. Handle Cancellation
+
+```csharp
+public override async Task<object?> ForgeAsync(
+    object? inputData, 
+    IWorkflowFoundry foundry, 
+    CancellationToken cancellationToken)
+{
+    // Pass cancellation token to async operations
+    var result = await _service.ProcessAsync(data, cancellationToken);
     
+    // Check cancellation periodically in loops
     foreach (var item in items)
     {
-        try
-        {
-            if (await ValidateItemAsync(item))
-                validItems.Add(item);
-        }
-        catch (Exception ex)
-        {
-            errors.Add($"Item {item.Id}: {ex.Message}");
-        }
+        cancellationToken.ThrowIfCancellationRequested();
+        // Process item
     }
     
-    foundry.SetProperty("valid_items", validItems);
-    foundry.SetProperty("validation_errors", errors);
-    
-    return validItems.Count > 0 ? "Partial success" : "All items failed";
+    return result;
 }
 ```
 
-### Compensation Design Patterns
-
-**State-Based Compensation**
-```csharp
-public class UpdateStateOperation : IWorkflowOperation
-{
-    public bool SupportsRestore => true;
-    
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
-    {
-        var previousState = await GetCurrentStateAsync();
-        foundry.SetProperty("previous_state", previousState);
-        
-        await ModifyStateAsync();
-        foundry.SetProperty("state_modified", true);
-        
-        return "State updated";
-    }
-    
-    public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken ct)
-    {
-        if (foundry.GetPropertyOrDefault<bool>("state_modified"))
-        {
-            var previousState = foundry.GetPropertyOrDefault<State>("previous_state");
-            if (previousState != null)
-                await RestoreStateAsync(previousState);
-        }
-    }
-}
-```
-
-**Idempotent Compensation**
-```csharp
-public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken ct)
-{
-    var alreadyCompensated = foundry.GetPropertyOrDefault<bool>("compensated");
-    if (!alreadyCompensated)
-    {
-        await UndoChangesAsync();
-        foundry.SetProperty("compensated", true);
-    }
-}
-```
-
-### Performance Optimization
-
-**Lazy Loading**
-```csharp
-private static readonly MemoryCache _cache = new();
-
-public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
-{
-    var key = foundry.GetPropertyOrDefault<string>("lookup_key");
-    
-    if (!_cache.TryGetValue(key, out var cached))
-    {
-        cached = await FetchExpensiveDataAsync(key);
-        _cache.Set(key, cached, TimeSpan.FromMinutes(5));
-        foundry.SetProperty("cache_hit", false);
-    }
-    else
-    {
-        foundry.SetProperty("cache_hit", true);
-    }
-    
-    foundry.SetProperty("lookup_result", cached);
-    return "Data loaded";
-}
-```
-
-**Batch Processing**
-```csharp
-public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
-{
-    var items = foundry.GetPropertyOrDefault<List<Item>>("items");
-    var batchSize = 100;
-    var results = new List<Result>();
-    
-    for (int i = 0; i < items.Count; i += batchSize)
-    {
-        var batch = items.Skip(i).Take(batchSize).ToList();
-        var batchResults = await ProcessBatchAsync(batch);
-        results.AddRange(batchResults);
-    }
-    
-    foundry.SetProperty("batch_results", results);
-    return $"Processed {results.Count} items in batches";
-}
-```
-
-### Type Safety
-
-**Strongly Typed Generic Operations**
-```csharp
-public class TransformOrderOperation : IWorkflowOperation<Order, OrderDto>
-{
-    public string Name => "TransformOrder";
-    
-    public async Task<OrderDto> ForgeAsync(
-        Order order,
-        IWorkflowFoundry foundry,
-        CancellationToken ct)
-    {
-        var dto = new OrderDto
-        {
-            Id = order.Id,
-            Total = order.Items.Sum(i => i.Price),
-            ItemCount = order.Items.Count
-        };
-        
-        foundry.SetProperty("order_dto", dto);
-        return dto;
-    }
-}
-```
-
-## Validation Operations (NEW in 2.0.0)
-
-WorkflowForge 2.0.0 introduces the **Validation extension** for comprehensive validation using FluentValidation.
-
-### Using Validation Middleware
-
-The recommended pattern is to use validation middleware:
+### 7. Dispose Resources Properly
 
 ```csharp
-using WorkflowForge.Extensions.Validation;
-
-// Define validator
-public class OrderValidator : AbstractValidator<Order>
+public class ResourceOperation : WorkflowOperationBase
 {
-    public OrderValidator()
-    {
-        RuleFor(x => x.CustomerId).NotEmpty();
-        RuleFor(x => x.Amount).GreaterThan(0);
-        RuleFor(x => x.Currency).Must(c => c == "USD" || c == "EUR");
-    }
-}
-
-// Add validation to foundry
-var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
-foundry.SetProperty("Order", new Order { /* ... */ });
-
-var validator = new OrderValidator();
-foundry.AddValidation(
-    validator,
-    f => f.GetPropertyOrDefault<Order>("Order"),
-    throwOnFailure: true);
-
-// Validation runs automatically before each operation
-var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
-    .AddOperation(new ProcessOrderOperation())
-    .AddOperation(new ChargePaymentOperation())
-    .Build();
-
-using var smith = WorkflowForge.CreateSmith();
-await smith.ForgeAsync(workflow, foundry);
-```
-
-### Manual Validation in Operations
-
-For operation-specific validation:
-
-```csharp
-public class ProcessOrderOperation : IWorkflowOperation
-{
-    public async Task<object?> ForgeAsync(
-        IWorkflowFoundry foundry,
-        object? inputData,
-        CancellationToken cancellationToken)
-    {
-        var order = foundry.GetPropertyOrDefault<Order>("Order");
-        var validator = new OrderValidator();
-        
-        // Manual validation
-        var result = await foundry.ValidateAsync(validator, order, cancellationToken);
-        
-        if (!result.IsValid)
-        {
-            throw new WorkflowValidationException(
-                "Order validation failed",
-                result.Errors);
-        }
-        
-        // Continue processing...
-        return null;
-    }
+    private readonly IDisposable _resource;
     
-    public Task<object?> RestoreAsync(
-        IWorkflowFoundry foundry,
-        object? inputData,
-        CancellationToken cancellationToken)
+    public override void Dispose()
     {
-        return Task.FromResult<object?>(null);
-    }
-    
-    public void Dispose() { }
-}
-```
-
-### Custom Validators
-
-Implement `IWorkflowValidator<T>` for custom validation logic:
-
-```csharp
-public class BusinessRuleValidator : IWorkflowValidator<Order>
-{
-    public async Task<ValidationResult> ValidateAsync(
-        Order data,
-        CancellationToken cancellationToken)
-    {
-        if (data.Amount > 10000 && !data.RequiresApproval)
-        {
-            return ValidationResult.Failure(
-                new ValidationError("RequiresApproval", 
-                    "Orders over $10,000 require approval"));
-        }
-        
-        return ValidationResult.Success;
+        _resource?.Dispose();
+        base.Dispose();
     }
 }
 ```
-
-See the **[Validation Extension README](../src/extensions/WorkflowForge.Extensions.Validation/README.md)** for complete documentation.
-
-## Audit Operations (NEW in 2.0.0)
-
-WorkflowForge 2.0.0 introduces the **Audit extension** for compliance and operational monitoring.
-
-### Using Audit Middleware
-
-```csharp
-using WorkflowForge.Extensions.Audit;
-
-// Implement audit provider
-public class DatabaseAuditProvider : IAuditProvider
-{
-    private readonly DbContext _dbContext;
-    
-    public async Task WriteAuditEntryAsync(
-        AuditEntry entry,
-        CancellationToken cancellationToken = default)
-    {
-        await _dbContext.AuditLog.AddAsync(entry, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
-    }
-    
-    public Task FlushAsync(CancellationToken cancellationToken = default)
-    {
-        return _dbContext.SaveChangesAsync(cancellationToken);
-    }
-}
-
-// Enable audit logging
-var auditProvider = new DatabaseAuditProvider(dbContext);
-var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
-
-foundry.EnableAuditLogging(
-    auditProvider,
-    userId: "user@example.com",
-    sessionId: Guid.NewGuid().ToString());
-
-// Audit entries automatically recorded for all operations
-var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
-    .AddOperation(new ValidateOrderOperation())
-    .AddOperation(new ChargePaymentOperation())
-    .Build();
-
-using var smith = WorkflowForge.CreateSmith();
-await smith.ForgeAsync(workflow, foundry);
-
-// Audit log contains:
-// - Workflow start/completion/failure
-// - Each operation start/completion/failure
-// - User ID, session ID, timestamps
-// - Property snapshots (before/after)
-```
-
-See the **[Audit Extension README](../src/extensions/WorkflowForge.Extensions.Audit/README.md)** for complete documentation.
-
-## Related Documentation
-
-- **[Getting Started](getting-started.md)** - Basic operation usage
-- **[Architecture](architecture.md)** - Operation architecture
-- **[Extensions Guide](extensions.md)** - All available extensions
-- **[Validation Extension](../src/extensions/WorkflowForge.Extensions.Validation/README.md)** - Detailed validation patterns
-- **[Audit Extension](../src/extensions/WorkflowForge.Extensions.Audit/README.md)** - Detailed audit patterns
 
 ---
 
-**WorkflowForge Operations** - *Build powerful, reusable workflow components* 
+## Next Steps
+
+- **[Architecture](architecture.md)** - Understanding WorkflowForge design
+- **[Event System](events.md)** - Monitoring operation execution
+- **[Samples Guide](samples-guide.md)** - See operations in action
+- **[API Reference](api-reference.md)** - Complete API documentation
+
+---
+
+[Back to Documentation Hub](README.md)
