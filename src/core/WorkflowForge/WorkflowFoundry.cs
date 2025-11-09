@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Configurations;
+using WorkflowForge.Events;
 using WorkflowForge.Loggers;
 
 namespace WorkflowForge
@@ -20,8 +21,18 @@ namespace WorkflowForge
         private readonly List<IWorkflowOperation> _operations = new();
         private readonly FoundryConfiguration _configuration;
         private readonly List<IWorkflowOperationMiddleware> _middlewares = new();
+        private readonly ISystemTimeProvider _timeProvider;
         private volatile bool _disposed;
         private IWorkflow? _currentWorkflow;
+
+        // ==================================================================================
+        // OPERATION LIFECYCLE EVENTS (IOperationLifecycleEvents Implementation)
+        // ==================================================================================
+        public event EventHandler<OperationStartedEventArgs>? OperationStarted;
+
+        public event EventHandler<OperationCompletedEventArgs>? OperationCompleted;
+
+        public event EventHandler<OperationFailedEventArgs>? OperationFailed;
 
         /// <inheritdoc />
         public Guid ExecutionId { get; }
@@ -50,12 +61,14 @@ namespace WorkflowForge
         /// <param name="properties">The foundry properties container.</param>
         /// <param name="configuration">The foundry configuration.</param>
         /// <param name="currentWorkflow">Optional initial workflow to associate with this foundry.</param>
+        /// <param name="timeProvider">The time provider to use for timestamps.</param>
         /// <exception cref="ArgumentNullException">Thrown when properties is null.</exception>
         public WorkflowFoundry(
             Guid executionId,
             ConcurrentDictionary<string, object?> properties,
             FoundryConfiguration? configuration = null,
-            IWorkflow? currentWorkflow = null)
+            IWorkflow? currentWorkflow = null,
+            ISystemTimeProvider? timeProvider = null)
         {
             ExecutionId = executionId;
             Properties = properties ?? throw new ArgumentNullException(nameof(properties));
@@ -63,6 +76,7 @@ namespace WorkflowForge
             Logger = _configuration.Logger ?? NullLogger.Instance;
             ServiceProvider = _configuration.ServiceProvider;
             _currentWorkflow = currentWorkflow;
+            _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
         }
 
         /// <summary>
@@ -73,17 +87,19 @@ namespace WorkflowForge
         /// <param name="logger">The logger for this foundry.</param>
         /// <param name="serviceProvider">Optional service provider for dependency injection.</param>
         /// <param name="currentWorkflow">Optional initial workflow to associate with this foundry.</param>
+        /// <param name="timeProvider">The time provider to use for timestamps.</param>
         public WorkflowFoundry(
             Guid executionId,
             ConcurrentDictionary<string, object?> properties,
             IWorkflowForgeLogger logger,
             IServiceProvider? serviceProvider = null,
-            IWorkflow? currentWorkflow = null)
+            IWorkflow? currentWorkflow = null,
+            ISystemTimeProvider? timeProvider = null)
             : this(executionId, properties, new FoundryConfiguration
             {
                 Logger = logger,
                 ServiceProvider = serviceProvider
-            }, currentWorkflow)
+            }, currentWorkflow, timeProvider)
         {
         }
 
@@ -184,7 +200,40 @@ namespace WorkflowForge
             foreach (var operation in operationsSnapshot)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                await ExecuteOperationWithMiddleware(operation, null, cancellationToken).ConfigureAwait(false);
+
+                var operationStartTime = _timeProvider.UtcNow;
+
+                try
+                {
+                    // FIRE: OperationStarted event
+                    OperationStarted?.Invoke(this, new OperationStartedEventArgs(operation, this, null));
+
+                    var result = await ExecuteOperationWithMiddleware(operation, null, cancellationToken).ConfigureAwait(false);
+
+                    var operationDuration = _timeProvider.UtcNow - operationStartTime;
+
+                    // FIRE: OperationCompleted event
+                    OperationCompleted?.Invoke(this, new OperationCompletedEventArgs(
+                        operation,
+                        this,
+                        null,
+                        result,
+                        TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
+                }
+                catch (Exception ex)
+                {
+                    var operationDuration = _timeProvider.UtcNow - operationStartTime;
+
+                    // FIRE: OperationFailed event
+                    OperationFailed?.Invoke(this, new OperationFailedEventArgs(
+                        operation,
+                        this,
+                        null,
+                        ex,
+                        TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
+
+                    throw;
+                }
             }
         }
 
@@ -206,7 +255,56 @@ namespace WorkflowForge
                 return await operation.ForgeAsync(inputData, this, cancellationToken).ConfigureAwait(false);
             }
 
-            // Build middleware chain from end to beginning
+            // ==================================================================================
+            // MIDDLEWARE EXECUTION: Russian Doll Pattern (Industry Standard)
+            // ==================================================================================
+            //
+            // Middleware wraps in REVERSE order of addition to create a "Russian Doll" effect.
+            // This is intentional and correct - it's how ASP.NET, Express.js, and other
+            // frameworks implement middleware pipelines.
+            //
+            // EXAMPLE:
+            // --------
+            // If you add middleware in this order:
+            //   foundry.AddMiddleware(timingMiddleware);        // Added 1st
+            //   foundry.AddMiddleware(errorHandlingMiddleware); // Added 2nd
+            //   foundry.AddMiddleware(retryMiddleware);         // Added 3rd
+            //
+            // Execution flow becomes:
+            //   Timing.Start
+            //     → ErrorHandling.Start
+            //       → Retry.Start
+            //         → OPERATION EXECUTES
+            //       ← Retry.End
+            //     ← ErrorHandling.End
+            //   ← Timing.End
+            //
+            // REVERSE iteration builds the chain from inside-out:
+            //   1. Start with: next = operation.ForgeAsync
+            //   2. Wrap with retryMiddleware:    next = () => retry.Execute(next)
+            //   3. Wrap with errorMiddleware:    next = () => error.Execute(next)
+            //   4. Wrap with timingMiddleware:   next = () => timing.Execute(next)
+            //
+            // Final execution: timing → error → retry → operation → retry → error → timing
+            //
+            // BEST PRACTICES:
+            // ---------------
+            // Add middleware in order of desired outer-to-inner wrapping:
+            //   1. Observability (Timing, Logging) first     - measures everything
+            //   2. Error Handling second                     - catches all errors
+            //   3. Retry/Resilience last                     - wraps just the operation
+            //
+            // This ensures timing includes error handling time, and error handlers
+            // can catch retry failures, etc.
+            //
+            // TECHNICAL DETAILS:
+            // ------------------
+            // We iterate backwards (_middlewares.Count - 1 down to 0) because:
+            // - Last middleware added should wrap first (innermost)
+            // - Each iteration wraps the previous 'next' delegate
+            // - Results in correct execution order: first added → first executed
+            // ==================================================================================
+
             Func<Task<object?>> next = () => operation.ForgeAsync(inputData, this, cancellationToken);
 
             for (int i = _middlewares.Count - 1; i >= 0; i--)

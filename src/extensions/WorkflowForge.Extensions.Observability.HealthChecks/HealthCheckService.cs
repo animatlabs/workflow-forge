@@ -6,8 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.Observability.HealthChecks.Abstractions;
-using WorkflowForge.Loggers;
-using WorkflowForge.Constants;
 
 namespace WorkflowForge.Extensions.Observability.HealthChecks
 {

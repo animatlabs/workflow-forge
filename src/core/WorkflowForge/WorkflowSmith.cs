@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Configurations;
 using WorkflowForge.Constants;
+using WorkflowForge.Events;
 using WorkflowForge.Extensions;
 using WorkflowForge.Loggers;
 
@@ -23,7 +24,27 @@ namespace WorkflowForge
         private readonly IWorkflowForgeLogger _logger;
         private readonly IServiceProvider? _serviceProvider;
         private readonly FoundryConfiguration _configuration;
+        private readonly ISystemTimeProvider _timeProvider;
         private volatile bool _disposed;
+
+        // ==================================================================================
+        // WORKFLOW + COMPENSATION LIFECYCLE EVENTS
+        // ==================================================================================
+        public event EventHandler<WorkflowStartedEventArgs>? WorkflowStarted;
+
+        public event EventHandler<WorkflowCompletedEventArgs>? WorkflowCompleted;
+
+        public event EventHandler<WorkflowFailedEventArgs>? WorkflowFailed;
+
+        public event EventHandler<CompensationTriggeredEventArgs>? CompensationTriggered;
+
+        public event EventHandler<CompensationCompletedEventArgs>? CompensationCompleted;
+
+        public event EventHandler<OperationRestoreStartedEventArgs>? OperationRestoreStarted;
+
+        public event EventHandler<OperationRestoreCompletedEventArgs>? OperationRestoreCompleted;
+
+        public event EventHandler<OperationRestoreFailedEventArgs>? OperationRestoreFailed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WorkflowSmith"/> class.
@@ -31,11 +52,13 @@ namespace WorkflowForge
         /// <param name="logger">The logger to use for workflow forging events.</param>
         /// <param name="serviceProvider">Optional service provider for dependency injection.</param>
         /// <param name="configuration">The foundry configuration.</param>
-        public WorkflowSmith(IWorkflowForgeLogger logger, IServiceProvider? serviceProvider = null, FoundryConfiguration? configuration = null)
+        /// <param name="timeProvider">The time provider to use for timestamps.</param>
+        public WorkflowSmith(IWorkflowForgeLogger logger, IServiceProvider? serviceProvider = null, FoundryConfiguration? configuration = null, ISystemTimeProvider? timeProvider = null)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _serviceProvider = serviceProvider;
             _configuration = configuration ?? FoundryConfiguration.Minimal();
+            _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
         }
 
         /// <summary>
@@ -88,7 +111,11 @@ namespace WorkflowForge
             // Create workflow scope using helper
             using var workflowScope = _logger.CreateWorkflowScope(workflow, foundry);
 
+            var startTime = _timeProvider.UtcNow;
             _logger.LogInformation(WorkflowLogMessageConstants.WorkflowExecutionStarted);
+
+            // FIRE: WorkflowStarted event
+            WorkflowStarted?.Invoke(this, new WorkflowStartedEventArgs(foundry, _timeProvider.UtcNow));
 
             try
             {
@@ -98,6 +125,15 @@ namespace WorkflowForge
 
                 // Log workflow completion
                 _logger.LogInformation(WorkflowLogMessageConstants.WorkflowExecutionCompleted);
+
+                // FIRE: WorkflowCompleted event
+                var duration = _timeProvider.UtcNow - startTime;
+                var finalProperties = new Dictionary<string, object?>(foundry.Properties);
+                WorkflowCompleted?.Invoke(this, new WorkflowCompletedEventArgs(
+                    foundry,
+                    _timeProvider.UtcNow,
+                    finalProperties,
+                    duration));
             }
             catch (OperationCanceledException)
             {
@@ -108,6 +144,16 @@ namespace WorkflowForge
             {
                 var errorProperties = _logger.CreateErrorProperties(ex, "WorkflowExecution");
                 _logger.LogError(errorProperties, ex, WorkflowLogMessageConstants.WorkflowExecutionFailed);
+
+                // FIRE: WorkflowFailed event
+                var duration = _timeProvider.UtcNow - startTime;
+                WorkflowFailed?.Invoke(this, new WorkflowFailedEventArgs(
+                    foundry,
+                    _timeProvider.UtcNow,
+                    ex,
+                    "Unknown",
+                    duration));
+
                 throw;
             }
         }
@@ -179,8 +225,17 @@ namespace WorkflowForge
 
             _logger.LogInformation(WorkflowLogMessageConstants.CompensationProcessStarted);
 
+            // FIRE: CompensationTriggered event
+            CompensationTriggered?.Invoke(this, new CompensationTriggeredEventArgs(
+                foundry,
+                _timeProvider.UtcNow,
+                "Operation failed, initiating compensation",
+                lastForgedIndex < operations.Count ? operations[lastForgedIndex].Name : "Unknown",
+                null));
+
             int successCount = 0;
             int failureCount = 0;
+            var compensationStartTime = _timeProvider.UtcNow;
 
             // Compensate in reverse order
             for (int i = lastForgedIndex; i >= 0; i--)
@@ -208,13 +263,27 @@ namespace WorkflowForge
 
                 using var operationScope = _logger.BeginScope("CompensationAction", operationProperties);
 
+                var restoreStartTime = _timeProvider.UtcNow;
+
                 try
                 {
                     _logger.LogDebug(WorkflowLogMessageConstants.CompensationActionStarted);
 
+                    // FIRE: OperationRestoreStarted event
+                    OperationRestoreStarted?.Invoke(this, new OperationRestoreStartedEventArgs(operation, foundry));
+
                     await operation.RestoreAsync(null, foundry, cancellationToken).ConfigureAwait(false);
 
                     _logger.LogDebug(WorkflowLogMessageConstants.CompensationActionCompleted);
+
+                    var restoreDuration = _timeProvider.UtcNow - restoreStartTime;
+
+                    // FIRE: OperationRestoreCompleted event
+                    OperationRestoreCompleted?.Invoke(this, new OperationRestoreCompletedEventArgs(
+                        operation,
+                        foundry,
+                        restoreDuration));
+
                     successCount++;
                 }
                 catch (Exception compensationEx)
@@ -222,6 +291,16 @@ namespace WorkflowForge
                     var errorProperties = _logger.CreateErrorProperties(compensationEx, "CompensationFailure");
 
                     _logger.LogError(errorProperties, compensationEx, WorkflowLogMessageConstants.CompensationActionFailed);
+
+                    var restoreDuration = _timeProvider.UtcNow - restoreStartTime;
+
+                    // FIRE: OperationRestoreFailed event
+                    OperationRestoreFailed?.Invoke(this, new OperationRestoreFailedEventArgs(
+                        operation,
+                        foundry,
+                        compensationEx,
+                        restoreDuration));
+
                     failureCount++;
                     // Continue with other compensations even if one fails
                 }
@@ -230,6 +309,16 @@ namespace WorkflowForge
             var completionProperties = _logger.CreateCompensationResultProperties(successCount, failureCount);
 
             _logger.LogInformation(completionProperties, WorkflowLogMessageConstants.CompensationProcessCompleted);
+
+            var totalCompensationDuration = _timeProvider.UtcNow - compensationStartTime;
+
+            // FIRE: CompensationCompleted event
+            CompensationCompleted?.Invoke(this, new CompensationCompletedEventArgs(
+                foundry,
+                _timeProvider.UtcNow,
+                successCount,
+                failureCount,
+                TimeSpan.FromMilliseconds(totalCompensationDuration.TotalMilliseconds)));
         }
 
         private IWorkflowFoundry CreateFoundryFor(IWorkflow workflow)

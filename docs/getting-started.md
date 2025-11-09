@@ -1,12 +1,48 @@
 # Getting Started with WorkflowForge
 
+<p align="center">
+  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
+</p>
+
 Welcome to WorkflowForge! This guide will walk you through installing, configuring, and creating your first workflow in just a few minutes.
+
+## Table of Contents
+
+- [What's New in 2.0.0](#whats-new-in-200)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Your First Workflow](#your-first-workflow)
+- [Core Concepts Explained](#core-concepts-explained)
+- [Next Steps](#next-steps)
+- [Troubleshooting](#troubleshooting)
+
+---
+
+## What's New in 2.0.0
+
+**WorkflowForge 2.0.0** introduces major improvements:
+
+### Zero Version Conflicts
+Extensions now use **Costura.Fody** to embed dependencies, eliminating DLL hell. Use ANY version of Serilog, Polly, FluentValidation, or OpenTelemetry in your app without conflicts!
+
+### New Extensions
+- **Validation**: FluentValidation bridge for comprehensive validation
+- **Audit**: Production-ready audit logging with pluggable providers
+
+### Breaking Changes
+- **Event System**: Refactored from single `IWorkflowEvents` to three focused interfaces (`IWorkflowLifecycleEvents`, `IOperationLifecycleEvents`, `ICompensationLifecycleEvents`) for SRP compliance. See [Events Guide](events.md) for migration.
+- **ISystemTimeProvider**: Now injected via DI instead of static instance
+
+### Enhancements
+- Comprehensive test suite (>90% coverage)
+- Improved documentation and samples
+- Better testability with DI throughout
 
 ## Prerequisites
 
 Before you begin, ensure you have:
 
-- **.NET 8.0 SDK** or later ([Download](https://dotnet.microsoft.com/download))
+- **.NET SDK**: .NET 6.0+ (WorkflowForge targets .NET Standard 2.0)
 - **IDE**: Visual Studio 2022, VS Code, or JetBrains Rider
 - **Basic C# knowledge**: Understanding of async/await patterns
 
@@ -29,6 +65,8 @@ dotnet add package WorkflowForge
 # Optional: Install extensions for enhanced capabilities
 dotnet add package WorkflowForge.Extensions.Logging.Serilog
 dotnet add package WorkflowForge.Extensions.Resilience.Polly
+dotnet add package WorkflowForge.Extensions.Validation
+dotnet add package WorkflowForge.Extensions.Audit
 ```
 
 ### Step 3: Verify Installation
@@ -65,512 +103,420 @@ public class PaymentResult
 
 ### Step 2: Create Custom Operations
 
+**Best Practice**: Use class-based operations for production scenarios (better performance, testability, and maintainability).
+
 ```csharp
 // Operations/ValidateOrderOperation.cs
 using WorkflowForge;
+using WorkflowForge.Operations;
 
-public class ValidateOrderOperation : IWorkflowOperation
+public class ValidateOrderOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "ValidateOrder";
-    public bool SupportsRestore => false; // Validation doesn't need rollback
+    public override string Name => "ValidateOrder";
+    public override bool SupportsRestore => false; // Validation doesn't need rollback
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override async Task<object?> ForgeAsync(
+        object? inputData,
+        IWorkflowFoundry foundry,
+        CancellationToken cancellationToken)
     {
-        var order = (Order)inputData!;
+        // Get order from foundry properties (recommended pattern)
+        var order = foundry.GetPropertyOrDefault<Order>("Order");
         
-        foundry.Logger.LogInformation("Validating order {OrderId} for customer {CustomerId}", 
-            order.Id, order.CustomerId);
+        if (order == null)
+        {
+            throw new InvalidOperationException("Order not found in foundry properties");
+        }
 
-        // Simulate validation logic
-        await Task.Delay(100, cancellationToken);
+        foundry.Logger.LogInformation($"Validating order {order.Id}");
 
-        if (string.IsNullOrEmpty(order.CustomerId))
-            throw new InvalidOperationException("Customer ID is required");
+        // Validation logic
+        if (string.IsNullOrWhiteSpace(order.CustomerId))
+        {
+            throw new ArgumentException("Customer ID is required");
+        }
 
         if (order.Amount <= 0)
-            throw new InvalidOperationException("Order amount must be positive");
+        {
+            throw new ArgumentException("Order amount must be greater than 0");
+        }
 
-        if (!order.Items.Any())
-            throw new InvalidOperationException("Order must contain at least one item");
+        if (order.Items.Count == 0)
+        {
+            throw new ArgumentException("Order must contain at least one item");
+        }
 
-        foundry.Logger.LogInformation("Order {OrderId} validation completed successfully", order.Id);
-        
-        // Update order status
-        order.Status = "Validated";
-        return order;
-    }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        // No restoration needed for validation
-        return Task.CompletedTask;
+        foundry.Logger.LogInformation("Order validation successful");
+        await Task.CompletedTask;
+        return null;
     }
 }
 ```
 
 ```csharp
 // Operations/ProcessPaymentOperation.cs
-public class ProcessPaymentOperation : IWorkflowOperation
-{
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "ProcessPayment";
-    public bool SupportsRestore => true; // Payment processing supports refunds
+using WorkflowForge;
+using WorkflowForge.Operations;
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+public class ProcessPaymentOperation : WorkflowOperationBase
+{
+    public override string Name => "ProcessPayment";
+    public override bool SupportsRestore => true; // Payment can be refunded
+
+    public override async Task<object?> ForgeAsync(
+        object? inputData,
+        IWorkflowFoundry foundry,
+        CancellationToken cancellationToken)
     {
-        var order = (Order)inputData!;
-        
-        foundry.Logger.LogInformation("Processing payment for order {OrderId}, amount: {Amount:C}", 
-            order.Id, order.Amount);
+        var order = foundry.GetPropertyOrDefault<Order>("Order");
+        if (order == null)
+        {
+            throw new InvalidOperationException("Order not found");
+        }
+
+        foundry.Logger.LogInformation($"Processing payment for order {order.Id}");
 
         // Simulate payment processing
-        await Task.Delay(500, cancellationToken);
+        await Task.Delay(100, cancellationToken); // Simulate API call
 
         var paymentResult = new PaymentResult
         {
             Success = true,
-            TransactionId = $"TXN_{Guid.NewGuid():N}",
+            TransactionId = Guid.NewGuid().ToString("N"),
             Message = "Payment processed successfully"
         };
 
-        // Store transaction ID for potential refund
-        foundry.SetProperty("TransactionId", paymentResult.TransactionId);
+        // Store result in foundry properties
+        foundry.SetProperty("PaymentResult", paymentResult);
         
-        foundry.Logger.LogInformation("Payment processed successfully for order {OrderId}, transaction: {TransactionId}", 
-            order.Id, paymentResult.TransactionId);
-
-        order.Status = "Paid";
-        return order;
+        foundry.Logger.LogInformation($"Payment processed: {paymentResult.TransactionId}");
+        return paymentResult;
     }
 
-    public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override async Task RestoreAsync(
+        object? inputData,
+        IWorkflowFoundry foundry,
+        CancellationToken cancellationToken)
     {
-        if (foundry.TryGetProperty<string>("TransactionId", out var transactionId) && !string.IsNullOrEmpty(transactionId))
+        // Compensation logic (rollback)
+        var paymentResult = foundry.GetPropertyOrDefault<PaymentResult>("PaymentResult");
+        
+        if (paymentResult != null && paymentResult.Success)
         {
-            foundry.Logger.LogWarning("Refunding payment for transaction {TransactionId}", transactionId);
+            foundry.Logger.LogWarning($"Refunding payment {paymentResult.TransactionId}");
             
-            // Simulate refund process
-            await Task.Delay(200, cancellationToken);
+            // Simulate refund API call
+            await Task.Delay(50, cancellationToken);
             
-            foundry.Logger.LogInformation("Payment refunded successfully for transaction {TransactionId}", transactionId);
+            foundry.Logger.LogInformation("Payment refunded successfully");
         }
     }
 }
 ```
 
-### Step 3: Build and Execute the Workflow
-
 ```csharp
-// Program.cs
+// Operations/FulfillOrderOperation.cs
 using WorkflowForge;
+using WorkflowForge.Operations;
 
-class Program
+public class FulfillOrderOperation : WorkflowOperationBase
 {
-    static async Task Main(string[] args)
+    public override string Name => "FulfillOrder";
+    public override bool SupportsRestore => false;
+
+    public override async Task<object?> ForgeAsync(
+        object? inputData,
+        IWorkflowFoundry foundry,
+        CancellationToken cancellationToken)
     {
-        Console.WriteLine("WorkflowForge Getting Started Example");
-        Console.WriteLine("=====================================");
-
-        // Create a sample order
-        var order = new Order
+        var order = foundry.GetPropertyOrDefault<Order>("Order");
+        if (order == null)
         {
-            Id = "ORD-001",
-            CustomerId = "CUST-123",
-            Amount = 99.99m,
-            Items = new List<string> { "Product A", "Product B" }
-        };
+            throw new InvalidOperationException("Order not found");
+        }
 
-        // Build the workflow
-        var workflow = WorkflowForge.CreateWorkflow()
-            .WithName("OrderProcessing")
-            .AddOperation(new ValidateOrderOperation())
-            .AddOperation(new ProcessPaymentOperation())
-            .AddOperation("FulfillOrder", async (input, foundry, ct) =>
-            {
-                var processedOrder = (Order)input!;
-                foundry.Logger.LogInformation("Fulfilling order {OrderId}", processedOrder.Id);
-                
-                // Simulate fulfillment
-                await Task.Delay(300, ct);
-                
-                processedOrder.Status = "Fulfilled";
-                foundry.Logger.LogInformation("Order {OrderId} fulfilled successfully", processedOrder.Id);
-                
-                return processedOrder;
-            })
-            .Build();
+        foundry.Logger.LogInformation($"Fulfilling order {order.Id}");
 
-        // Execute the workflow
-        using var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
-        using var smith = WorkflowForge.CreateSmith();
+        // Simulate fulfillment
+        await Task.Delay(50, cancellationToken);
 
-        // Set initial data in foundry
-        foundry.SetProperty("order", order);
-
-        await smith.ForgeAsync(workflow, foundry);
+        order.Status = "Fulfilled";
+        
+        foundry.Logger.LogInformation("Order fulfilled successfully");
+        return order;
     }
 }
 ```
 
-### Step 4: Run Your First Workflow
+### Step 3: Build the Workflow
+
+```csharp
+// Program.cs
+using WorkflowForge;
+using WorkflowForge.Loggers;
+
+// Create an order
+var order = new Order
+{
+    Id = Guid.NewGuid().ToString("N"),
+    CustomerId = "CUST-123",
+    Amount = 99.99m,
+    Items = new List<string> { "Product A", "Product B" }
+};
+
+Console.WriteLine($"Processing order {order.Id}...\n");
+
+// Build the workflow
+var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
+    .WithDescription("Complete order processing workflow")
+    .WithVersion("2.0.0")
+    .AddOperation(new ValidateOrderOperation())
+    .AddOperation(new ProcessPaymentOperation())
+    .AddOperation(new FulfillOrderOperation())
+    .Build();
+
+// Create a foundry with the order data
+var foundry = WorkflowForge.CreateFoundryWithData(
+    "ProcessOrder",
+    new Dictionary<string, object?> { ["Order"] = order }
+);
+
+// Create a smith (orchestrator) with console logger
+using var smith = WorkflowForge.CreateSmith(new ConsoleLogger());
+
+try
+{
+    // Execute the workflow
+    await smith.ForgeAsync(workflow, foundry);
+    
+    Console.WriteLine($"\nOrder processed successfully!");
+    Console.WriteLine($"Final status: {order.Status}");
+    
+    var paymentResult = foundry.GetPropertyOrDefault<PaymentResult>("PaymentResult");
+    if (paymentResult != null)
+    {
+        Console.WriteLine($"Transaction ID: {paymentResult.TransactionId}");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"\nWorkflow failed: {ex.Message}");
+}
+```
+
+### Step 4: Run the Application
 
 ```bash
 dotnet run
 ```
 
-**Expected Output:**
+**Expected Output**:
 ```
-WorkflowForge Getting Started Example
-=====================================
-Processing order: ORD-001
-Initial status: Pending
+Processing order abc123...
 
-[INFO] Validating order ORD-001 for customer CUST-123
-[INFO] Order ORD-001 validation completed successfully
-[INFO] Processing payment for order ORD-001, amount: $99.99
-[INFO] Payment processed successfully for order ORD-001, transaction: TXN_1234567890abcdef
-[INFO] Fulfilling order ORD-001
-[INFO] Order ORD-001 fulfilled successfully
+[INFO] Validating order abc123
+[INFO] Order validation successful
+[INFO] Processing payment for order abc123
+[INFO] Payment processed: def456
+[INFO] Fulfilling order abc123
+[INFO] Order fulfilled successfully
 
-Workflow completed successfully!
+Order processed successfully!
 Final status: Fulfilled
-Transaction stored: TXN_1234567890abcdef
+Transaction ID: def456
 ```
 
-## Understanding the Flow
+## Core Concepts Explained
 
-### 1. Workflow Creation
-```csharp
-var workflow = WorkflowForge.CreateWorkflow()
-    .WithName("OrderProcessing")           // Give the workflow a name
-    .AddOperation(new ValidateOrderOperation())  // Add custom operation
-    .AddOperation(new ProcessPaymentOperation()) // Add another operation
-    .AddOperation("FulfillOrder", async ...)    // Add inline operation
-    .Build();                              // Build immutable workflow
-```
+### The Metaphor
 
-### 2. Foundry Setup
-```csharp
-var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
-```
-The foundry provides:
-- **Logging**: Built-in logging abstraction
-- **Properties**: Shared state across operations
-- **Services**: Dependency injection support
+WorkflowForge uses an industrial manufacturing metaphor where workflows are "forged" through operations.
 
-### 3. Execution
-```csharp
-var smith = WorkflowForge.CreateSmith();
-foundry.SetProperty("order", order); // Set order data in foundry
-await smith.ForgeAsync(workflow, foundry);
-```
-The smith:
-- Executes operations in sequence
-- Passes data between operations
-- Handles errors and compensation automatically
+**Core Components**:
+- **Forge**: Main factory for creating workflows
+- **Foundry**: Execution environment with shared data
+- **Smith**: Orchestrator that executes workflows
+- **Operation**: Individual executable task
 
-### 4. Error Handling & Compensation
-If any operation fails, WorkflowForge automatically:
-1. Stops execution
-2. Calls `RestoreAsync` on completed operations (in reverse order)
-3. Propagates the exception
+For detailed explanation of the metaphor and architecture, see [Architecture Guide](architecture.md#core-metaphor).
 
-## Adding Extensions
+### Data Flow Pattern
 
-Enhance your workflow with powerful extensions:
-
-### Structured Logging with Serilog
+**PRIMARY**: Dictionary-based via `foundry.Properties`
 
 ```csharp
-// Install: dotnet add package WorkflowForge.Extensions.Logging.Serilog
+// Store data
+foundry.SetProperty("Key", value);
 
-using Serilog;
-using WorkflowForge.Extensions.Logging.Serilog;
+// Retrieve data
+var value = foundry.GetPropertyOrDefault<T>("Key");
 
-// Configure Serilog
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
-    .WriteTo.Console()
-    .WriteTo.File("logs/workflow-.txt", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
-
-// Create foundry with Serilog
-var config = FoundryConfiguration.ForProduction().UseSerilog(Log.Logger);
-var foundry = WorkflowForge.CreateFoundry("OrderProcessing", config);
+// Retrieve with default
+var value = foundry.GetPropertyOrDefault<T>("Key", defaultValue);
 ```
 
-### Resilience with Polly
+**SECONDARY**: Type-safe via `IWorkflowOperation<TInput, TOutput>` (for explicit input/output contracts)
 
 ```csharp
-// Install: dotnet add package WorkflowForge.Extensions.Resilience.Polly
-
-using WorkflowForge.Extensions.Resilience.Polly;
-
-// Apply Polly resilience to foundry (extension methods are on IWorkflowFoundry)
-var foundry = WorkflowForge.CreateFoundry("OrderProcessing", FoundryConfiguration.ForProduction());
-foundry.UsePollyProductionResilience(); // Retry, circuit breaker, timeout from settings
-```
-
-### Persistence + Recovery Quickstart
-
-```bash
-# Install persistence + recovery extensions
-dotnet add package WorkflowForge.Extensions.Persistence
-dotnet add package WorkflowForge.Extensions.Persistence.Recovery
-```
-
-```csharp
-using WorkflowForge.Extensions; // UsePersistence
-using WorkflowForge.Extensions.Persistence; // PersistenceOptions
-using WorkflowForge.Extensions.Persistence.Abstractions; // IWorkflowPersistenceProvider
-using WorkflowForge.Extensions.Persistence.Recovery; // ForgeWithRecoveryAsync
-
-// Implement your provider (DB/file/etc.). See sample FilePersistenceProvider in samples.
-public sealed class DemoInMemoryProvider : IWorkflowPersistenceProvider
+public class MyOperation : IWorkflowOperation<Order, OrderResult>
 {
-    private static readonly ConcurrentDictionary<(Guid, Guid), WorkflowExecutionSnapshot> Store = new();
-    public Task SaveAsync(WorkflowExecutionSnapshot snapshot, CancellationToken ct = default)
+    public async Task<OrderResult> ForgeAsync(
+        Order input,
+        IWorkflowFoundry foundry,
+        CancellationToken cancellationToken)
     {
-        Store[(snapshot.FoundryExecutionId, snapshot.WorkflowId)] = snapshot;
-        return Task.CompletedTask;
-    }
-    public Task<WorkflowExecutionSnapshot?> TryLoadAsync(Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default)
-    {
-        Store.TryGetValue((foundryExecutionId, workflowId), out var s);
-        return Task.FromResult<WorkflowExecutionSnapshot?>(s);
-    }
-    public Task DeleteAsync(Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default)
-    {
-        Store.TryRemove((foundryExecutionId, workflowId), out _);
-        return Task.CompletedTask;
+        // Typed input and output
+        return new OrderResult { Success = true };
     }
 }
+```
 
-// Enable persistence with stable keys and run with recovery
-var provider = new DemoInMemoryProvider();
-var options = new PersistenceOptions
+**Recommendation**: Use dictionary-based data flow for most scenarios. Type-safe operations are useful when you need explicit compile-time contracts.
+
+### Compensation (Saga Pattern)
+
+WorkflowForge supports automatic rollback on failure:
+
+```csharp
+public class MyOperation : WorkflowOperationBase
 {
-    InstanceId = "order-service-west-1",
-    WorkflowKey = "ProcessOrder-v1"
+    public override bool SupportsRestore => true;
+
+    public override async Task<object?> ForgeAsync(...) 
+    {
+        // Forward logic
+    }
+
+    public override async Task RestoreAsync(...) 
+    {
+        // Compensation/rollback logic
+    }
+}
+```
+
+Configure automatic restoration:
+```csharp
+var config = new FoundryConfiguration
+{
+    AutoRestore = true,
+    ContinueOnRestorationFailure = false
 };
 
-using var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
-foundry.UsePersistence(provider, options);
-
-// On startup, the smith can resume or start fresh using recovery:
-using var smith = WorkflowForge.CreateSmith();
-await smith.ForgeWithRecoveryAsync(workflow, foundry, CancellationToken.None);
-
-// Note: For cross-process resume, use a shared provider (e.g., DB or file). See
-// `src/samples/WorkflowForge.Samples.BasicConsole/Samples/FilePersistenceProvider.cs` for a file-based demo.
-```
-
-### Logging-only Quickstart (no external logger)
-
-```csharp
-// Use core logging middleware with the foundry's logger
-using WorkflowForge.Extensions; // UseLogging
-
-using var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
-foundry.UseLogging();
-
-// Optionally provide your own IWorkflowForgeLogger implementation
-// foundry.UseLogging(myLogger);
-```
-
-### Performance Monitoring
-
-```csharp
-// Install: dotnet add package WorkflowForge.Extensions.Observability.Performance
-
-using WorkflowForge.Extensions.Observability.Performance;
-
-// Enable performance monitoring
-var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
-foundry.EnablePerformanceMonitoring();
-
-// After execution, get statistics
-var stats = foundry.GetPerformanceStatistics();
-Console.WriteLine($"Total operations: {stats.TotalOperations}");
-Console.WriteLine($"Success rate: {stats.SuccessRate:P2}");
-Console.WriteLine($"Average duration: {stats.AverageDuration.TotalMilliseconds:F2}ms");
-```
-
-## Testing Your Workflow
-
-WorkflowForge is designed for testability:
-
-```csharp
-// Tests/OrderWorkflowTests.cs
-using Xunit;
-using Moq;
-using WorkflowForge;
-
-public class OrderWorkflowTests
-{
-    [Fact]
-    public async Task Should_Process_Valid_Order_Successfully()
-    {
-        // Arrange
-        var order = new Order
-        {
-            Id = "TEST-001",
-            CustomerId = "TEST-CUSTOMER",
-            Amount = 50.00m,
-            Items = new List<string> { "Test Item" }
-        };
-
-        var workflow = WorkflowForge.CreateWorkflow()
-            .WithName("TestOrderProcessing")
-            .AddOperation(new ValidateOrderOperation())
-            .AddOperation(new ProcessPaymentOperation())
-            .Build();
-
-        var foundry = WorkflowForge.CreateFoundry("Test");
-        var smith = WorkflowForge.CreateSmith();
-
-        // Act
-        foundry.SetProperty("order", order); // Set order data in foundry
-        await smith.ForgeAsync(workflow, foundry);
-
-        // Assert
-        var processedOrder = foundry.GetPropertyOrDefault<Order>("processedOrder");
-        Assert.Equal("Paid", processedOrder?.Status);
-        Assert.True(foundry.TryGetProperty<string>("TransactionId", out _));
-    }
-
-    [Fact]
-    public async Task Should_Compensate_On_Failure()
-    {
-        // Arrange
-        var invalidOrder = new Order { Id = "INVALID" }; // Missing required fields
-
-        var workflow = WorkflowForge.CreateWorkflow()
-            .WithName("TestFailure")
-            .AddOperation(new ValidateOrderOperation())
-            .Build();
-
-        var foundry = WorkflowForge.CreateFoundry("Test");
-        var smith = WorkflowForge.CreateSmith();
-
-        // Act & Assert
-        foundry.SetProperty("order", invalidOrder); // Set invalid order data in foundry
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => smith.ForgeAsync(workflow, foundry));
-    }
-}
+var foundry = WorkflowForge.CreateFoundry("MyWorkflow", config);
 ```
 
 ## Next Steps
 
-Congratulations! You've created your first WorkflowForge workflow. Here's what to explore next:
+### Explore Samples
 
-### 1. **Learn Core Concepts**
-- **[Architecture Overview](architecture.md)** - Understand the design principles
-- **[Workflow Concepts](concepts.md)** - Deep dive into workflows and operations
+WorkflowForge includes 24 comprehensive samples covering all features:
 
-### 2. **Explore Advanced Features**
-- **[Building Operations](operations.md)** - Create sophisticated custom operations
-- Middleware development - See examples in samples and `architecture.md`
-- Error handling & compensation - Covered throughout `operations.md` and samples
+```bash
+# Clone the repository
+git clone https://github.com/animatlabs/workflow-forge.git
+cd workflow-forge
 
-### 3. **Add Enterprise Features**
-- **[Extensions Guide](extensions.md)** - Logging, resilience, observability
+# Run the samples
+cd src/samples/WorkflowForge.Samples.BasicConsole
+dotnet run
+```
+
+[Samples Guide](samples-guide.md)
+
+### Add Extensions
+
+Enhance your workflows with extensions:
+
+**Structured Logging (Serilog)**:
+```csharp
+using Serilog;
+using WorkflowForge.Extensions.Logging.Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("logs/workflow.log")
+    .CreateLogger();
+
+var logger = new SerilogWorkflowForgeLogger(Log.Logger);
+var smith = WorkflowForge.CreateSmith(logger);
+```
+
+**Resilience (Polly)**:
+```csharp
+using WorkflowForge.Extensions.Resilience.Polly;
+
+foundry.UsePolly(policy => policy
+    .RetryAsync(3)
+    .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30))
+);
+```
+
+**Validation (FluentValidation)**:
+```csharp
+using WorkflowForge.Extensions.Validation;
+
+foundry.AddValidation(
+    new OrderValidator(),
+    f => f.GetPropertyOrDefault<Order>("Order"),
+    throwOnFailure: true
+);
+```
+
+[Extensions Guide](extensions.md)
+
+### Learn Advanced Patterns
+
+- **[Architecture Overview](architecture.md)** - Design patterns and principles
+- **[Operations Guide](operations.md)** - Built-in and custom operations
+- **[Event System](events.md)** - Lifecycle events and monitoring
 - **[Configuration](configuration.md)** - Environment-specific settings
-- **[Performance Optimization](performance.md)** - High-performance patterns
-
-### 4. **Run Sample Applications**
-- **[Interactive Samples](../src/samples/WorkflowForge.Samples.BasicConsole/README.md)** - Comprehensive examples
-- Quickstarts in samples (menu numbers): Persistence (18), Recovery Only (21), Recovery + Resilience (22)
-- **[Performance Benchmarks](../src/benchmarks/README.md)** - See performance characteristics
-
-### 5. **Advanced Deployment**
-- Advanced patterns - To be documented in future versions
-- Security considerations - Follow standard .NET security practices
-- Monitoring & Observability - See `docs/extensions.md` and extension READMEs
-
-## Common Patterns
-
-### Configuration-Based Workflows
-```csharp
-var workflow = WorkflowForge.CreateWorkflow()
-    .WithName("ConfigurableWorkflow")
-    .AddOperation("Step1", async (input, foundry, ct) =>
-    {
-        var config = foundry.GetService<IConfiguration>();
-        var setting = config["MyApp:ProcessingMode"];
-        // Use configuration in operation
-        return ProcessWithMode(input, setting);
-    })
-    .Build();
-```
-
-### Conditional Workflows
-```csharp
-var workflow = WorkflowForge.CreateWorkflow()
-    .WithName("ConditionalProcessing")
-    .AddOperation("CheckCondition", async (input, foundry, ct) =>
-    {
-        var order = (Order)input!;
-        return order.Amount > 100 ? "HighValue" : "StandardValue";
-    })
-    .AddOperation("ProcessHighValue", async (input, foundry, ct) =>
-    {
-        if (foundry.TryGetProperty<string>("PreviousResult", out var prev) && prev == "HighValue")
-        {
-            // High value processing
-        }
-        return input;
-    })
-    .Build();
-```
-
-### Parallel Processing
-```csharp
-// Note: Built-in parallel operations coming in future releases
-// For now, use Task.WhenAll within operations for parallel work
-var workflow = WorkflowForge.CreateWorkflow()
-    .WithName("ParallelProcessing")
-    .AddOperation("ParallelTasks", async (input, foundry, ct) =>
-    {
-        var tasks = new[]
-        {
-            ProcessTaskA(input, foundry, ct),
-            ProcessTaskB(input, foundry, ct),
-            ProcessTaskC(input, foundry, ct)
-        };
-        
-        var results = await Task.WhenAll(tasks);
-        return AggregateResults(results);
-    })
-    .Build();
-```
+- **[API Reference](api-reference.md)** - Complete API documentation
 
 ## Troubleshooting
 
 ### Common Issues
 
-**1. "Operation failed but no compensation occurred"**
-- Ensure your operations implement `SupportsRestore = true`
-- Check that `RestoreAsync` is properly implemented
+**Issue**: "Workflow name is required" exception
+**Solution**: Always set a workflow name via `.WithName()` or `CreateWorkflow(name)`.
 
-**2. "Foundry properties not persisting between operations"**
-- Use `foundry.SetProperty("key", value);` to store data
-- Ensure the foundry instance is reused across operations
+**Issue**: Operations not executing
+**Solution**: Verify you called `.Build()` on the workflow builder and `await smith.ForgeAsync()`.
 
-**3. "Performance is slower than expected"**
-- Check if you're running in Debug mode (use Release for benchmarks)
-- Consider adding performance monitoring extension
-- Review operation implementations for blocking calls
+**Issue**: Data not passing between operations
+**Solution**: Use `foundry.SetProperty()` to store and `foundry.GetPropertyOrDefault()` to retrieve data.
+
+**Issue**: Compensation not running
+**Solution**: Set `SupportsRestore = true` and configure `AutoRestore = true` in foundry configuration.
 
 ### Getting Help
 
-- **Documentation**: Explore the [full documentation](README.md)
-- **Samples**: Run the [interactive samples](../src/samples/WorkflowForge.Samples.BasicConsole/README.md)
-- **Issues**: Report bugs on GitHub Issues: https://github.com/animatlabs/workflow-forge/issues
-- **Discussions**: Ask questions in GitHub Discussions: https://github.com/animatlabs/workflow-forge/discussions
+- **GitHub Issues**: https://github.com/animatlabs/workflow-forge/issues
+- **Documentation**: https://github.com/animatlabs/workflow-forge/tree/main/docs
+- **Samples**: https://github.com/animatlabs/workflow-forge/tree/main/src/samples
+
+## Summary
+
+You've learned:
+
+- How to install WorkflowForge
+- How to create custom operations (class-based, recommended)
+- How to build and execute workflows
+- Core concepts (Forge, Workflow, Operation, Foundry, Smith)
+- Data flow patterns (dictionary-based preferred)
+- Compensation/rollback (Saga pattern)
+
+**Next**: Explore the [24 samples](samples-guide.md) to see WorkflowForge in action, or dive into [architecture](architecture.md) to understand the design principles.
 
 ---
 
-**Welcome to WorkflowForge!** - *Start building robust workflows today* 
+## Related Documentation
+
+- **[Architecture Overview](architecture.md)** - Design patterns and core concepts
+- **[Operations Guide](operations.md)** - All operation types and patterns
+- **[Events System](events.md)** - Monitoring and observability
+- **[Extensions](extensions.md)** - Available extensions
+- **[Configuration](configuration.md)** - Environment-specific setup
+- **[Samples Guide](samples-guide.md)** - All 24 samples with learning path
+- **[API Reference](api-reference.md)** - Complete API documentation
+
+**← Back to [Documentation Home](README.md)**

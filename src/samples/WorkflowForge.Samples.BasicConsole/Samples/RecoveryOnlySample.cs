@@ -1,6 +1,5 @@
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Persistence;
-using WorkflowForge.Extensions.Persistence.Abstractions;
 using WorkflowForge.Extensions.Persistence.Recovery;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
@@ -95,5 +94,3 @@ public class RecoveryOnlySample : ISample
         return new Guid(guidBytes);
     }
 }
-
-

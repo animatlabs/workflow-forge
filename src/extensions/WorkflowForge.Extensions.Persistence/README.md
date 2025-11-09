@@ -1,65 +1,181 @@
-WorkflowForge Persistence Extension (Bring Your Own Storage)
+# WorkflowForge.Extensions.Persistence
 
-Add resumable workflows to WorkflowForge via a pluggable provider without introducing external dependencies. You implement storage; we provide the middleware and hooks.
+<p align="center">
+  <img src="../../../icon.png" alt="WorkflowForge" width="120" height="120">
+</p>
 
-Quick start
+Workflow state persistence extension for WorkflowForge with in-memory and SQLite providers for checkpointing and recovery.
 
-1) Implement the provider interface
+[![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Persistence.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Persistence/)
+
+## Zero Dependencies (InMemory) / Zero Conflicts (SQLite)
+
+**InMemory Provider**: ZERO external dependencies - Pure WorkflowForge  
+**SQLite Provider**: Uses Costura.Fody to embed Microsoft.Data.Sqlite
+
+- NO DLL Hell - Embedded dependencies don't conflict
+- NO Version Conflicts - Your app can use any SQLite version
+- Clean Deployment - Professional dependency isolation
+
+## Installation
+
+```bash
+dotnet add package WorkflowForge.Extensions.Persistence
+```
+
+**Requires**: .NET Standard 2.0 or later
+
+## Quick Start
+
+### In-Memory (Development/Testing)
 
 ```csharp
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using WorkflowForge.Persistence;
+using WorkflowForge.Extensions.Persistence.InMemory;
 
-public sealed class MyPersistenceProvider : IWorkflowPersistenceProvider
+var provider = new InMemoryPersistenceProvider();
+
+// Save workflow state
+var state = new WorkflowState
 {
-    public Task SaveAsync(WorkflowExecutionSnapshot snapshot, CancellationToken ct = default)
-    {
-        // Serialize and save to your storage
-        return Task.CompletedTask;
-    }
+    ExecutionId = foundry.ExecutionId,
+    WorkflowName = workflow.Name,
+    Properties = foundry.Properties.ToDictionary(x => x.Key, x => x.Value),
+    CompletedOperations = new List<string> { "Op1", "Op2" }
+};
 
-    public Task<WorkflowExecutionSnapshot?> TryLoadAsync(Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default)
-    {
-        // Load and deserialize snapshot if present
-        return Task.FromResult<WorkflowExecutionSnapshot?>(null);
-    }
+await provider.SaveWorkflowStateAsync(foundry.ExecutionId, state);
 
-    public Task DeleteAsync(Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default)
+// Load workflow state
+var loadedState = await provider.LoadWorkflowStateAsync(foundry.ExecutionId);
+```
+
+### SQLite (Production)
+
+```csharp
+using WorkflowForge.Extensions.Persistence.SQLite;
+
+var provider = new SQLitePersistenceProvider("workflows.db");
+
+// Same API as InMemory
+await provider.SaveWorkflowStateAsync(foundry.ExecutionId, state);
+var loadedState = await provider.LoadWorkflowStateAsync(foundry.ExecutionId);
+```
+
+## Key Features
+
+- **Two Providers**: InMemory (testing) and SQLite (production)
+- **Checkpoint Support**: Save workflow state at any point
+- **Resume Workflows**: Continue from last checkpoint
+- **Pluggable Architecture**: `IWorkflowPersistenceProvider` interface
+- **Thread-Safe**: Concurrent workflow support
+- **Transactional**: SQLite provider uses transactions
+
+## Configuration
+
+### In Workflow
+
+```csharp
+foundry.SetProperty("PersistenceProvider", sqliteProvider);
+
+// Save checkpoints during execution
+var checkpointOp = new DelegateWorkflowOperation(async (foundry, ct) =>
+{
+    var provider = foundry.GetPropertyOrDefault<IPersistenceProvider>("PersistenceProvider");
+    var state = new WorkflowState { /* ... */ };
+    await provider.SaveWorkflowStateAsync(foundry.ExecutionId, state, ct);
+});
+```
+
+See [Configuration Guide](../../../docs/configuration.md#persistence-extensions) for complete options.
+
+## Workflow State Structure
+
+```csharp
+public class WorkflowState
+{
+    public Guid ExecutionId { get; set; }
+    public string WorkflowName { get; set; }
+    public Dictionary<string, object> Properties { get; set; }
+    public List<string> CompletedOperations { get; set; }
+    public int NextOperationIndex { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset? UpdatedAt { get; set; }
+}
+```
+
+## Custom Persistence Provider
+
+```csharp
+public class CosmosDbPersistenceProvider : IWorkflowPersistenceProvider
+{
+    private readonly CosmosClient _client;
+    private readonly Container _container;
+    
+    public async Task SaveWorkflowStateAsync(
+        Guid executionId,
+        WorkflowState state,
+        CancellationToken cancellationToken = default)
     {
-        // Remove snapshot when workflow completes
-        return Task.CompletedTask;
+        await _container.UpsertItemAsync(state, new PartitionKey(executionId.ToString()), cancellationToken: cancellationToken);
+    }
+    
+    public async Task<WorkflowState?> LoadWorkflowStateAsync(
+        Guid executionId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _container.ReadItemAsync<WorkflowState>(
+                executionId.ToString(),
+                new PartitionKey(executionId.ToString()),
+                cancellationToken: cancellationToken);
+            return response.Resource;
+        }
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
     }
 }
 ```
 
-2) Enable persistence
+## Usage Patterns
+
+### Save Checkpoint at Each Operation
 
 ```csharp
-using WorkflowForge;
-using WorkflowForge.Extensions; // UsePersistence extension
-
-var foundry = WorkflowForge.CreateFoundry("OrderWorkflow");
-foundry.UsePersistence(new MyPersistenceProvider());
-
-// For cross-process resume, pass stable keys via options and use a shared provider (e.g., DB/cache)
-foundry.UsePersistence(new MyPersistenceProvider(), new PersistenceOptions
+foundry.OperationCompleted += async (s, e) =>
 {
-    InstanceId = "order-service-west-1",
-    WorkflowKey = "ProcessOrder-v1"
-});
+    var state = CreateStateFromFoundry(foundry);
+    await provider.SaveWorkflowStateAsync(foundry.ExecutionId, state);
+};
 ```
 
-How it works
+### Resume from Checkpoint
 
-- After each operation completes, a snapshot is saved with the next operation index and foundry properties.
-- On resume, properties are restored once and already-completed operations are skipped.
-- When the last operation completes, the snapshot is deleted.
+```csharp
+var state = await provider.LoadWorkflowStateAsync(executionId);
+if (state != null)
+{
+    // Restore foundry state
+    foreach (var prop in state.Properties)
+    {
+        foundry.SetProperty(prop.Key, prop.Value);
+    }
+    
+    // Skip completed operations
+    foundry.SetProperty("NextOperationIndex", state.NextOperationIndex);
+}
+```
 
-Notes
+## Documentation
 
-- The extension is zero-dependency; you bring the storage and serialization.
-- Snapshots store only what you put in foundry `Properties`. Keep payloads minimal.
-- To resume across processes or after restarts, use a provider backed by shared storage and provide stable keys via `PersistenceOptions`.
+- **[Getting Started](../../../docs/getting-started.md)**
+- **[Configuration Guide](../../../docs/configuration.md#persistence-extensions)**
+- **[Extensions Overview](../../../docs/extensions.md)**
+- **[Sample 18: Persistence](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
+- **[Recovery Extension](../WorkflowForge.Extensions.Persistence.Recovery/README.md)** - Recovery orchestration on top of persistence
 
+---
+
+**WorkflowForge.Extensions.Persistence** - *Build workflows with industrial strength*

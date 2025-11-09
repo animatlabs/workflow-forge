@@ -249,5 +249,6 @@ public class CustomTimedOperation : IWorkflowOperation
         throw new NotSupportedException($"Operation {_operationName} does not support restoration");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }

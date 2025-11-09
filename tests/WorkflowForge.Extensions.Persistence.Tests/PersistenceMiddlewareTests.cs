@@ -2,13 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using WorkflowForge; // CreateWorkflow, CreateFoundry, CreateSmith
-using WorkflowForge.Extensions; // UsePersistence
-using WorkflowForge.Extensions.Persistence; // PersistenceOptions
-using WorkflowForge.Extensions.Persistence.Abstractions; // IWorkflowPersistenceProvider
-using WorkflowForge.Extensions.Persistence; // PersistenceOptions
-using WorkflowForge.Extensions.Persistence.Abstractions; // WorkflowExecutionSnapshot
 using WorkflowForge.Exceptions; // WorkflowOperationException
+using WorkflowForge.Extensions.Persistence.Abstractions; // IWorkflowPersistenceProvider
 using WorkflowForge.Extensions.Persistence.Recovery; // RecoveryExtensions, RecoveryPolicy
 using Xunit;
 

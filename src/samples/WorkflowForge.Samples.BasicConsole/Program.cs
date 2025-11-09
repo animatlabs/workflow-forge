@@ -38,7 +38,7 @@ public static class Program
         ["11"] = new WorkflowEventsSample(),
         ["12"] = new MiddlewareSample(),
 
-        // Extension Samples (13-18)
+        // Extension Samples (13-18 + 23-24)
         ["13"] = new SerilogIntegrationSample(),
         ["14"] = new PollyResilienceSample(),
         ["15"] = new OpenTelemetryObservabilitySample(),
@@ -47,6 +47,8 @@ public static class Program
         ["18"] = new PersistenceSample(),
         ["21"] = new RecoveryOnlySample(),
         ["22"] = new ResilienceRecoverySample(),
+        ["23"] = new ValidationSample(),
+        ["24"] = new AuditSample(),
 
         // Advanced Samples (19-20)
         ["19"] = new ComprehensiveIntegrationSample(),
@@ -88,8 +90,11 @@ public static class Program
         catch (Exception ex)
         {
             Console.WriteLine($"\nERROR: {ex.Message}");
-            Console.WriteLine("Press any key to exit...");
-            Console.ReadKey();
+            if (Environment.UserInteractive && !Console.IsInputRedirected)
+            {
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey();
+            }
         }
     }
 
@@ -138,6 +143,8 @@ public static class Program
             Console.WriteLine("  18. Persistence (BYO Storage) - Resumable workflows");
             Console.WriteLine("  21. Recovery Only            - Resume + retry without re-running completed steps");
             Console.WriteLine("  22. Recovery + Resilience    - Unified resume plus retry via Resilience middleware");
+            Console.WriteLine("  23. Validation              - FluentValidation integration");
+            Console.WriteLine("  24. Audit Logging           - Comprehensive audit trails");
             Console.WriteLine();
             Console.WriteLine("ADVANCED:");
             Console.WriteLine("  19. Comprehensive Demo      - Full-featured example");
@@ -187,7 +194,7 @@ public static class Program
                     else
                     {
                         Console.WriteLine($"Invalid choice: {input}");
-                        Console.WriteLine("Please enter a number (1-22), A for all, B for basic, or Q to quit.");
+                        Console.WriteLine("Please enter a number (1-24), A for all, B for basic, or Q to quit.");
                     }
                     break;
             }
@@ -195,8 +202,11 @@ public static class Program
             if (running && input != "A" && input != "B")
             {
                 Console.WriteLine();
-                Console.WriteLine("Press any key to return to menu...");
-                Console.ReadKey();
+                if (Environment.UserInteractive && !Console.IsInputRedirected)
+                {
+                    Console.WriteLine("Press any key to return to menu...");
+                    Console.ReadKey();
+                }
                 Console.Clear();
                 PrintHeader();
             }
@@ -217,8 +227,11 @@ public static class Program
 
         Console.WriteLine("All samples completed successfully.");
         Console.WriteLine();
-        Console.WriteLine("Press any key to return to menu...");
-        Console.ReadKey();
+        if (Environment.UserInteractive && !Console.IsInputRedirected)
+        {
+            Console.WriteLine("Press any key to return to menu...");
+            Console.ReadKey();
+        }
         Console.Clear();
         PrintHeader();
     }
@@ -240,8 +253,11 @@ public static class Program
 
         Console.WriteLine("Basic samples completed successfully.");
         Console.WriteLine();
-        Console.WriteLine("Press any key to return to menu...");
-        Console.ReadKey();
+        if (Environment.UserInteractive && !Console.IsInputRedirected)
+        {
+            Console.WriteLine("Press any key to return to menu...");
+            Console.ReadKey();
+        }
         Console.Clear();
         PrintHeader();
     }

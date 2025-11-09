@@ -1,166 +1,314 @@
 # WorkflowForge Documentation
 
-Comprehensive documentation for WorkflowForge, the modern workflow orchestration framework for .NET.
+<p align="center">
+  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
+</p>
 
-[![GitHub Repository](https://img.shields.io/badge/GitHub-animatlabs%2Fworkflow--forge-blue?logo=github)](https://github.com/animatlabs/workflow-forge)
-[![Documentation](https://img.shields.io/badge/Docs-Latest-green?logo=gitbook)](https://github.com/animatlabs/workflow-forge/tree/main/docs)
+**Welcome to the complete WorkflowForge documentation** - Your guide to building high-performance workflows in .NET.
 
-## Quick Start Learning Path
+---
 
-### Interactive Samples (Recommended Starting Point)
-**The fastest way to learn WorkflowForge is through our comprehensive interactive samples:**
+## Table of Contents
+
+- [Quick Navigation](#quick-navigation)
+- [What is WorkflowForge?](#what-is-workflowforge)
+- [Why Choose WorkflowForge?](#why-choose-workflowforge)
+- [Core Architecture](#core-architecture)
+- [Documentation Structure](#documentation-structure)
+- [Quick Start](#quick-start)
+- [Learning Path](#learning-path)
+- [Extension Ecosystem](#extension-ecosystem)
+- [Performance Highlights](#performance-highlights)
+- [Getting Help](#getting-help)
+
+---
+
+## Quick Navigation
+
+### Getting Started
+- **[Getting Started Guide](getting-started.md)** - Step-by-step tutorial for new users
+- **[Quick Start (Root README)](../README.md)** - Installation and first workflow
+- **[Interactive Samples](samples-guide.md)** - 24 hands-on examples
+
+### Core Concepts
+- **[Architecture Overview](architecture.md)** - Design principles, metaphor, and patterns
+- **[API Reference](api-reference.md)** - Complete API documentation
+- **[Operations Guide](operations.md)** - Creating and using operations
+- **[Event System](events.md)** - Lifecycle events and monitoring
+- **[Configuration](configuration.md)** - Settings and options
+
+### Performance & Comparison
+- **[Performance Analysis](performance.md)** - Internal + comparative benchmark data, artifacts linked
+- **[Competitive Analysis](competitive-analysis.md)** - Summary only; details and artifacts inside
+
+### Extensions & Samples
+- **[Extensions Overview](extensions.md)** - All 10 available extensions
+- **[Samples Guide](samples-guide.md)** - Complete guide to 24 progressive examples
+
+### Contributing
+- **[Contributing Guidelines](../CONTRIBUTING.md)** - How to contribute to WorkflowForge
+
+---
+
+## What is WorkflowForge?
+
+WorkflowForge is a **zero-dependency workflow orchestration framework** for .NET with **microsecond-level performance** and **minimal memory footprint**. It provides a clean, industrial metaphor for building workflows that are fast, maintainable, and production-ready.
+
+### Key Features
+
+- **World-Class Performance**: 13-378x faster than leading alternatives
+- **Minimal Memory**: 6-1,495x less memory usage
+- **Zero Dependencies**: Core package with no external dependencies
+- **Production Ready**: Built-in compensation (saga pattern), comprehensive testing
+- **Extension Ecosystem**: 10 optional extensions with zero version conflicts
+- **Developer Experience**: Fluent API, clear metaphor, 24 progressive samples
+
+---
+
+## The Industrial Metaphor
+
+WorkflowForge uses an industrial metaphor that makes workflows intuitive:
+
+- **The Forge** (`WorkflowForge` static class) - Main factory for creating workflows
+- **Foundries** (`IWorkflowFoundry`) - Execution environments where operations run
+- **Smiths** (`IWorkflowSmith`) - Orchestration engines managing workflow execution
+- **Operations** (`IWorkflowOperation`) - Individual tasks within workflows
+
+This metaphor provides clarity: *data (raw materials) flows through operations (tools) in a foundry (workspace), orchestrated by a smith (craftsman)*.
+
+---
+
+## Core Abstractions
+
+### IWorkflow
+Complete workflow definition with operations and metadata.
+```csharp
+public interface IWorkflow : IDisposable
+{
+    Guid Id { get; }
+    string Name { get; }
+    string? Description { get; }
+    string Version { get; }
+    IReadOnlyList<IWorkflowOperation> Operations { get; }
+    bool SupportsRestore { get; }
+}
+```
+
+### IWorkflowFoundry
+Execution environment providing context, logging, and services.
+```csharp
+public interface IWorkflowFoundry : IDisposable, IOperationLifecycleEvents
+{
+    Guid ExecutionId { get; }
+    IWorkflow? CurrentWorkflow { get; }
+    ConcurrentDictionary<string, object?> Properties { get; }
+    IWorkflowForgeLogger Logger { get; }
+    IServiceProvider? ServiceProvider { get; }
+}
+```
+
+### IWorkflowSmith
+Orchestration engine executing workflows.
+```csharp
+public interface IWorkflowSmith : IDisposable, IWorkflowLifecycleEvents, ICompensationLifecycleEvents
+{
+    Task ForgeAsync(IWorkflow workflow, CancellationToken cancellationToken = default);
+    Task ForgeAsync(IWorkflow workflow, ConcurrentDictionary<string, object?> data, CancellationToken cancellationToken = default);
+    Task ForgeAsync(IWorkflow workflow, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
+}
+```
+
+### IWorkflowOperation
+Individual executable operation within a workflow.
+```csharp
+public interface IWorkflowOperation : IDisposable
+{
+    Guid Id { get; }
+    string Name { get; }
+    bool SupportsRestore { get; }
+    
+    Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
+    Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
+}
+```
+
+For complete API documentation, see [API Reference](api-reference.md).
+
+---
+
+## Data Flow Patterns
+
+WorkflowForge supports two data flow patterns:
+
+### Primary Pattern: Dictionary-Based Context
+**Recommended for most workflows**. All data stored in `foundry.Properties` (thread-safe `ConcurrentDictionary`).
+
+```csharp
+workflow.AddOperation("StoreData", async (input, foundry, ct) => {
+    foundry.Properties["OrderId"] = orderId;
+    foundry.Properties["Customer"] = customer;
+    return input;
+});
+
+workflow.AddOperation("RetrieveData", async (input, foundry, ct) => {
+    var orderId = foundry.Properties["OrderId"];
+    var customer = foundry.Properties["Customer"];
+    return input;
+});
+```
+
+### Secondary Pattern: Type-Safe Operations
+For explicit contracts between operations, use `IWorkflowOperation<TInput, TOutput>`.
+
+```csharp
+public class ValidateOrderOperation : WorkflowOperationBase<Order, ValidationResult>
+{
+    public override async Task<ValidationResult> ForgeAsync(
+        Order input, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    {
+        // Type-safe input and output
+        return new ValidationResult { IsValid = input.IsValid() };
+    }
+}
+```
+
+For detailed patterns, see [Operations Guide](operations.md).
+
+---
+
+## Event System (SRP-Compliant)
+
+WorkflowForge provides three focused event interfaces following Single Responsibility Principle:
+
+### IWorkflowLifecycleEvents
+Workflow-level events: `WorkflowStarted`, `WorkflowCompleted`, `WorkflowFailed`
+
+### IOperationLifecycleEvents
+Operation-level events: `OperationStarted`, `OperationCompleted`, `OperationFailed`
+
+### ICompensationLifecycleEvents
+Compensation events: `CompensationStarted`, `CompensationCompleted`, `CompensationFailed`
+
+For comprehensive event handling, see [Event System Guide](events.md).
+
+---
+
+## Extensions Ecosystem
+
+WorkflowForge provides **10 optional extensions** for additional capabilities:
+
+| Extension | Purpose | Package |
+|-----------|---------|---------|
+| **Serilog Logging** | Structured logging | `WorkflowForge.Extensions.Logging.Serilog` |
+| **Resilience** | Core retry abstractions | `WorkflowForge.Extensions.Resilience` |
+| **Polly Resilience** | Circuit breakers, retries | `WorkflowForge.Extensions.Resilience.Polly` |
+| **Validation** | Input validation, FluentValidation | `WorkflowForge.Extensions.Validation` |
+| **Audit Logging** | Compliance & audit trails | `WorkflowForge.Extensions.Audit` |
+| **Persistence** | Workflow state storage | `WorkflowForge.Extensions.Persistence` |
+| **Persistence Recovery** | Resume interrupted workflows | `WorkflowForge.Extensions.Persistence.Recovery` |
+| **Performance Monitoring** | Metrics & profiling | `WorkflowForge.Extensions.Observability.Performance` |
+| **Health Checks** | Application health | `WorkflowForge.Extensions.Observability.HealthChecks` |
+| **OpenTelemetry** | Distributed tracing | `WorkflowForge.Extensions.Observability.OpenTelemetry` |
+
+**Zero Version Conflicts**: All extensions use Costura.Fody to embed dependencies. Your application can use ANY version of Serilog, Polly, FluentValidation, or OpenTelemetry without conflicts.
+
+For detailed extension documentation, see [Extensions Guide](extensions.md).
+
+---
+
+## Performance Highlights
+
+Based on rigorous BenchmarkDotNet testing against WorkflowCore 3.17 and Elsa Workflows 3.5.1:
+
+| Metric | WorkflowForge | Competitors | Advantage |
+|--------|---------------|-------------|-----------|
+| **Execution Speed** | 6.9-306 μs | 882-106,115 μs | **13-378x faster** |
+| **Memory Usage** | 1.73-87.93 KB | 44.51-19,104.55 KB | **6-1,495x less** |
+| **Creation Overhead** | 6.9 μs | 882-2,605 μs | **128-378x faster** |
+
+**Test System**: Windows 11, .NET 8.0.21, 25 iterations per benchmark
+
+For comprehensive performance analysis, see [Performance Documentation](performance.md).
+
+---
+
+## Learning Path
+
+### 1. Start Here: Quick Start
+[Root README](../README.md) - Install and run your first workflow in 5 minutes.
+
+### 2. Run Interactive Samples
+[Samples Guide](samples-guide.md) - 24 progressive examples from "Hello World" to production patterns.
 
 ```bash
 cd src/samples/WorkflowForge.Samples.BasicConsole
 dotnet run
 ```
 
-**Learning Path:** 22 hands-on examples from basic to advanced
-- **Beginner (1-4)**: Hello World, Data Passing, Conditions, Inline Operations
-- **Intermediate (5-12)**: Control Flow, Error Handling, Configuration, Middleware
-- **Advanced (13-18, 21-22)**: Extensions, Observability, Resilience, Persistence (18), Recovery Only (21), Recovery + Resilience (22), Comprehensive Integration
+### 3. Understand Core Concepts
+- [Architecture](architecture.md) - Design principles
+- [Operations](operations.md) - Operation patterns
+- [Events](events.md) - Lifecycle monitoring
 
-[View Complete Sample Collection](../src/samples/WorkflowForge.Samples.BasicConsole/)
+### 4. Explore Extensions
+[Extensions Guide](extensions.md) - Add logging, resilience, persistence, etc.
 
-Quick sample pointers:
-- Persistence (BYO Storage): Menu item 18
-- Recovery Only (resume + retry): Menu item 21
-- Recovery + Resilience (unified): Menu item 22
-
-### Core Documentation
-- **[Getting Started Guide](getting-started.md)** - Step-by-step introduction
-- **[Architecture Overview](architecture.md)** - Core design principles
-- **[Operations Guide](operations.md)** - Building custom operations
-- **[Configuration Reference](configuration.md)** - Complete configuration options
-
-### Reference Documentation
-- **[API Reference](api-reference.md)** - Complete API documentation
-- **[Extensions Overview](extensions.md)** - Available extensions and usage
-
-## Why WorkflowForge?
-
-### Zero Dependencies, Maximum Power
-- **Minimal deployment footprint** (~50KB core)
-- **No version conflicts** with your existing dependencies
-- **Maximum compatibility** across .NET versions
-- **Lightweight containers** and edge deployments
-
-### Performance That Scales
-- **Microsecond-level operations** - Typical medians ~14–36 μs; see benchmarks
-- **Parallel throughput** - Improves with concurrent execution; see throughput benchmarks
-- **Memory efficient** - ~0.9–2.3 KB per operation (benchmarks)
-- **Concurrent execution** with excellent parallel performance
-
-### Feature-Rich Architecture
-- **Built-in compensation** (saga pattern) for automatic rollback
-- **Middleware pipeline** similar to ASP.NET Core
-- **Comprehensive observability** with metrics, tracing, and health checks
-- **Advanced resilience** with circuit breakers and retries
-
-## Documentation Structure
-
-### Getting Started
-| Document | Description | Audience |
-|----------|-------------|----------|
-| [Getting Started](getting-started.md) | Step-by-step introduction | New users |
-| [Interactive Samples](../src/samples/WorkflowForge.Samples.BasicConsole/) | **Recommended starting point** | All users |
-
-### Core Concepts
-| Document | Description | Audience |
-|----------|-------------|----------|
-| [Architecture](architecture.md) | Core design principles | Developers |
-| [Operations](operations.md) | Building custom operations | Developers |
-| [Configuration](configuration.md) | Configuration management | All users |
-
-### Extensions
-| Document | Description | Audience |
-|----------|-------------|----------|
-| [Extensions Overview](extensions.md) | Available extensions | All users |
-
-### Reference
-| Document | Description | Audience |
-|----------|-------------|----------|
-| [API Reference](api-reference.md) | Complete API documentation | Developers |
-
-## Quick Navigation
-
-### For New Users
-1. **[Interactive Samples](../src/samples/WorkflowForge.Samples.BasicConsole/)** - Learn by doing (recommended)
-2. **[Getting Started Guide](getting-started.md)** - Traditional tutorial approach
-3. **[Architecture Overview](architecture.md)** - Understand the design
-
-### For Experienced Developers
-1. **[API Reference](api-reference.md)** - Complete API documentation
-2. **[Operations Guide](operations.md)** - Building custom operations
-3. **[Extensions](extensions.md)** - Adding capabilities
-
-### For DevOps/Configuration
-1. **[Configuration Reference](configuration.md)** - All configuration options
-2. **[Extensions Overview](extensions.md)** - Available extensions
-3. **[Performance Benchmarks](../src/benchmarks/WorkflowForge.Benchmarks/)** - Performance data
-
-## WorkflowForge Metaphor
-
-WorkflowForge uses an **industrial metaphor** that makes workflow concepts intuitive:
-
-- **The Forge** - Main factory for creating workflows and components
-- **Foundries** - Execution environments where operations are performed  
-- **Smiths** - Skilled craftsmen who manage foundries and forge workflows
-- **Operations** - Individual tasks performed in the foundry
-- **Workflows** - Complete workflow definitions with operations
-
-This metaphor provides a consistent mental model throughout the framework.
-
-## Core Features Highlighted
-
-### Developer Experience
-- **Fluent API** with IntelliSense support
-- **Industrial metaphor** for intuitive understanding
-- **Comprehensive examples** with real-world scenarios
-- **Test-first design** with mockable interfaces
-
-### Performance & Efficiency
-- **Zero-dependency core** for minimal footprint
-- **Memory-optimized** with object pooling
-- **Async-first** design throughout
-- **Benchmark-proven** performance characteristics
-
-### Production Features
-- **Automatic compensation** for robust error handling
-- **Rich observability** with metrics and distributed tracing
-- **Advanced resilience** patterns
-- **Configuration management** for different environments
-
-## Documentation Conventions
-
-### Code Examples
-All code examples are tested and maintained:
-- **Complete examples** that can be run as-is
-- **Clear naming** without emojis or casual language
-- **Robust patterns** suitable for production deployment
-- **Clear comments** explaining key concepts
-
-### Versioning
-Documentation is versioned alongside the codebase:
-- **Current version**: Matches the latest release
-- **Version compatibility** is noted where applicable
-- **Migration guides** are provided for breaking changes
-
-## Contributing to Documentation
-
-We welcome contributions to improve the documentation:
-
-1. **Identify gaps** - What's missing or unclear?
-2. **Propose improvements** - Submit issues or pull requests
-3. **Follow conventions** - Maintain professional tone and structure
-4. **Test examples** - Ensure all code examples work correctly
-
-## Support
-
-- **Issues**: Report documentation issues on [GitHub Issues](https://github.com/animatlabs/workflow-forge/issues)
-- **Discussions**: Ask questions in [GitHub Discussions](https://github.com/animatlabs/workflow-forge/discussions)
-- **Repository**: [github.com/animatlabs/workflow-forge](https://github.com/animatlabs/workflow-forge)
+### 5. Deep Dive
+- [API Reference](api-reference.md) - Complete API documentation
+- [Performance](performance.md) - Optimization techniques
+- [Configuration](configuration.md) - Advanced settings
 
 ---
 
-**WorkflowForge Documentation** - *Comprehensive guides for workflow orchestration mastery* 
+## Common Use Cases
+
+### High-Throughput APIs
+Microsecond-level performance ideal for request processing.
+
+### Cloud/Serverless Functions
+Minimal memory footprint reduces costs in AWS Lambda, Azure Functions, etc.
+
+### Microservices Orchestration
+Lightweight workflows for service coordination.
+
+### Data Processing Pipelines
+ForEach operations efficiently process collections.
+
+### Saga Pattern / Distributed Transactions
+Built-in compensation for rollback scenarios.
+
+---
+
+## Support & Community
+
+- **GitHub Repository**: [animatlabs/workflow-forge](https://github.com/animatlabs/workflow-forge)
+- **Issues**: [GitHub Issues](https://github.com/animatlabs/workflow-forge/issues)
+- **License**: MIT License
+- **Contributing**: [Contributing Guidelines](../CONTRIBUTING.md)
+
+---
+
+## Document Index
+
+### Essential Documentation
+- [Getting Started](getting-started.md) - Tutorial
+- [Architecture](architecture.md) - Design & principles
+- [API Reference](api-reference.md) - Complete API
+- [Operations](operations.md) - Operation patterns
+- [Events](events.md) - Event system
+- [Configuration](configuration.md) - Settings
+- [Extensions](extensions.md) - Extensions overview
+- [Samples Guide](samples-guide.md) - 24 examples
+
+### Performance & Analysis
+- [Performance](performance.md) - Benchmark data
+- [Competitive Analysis](competitive-analysis.md) - Framework comparison
+
+### Project Information
+- [Root README](../README.md) - Project overview
+- [Contributing](../CONTRIBUTING.md) - Contribution guidelines
+- [License](../LICENSE) - MIT License
+
+---
+
+**WorkflowForge** - *Build workflows with industrial strength*

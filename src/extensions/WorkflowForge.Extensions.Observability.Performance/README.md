@@ -8,6 +8,16 @@ Comprehensive performance monitoring extension for WorkflowForge with detailed m
 dotnet add package WorkflowForge.Extensions.Observability.Performance
 ```
 
+## Zero Version Conflicts
+
+**This extension uses Costura.Fody to embed System.Diagnostics.DiagnosticSource.** This means:
+
+- **NO DLL Hell** - No conflicts with your application's System libraries  
+- **NO Conflicts** - Works seamlessly with any .NET version  
+- **Clean Deployment** - Professional-grade dependency isolation
+
+**How it works**: Dependencies are embedded as compressed resources at build time and loaded automatically at runtime, completely isolated from your application.
+
 ## Quick Start
 
 ```csharp

@@ -2,41 +2,48 @@ using BenchmarkDotNet.Running;
 
 namespace WorkflowForge.Benchmarks;
 
-/// <summary>
-/// WorkflowForge Benchmarks Runner
-///
-/// Benchmarks various WorkflowForge scenarios including:
-/// - Configuration profiles performance
-/// - Workflow operation throughput
-/// - Memory allocation patterns
-/// - Concurrency scenarios
-/// - Extension overhead analysis
-///
-/// Usage:
-///   dotnet run -c Release                    # Run all benchmarks
-///   dotnet run -c Release --filter "*Config*" # Run configuration benchmarks only
-///   dotnet run -c Release --filter "*Throughput*" # Run throughput benchmarks only
-/// </summary>
 public class Program
 {
     public static void Main(string[] args)
     {
-        Console.WriteLine("WorkflowForge Performance Benchmarks");
-        Console.WriteLine("=====================================");
-        Console.WriteLine();
-        Console.WriteLine("Running comprehensive performance analysis...");
-        Console.WriteLine("This will take several minutes to complete.");
+        Console.WriteLine("================================================================");
+        Console.WriteLine("  WorkflowForge Internal Performance Benchmarks");
+        Console.WriteLine("  Comprehensive performance testing of WorkflowForge framework");
+        Console.WriteLine("================================================================");
         Console.WriteLine();
 
-        var switcher = new BenchmarkSwitcher(new[]
+        if (args.Length == 0)
         {
-            typeof(ConfigurationProfilesBenchmark),
-            typeof(WorkflowThroughputBenchmark),
-            typeof(OperationPerformanceBenchmark),
-            typeof(ConcurrencyBenchmark),
-            typeof(MemoryAllocationBenchmark)
-        });
+            Console.WriteLine("Running ALL internal benchmarks...");
+            Console.WriteLine();
+            Console.WriteLine("Available benchmarks:");
+            Console.WriteLine("  1. Operation Performance Benchmark");
+            Console.WriteLine("  2. Workflow Throughput Benchmark");
+            Console.WriteLine("  3. Memory Allocation Benchmark");
+            Console.WriteLine("  4. Concurrency Benchmark");
+            Console.WriteLine("  5. Configuration Profiles Benchmark");
+            Console.WriteLine();
+            Console.WriteLine("Running all benchmarks automatically...");
+            Console.WriteLine();
 
-        switcher.Run(args);
+            // Run all benchmarks
+            BenchmarkRunner.Run<OperationPerformanceBenchmark>();
+            BenchmarkRunner.Run<WorkflowThroughputBenchmark>();
+            BenchmarkRunner.Run<MemoryAllocationBenchmark>();
+            BenchmarkRunner.Run<ConcurrencyBenchmark>();
+            BenchmarkRunner.Run<ConfigurationProfilesBenchmark>();
+
+            Console.WriteLine();
+            Console.WriteLine("================================================================");
+            Console.WriteLine("  ALL INTERNAL BENCHMARKS COMPLETE!");
+            Console.WriteLine("  Results saved to: BenchmarkDotNet.Artifacts/results/");
+            Console.WriteLine("================================================================");
+        }
+        else
+        {
+            // Use BenchmarkSwitcher for custom arguments
+            var switcher = BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly);
+            switcher.Run(args);
+        }
     }
 }

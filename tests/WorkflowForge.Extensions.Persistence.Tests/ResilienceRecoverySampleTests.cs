@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using WorkflowForge.Extensions.Persistence;
 using WorkflowForge.Extensions.Persistence.Recovery;
 using WorkflowForge.Extensions.Resilience;
 using Xunit;
@@ -110,7 +109,9 @@ public class ResilienceRecoverySampleTests
         }
 
         public bool HasSnapshot(Guid foundryKey, Guid workflowKey) => _store.ContainsKey((foundryKey, workflowKey));
+
         public int Count => _store.Count;
+
         public (Guid foundryKey, Guid workflowKey)? FirstKey()
         {
             foreach (var kv in _store)
@@ -131,5 +132,3 @@ public class ResilienceRecoverySampleTests
         return new Guid(guidBytes);
     }
 }
-
-

@@ -1,9 +1,9 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
-using WorkflowForge.Configurations;
 
 namespace WorkflowForge.Benchmarks;
 
@@ -15,7 +15,7 @@ namespace WorkflowForge.Benchmarks;
 /// - Restoration/compensation performance
 /// </summary>
 [MemoryDiagnoser]
-[SimpleJob(RunStrategy.Monitoring, iterationCount: 200)]
+[SimpleJob(RunStrategy.Monitoring, iterationCount: 25)]
 [MarkdownExporter]
 [HtmlExporter]
 public class OperationPerformanceBenchmark
