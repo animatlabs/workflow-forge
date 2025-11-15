@@ -1,5 +1,4 @@
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 
 namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
@@ -7,7 +6,6 @@ namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
 public class Scenario5_ConcurrentExecution_WorkflowForge : IWorkflowScenario
 {
     private readonly ScenarioParameters _parameters;
-    private FoundryConfiguration _config = null!;
 
     public string Name => "Concurrent Execution";
     public string Description => $"Execute {_parameters.ConcurrencyLevel} concurrent workflows";
@@ -19,7 +17,6 @@ public class Scenario5_ConcurrentExecution_WorkflowForge : IWorkflowScenario
 
     public Task SetupAsync()
     {
-        _config = FoundryConfiguration.HighPerformance();
         return Task.CompletedTask;
     }
 
@@ -32,7 +29,7 @@ public class Scenario5_ConcurrentExecution_WorkflowForge : IWorkflowScenario
         {
             tasks.Add(Task.Run(async () =>
             {
-                using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry($"Concurrent_{i}", _config);
+                using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry($"Concurrent_{i}");
 
                 for (int j = 0; j < 10; j++)
                 {

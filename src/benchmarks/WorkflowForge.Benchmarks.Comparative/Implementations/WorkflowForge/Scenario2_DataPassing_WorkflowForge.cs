@@ -1,5 +1,4 @@
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 
 namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
@@ -11,7 +10,6 @@ namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
 public class Scenario2_DataPassing_WorkflowForge : IWorkflowScenario
 {
     private readonly ScenarioParameters _parameters;
-    private FoundryConfiguration _config = null!;
 
     public string Name => "Data Passing Workflow";
     public string Description => $"Read, modify, and write {_parameters.OperationCount} context values";
@@ -23,13 +21,12 @@ public class Scenario2_DataPassing_WorkflowForge : IWorkflowScenario
 
     public Task SetupAsync()
     {
-        _config = FoundryConfiguration.HighPerformance();
         return Task.CompletedTask;
     }
 
     public async Task<ScenarioResult> ExecuteAsync()
     {
-        using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry("DataPassing", _config);
+        using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry("DataPassing");
 
         // Initialize some data
         foundry.Properties["initial_value"] = 0;

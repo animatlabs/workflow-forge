@@ -61,29 +61,58 @@ await coordinator.ResumeAsync(
 
 ## Configuration
 
-### Recovery Policy
+### Via appsettings.json
 
-```csharp
-var policy = new RecoveryPolicy
+```json
 {
-    MaxAttempts = 3,
-    BaseDelay = TimeSpan.FromSeconds(1),
-    UseExponentialBackoff = true
-};
-
-var coordinator = new RecoveryCoordinator(provider, policy);
+  "WorkflowForge": {
+    "Extensions": {
+      "Recovery": {
+        "Enabled": true,
+        "MaxRetryAttempts": 3,
+        "BaseDelay": "00:00:01",
+        "UseExponentialBackoff": true,
+        "AttemptResume": true,
+        "LogRecoveryAttempts": true
+      }
+    }
+  }
+}
 ```
 
-### Extension Method
+### Via Code
 
 ```csharp
+using WorkflowForge.Extensions.Persistence.Recovery.Options;
+
+var options = new RecoveryMiddlewareOptions
+{
+    Enabled = true,
+    MaxRetryAttempts = 3,
+    BaseDelay = TimeSpan.FromSeconds(1),
+    UseExponentialBackoff = true,
+    AttemptResume = true,
+    LogRecoveryAttempts = true
+};
+
 await smith.ForgeWithRecoveryAsync(
     workflow,
     foundry,
     provider,
     foundryKey,
     workflowKey,
-    policy);
+    options);
+```
+
+### Via Dependency Injection
+
+```csharp
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using WorkflowForge.Extensions.Persistence.Recovery;
+
+services.AddRecoveryConfiguration(configuration);
+var options = serviceProvider.GetRequiredService<IOptions<RecoveryMiddlewareOptions>>().Value;
 ```
 
 See [Configuration Guide](../../../docs/configuration.md#recovery-extension) for complete options.

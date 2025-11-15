@@ -1,5 +1,4 @@
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 
 namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
@@ -11,7 +10,6 @@ namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
 public class Scenario1_SimpleSequential_WorkflowForge : IWorkflowScenario
 {
     private readonly ScenarioParameters _parameters;
-    private FoundryConfiguration _config = null!;
 
     public string Name => "Simple Sequential Workflow";
     public string Description => $"Execute {_parameters.OperationCount} simple sequential operations";
@@ -24,13 +22,12 @@ public class Scenario1_SimpleSequential_WorkflowForge : IWorkflowScenario
     public Task SetupAsync()
     {
         // Use high-performance configuration for fair comparison
-        _config = FoundryConfiguration.HighPerformance();
         return Task.CompletedTask;
     }
 
     public async Task<ScenarioResult> ExecuteAsync()
     {
-        using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry("SimpleSequential", _config);
+        using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry("SimpleSequential");
 
         // Add N sequential operations
         for (int i = 0; i < _parameters.OperationCount; i++)

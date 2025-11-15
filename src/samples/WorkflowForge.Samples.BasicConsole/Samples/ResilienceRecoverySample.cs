@@ -1,6 +1,7 @@
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Persistence;
 using WorkflowForge.Extensions.Persistence.Recovery;
+using WorkflowForge.Extensions.Persistence.Recovery.Options;
 using WorkflowForge.Extensions.Resilience;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
@@ -100,7 +101,7 @@ public class ResilienceRecoverySample : ISample
                 provider,
                 foundryKey,
                 workflowKey,
-                new RecoveryPolicy { MaxAttempts = 3, BaseDelay = TimeSpan.FromMilliseconds(50), UseExponentialBackoff = true });
+                new RecoveryMiddlewareOptions { MaxRetryAttempts = 3, BaseDelay = TimeSpan.FromMilliseconds(50), UseExponentialBackoff = true });
 
             var seq = f2.GetPropertyOrDefault<List<string>>("seq") ?? new();
             Console.WriteLine($"Sequence: {string.Join(" -> ", seq)}");

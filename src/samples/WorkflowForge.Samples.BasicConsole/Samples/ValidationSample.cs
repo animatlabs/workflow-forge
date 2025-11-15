@@ -2,6 +2,7 @@ using FluentValidation;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Validation;
+using WorkflowForge.Extensions.Validation.Options;
 using WF = WorkflowForge;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
@@ -78,10 +79,11 @@ public class ValidationSample : ISample
 
         // Add validation middleware
         var validator = new OrderValidator();
-        foundry.AddValidation(
+        var options = new ValidationMiddlewareOptions { ThrowOnValidationError = true };
+        foundry.UseValidation(
             validator,
             f => f.GetPropertyOrDefault<Order>("Order"),
-            throwOnFailure: true);
+            options);
 
         // Create order
         var order = new Order
@@ -161,10 +163,11 @@ public class ValidationSample : ISample
 
         // Add validation with throwOnFailure = false
         var validator = new OrderValidator();
-        foundry.AddValidation(
+        var options = new ValidationMiddlewareOptions { ThrowOnValidationError = false };
+        foundry.UseValidation(
             validator,
             f => f.GetPropertyOrDefault<Order>("Order"),
-            throwOnFailure: false); // Log but don't throw
+            options);
 
         var workflow = WF.WorkflowForge.CreateWorkflow()
             .WithName("ErrorHandledOrder")

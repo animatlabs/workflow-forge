@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using WorkflowForge.Abstractions;
 using WorkflowForge.Exceptions; // WorkflowOperationException
 using WorkflowForge.Extensions.Persistence.Abstractions; // IWorkflowPersistenceProvider
-using WorkflowForge.Extensions.Persistence.Recovery; // RecoveryExtensions, RecoveryPolicy
+using WorkflowForge.Extensions.Persistence.Recovery; // RecoveryExtensions
+using WorkflowForge.Extensions.Persistence.Recovery.Options; // RecoveryMiddlewareOptions
 using Xunit;
 
 namespace WorkflowForge.Extensions.Persistence.Tests;
@@ -146,7 +149,7 @@ public class PersistenceMiddlewareTests
                 provider,
                 foundryKey,
                 workflowKey,
-                new RecoveryPolicy { MaxAttempts = 5, BaseDelay = TimeSpan.FromMilliseconds(10), UseExponentialBackoff = false });
+                new RecoveryMiddlewareOptions { MaxRetryAttempts = 5, BaseDelay = TimeSpan.FromMilliseconds(10), UseExponentialBackoff = false });
 
             // Assertions
             Assert.True(f2.GetPropertyOrDefault<bool>("ok2"));
@@ -156,6 +159,41 @@ public class PersistenceMiddlewareTests
             Assert.Equal("First", seq[0]);
             Assert.Equal("Third", seq[^1]);
         }
+    }
+
+    [Fact]
+    public void UsePersistence_WithEnabledFalse_ShouldNotAddMiddleware()
+    {
+        var provider = new InMemoryProvider();
+        var options = new PersistenceOptions { Enabled = false };
+        using var foundry = WorkflowForge.CreateFoundry("Test");
+        var initialMiddlewareCount = GetMiddlewareCount(foundry);
+
+        var result = foundry.UsePersistence(provider, options);
+
+        Assert.Same(foundry, result);
+        Assert.Equal(initialMiddlewareCount, GetMiddlewareCount(foundry));
+    }
+
+    [Fact]
+    public void UsePersistence_WithEnabledTrue_ShouldAddMiddleware()
+    {
+        var provider = new InMemoryProvider();
+        var options = new PersistenceOptions { Enabled = true };
+        using var foundry = WorkflowForge.CreateFoundry("Test");
+        var initialMiddlewareCount = GetMiddlewareCount(foundry);
+
+        var result = foundry.UsePersistence(provider, options);
+
+        Assert.Same(foundry, result);
+        Assert.Equal(initialMiddlewareCount + 1, GetMiddlewareCount(foundry));
+    }
+
+    private static int GetMiddlewareCount(IWorkflowFoundry foundry)
+    {
+        var type = foundry.GetType();
+        var property = type.GetProperty("MiddlewareCount");
+        return property != null ? (int)property.GetValue(foundry)! : 0;
     }
 
     internal static Guid Deterministic(string input)

@@ -35,7 +35,7 @@ public class WorkflowBuilderTests
         var serviceProvider = new TestServiceProvider();
 
         // Act
-        var builder = WorkflowForge.CreateWorkflow(serviceProvider);
+        var builder = WorkflowForge.CreateWorkflow(serviceProvider: serviceProvider);
 
         // Assert
         Assert.NotNull(builder);
@@ -125,7 +125,7 @@ public class WorkflowBuilderTests
         var serviceProvider = new TestServiceProvider();
 
         // Act
-        var builder = WorkflowForge.CreateWorkflow(serviceProvider).WithName(workflowName);
+        var builder = WorkflowForge.CreateWorkflow(serviceProvider: serviceProvider).WithName(workflowName);
 
         // Assert
         Assert.NotNull(builder);
@@ -388,7 +388,7 @@ public class WorkflowBuilderTests
         // Arrange
         var serviceProvider = new TestServiceProvider();
         serviceProvider.RegisterService<TestParameterlessOperation>(() => new TestParameterlessOperation("FromDI"));
-        var builder = WorkflowForge.CreateWorkflow(serviceProvider);
+        var builder = WorkflowForge.CreateWorkflow(serviceProvider: serviceProvider);
 
         // Act
         var result = builder.AddOperation<TestParameterlessOperation>();
@@ -478,7 +478,7 @@ public class WorkflowBuilderTests
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
-        var builder = WorkflowForge.CreateWorkflow(serviceProvider)
+        var builder = WorkflowForge.CreateWorkflow(serviceProvider: serviceProvider)
             .WithName("ServiceWorkflow")
             .AddOperation(new TestOperation());
 
@@ -612,7 +612,7 @@ public class WorkflowBuilderTests
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
-        var builder = WorkflowForge.CreateWorkflow(serviceProvider)
+        var builder = WorkflowForge.CreateWorkflow(serviceProvider: serviceProvider)
             .WithName("ServiceWorkflow")
             .AddOperation(new TestOperation("Step1"))
             .AddOperation("Step2", foundry => { });

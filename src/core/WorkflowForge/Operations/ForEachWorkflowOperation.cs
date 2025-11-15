@@ -76,13 +76,11 @@ namespace WorkflowForge.Operations
             if (_disposed) throw new ObjectDisposedException(nameof(ForEachWorkflowOperation));
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
 
-            // Respect framework-level MaxConcurrentOperations setting
-            var effectiveMaxConcurrency = GetEffectiveMaxConcurrency(foundry);
+            // Use operation-specific concurrency setting (from constructor)
+            var effectiveMaxConcurrency = _maxConcurrency;
 
             var workflowId = foundry.CurrentWorkflow?.Id ?? Guid.Empty;
             var workflowName = foundry.CurrentWorkflow?.Name ?? "Unknown";
-            var frameworkMaxConcurrency = foundry.Properties.TryGetValue("MaxConcurrentOperations", out var maxConcurrent)
-                ? maxConcurrent as int? : null;
 
             foundry.Logger.LogInformation(
                 "Starting ForEach operation {OperationName} for workflow {WorkflowName} ({WorkflowId}) with {ChildOperationCount} operations, max concurrency: {EffectiveMaxConcurrency}",
@@ -140,8 +138,8 @@ namespace WorkflowForge.Operations
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
             if (!SupportsRestore) throw new NotSupportedException($"ForEach operation '{Name}' does not support restoration because one or more child operations do not support restoration.");
 
-            // Respect framework-level MaxConcurrentOperations setting
-            var effectiveMaxConcurrency = GetEffectiveMaxConcurrency(foundry);
+            // Use operation-specific concurrency setting (from constructor)
+            var effectiveMaxConcurrency = _maxConcurrency;
 
             var workflowId = foundry.CurrentWorkflow?.Id ?? Guid.Empty;
             var workflowName = foundry.CurrentWorkflow?.Name ?? "Unknown";
@@ -371,29 +369,6 @@ namespace WorkflowForge.Operations
             TimeSpan? timeout = null)
         {
             return new ForEachWorkflowOperation(operations, timeout, ForEachDataStrategy.SharedInput, maxConcurrency);
-        }
-
-        /// <summary>
-        /// Gets the effective maximum concurrency by respecting both operation-specific and framework-level limits.
-        /// The framework-level MaxConcurrentOperations acts as a global cap that overrides operation-specific settings.
-        /// </summary>
-        /// <param name="foundry">The workflow foundry containing framework settings.</param>
-        /// <returns>The effective maximum concurrency to use, or null for unlimited.</returns>
-        private int? GetEffectiveMaxConcurrency(IWorkflowFoundry foundry)
-        {
-            var frameworkMax = foundry.Properties.TryGetValue("MaxConcurrentOperations", out var maxConcurrent) == true
-                ? maxConcurrent as int? : null;
-
-            // If no framework limit is set, use operation-specific limit
-            if (!frameworkMax.HasValue)
-                return _maxConcurrency;
-
-            // If no operation-specific limit is set, use framework limit
-            if (!_maxConcurrency.HasValue)
-                return frameworkMax;
-
-            // Use the minimum of both limits (most restrictive wins)
-            return Math.Min(_maxConcurrency.Value, frameworkMax.Value);
         }
     }
 }

@@ -1,8 +1,6 @@
 using Serilog;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
-using WorkflowForge.Extensions.Logging.Serilog;
 using WorkflowForge.Extensions.Observability.OpenTelemetry;
 using WorkflowForge.Extensions.Resilience.Polly;
 
@@ -41,11 +39,8 @@ public class ComprehensiveIntegrationSample : ISample
 
         try
         {
-            // Create foundry with comprehensive configuration
-            var config = FoundryConfiguration.ForProduction()
-                .UseSerilog(logger);
-
-            using var foundry = WorkflowForge.CreateFoundry("ECommerceOrderProcessing", config);
+            // Create foundry (Serilog configured globally)
+            using var foundry = WorkflowForge.CreateFoundry("ECommerceOrderProcessing");
 
             // Enable Polly resilience patterns
             foundry.UsePollyProductionResilience();

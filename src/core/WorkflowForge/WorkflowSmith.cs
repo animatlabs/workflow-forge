@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Configurations;
 using WorkflowForge.Constants;
 using WorkflowForge.Events;
 using WorkflowForge.Extensions;
 using WorkflowForge.Loggers;
+using WorkflowForge.Options;
 
 namespace WorkflowForge
 {
@@ -23,8 +23,10 @@ namespace WorkflowForge
     {
         private readonly IWorkflowForgeLogger _logger;
         private readonly IServiceProvider? _serviceProvider;
-        private readonly FoundryConfiguration _configuration;
+        private readonly WorkflowForgeOptions _options;
         private readonly ISystemTimeProvider _timeProvider;
+        private readonly SemaphoreSlim? _concurrencyLimiter;
+        private readonly List<IWorkflowMiddleware> _workflowMiddlewares = new();
         private volatile bool _disposed;
 
         // ==================================================================================
@@ -51,14 +53,42 @@ namespace WorkflowForge
         /// </summary>
         /// <param name="logger">The logger to use for workflow forging events.</param>
         /// <param name="serviceProvider">Optional service provider for dependency injection.</param>
-        /// <param name="configuration">The foundry configuration.</param>
+        /// <param name="options">Optional workflow forge options.</param>
         /// <param name="timeProvider">The time provider to use for timestamps.</param>
-        public WorkflowSmith(IWorkflowForgeLogger logger, IServiceProvider? serviceProvider = null, FoundryConfiguration? configuration = null, ISystemTimeProvider? timeProvider = null)
+        public WorkflowSmith(
+            IWorkflowForgeLogger logger,
+            IServiceProvider? serviceProvider = null,
+            WorkflowForgeOptions? options = null,
+            ISystemTimeProvider? timeProvider = null)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _serviceProvider = serviceProvider;
-            _configuration = configuration ?? FoundryConfiguration.Minimal();
             _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
+            _options = options ?? new WorkflowForgeOptions();
+
+            // Validate options
+            var validationErrors = _options.Validate();
+            if (validationErrors.Count > 0)
+            {
+                var errorMessage = $"Invalid WorkflowForge options: {string.Join("; ", validationErrors)}";
+                _logger.LogError(errorMessage);
+                throw new ArgumentException(errorMessage, nameof(options));
+            }
+
+            // Initialize concurrency limiter if MaxConcurrentWorkflows is configured (> 0)
+            if (_options.MaxConcurrentWorkflows > 0)
+            {
+                _concurrencyLimiter = new SemaphoreSlim(
+                    _options.MaxConcurrentWorkflows,
+                    _options.MaxConcurrentWorkflows);
+
+                _logger.LogInformation(
+                    $"WorkflowSmith initialized with MaxConcurrentWorkflows={_options.MaxConcurrentWorkflows}");
+            }
+            else
+            {
+                _concurrencyLimiter = null; // Unlimited concurrency
+            }
         }
 
         /// <summary>
@@ -105,88 +135,143 @@ namespace WorkflowForge
             if (workflow == null) throw new ArgumentNullException(nameof(workflow));
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
 
+            // Apply concurrency throttling if configured
+            if (_concurrencyLimiter != null)
+            {
+                await _concurrencyLimiter.WaitAsync(cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    await ExecuteWorkflowAsync(workflow, foundry, cancellationToken).ConfigureAwait(false);
+                }
+                finally
+                {
+                    _concurrencyLimiter.Release();
+                }
+            }
+            else
+            {
+                // No throttling - execute directly
+                await ExecuteWorkflowAsync(workflow, foundry, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
+        /// Internal workflow execution logic (extracted for semaphore wrapping).
+        /// Executes workflow through workflow-level middleware pipeline.
+        /// </summary>
+        private async Task ExecuteWorkflowAsync(
+            IWorkflow workflow,
+            IWorkflowFoundry foundry,
+            CancellationToken cancellationToken)
+        {
             // Advanced pattern: use provided foundry and set current workflow
             foundry.SetCurrentWorkflow(workflow);
 
-            // Create workflow scope using helper
-            using var workflowScope = _logger.CreateWorkflowScope(workflow, foundry);
-
-            var startTime = _timeProvider.UtcNow;
-            _logger.LogInformation(WorkflowLogMessageConstants.WorkflowExecutionStarted);
-
-            // FIRE: WorkflowStarted event
-            WorkflowStarted?.Invoke(this, new WorkflowStartedEventArgs(foundry, _timeProvider.UtcNow));
-
-            try
+            // Build workflow middleware pipeline (Russian Doll pattern)
+            Func<Task> workflowExecution = async () =>
             {
-                // Route execution through foundry pipeline so middlewares (e.g., persistence, retry, logging) are applied
-                foundry.WithOperations(workflow.Operations);
-                await foundry.ForgeAsync(cancellationToken).ConfigureAwait(false);
+                // Create workflow scope using helper
+                using var workflowScope = _logger.CreateWorkflowScope(workflow, foundry);
 
-                // Log workflow completion
-                _logger.LogInformation(WorkflowLogMessageConstants.WorkflowExecutionCompleted);
+                var startTime = _timeProvider.UtcNow;
+                _logger.LogInformation(WorkflowLogMessageConstants.WorkflowExecutionStarted);
 
-                // FIRE: WorkflowCompleted event
-                var duration = _timeProvider.UtcNow - startTime;
-                var finalProperties = new Dictionary<string, object?>(foundry.Properties);
-                WorkflowCompleted?.Invoke(this, new WorkflowCompletedEventArgs(
-                    foundry,
-                    _timeProvider.UtcNow,
-                    finalProperties,
-                    duration));
-            }
-            catch (OperationCanceledException)
+                // FIRE: WorkflowStarted event
+                WorkflowStarted?.Invoke(this, new WorkflowStartedEventArgs(foundry, _timeProvider.UtcNow));
+
+                try
+                {
+                    // Route execution through foundry pipeline so operation middlewares are applied
+                    foundry.WithOperations(workflow.Operations);
+                    await foundry.ForgeAsync(cancellationToken).ConfigureAwait(false);
+
+                    // Log workflow completion
+                    _logger.LogInformation(WorkflowLogMessageConstants.WorkflowExecutionCompleted);
+
+                    // FIRE: WorkflowCompleted event
+                    var duration = _timeProvider.UtcNow - startTime;
+                    var finalProperties = new Dictionary<string, object?>(foundry.Properties);
+                    WorkflowCompleted?.Invoke(this, new WorkflowCompletedEventArgs(
+                        foundry,
+                        _timeProvider.UtcNow,
+                        finalProperties,
+                        duration));
+                }
+                catch (OperationCanceledException)
+                {
+                    _logger.LogWarning(WorkflowLogMessageConstants.WorkflowExecutionCancelled);
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    var errorProperties = _logger.CreateErrorProperties(ex, "WorkflowExecution");
+                    _logger.LogError(errorProperties, ex, WorkflowLogMessageConstants.WorkflowExecutionFailed);
+
+                    // FIRE: WorkflowFailed event
+                    var duration = _timeProvider.UtcNow - startTime;
+                    WorkflowFailed?.Invoke(this, new WorkflowFailedEventArgs(
+                        foundry,
+                        _timeProvider.UtcNow,
+                        ex,
+                        "Unknown",
+                        duration));
+
+                    throw;
+                }
+            };
+
+            // Wrap with workflow middlewares (Russian Doll pattern - reverse order)
+            for (int i = _workflowMiddlewares.Count - 1; i >= 0; i--)
             {
-                _logger.LogWarning(WorkflowLogMessageConstants.WorkflowExecutionCancelled);
-                throw;
+                var middleware = _workflowMiddlewares[i];
+                var currentNext = workflowExecution;
+                workflowExecution = () => middleware.ExecuteAsync(workflow, foundry, currentNext, cancellationToken);
             }
-            catch (Exception ex)
-            {
-                var errorProperties = _logger.CreateErrorProperties(ex, "WorkflowExecution");
-                _logger.LogError(errorProperties, ex, WorkflowLogMessageConstants.WorkflowExecutionFailed);
 
-                // FIRE: WorkflowFailed event
-                var duration = _timeProvider.UtcNow - startTime;
-                WorkflowFailed?.Invoke(this, new WorkflowFailedEventArgs(
-                    foundry,
-                    _timeProvider.UtcNow,
-                    ex,
-                    "Unknown",
-                    duration));
-
-                throw;
-            }
+            // Execute workflow with middleware pipeline
+            await workflowExecution().ConfigureAwait(false);
         }
 
         /// <inheritdoc />
+        /// <remarks>
+        /// <para><strong>Isolation:</strong> Creates a NEW ConcurrentDictionary for Properties,
+        /// ensuring complete isolation between foundry instances. Parallel foundries never share state.</para>
+        /// <para><strong>Ambient Services:</strong> The foundry inherits Logger/ServiceProvider from this WorkflowSmith
+        /// enabling the Ambient Context pattern where services flow: Smith → Foundry → Operations.</para>
+        /// </remarks>
         public IWorkflowFoundry CreateFoundry(IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null)
         {
             ThrowIfDisposed();
+
+            // NEW ConcurrentDictionary per foundry = complete isolation
+            var properties = new ConcurrentDictionary<string, object?>();
+
             return new WorkflowFoundry(
-                Guid.NewGuid(),
-                new ConcurrentDictionary<string, object?>(),
-                new FoundryConfiguration
-                {
-                    Logger = logger ?? _logger,
-                    ServiceProvider = serviceProvider ?? _serviceProvider
-                });
+                Guid.NewGuid(),                                    // Unique execution ID
+                properties,                                         // Isolated properties
+                logger ?? _logger,                                  // Logger (override or use smith's)
+                serviceProvider ?? _serviceProvider);               // ServiceProvider (override or use smith's)
         }
 
         /// <inheritdoc />
+        /// <remarks>
+        /// <para><strong>Isolation:</strong> Creates a NEW ConcurrentDictionary for Properties,
+        /// ensuring complete isolation. Each foundry has its own isolated state.</para>
+        /// </remarks>
         public IWorkflowFoundry CreateFoundryFor(IWorkflow workflow, IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null)
         {
             ThrowIfDisposed();
             if (workflow == null) throw new ArgumentNullException(nameof(workflow));
 
+            // NEW ConcurrentDictionary per foundry = complete isolation
+            var properties = new ConcurrentDictionary<string, object?>();
+
             return new WorkflowFoundry(
-                Guid.NewGuid(),
-                new ConcurrentDictionary<string, object?>(),
-                new FoundryConfiguration
-                {
-                    Logger = logger ?? _logger,
-                    ServiceProvider = serviceProvider ?? _serviceProvider
-                },
-                workflow);
+                Guid.NewGuid(),                                    // Unique execution ID
+                properties,                                         // Isolated properties
+                logger ?? _logger,                                  // Logger (override or use smith's)
+                serviceProvider ?? _serviceProvider,                // ServiceProvider (override or use smith's)
+                workflow);                                          // Pre-associate with workflow
         }
 
         /// <inheritdoc />
@@ -198,11 +283,8 @@ namespace WorkflowForge
             return new WorkflowFoundry(
                 Guid.NewGuid(),
                 data,
-                new FoundryConfiguration
-                {
-                    Logger = logger ?? _logger,
-                    ServiceProvider = serviceProvider ?? _serviceProvider
-                });
+                logger ?? _logger,
+                serviceProvider ?? _serviceProvider);
         }
 
         /// <summary>
@@ -323,10 +405,13 @@ namespace WorkflowForge
 
         private IWorkflowFoundry CreateFoundryFor(IWorkflow workflow)
         {
+            var properties = new ConcurrentDictionary<string, object?>();
+
             return new WorkflowFoundry(
                 Guid.NewGuid(),
-                new ConcurrentDictionary<string, object?>(),
-                _configuration,
+                properties,
+                _logger,
+                _serviceProvider,
                 workflow);
         }
 
@@ -335,7 +420,16 @@ namespace WorkflowForge
             return new WorkflowFoundry(
                 Guid.NewGuid(),
                 properties,
-                _configuration);
+                _logger,
+                _serviceProvider);
+        }
+
+        /// <inheritdoc />
+        public void AddWorkflowMiddleware(IWorkflowMiddleware middleware)
+        {
+            ThrowIfDisposed();
+            if (middleware == null) throw new ArgumentNullException(nameof(middleware));
+            _workflowMiddlewares.Add(middleware);
         }
 
         /// <summary>
@@ -345,6 +439,10 @@ namespace WorkflowForge
         {
             if (_disposed) return;
             _logger.LogTrace("WorkflowSmith disposal initiated");
+
+            // Dispose concurrency limiter if it was created
+            _concurrencyLimiter?.Dispose();
+
             _disposed = true;
             GC.SuppressFinalize(this);
         }

@@ -1,5 +1,4 @@
 using WorkflowForge.Abstractions;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
 
@@ -33,7 +32,7 @@ public class ForEachLoopSample : ISample
     {
         Console.WriteLine("\n--- Processing Orders Scenario ---");
 
-        using var foundry = WorkflowForge.CreateFoundry("ProcessOrdersWorkflow", FoundryConfiguration.Development());
+        using var foundry = WorkflowForge.CreateFoundry("ProcessOrdersWorkflow");
 
         // Set up order data
         var orders = new[]
@@ -62,7 +61,7 @@ public class ForEachLoopSample : ISample
     {
         Console.WriteLine("\n--- Processing Notifications Scenario ---");
 
-        using var foundry = WorkflowForge.CreateFoundry("ProcessNotificationsWorkflow", FoundryConfiguration.Development());
+        using var foundry = WorkflowForge.CreateFoundry("ProcessNotificationsWorkflow");
 
         // Set up notification data
         var notifications = new[]
@@ -91,7 +90,7 @@ public class ForEachLoopSample : ISample
     {
         Console.WriteLine("\n--- Validate Data Items Scenario ---");
 
-        using var foundry = WorkflowForge.CreateFoundry("ValidateDataWorkflow", FoundryConfiguration.Development());
+        using var foundry = WorkflowForge.CreateFoundry("ValidateDataWorkflow");
 
         // Set up data items for validation
         var dataItems = new[]

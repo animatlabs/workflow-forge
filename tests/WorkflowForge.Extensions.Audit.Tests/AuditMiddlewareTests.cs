@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions.Audit.Options;
 using WF = WorkflowForge;
 
 namespace WorkflowForge.Extensions.Audit.Tests
@@ -31,7 +32,8 @@ namespace WorkflowForge.Extensions.Audit.Tests
         [Fact]
         public async Task ExecuteAsync_SuccessfulOperation_ShouldCreateStartedAndCompletedEntries()
         {
-            var middleware = new AuditMiddleware(_auditProvider, _timeProvider, "test-user", includeMetadata: false);
+            var options = new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Standard };
+            var middleware = new AuditMiddleware(_auditProvider, options, _timeProvider, "test-user");
 
             var nextCalled = false;
             Task<object?> Next() { nextCalled = true; return Task.FromResult<object?>("result"); }
@@ -58,7 +60,8 @@ namespace WorkflowForge.Extensions.Audit.Tests
         [Fact]
         public async Task ExecuteAsync_FailedOperation_ShouldCreateFailedEntry()
         {
-            var middleware = new AuditMiddleware(_auditProvider, _timeProvider, "test-user", includeMetadata: false);
+            var options = new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Standard };
+            var middleware = new AuditMiddleware(_auditProvider, options, _timeProvider, "test-user");
 
             Task<object?> Next() => throw new InvalidOperationException("Test error");
 
@@ -78,7 +81,8 @@ namespace WorkflowForge.Extensions.Audit.Tests
         public async Task ExecuteAsync_WithMetadata_ShouldIncludeFoundryProperties()
         {
             _foundry.Properties["CustomProperty"] = "CustomValue";
-            var middleware = new AuditMiddleware(_auditProvider, _timeProvider, "test-user", includeMetadata: true);
+            var options = new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Verbose };
+            var middleware = new AuditMiddleware(_auditProvider, options, _timeProvider, "test-user");
 
             Task<object?> Next() => Task.FromResult<object?>(null);
 
@@ -94,7 +98,13 @@ namespace WorkflowForge.Extensions.Audit.Tests
         public async Task ExecuteAsync_WithoutMetadata_ShouldHaveEmptyMetadata()
         {
             _foundry.Properties["CustomProperty"] = "CustomValue";
-            var middleware = new AuditMiddleware(_auditProvider, _timeProvider, "test-user", includeMetadata: false);
+            var options = new AuditMiddlewareOptions 
+            { 
+                DetailLevel = AuditDetailLevel.Standard,
+                IncludeTimestamps = false,
+                IncludeUserContext = false
+            };
+            var middleware = new AuditMiddleware(_auditProvider, options, _timeProvider, "test-user");
 
             Task<object?> Next() => Task.FromResult<object?>(null);
 
@@ -107,14 +117,16 @@ namespace WorkflowForge.Extensions.Audit.Tests
         [Fact]
         public void Constructor_WithNullAuditProvider_ShouldThrowArgumentNullException()
         {
+            var options = new AuditMiddlewareOptions();
             Assert.Throws<ArgumentNullException>(() =>
-                new AuditMiddleware(null!, _timeProvider));
+                new AuditMiddleware(null!, options, _timeProvider));
         }
 
         [Fact]
         public async Task ExecuteAsync_WithDefaultTimeProvider_ShouldUseSystemTime()
         {
-            var middleware = new AuditMiddleware(_auditProvider);
+            var options = new AuditMiddlewareOptions();
+            var middleware = new AuditMiddleware(_auditProvider, options);
 
             Task<object?> Next() => Task.FromResult<object?>(null);
 

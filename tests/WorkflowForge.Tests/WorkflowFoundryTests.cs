@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Configurations;
 using WorkflowForge.Exceptions;
 using WorkflowForge.Loggers;
 using WorkflowForge.Operations;
@@ -49,10 +48,10 @@ public class WorkflowFoundryTests
         // Arrange
         var executionId = Guid.NewGuid();
         var properties = new ConcurrentDictionary<string, object?>();
-        var config = new FoundryConfiguration();
+        var logger = NullLogger.Instance;
 
         // Act
-        var foundry = new WorkflowFoundry(executionId, properties, config);
+        var foundry = new WorkflowFoundry(executionId, properties, logger);
 
         // Assert - Configuration would be internal, just verify foundry created
         Assert.NotNull(foundry);
@@ -143,29 +142,29 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void Configuration_ReturnsCorrectConfiguration()
+    public void Logger_ReturnsCorrectLogger()
     {
         // Arrange
-        var config = FoundryConfiguration.ForDevelopment();
-        var foundry = CreateTestFoundry(config: config);
+        var logger = NullLogger.Instance;
+        var foundry = CreateTestFoundry(logger: logger);
 
         // Act & Assert
-        Assert.Same(config, foundry.Configuration);
+        Assert.Same(logger, foundry.Logger);
     }
 
     [Fact]
-    public void Constructor_WithNullConfiguration_UsesMinimalConfiguration()
+    public void Constructor_WithNullLogger_UsesNullLogger()
     {
         // Arrange
         var executionId = Guid.NewGuid();
         var properties = new ConcurrentDictionary<string, object?>();
 
         // Act
-        var foundry = new WorkflowFoundry(executionId, properties, configuration: null);
+        var foundry = new WorkflowFoundry(executionId, properties, logger: null);
 
         // Assert
-        Assert.NotNull(foundry.Configuration);
         Assert.NotNull(foundry.Logger);
+        Assert.IsType<NullLogger>(foundry.Logger);
     }
 
     #endregion Constructor and Basic Properties Tests
@@ -694,19 +693,6 @@ public class WorkflowFoundryTests
 
     #region Configuration Tests
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void Configuration_EnableDetailedTiming_ReflectsValue(bool enableTiming)
-    {
-        // Arrange
-        var config = FoundryConfiguration.Minimal();
-        config.EnableDetailedTiming = enableTiming;
-        var foundry = CreateTestFoundry(config: config);
-
-        // Act & Assert
-        Assert.Equal(enableTiming, foundry.Configuration.EnableDetailedTiming);
-    }
 
     #endregion Configuration Tests
 
@@ -735,11 +721,11 @@ public class WorkflowFoundryTests
 
     #region Helper Methods
 
-    private static WorkflowFoundry CreateTestFoundry(Guid? executionId = null, FoundryConfiguration? config = null)
+    private static WorkflowFoundry CreateTestFoundry(Guid? executionId = null, IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null)
     {
         var id = executionId ?? Guid.NewGuid();
         var properties = new ConcurrentDictionary<string, object?>();
-        return new WorkflowFoundry(id, properties, config);
+        return new WorkflowFoundry(id, properties, logger, serviceProvider);
     }
 
     private static IWorkflow CreateMockWorkflow(string name, Guid? id = null)

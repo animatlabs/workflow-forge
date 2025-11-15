@@ -21,29 +21,12 @@ namespace WorkflowForge
         private string? _description;
         private string _version;
 
-        /// <summary>
-        /// Gets the service provider for testing purposes.
-        /// </summary>
+        // Internal properties for testing via InternalsVisibleTo
         internal IServiceProvider? ServiceProvider => _serviceProvider;
 
-        /// <summary>
-        /// Gets the workflow name for testing purposes.
-        /// </summary>
         internal string? Name => _name;
-
-        /// <summary>
-        /// Gets the workflow description for testing purposes.
-        /// </summary>
         internal string? Description => _description;
-
-        /// <summary>
-        /// Gets the workflow version for testing purposes.
-        /// </summary>
         internal string Version => _version;
-
-        /// <summary>
-        /// Gets the read-only list of operations for testing purposes.
-        /// </summary>
         internal IReadOnlyList<IWorkflowOperation> Operations => new ReadOnlyCollection<IWorkflowOperation>(_operations);
 
         /// <summary>

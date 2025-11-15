@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Configurations;
 using WorkflowForge.Events;
 using WorkflowForge.Loggers;
 
@@ -19,15 +18,11 @@ namespace WorkflowForge
     internal sealed class WorkflowFoundry : IWorkflowFoundry
     {
         private readonly List<IWorkflowOperation> _operations = new();
-        private readonly FoundryConfiguration _configuration;
         private readonly List<IWorkflowOperationMiddleware> _middlewares = new();
         private readonly ISystemTimeProvider _timeProvider;
         private volatile bool _disposed;
         private IWorkflow? _currentWorkflow;
 
-        // ==================================================================================
-        // OPERATION LIFECYCLE EVENTS (IOperationLifecycleEvents Implementation)
-        // ==================================================================================
         public event EventHandler<OperationStartedEventArgs>? OperationStarted;
 
         public event EventHandler<OperationCompletedEventArgs>? OperationCompleted;
@@ -36,11 +31,6 @@ namespace WorkflowForge
 
         /// <inheritdoc />
         public Guid ExecutionId { get; }
-
-        /// <summary>
-        /// Gets the foundry configuration.
-        /// </summary>
-        public FoundryConfiguration Configuration => _configuration;
 
         /// <inheritdoc />
         public ConcurrentDictionary<string, object?> Properties { get; }
@@ -55,31 +45,6 @@ namespace WorkflowForge
         public IServiceProvider? ServiceProvider { get; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="WorkflowFoundry"/> class.
-        /// </summary>
-        /// <param name="executionId">The unique identifier for this foundry execution instance.</param>
-        /// <param name="properties">The foundry properties container.</param>
-        /// <param name="configuration">The foundry configuration.</param>
-        /// <param name="currentWorkflow">Optional initial workflow to associate with this foundry.</param>
-        /// <param name="timeProvider">The time provider to use for timestamps.</param>
-        /// <exception cref="ArgumentNullException">Thrown when properties is null.</exception>
-        public WorkflowFoundry(
-            Guid executionId,
-            ConcurrentDictionary<string, object?> properties,
-            FoundryConfiguration? configuration = null,
-            IWorkflow? currentWorkflow = null,
-            ISystemTimeProvider? timeProvider = null)
-        {
-            ExecutionId = executionId;
-            Properties = properties ?? throw new ArgumentNullException(nameof(properties));
-            _configuration = configuration ?? FoundryConfiguration.Minimal();
-            Logger = _configuration.Logger ?? NullLogger.Instance;
-            ServiceProvider = _configuration.ServiceProvider;
-            _currentWorkflow = currentWorkflow;
-            _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
-        }
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="WorkflowFoundry"/> class with explicit logger and service provider.
         /// </summary>
         /// <param name="executionId">The unique identifier for this foundry execution instance.</param>
@@ -88,19 +53,21 @@ namespace WorkflowForge
         /// <param name="serviceProvider">Optional service provider for dependency injection.</param>
         /// <param name="currentWorkflow">Optional initial workflow to associate with this foundry.</param>
         /// <param name="timeProvider">The time provider to use for timestamps.</param>
+        /// <exception cref="ArgumentNullException">Thrown when properties is null.</exception>
         public WorkflowFoundry(
             Guid executionId,
             ConcurrentDictionary<string, object?> properties,
-            IWorkflowForgeLogger logger,
+            IWorkflowForgeLogger? logger = null,
             IServiceProvider? serviceProvider = null,
             IWorkflow? currentWorkflow = null,
             ISystemTimeProvider? timeProvider = null)
-            : this(executionId, properties, new FoundryConfiguration
-            {
-                Logger = logger,
-                ServiceProvider = serviceProvider
-            }, currentWorkflow, timeProvider)
         {
+            ExecutionId = executionId;
+            Properties = properties ?? throw new ArgumentNullException(nameof(properties));
+            Logger = logger ?? NullLogger.Instance;
+            ServiceProvider = serviceProvider;
+            _currentWorkflow = currentWorkflow;
+            _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
         }
 
         /// <inheritdoc />
@@ -255,55 +222,8 @@ namespace WorkflowForge
                 return await operation.ForgeAsync(inputData, this, cancellationToken).ConfigureAwait(false);
             }
 
-            // ==================================================================================
-            // MIDDLEWARE EXECUTION: Russian Doll Pattern (Industry Standard)
-            // ==================================================================================
-            //
-            // Middleware wraps in REVERSE order of addition to create a "Russian Doll" effect.
-            // This is intentional and correct - it's how ASP.NET, Express.js, and other
-            // frameworks implement middleware pipelines.
-            //
-            // EXAMPLE:
-            // --------
-            // If you add middleware in this order:
-            //   foundry.AddMiddleware(timingMiddleware);        // Added 1st
-            //   foundry.AddMiddleware(errorHandlingMiddleware); // Added 2nd
-            //   foundry.AddMiddleware(retryMiddleware);         // Added 3rd
-            //
-            // Execution flow becomes:
-            //   Timing.Start
-            //     → ErrorHandling.Start
-            //       → Retry.Start
-            //         → OPERATION EXECUTES
-            //       ← Retry.End
-            //     ← ErrorHandling.End
-            //   ← Timing.End
-            //
-            // REVERSE iteration builds the chain from inside-out:
-            //   1. Start with: next = operation.ForgeAsync
-            //   2. Wrap with retryMiddleware:    next = () => retry.Execute(next)
-            //   3. Wrap with errorMiddleware:    next = () => error.Execute(next)
-            //   4. Wrap with timingMiddleware:   next = () => timing.Execute(next)
-            //
-            // Final execution: timing → error → retry → operation → retry → error → timing
-            //
-            // BEST PRACTICES:
-            // ---------------
-            // Add middleware in order of desired outer-to-inner wrapping:
-            //   1. Observability (Timing, Logging) first     - measures everything
-            //   2. Error Handling second                     - catches all errors
-            //   3. Retry/Resilience last                     - wraps just the operation
-            //
-            // This ensures timing includes error handling time, and error handlers
-            // can catch retry failures, etc.
-            //
-            // TECHNICAL DETAILS:
-            // ------------------
-            // We iterate backwards (_middlewares.Count - 1 down to 0) because:
-            // - Last middleware added should wrap first (innermost)
-            // - Each iteration wraps the previous 'next' delegate
-            // - Results in correct execution order: first added → first executed
-            // ==================================================================================
+            // Russian Doll pattern: Middleware wraps from inside-out (reverse iteration).
+            // First middleware added = outermost layer. See /docs/architecture/middleware-pipeline.md
 
             Func<Task<object?>> next = () => operation.ForgeAsync(inputData, this, cancellationToken);
 

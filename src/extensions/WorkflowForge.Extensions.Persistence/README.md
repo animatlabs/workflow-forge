@@ -72,18 +72,54 @@ var loadedState = await provider.LoadWorkflowStateAsync(foundry.ExecutionId);
 
 ## Configuration
 
-### In Workflow
+### Via appsettings.json
+
+```json
+{
+  "WorkflowForge": {
+    "Extensions": {
+      "Persistence": {
+        "Enabled": true,
+        "PersistOnOperationComplete": true,
+        "PersistOnWorkflowComplete": true,
+        "PersistOnFailure": true,
+        "MaxVersions": 10,
+        "InstanceId": "my-instance-id",
+        "WorkflowKey": "my-workflow-key"
+      }
+    }
+  }
+}
+```
+
+### Via Code
 
 ```csharp
-foundry.SetProperty("PersistenceProvider", sqliteProvider);
+using WorkflowForge.Extensions.Persistence;
 
-// Save checkpoints during execution
-var checkpointOp = new DelegateWorkflowOperation(async (foundry, ct) =>
+var options = new PersistenceOptions
 {
-    var provider = foundry.GetPropertyOrDefault<IPersistenceProvider>("PersistenceProvider");
-    var state = new WorkflowState { /* ... */ };
-    await provider.SaveWorkflowStateAsync(foundry.ExecutionId, state, ct);
-});
+    Enabled = true,
+    PersistOnOperationComplete = true,
+    PersistOnWorkflowComplete = true,
+    PersistOnFailure = true,
+    MaxVersions = 10,
+    InstanceId = "my-instance-id",
+    WorkflowKey = "my-workflow-key"
+};
+
+foundry.UsePersistence(provider, options);
+```
+
+### Via Dependency Injection
+
+```csharp
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using WorkflowForge.Extensions.Persistence;
+
+services.AddPersistenceConfiguration(configuration);
+var options = serviceProvider.GetRequiredService<IOptions<PersistenceOptions>>().Value;
 ```
 
 See [Configuration Guide](../../../docs/configuration.md#persistence-extensions) for complete options.

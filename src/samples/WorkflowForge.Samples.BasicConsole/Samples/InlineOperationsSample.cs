@@ -1,4 +1,3 @@
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
@@ -16,7 +15,7 @@ public class InlineOperationsSample : ISample
     {
         Console.WriteLine("Creating a workflow with inline operations...");
 
-        using var foundry = WorkflowForge.CreateFoundry("InlineOperationsWorkflow", FoundryConfiguration.Development());
+        using var foundry = WorkflowForge.CreateFoundry("InlineOperationsWorkflow");
 
         // Set initial data
         foundry.Properties["user_name"] = "Alice Johnson";

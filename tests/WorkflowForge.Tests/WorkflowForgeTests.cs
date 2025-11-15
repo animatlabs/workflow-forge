@@ -1,7 +1,7 @@
 using System;
+using WorkflowForge.Options;
 using System.Collections.Generic;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Configurations;
 
 namespace WorkflowForge.Tests;
 
@@ -25,7 +25,7 @@ public class WorkflowForgeTests
         var serviceProvider = new Mock<IServiceProvider>().Object;
 
         // Act
-        var builder = WorkflowForge.CreateWorkflow(serviceProvider);
+        var builder = WorkflowForge.CreateWorkflow(serviceProvider: serviceProvider);
 
         // Assert
         Assert.NotNull(builder);
@@ -125,10 +125,9 @@ public class WorkflowForgeTests
     {
         // Arrange
         const string workflowName = "TestWorkflow";
-        var configuration = FoundryConfiguration.Minimal();
 
         // Act
-        var foundry = WorkflowForge.CreateFoundry(workflowName, configuration);
+        var foundry = WorkflowForge.CreateFoundry(workflowName);
 
         // Assert
         Assert.NotNull(foundry);
@@ -136,13 +135,12 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithNullConfiguration_ThrowsArgumentNullException()
+    public void CreateFoundry_WithNullConfiguration_ThrowsArgumentException()
     {
         // Arrange
-        const string workflowName = "TestWorkflow";
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => WorkflowForge.CreateFoundry(workflowName, (FoundryConfiguration)null!));
+        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(null!));
     }
 
     [Fact]
@@ -152,7 +150,7 @@ public class WorkflowForgeTests
         const string workflowName = "TestWorkflow";
 
         // Act
-        var foundry = WorkflowForge.CreateFoundry(workflowName, FoundryConfiguration.Development());
+        var foundry = WorkflowForge.CreateFoundry(workflowName);
 
         // Assert
         Assert.NotNull(foundry);
@@ -163,9 +161,9 @@ public class WorkflowForgeTests
     public void CreateFoundry_WithDevelopmentConfiguration_ValidatesWorkflowName()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry("", FoundryConfiguration.Development()));
-        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(" ", FoundryConfiguration.Development()));
-        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(null!, FoundryConfiguration.Development()));
+        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(""));
+        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(" "));
+        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(null!));
     }
 
     [Fact]
@@ -174,11 +172,9 @@ public class WorkflowForgeTests
         // Arrange
         const string workflowName = "TestWorkflow";
         var logger = new TestLogger();
-        var config = FoundryConfiguration.Development();
-        config.Logger = logger;
 
         // Act
-        var foundry = WorkflowForge.CreateFoundry(workflowName, config);
+        var foundry = WorkflowForge.CreateFoundry(workflowName);
 
         // Assert
         Assert.NotNull(foundry);
@@ -192,7 +188,7 @@ public class WorkflowForgeTests
         const string workflowName = "TestWorkflow";
 
         // Act
-        var foundry = WorkflowForge.CreateFoundry(workflowName, FoundryConfiguration.ForProduction());
+        var foundry = WorkflowForge.CreateFoundry(workflowName);
 
         // Assert
         Assert.NotNull(foundry);
@@ -203,9 +199,9 @@ public class WorkflowForgeTests
     public void CreateFoundry_WithProductionConfiguration_ValidatesWorkflowName()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry("", FoundryConfiguration.ForProduction()));
-        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(" ", FoundryConfiguration.ForProduction()));
-        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(null!, FoundryConfiguration.ForProduction()));
+        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(""));
+        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(" "));
+        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(null!));
     }
 
     [Fact]
@@ -215,7 +211,7 @@ public class WorkflowForgeTests
         const string workflowName = "TestWorkflow";
 
         // Act
-        var foundry = WorkflowForge.CreateFoundry(workflowName, FoundryConfiguration.HighPerformance());
+        var foundry = WorkflowForge.CreateFoundry(workflowName);
 
         // Assert
         Assert.NotNull(foundry);
@@ -226,13 +222,13 @@ public class WorkflowForgeTests
     public void CreateFoundry_WithHighPerformanceConfiguration_ValidatesWorkflowName()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry("", FoundryConfiguration.HighPerformance()));
-        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(" ", FoundryConfiguration.HighPerformance()));
-        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(null!, FoundryConfiguration.HighPerformance()));
+        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(""));
+        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(" "));
+        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(null!));
     }
 
     [Fact]
-    public void CreateFoundryWithData_WithInitialData_ReturnsFoundryWithData()
+    public void CreateFoundry_WithInitialData_ReturnsFoundryWithData()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -243,7 +239,7 @@ public class WorkflowForgeTests
         };
 
         // Act
-        var foundry = WorkflowForge.CreateFoundryWithData(workflowName, initialData);
+        var foundry = WorkflowForge.CreateFoundry(workflowName, null, initialData);
 
         // Assert
         Assert.NotNull(foundry);
@@ -251,7 +247,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundryWithData_WithInitialDataAndConfiguration_ReturnsFoundryWithData()
+    public void CreateFoundry_WithInitialDataAndConfiguration_ReturnsFoundryWithData()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -260,10 +256,10 @@ public class WorkflowForgeTests
             { "key1", "value1" },
             { "key2", 42 }
         };
-        var configuration = FoundryConfiguration.ForProduction();
+        // Arrange - no configuration needed
 
         // Act
-        var foundry = WorkflowForge.CreateFoundryWithData(workflowName, initialData, configuration);
+        var foundry = WorkflowForge.CreateFoundry(workflowName, null, initialData);
 
         // Assert
         Assert.NotNull(foundry);
@@ -271,36 +267,36 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundryWithData_WithEmptyWorkflowName_ThrowsArgumentException()
+    public void CreateFoundry_WithInitialDataAndEmptyWorkflowName_ThrowsArgumentException()
     {
         // Arrange
         var initialData = new Dictionary<string, object?> { { "key", "value" } };
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundryWithData("", initialData));
-        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundryWithData(" ", initialData));
-        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundryWithData(null!, initialData));
+        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry("", null, initialData));
+        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(" ", null, initialData));
+        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(null!, null, initialData));
     }
 
     [Fact]
-    public void CreateFoundryWithData_WithNullInitialData_ThrowsArgumentNullException()
+    public void CreateFoundry_WithNullInitialData_ThrowsArgumentNullException()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => WorkflowForge.CreateFoundryWithData(workflowName, null!));
+        Assert.Throws<ArgumentNullException>(() => WorkflowForge.CreateFoundry(workflowName, null!));
     }
 
     [Fact]
-    public void CreateFoundryWithData_WithNullConfiguration_ThrowsArgumentNullException()
+    public void CreateFoundry_WithNullConfiguration_ThrowsArgumentNullException()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
         var initialData = new Dictionary<string, object?> { { "key", "value" } };
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => WorkflowForge.CreateFoundryWithData(workflowName, initialData, null!));
+        Assert.Throws<ArgumentNullException>(() => WorkflowForge.CreateFoundry(workflowName, null!));
     }
 
     [Fact]

@@ -43,14 +43,15 @@ WorkflowForge provides flexible configuration through multiple mechanisms:
 
 ## Core Settings
 
-WorkflowForge configuration is defined in `WorkflowForgeConfiguration` class and can be configured via `appsettings.json` or programmatically.
+WorkflowForge configuration is defined in `WorkflowForgeOptions` class and can be configured via `appsettings.json` or programmatically.
 
-### WorkflowForgeConfiguration Properties
+### WorkflowForgeOptions Properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `AutoRestore` | bool | true | Automatically trigger compensation/rollback on workflow failure |
-| `MaxConcurrentOperations` | int | ProcessorCount * 2 | Global limit for concurrent operations (1-1000) |
+| `MaxConcurrentWorkflows` | int | 0 (unlimited) | Maximum concurrent workflows (0-10000, 0 = unlimited) |
+| `OperationTimeout` | TimeSpan? | null | Per-operation timeout (null = no timeout) |
+| `WorkflowTimeout` | TimeSpan? | null | Per-workflow timeout (null = no timeout) |
 
 **Configuration Section**: `"WorkflowForge"` in `appsettings.json`
 
@@ -67,33 +68,45 @@ WorkflowForge configuration is defined in `WorkflowForgeConfiguration` class and
 ```json
 {
   "WorkflowForge": {
-    "AutoRestore": true,
-    "MaxConcurrentOperations": 4,
-    "Polly": {
-      "IsEnabled": true,
-      "EnableDetailedLogging": true,
-      "Retry": {
-        "IsEnabled": true,
-        "MaxRetryAttempts": 3,
-        "BaseDelay": "00:00:01",
-        "MaxDelay": "00:00:30",
-        "UseJitter": true
+    "MaxConcurrentWorkflows": 10,
+    "OperationTimeout": "00:00:30",
+    "WorkflowTimeout": "00:05:00",
+    "Extensions": {
+      "Polly": {
+        "Enabled": true,
+        "EnableDetailedLogging": true,
+        "Retry": {
+          "IsEnabled": true,
+          "MaxRetryAttempts": 3,
+          "BaseDelay": "00:00:01",
+          "BackoffType": "Exponential",
+          "UseJitter": true
+        },
+        "CircuitBreaker": {
+          "IsEnabled": false,
+          "FailureThreshold": 5,
+          "BreakDuration": "00:00:30"
+        },
+        "Timeout": {
+          "IsEnabled": true,
+          "DefaultTimeout": "00:00:30"
+        }
       },
-      "CircuitBreaker": {
-        "IsEnabled": false,
-        "FailureThreshold": 5,
-        "DurationOfBreak": "00:00:30"
+      "Validation": {
+        "Enabled": true,
+        "ThrowOnValidationError": true,
+        "LogValidationErrors": true
       },
-      "Timeout": {
-        "IsEnabled": true,
-        "TimeoutDuration": "00:02:00"
+      "Audit": {
+        "Enabled": true,
+        "DetailLevel": "Standard",
+        "LogDataPayloads": false
+      },
+      "Persistence": {
+        "Enabled": false,
+        "PersistOnOperationComplete": true,
+        "PersistOnWorkflowComplete": true
       }
-    },
-    "Performance": {
-      "MaxDegreeOfParallelism": 4,
-      "EnableObjectPooling": true,
-      "MaxQueuedOperations": 1000,
-      "BatchSize": 10
     }
   },
   "Logging": {
@@ -111,9 +124,12 @@ WorkflowForge configuration is defined in `WorkflowForgeConfiguration` class and
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using WorkflowForge.Configurations;
-using WorkflowForge.Extensions.Resilience.Polly.Configurations;
-using WorkflowForge.Extensions.Observability.Performance.Configurations;
+using WorkflowForge.Options;
+using WorkflowForge.Extensions.Resilience.Polly;
+using WorkflowForge.Extensions.Resilience.Polly.Options;
+using WorkflowForge.Extensions.Validation;
+using WorkflowForge.Extensions.Audit;
+using WorkflowForge.Extensions.Persistence;
 
 // Build configuration
 var configuration = new ConfigurationBuilder()
@@ -128,14 +144,14 @@ var services = new ServiceCollection();
 services.AddSingleton<IConfiguration>(configuration);
 
 // Core WorkflowForge settings
-services.Configure<WorkflowForgeConfiguration>(
-    configuration.GetSection(WorkflowForgeConfiguration.SectionName));
+services.Configure<WorkflowForgeOptions>(
+    configuration.GetSection(WorkflowForgeOptions.DefaultSectionName));
 
-// Extension settings
-services.Configure<PollySettings>(
-    configuration.GetSection("WorkflowForge:Polly"));
-services.Configure<PerformanceSettings>(
-    configuration.GetSection("WorkflowForge:Performance"));
+// Extension settings using extension methods
+services.AddWorkflowForgePolly(configuration);
+services.AddValidationConfiguration(configuration);
+services.AddAuditConfiguration(configuration);
+services.AddPersistenceConfiguration(configuration);
 
 var serviceProvider = services.BuildServiceProvider();
 ```
@@ -144,34 +160,37 @@ var serviceProvider = services.BuildServiceProvider();
 
 ```csharp
 using Microsoft.Extensions.Options;
+using WorkflowForge.Options;
+using WorkflowForge.Extensions.Resilience.Polly.Options;
 
 public class OrderWorkflowService
 {
-    private readonly IOptions<WorkflowForgeConfiguration> _workflowOptions;
-    private readonly IOptions<PollySettings> _pollyOptions;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IOptions<WorkflowForgeOptions> _workflowOptions;
+    private readonly IOptions<PollyMiddlewareOptions> _pollyOptions;
     
     public OrderWorkflowService(
-        IOptions<WorkflowForgeConfiguration> workflowOptions,
-        IOptions<PollySettings> pollyOptions,
-        IServiceProvider serviceProvider)
+        IOptions<WorkflowForgeOptions> workflowOptions,
+        IOptions<PollyMiddlewareOptions> pollyOptions)
     {
         _workflowOptions = workflowOptions;
         _pollyOptions = pollyOptions;
-        _serviceProvider = serviceProvider;
     }
     
     public async Task ProcessOrderAsync(Order order)
     {
         // Configuration is automatically loaded from appsettings.json
         var settings = _workflowOptions.Value;
-        Console.WriteLine($"AutoRestore: {settings.AutoRestore}");
-        Console.WriteLine($"MaxConcurrentOperations: {settings.MaxConcurrentOperations}");
+        Console.WriteLine($"MaxConcurrentWorkflows: {settings.MaxConcurrentWorkflows}");
+        Console.WriteLine($"OperationTimeout: {settings.OperationTimeout}");
         
-        // Create foundry with service provider (includes configuration)
-        using var foundry = WorkflowForge.CreateFoundry(
-            $"Order-{order.Id}",
-            _serviceProvider);
+        // Create foundry and apply configuration
+        using var foundry = WorkflowForge.CreateFoundry($"Order-{order.Id}");
+        
+        // Apply Polly configuration if enabled
+        if (_pollyOptions.Value.Enabled)
+        {
+            foundry.UsePollyFromSettings(_pollyOptions.Value);
+        }
         
         foundry.SetProperty("Order", order);
         
@@ -419,7 +438,8 @@ var workflow = WorkflowForge.CreateWorkflow("ResilientProcess")
 - `FixedIntervalStrategy` - Best for databases
 - `RandomIntervalStrategy` - Prevents thundering herd
 
-**Zero Dependencies**: Pure WorkflowForge extension with no external dependencies.
+**Zero Dependencies**: Pure WorkflowForge extension with no external dependencies.  
+**Configuration**: Programmatic only (via code). For `appsettings.json` support, use WorkflowForge.Extensions.Resilience.Polly.
 
 ### Polly Extension
 
@@ -478,25 +498,6 @@ await smith.ForgeAsync(workflow, foundry);
 ```
 
 **Dependency Isolation**: OpenTelemetry is embedded. Your app can use any OpenTelemetry version without conflicts.
-
-### Performance Extension
-
-```csharp
-using WorkflowForge.Extensions.Observability.Performance;
-
-// Add timing middleware
-using var foundry = WorkflowForge.CreateFoundry("PerformanceMonitored");
-foundry.AddMiddleware(new TimingMiddleware(logger));
-
-// Timing data is logged per operation
-await smith.ForgeAsync(workflow, foundry);
-
-// Output:
-// [INF] Operation 'CalculateTotal' started
-// [INF] Operation 'CalculateTotal' completed in 23.4ms
-```
-
-**Zero Dependencies**: Pure WorkflowForge extension.
 
 ### Validation Extension
 

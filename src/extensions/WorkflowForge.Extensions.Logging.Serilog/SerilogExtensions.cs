@@ -1,41 +1,42 @@
 using Serilog;
-using WorkflowForge.Configurations;
+using WorkflowForge.Abstractions;
 
 namespace WorkflowForge.Extensions.Logging.Serilog
 {
     /// <summary>
-    /// Extension methods for integrating Serilog with WorkflowForge.
+    /// Extension methods for creating Serilog-based WorkflowForge loggers.
+    /// NOTE: This extension does NOT work with foundries - it creates loggers for WorkflowSmith.
+    /// The foundry's Logger property is immutable and set during construction.
     /// </summary>
     public static class SerilogExtensions
     {
         /// <summary>
-        /// Configures WorkflowForge to use Serilog for structured logging.
+        /// Creates a WorkflowForge logger wrapper around a Serilog ILogger.
+        /// Use this when creating a WorkflowSmith or WorkflowFoundry.
         /// </summary>
-        /// <param name="configuration">The WorkflowForge configuration.</param>
         /// <param name="serilogLogger">The configured Serilog ILogger instance.</param>
-        /// <returns>The configuration for method chaining.</returns>
-        public static FoundryConfiguration UseSerilog(
-            this FoundryConfiguration configuration,
-            ILogger serilogLogger)
+        /// <returns>A WorkflowForge logger that wraps Serilog.</returns>
+        /// <example>
+        /// var logger = Log.Logger.ToWorkflowForgeLogger();
+        /// var smith = WorkflowForge.CreateSmith(logger);
+        /// </example>
+        public static IWorkflowForgeLogger ToWorkflowForgeLogger(this ILogger serilogLogger)
         {
-            var workflowLogger = new SerilogWorkflowForgeLogger(serilogLogger);
-            configuration.Logger = workflowLogger;
-            return configuration;
+            if (serilogLogger == null) throw new System.ArgumentNullException(nameof(serilogLogger));
+            return new SerilogWorkflowForgeLogger(serilogLogger);
         }
 
         /// <summary>
-        /// Configures WorkflowForge to use the global Serilog logger for structured logging.
+        /// Creates a WorkflowForge logger wrapper around the global Serilog logger.
         /// </summary>
-        /// <param name="configuration">The WorkflowForge configuration.</param>
-        /// <returns>The configuration for method chaining.</returns>
+        /// <returns>A WorkflowForge logger that wraps the global Serilog logger.</returns>
         /// <remarks>
         /// This method uses Log.Logger as the Serilog instance.
         /// Ensure Serilog is properly configured before calling this method.
         /// </remarks>
-        public static FoundryConfiguration UseSerilog(
-            this FoundryConfiguration configuration)
+        public static IWorkflowForgeLogger CreateWorkflowForgeLogger()
         {
-            return configuration.UseSerilog(Log.Logger);
+            return new SerilogWorkflowForgeLogger(Log.Logger);
         }
     }
 }

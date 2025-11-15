@@ -1,5 +1,6 @@
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.Audit;
+using WorkflowForge.Extensions.Audit.Options;
 using WF = WorkflowForge;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
@@ -46,7 +47,7 @@ public class AuditSample : ISample
         foundry.Properties["Workflow.Name"] = "OrderProcessing";
 
         // Enable audit logging
-        foundry.EnableAudit(auditProvider);
+        foundry.UseAudit(auditProvider);
 
         // Create simple workflow
         var workflow = WF.WorkflowForge.CreateWorkflow()
@@ -78,10 +79,11 @@ public class AuditSample : ISample
         foundry.Properties["Workflow.Name"] = "PaymentProcessing";
 
         // Enable audit with user context
-        foundry.EnableAudit(
+        var options = new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Standard };
+        foundry.UseAudit(
             auditProvider,
-            initiatedBy: "admin@company.com",
-            includeMetadata: false);
+            options,
+            initiatedBy: "admin@company.com");
 
         var workflow = WF.WorkflowForge.CreateWorkflow()
             .WithName("ProcessPayment")
@@ -113,10 +115,11 @@ public class AuditSample : ISample
         foundry.Properties["UserAgent"] = "Mozilla/5.0";
 
         // Enable audit with metadata
-        foundry.EnableAudit(
+        var verboseOptions = new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Verbose };
+        foundry.UseAudit(
             auditProvider,
-            initiatedBy: "system",
-            includeMetadata: true); // Include all foundry properties
+            verboseOptions,
+            initiatedBy: "system"); // Include all foundry properties
 
         var workflow = WF.WorkflowForge.CreateWorkflow()
             .WithName("CreateAccount")
@@ -147,7 +150,7 @@ public class AuditSample : ISample
         foundry.Properties["Workflow.Name"] = "DataProcessing";
 
         // Enable audit
-        foundry.EnableAudit(auditProvider, initiatedBy: "data-processor");
+        foundry.UseAudit(auditProvider, initiatedBy: "data-processor");
 
         // Write custom audit entry before workflow
         await foundry.WriteCustomAuditAsync(

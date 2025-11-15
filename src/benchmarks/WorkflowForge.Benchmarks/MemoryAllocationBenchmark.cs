@@ -2,7 +2,6 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
 using System.Collections.Concurrent;
 using System.Text;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 
 namespace WorkflowForge.Benchmarks;
@@ -20,28 +19,19 @@ namespace WorkflowForge.Benchmarks;
 [HtmlExporter]
 public class MemoryAllocationBenchmark
 {
-    private FoundryConfiguration _minimalConfig = null!;
-    private FoundryConfiguration _memoryOptimizedConfig = null!;
-
     [Params(10, 50, 100, 500)]
     public int AllocationCount { get; set; }
 
     [GlobalSetup]
     public void Setup()
     {
-        _minimalConfig = FoundryConfiguration.Minimal();
-        _memoryOptimizedConfig = new FoundryConfiguration
-        {
-            // Configure for memory optimization
-            EnableDetailedTiming = false,
-            MaxRetryAttempts = 0
-        };
+        // Benchmarks use defaults - no custom configuration needed
     }
 
     [Benchmark(Baseline = true)]
     public async Task<string> MinimalAllocationWorkflow()
     {
-        using var foundry = WorkflowForge.CreateFoundry("MinimalAllocation", _minimalConfig);
+        using var foundry = WorkflowForge.CreateFoundry("MinimalAllocation");
 
         foundry.WithOperation("MinimalOp", async (foundry) =>
         {
@@ -57,7 +47,7 @@ public class MemoryAllocationBenchmark
     [Benchmark]
     public async Task<string> SmallObjectAllocation()
     {
-        using var foundry = WorkflowForge.CreateFoundry("SmallObjects", _minimalConfig);
+        using var foundry = WorkflowForge.CreateFoundry("SmallObjects");
 
         for (int i = 0; i < AllocationCount; i++)
         {
@@ -78,7 +68,7 @@ public class MemoryAllocationBenchmark
     [Benchmark]
     public async Task<string> LargeObjectAllocation()
     {
-        using var foundry = WorkflowForge.CreateFoundry("LargeObjects", _minimalConfig);
+        using var foundry = WorkflowForge.CreateFoundry("LargeObjects");
 
         for (int i = 0; i < Math.Min(AllocationCount, 50); i++) // Limit for large objects
         {
@@ -100,7 +90,7 @@ public class MemoryAllocationBenchmark
     [Benchmark]
     public async Task<string> StringConcatenationAllocation()
     {
-        using var foundry = WorkflowForge.CreateFoundry("StringConcat", _minimalConfig);
+        using var foundry = WorkflowForge.CreateFoundry("StringConcat");
 
         foundry.Properties["result_string"] = "";
 
@@ -125,7 +115,7 @@ public class MemoryAllocationBenchmark
     [Benchmark]
     public async Task<string> StringBuilderOptimization()
     {
-        using var foundry = WorkflowForge.CreateFoundry("StringBuilder", _minimalConfig);
+        using var foundry = WorkflowForge.CreateFoundry("StringBuilder");
 
         var stringBuilder = new StringBuilder(AllocationCount * 20); // Pre-size for efficiency
         foundry.Properties["string_builder"] = stringBuilder;
@@ -149,7 +139,7 @@ public class MemoryAllocationBenchmark
     [Benchmark]
     public async Task<string> CollectionAllocation()
     {
-        using var foundry = WorkflowForge.CreateFoundry("Collections", _minimalConfig);
+        using var foundry = WorkflowForge.CreateFoundry("Collections");
 
         var collections = new List<List<string>>();
         foundry.Properties["collections"] = collections;
@@ -173,7 +163,7 @@ public class MemoryAllocationBenchmark
     [Benchmark]
     public async Task<string> ObjectPoolingSimulation()
     {
-        using var foundry = WorkflowForge.CreateFoundry("ObjectPooling", _memoryOptimizedConfig);
+        using var foundry = WorkflowForge.CreateFoundry("ObjectPooling");
 
         var objectPool = new SimpleObjectPool<BenchmarkWorkObject>(AllocationCount);
         foundry.Properties["object_pool"] = objectPool;
@@ -205,7 +195,7 @@ public class MemoryAllocationBenchmark
     [Benchmark]
     public async Task<string> MemoryPressureScenario()
     {
-        using var foundry = WorkflowForge.CreateFoundry("MemoryPressure", _minimalConfig);
+        using var foundry = WorkflowForge.CreateFoundry("MemoryPressure");
 
         var memoryIntensiveData = new List<byte[]>();
         foundry.Properties["memory_data"] = memoryIntensiveData;
@@ -241,7 +231,7 @@ public class MemoryAllocationBenchmark
     [Benchmark]
     public async Task<string> DisposableResourceManagement()
     {
-        using var foundry = WorkflowForge.CreateFoundry("DisposableResources", _minimalConfig);
+        using var foundry = WorkflowForge.CreateFoundry("DisposableResources");
 
         var disposedCount = 0;
         foundry.Properties["disposed_count"] = disposedCount;
@@ -270,7 +260,7 @@ public class MemoryAllocationBenchmark
     [Benchmark]
     public async Task<string> ArrayReuseOptimization()
     {
-        using var foundry = WorkflowForge.CreateFoundry("ArrayReuse", _memoryOptimizedConfig);
+        using var foundry = WorkflowForge.CreateFoundry("ArrayReuse");
 
         var reuseableArray = new int[1000]; // Reuse same array
         foundry.Properties["reuseable_array"] = reuseableArray;

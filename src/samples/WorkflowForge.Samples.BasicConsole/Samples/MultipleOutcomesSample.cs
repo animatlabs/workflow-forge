@@ -1,5 +1,4 @@
 using WorkflowForge.Abstractions;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
 
@@ -18,7 +17,7 @@ public class MultipleOutcomesSample : ISample
     {
         Console.WriteLine("Creating a workflow that demonstrates multiple outcomes...");
 
-        using var foundry = WorkflowForge.CreateFoundry("MultipleOutcomesWorkflow", FoundryConfiguration.Development());
+        using var foundry = WorkflowForge.CreateFoundry("MultipleOutcomesWorkflow");
 
         // Set test data for different scenarios
         foundry.Properties["credit_score"] = 720;

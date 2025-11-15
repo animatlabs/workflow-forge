@@ -1,7 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
 using System.Collections.Concurrent;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 
 namespace WorkflowForge.Benchmarks;
@@ -19,8 +18,6 @@ namespace WorkflowForge.Benchmarks;
 [HtmlExporter]
 public class ConcurrencyBenchmark
 {
-    private FoundryConfiguration _config = null!;
-
     [Params(1, 2, 4, 8, 16)]
     public int ConcurrentWorkflowCount { get; set; }
 
@@ -30,7 +27,6 @@ public class ConcurrencyBenchmark
     [GlobalSetup]
     public void Setup()
     {
-        _config = FoundryConfiguration.HighPerformance();
     }
 
     [Benchmark(Baseline = true)]
@@ -140,7 +136,7 @@ public class ConcurrencyBenchmark
             var workflowIndex = i;
             tasks.Add(Task.Run(async () =>
             {
-                using var foundry = WorkflowForge.CreateFoundry($"Contention_{workflowIndex}", _config);
+                using var foundry = WorkflowForge.CreateFoundry($"Contention_{workflowIndex}");
 
                 for (int j = 0; j < OperationsPerWorkflow; j++)
                 {
@@ -185,7 +181,7 @@ public class ConcurrencyBenchmark
 
     private async Task<string> RunSingleWorkflow(string workflowName)
     {
-        using var foundry = WorkflowForge.CreateFoundry(workflowName, _config);
+        using var foundry = WorkflowForge.CreateFoundry(workflowName);
 
         foundry.Properties["start_time"] = DateTime.UtcNow;
         foundry.Properties["operation_count"] = 0;
@@ -210,7 +206,7 @@ public class ConcurrencyBenchmark
 
     private async Task<string> RunWorkflowWithSharedResource(string workflowName, SharedBenchmarkResource sharedResource)
     {
-        using var foundry = WorkflowForge.CreateFoundry(workflowName, _config);
+        using var foundry = WorkflowForge.CreateFoundry(workflowName);
 
         for (int i = 0; i < OperationsPerWorkflow; i++)
         {
@@ -229,7 +225,7 @@ public class ConcurrencyBenchmark
 
     private async Task<string> RunWorkflowWithGlobalData(string workflowName, ConcurrentDictionary<string, object> globalData)
     {
-        using var foundry = WorkflowForge.CreateFoundry(workflowName, _config);
+        using var foundry = WorkflowForge.CreateFoundry(workflowName);
 
         for (int i = 0; i < OperationsPerWorkflow; i++)
         {

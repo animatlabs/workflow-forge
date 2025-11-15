@@ -1,8 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
-using WorkflowForge.Loggers;
+using WorkflowForge.Options;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -67,8 +66,7 @@ public class ConfigurationProfilesSample : ISample
     {
         Console.WriteLine("\n--- Development Configuration ---");
 
-        var config = FoundryConfiguration.Development();
-        using var foundry = WorkflowForge.CreateFoundry("DevelopmentConfig", config);
+        using var foundry = WorkflowForge.CreateFoundry("DevelopmentConfig");
 
         foundry.Properties["config_type"] = "Development";
         foundry.Properties["start_time"] = DateTime.UtcNow;
@@ -106,8 +104,7 @@ public class ConfigurationProfilesSample : ISample
     {
         Console.WriteLine("\n--- Production Configuration ---");
 
-        var config = FoundryConfiguration.ForProduction();
-        using var foundry = WorkflowForge.CreateFoundry("ProductionConfig", config);
+        using var foundry = WorkflowForge.CreateFoundry("ProductionConfig");
 
         foundry.Properties["config_type"] = "Production";
         foundry.Properties["start_time"] = DateTime.UtcNow;
@@ -148,8 +145,7 @@ public class ConfigurationProfilesSample : ISample
     {
         Console.WriteLine("\n--- High Performance Configuration ---");
 
-        var config = FoundryConfiguration.HighPerformance();
-        using var foundry = WorkflowForge.CreateFoundry("HighPerformanceConfig", config);
+        using var foundry = WorkflowForge.CreateFoundry("HighPerformanceConfig");
 
         foundry.Properties["config_type"] = "HighPerformance";
         foundry.Properties["start_time"] = DateTime.UtcNow;
@@ -195,30 +191,22 @@ public class ConfigurationProfilesSample : ISample
         // Setup services with Options pattern
         var services = new ServiceCollection();
         services.AddSingleton(configuration);
-        services.Configure<WorkflowForgeConfiguration>(
-            configuration.GetSection(WorkflowForgeConfiguration.SectionName));
+        services.Configure<WorkflowForgeOptions>(
+            configuration.GetSection(WorkflowForgeOptions.DefaultSectionName));
 
         using var serviceProvider = services.BuildServiceProvider();
 
         // Get configuration through Options pattern
-        var workflowOptions = serviceProvider.GetRequiredService<IOptions<WorkflowForgeConfiguration>>();
+        var workflowOptions = serviceProvider.GetRequiredService<IOptions<WorkflowForgeOptions>>();
         var settings = workflowOptions.Value;
 
         // Create foundry with settings from appsettings.json
-        var config = new FoundryConfiguration
-        {
-            // Use values from configuration file
-            MaxRetryAttempts = 3, // Could be from settings if we add it
-            EnableDetailedTiming = true
-        };
-
-        using var foundry = WorkflowForge.CreateFoundry("OptionsPatternConfig", config);
+        using var foundry = WorkflowForge.CreateFoundry("OptionsPatternConfig");
 
         foundry.Properties["config_type"] = "OptionsPattern";
         foundry.Properties["start_time"] = DateTime.UtcNow;
         foundry.Properties["settings_source"] = "appsettings.json";
-        foundry.Properties["auto_restore"] = settings.AutoRestore;
-        foundry.Properties["max_concurrent"] = settings.MaxConcurrentOperations;
+        foundry.Properties["max_concurrent"] = settings.MaxConcurrentWorkflows;
 
         foundry
             .WithOperation("InitConfig", async (foundry) =>
@@ -226,8 +214,7 @@ public class ConfigurationProfilesSample : ISample
                 Console.WriteLine("   [CONFIG] Options pattern configuration initialized");
                 Console.WriteLine("   [INFO] Features: Strongly-typed settings, appsettings.json binding");
                 Console.WriteLine("   [INFO] Best for: Production applications, environment-specific configs");
-                Console.WriteLine($"   [SETTINGS] AutoRestore: {foundry.Properties["auto_restore"]}");
-                Console.WriteLine($"   [SETTINGS] MaxConcurrentOperations: {foundry.Properties["max_concurrent"]}");
+                Console.WriteLine($"   [SETTINGS] MaxConcurrentWorkflows: {foundry.Properties["max_concurrent"]}");
                 await Task.Delay(80);
             })
             .WithOperation("ProcessData", async (foundry) =>
@@ -254,13 +241,8 @@ public class ConfigurationProfilesSample : ISample
     {
         Console.WriteLine("\n--- Custom Configuration ---");
 
-        // Create a custom configuration combining different aspects
-        var config = new FoundryConfiguration
-        {
-            Logger = new ConsoleLogger("CustomWorkflow")
-        };
-
-        using var foundry = WorkflowForge.CreateFoundry("CustomConfig", config);
+        // Create foundry (custom logger would be passed via WorkflowSmith)
+        using var foundry = WorkflowForge.CreateFoundry("CustomConfig");
 
         foundry.Properties["config_type"] = "Custom";
         foundry.Properties["start_time"] = DateTime.UtcNow;

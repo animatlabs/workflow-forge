@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions.Observability.Performance.Configurations;
-using WorkflowForge.Extensions.Resilience.Polly.Configurations;
+using WorkflowForge.Extensions.Resilience.Polly.Options;
+using WorkflowForge.Options;
 using WorkflowForge.Samples.BasicConsole.Samples;
 
 namespace WorkflowForge.Samples.BasicConsole;
@@ -49,6 +49,7 @@ public static class Program
         ["22"] = new ResilienceRecoverySample(),
         ["23"] = new ValidationSample(),
         ["24"] = new AuditSample(),
+        ["25"] = new ConfigurationSample(),
 
         // Advanced Samples (19-20)
         ["19"] = new ComprehensiveIntegrationSample(),
@@ -69,8 +70,8 @@ public static class Program
         // Setup services
         var services = new ServiceCollection();
         services.AddSingleton(Configuration);
-        services.Configure<WorkflowForgeConfiguration>(Configuration.GetSection(WorkflowForgeConfiguration.SectionName));
-        services.Configure<PollySettings>(Configuration.GetSection("WorkflowForge:Polly"));
+        services.Configure<WorkflowForgeOptions>(Configuration.GetSection(WorkflowForgeOptions.DefaultSectionName));
+        services.Configure<PollyMiddlewareOptions>(Configuration.GetSection("WorkflowForge:Extensions:Polly"));
         services.Configure<PerformanceSettings>(Configuration.GetSection("WorkflowForge:Performance"));
         services.AddLogging(builder =>
         {
@@ -145,6 +146,7 @@ public static class Program
             Console.WriteLine("  22. Recovery + Resilience    - Unified resume plus retry via Resilience middleware");
             Console.WriteLine("  23. Validation              - FluentValidation integration");
             Console.WriteLine("  24. Audit Logging           - Comprehensive audit trails");
+            Console.WriteLine("  25. Configuration-Driven    - Enable/disable via config");
             Console.WriteLine();
             Console.WriteLine("ADVANCED:");
             Console.WriteLine("  19. Comprehensive Demo      - Full-featured example");
@@ -194,7 +196,7 @@ public static class Program
                     else
                     {
                         Console.WriteLine($"Invalid choice: {input}");
-                        Console.WriteLine("Please enter a number (1-24), A for all, B for basic, or Q to quit.");
+                        Console.WriteLine("Please enter a number (1-25), A for all, B for basic, or Q to quit.");
                     }
                     break;
             }

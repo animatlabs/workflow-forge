@@ -1,6 +1,7 @@
 using FluentValidation;
 using System;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions.Validation.Options;
 
 namespace WorkflowForge.Extensions.Validation
 {
@@ -10,24 +11,32 @@ namespace WorkflowForge.Extensions.Validation
     public static class ValidationExtensions
     {
         /// <summary>
-        /// Adds a FluentValidation validator to the foundry's middleware pipeline.
+        /// Adds a FluentValidation validator to the foundry's middleware pipeline with options.
         /// </summary>
         /// <typeparam name="T">The type of data to validate.</typeparam>
         /// <param name="foundry">The workflow foundry.</param>
         /// <param name="validator">The FluentValidation validator.</param>
         /// <param name="dataExtractor">Function to extract data from foundry properties for validation.</param>
-        /// <param name="throwOnFailure">If true, throws exception on validation failure; otherwise logs and continues.</param>
+        /// <param name="options">Configuration options for validation behavior.</param>
         /// <returns>The foundry for method chaining.</returns>
         /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
-        public static IWorkflowFoundry AddValidation<T>(
+        public static IWorkflowFoundry UseValidation<T>(
             this IWorkflowFoundry foundry,
             IValidator<T> validator,
             Func<IWorkflowFoundry, T?> dataExtractor,
-            bool throwOnFailure = true) where T : class
+            ValidationMiddlewareOptions? options = null) where T : class
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
             if (validator == null) throw new ArgumentNullException(nameof(validator));
             if (dataExtractor == null) throw new ArgumentNullException(nameof(dataExtractor));
+
+            options ??= new ValidationMiddlewareOptions();
+
+            if (!options.Enabled)
+            {
+                foundry.Logger.LogInformation("Validation middleware is disabled via configuration");
+                return foundry;
+            }
 
             var adapter = new FluentValidationAdapter<T>(validator);
 
@@ -35,37 +44,45 @@ namespace WorkflowForge.Extensions.Validation
                 foundry.Logger,
                 new WorkflowValidatorAdapter<T>(adapter),
                 f => dataExtractor(f),
-                throwOnFailure);
+                options);
 
             foundry.AddMiddleware(middleware);
             return foundry;
         }
 
         /// <summary>
-        /// Adds a custom workflow validator to the foundry's middleware pipeline.
+        /// Adds a custom workflow validator to the foundry's middleware pipeline with options.
         /// </summary>
         /// <typeparam name="T">The type of data to validate.</typeparam>
         /// <param name="foundry">The workflow foundry.</param>
         /// <param name="validator">The workflow validator.</param>
         /// <param name="dataExtractor">Function to extract data from foundry properties for validation.</param>
-        /// <param name="throwOnFailure">If true, throws exception on validation failure; otherwise logs and continues.</param>
+        /// <param name="options">Configuration options for validation behavior.</param>
         /// <returns>The foundry for method chaining.</returns>
         /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
-        public static IWorkflowFoundry AddValidation<T>(
+        public static IWorkflowFoundry UseValidation<T>(
             this IWorkflowFoundry foundry,
             IWorkflowValidator<T> validator,
             Func<IWorkflowFoundry, T?> dataExtractor,
-            bool throwOnFailure = true) where T : class
+            ValidationMiddlewareOptions? options = null) where T : class
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
             if (validator == null) throw new ArgumentNullException(nameof(validator));
             if (dataExtractor == null) throw new ArgumentNullException(nameof(dataExtractor));
 
+            options ??= new ValidationMiddlewareOptions();
+
+            if (!options.Enabled)
+            {
+                foundry.Logger.LogInformation("Validation middleware is disabled via configuration");
+                return foundry;
+            }
+
             var middleware = new ValidationMiddleware(
                 foundry.Logger,
                 new WorkflowValidatorAdapter<T>(validator),
                 f => dataExtractor(f),
-                throwOnFailure);
+                options);
 
             foundry.AddMiddleware(middleware);
             return foundry;

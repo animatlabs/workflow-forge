@@ -1,5 +1,6 @@
 using System;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions.Audit.Options;
 
 namespace WorkflowForge.Extensions.Audit
 {
@@ -9,27 +10,47 @@ namespace WorkflowForge.Extensions.Audit
     public static class AuditExtensions
     {
         /// <summary>
-        /// Enables audit logging for the workflow foundry.
+        /// Enables audit logging for the workflow foundry with configurable options.
         /// </summary>
         /// <param name="foundry">The workflow foundry.</param>
         /// <param name="auditProvider">The audit provider for storing audit entries.</param>
+        /// <param name="options">Optional configuration options. If null, default options are used.</param>
         /// <param name="timeProvider">Optional time provider for timestamps.</param>
         /// <param name="initiatedBy">Optional user/system identifier that initiated the workflow.</param>
-        /// <param name="includeMetadata">If true, includes foundry properties in audit metadata.</param>
         /// <returns>The foundry for method chaining.</returns>
         /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
-        public static IWorkflowFoundry EnableAudit(
+        /// <exception cref="ArgumentException">Thrown when options validation fails.</exception>
+        public static IWorkflowFoundry UseAudit(
             this IWorkflowFoundry foundry,
             IAuditProvider auditProvider,
+            AuditMiddlewareOptions? options = null,
             ISystemTimeProvider? timeProvider = null,
-            string? initiatedBy = null,
-            bool includeMetadata = false)
+            string? initiatedBy = null)
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
             if (auditProvider == null) throw new ArgumentNullException(nameof(auditProvider));
 
-            var middleware = new AuditMiddleware(auditProvider, timeProvider, initiatedBy, includeMetadata);
-            foundry.AddMiddleware(middleware);
+            options ??= new AuditMiddlewareOptions();
+
+            // Validate options
+            var errors = options.Validate();
+            if (errors.Count > 0)
+            {
+                throw new ArgumentException(
+                    $"Invalid audit middleware options: {string.Join("; ", errors)}",
+                    nameof(options));
+            }
+
+            // Only register if enabled
+            if (options.Enabled)
+            {
+                var middleware = new AuditMiddleware(
+                    auditProvider,
+                    options,
+                    timeProvider,
+                    initiatedBy);
+                foundry.AddMiddleware(middleware);
+            }
 
             return foundry;
         }

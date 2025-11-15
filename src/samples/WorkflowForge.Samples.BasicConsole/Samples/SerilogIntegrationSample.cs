@@ -1,8 +1,6 @@
 using Serilog;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
-using WorkflowForge.Extensions.Logging.Serilog;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -31,11 +29,8 @@ public class SerilogIntegrationSample : ISample
 
         Console.WriteLine("Running workflow with structured logging...");
 
-        // Create foundry with Serilog configuration
-        var config = FoundryConfiguration.ForProduction()
-            .UseSerilog(logger);
-
-        using var foundry = WorkflowForge.CreateFoundry("SerilogIntegration", config);
+        // Create foundry (Serilog is configured globally via host builder)
+        using var foundry = WorkflowForge.CreateFoundry("SerilogIntegration");
 
         // Add workflow data for context
         foundry.Properties["user_id"] = "usr_12345";

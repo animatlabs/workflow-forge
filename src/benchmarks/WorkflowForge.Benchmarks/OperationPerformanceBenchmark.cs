@@ -1,7 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
 
@@ -20,14 +19,12 @@ namespace WorkflowForge.Benchmarks;
 [HtmlExporter]
 public class OperationPerformanceBenchmark
 {
-    private FoundryConfiguration _config = null!;
     private IWorkflowFoundry _foundry = null!;
 
     [GlobalSetup]
     public void Setup()
     {
-        _config = FoundryConfiguration.HighPerformance();
-        _foundry = WorkflowForge.CreateFoundry("BenchmarkFoundry", _config);
+        _foundry = WorkflowForge.CreateFoundry("BenchmarkFoundry");
     }
 
     [GlobalCleanup]
@@ -196,7 +193,7 @@ public class OperationPerformanceBenchmark
     [Benchmark]
     public async Task<string> ChainedOperationsExecution()
     {
-        using var foundry = WorkflowForge.CreateFoundry("ChainedBenchmark", _config);
+        using var foundry = WorkflowForge.CreateFoundry("ChainedBenchmark");
 
         foundry
             .WithOperation(new FastBenchmarkOperation())

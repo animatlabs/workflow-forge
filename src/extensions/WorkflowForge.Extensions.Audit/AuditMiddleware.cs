@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions.Audit.Options;
 
 namespace WorkflowForge.Extensions.Audit
 {
@@ -12,28 +13,28 @@ namespace WorkflowForge.Extensions.Audit
     public sealed class AuditMiddleware : IWorkflowOperationMiddleware
     {
         private readonly IAuditProvider _auditProvider;
+        private readonly AuditMiddlewareOptions _options;
         private readonly ISystemTimeProvider _timeProvider;
         private readonly string? _initiatedBy;
-        private readonly bool _includeMetadata;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuditMiddleware"/> class.
         /// </summary>
         /// <param name="auditProvider">The audit provider for storing audit entries.</param>
+        /// <param name="options">Configuration options for audit behavior.</param>
         /// <param name="timeProvider">Optional time provider for timestamps.</param>
         /// <param name="initiatedBy">Optional user/system identifier that initiated the workflow.</param>
-        /// <param name="includeMetadata">If true, includes foundry properties in audit metadata.</param>
-        /// <exception cref="ArgumentNullException">Thrown when auditProvider is null.</exception>
+        /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
         public AuditMiddleware(
             IAuditProvider auditProvider,
+            AuditMiddlewareOptions options,
             ISystemTimeProvider? timeProvider = null,
-            string? initiatedBy = null,
-            bool includeMetadata = false)
+            string? initiatedBy = null)
         {
             _auditProvider = auditProvider ?? throw new ArgumentNullException(nameof(auditProvider));
+            _options = options ?? throw new ArgumentNullException(nameof(options));
             _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
             _initiatedBy = initiatedBy;
-            _includeMetadata = includeMetadata;
         }
 
         /// <summary>
@@ -119,9 +120,29 @@ namespace WorkflowForge.Extensions.Audit
             long? durationMs,
             CancellationToken cancellationToken)
         {
-            var metadata = _includeMetadata
-                ? new System.Collections.Generic.Dictionary<string, object?>(foundry.Properties)
-                : new System.Collections.Generic.Dictionary<string, object?>();
+            // Determine what metadata to include based on options
+            var metadata = new System.Collections.Generic.Dictionary<string, object?>();
+
+            // Include foundry properties based on detail level
+            if (_options.DetailLevel >= AuditDetailLevel.Verbose)
+            {
+                foreach (var prop in foundry.Properties)
+                {
+                    metadata[prop.Key] = prop.Value;
+                }
+            }
+
+            // Add timestamp if configured
+            if (_options.IncludeTimestamps)
+            {
+                metadata["AuditTimestamp"] = timestamp;
+            }
+
+            // Add user context if configured
+            if (_options.IncludeUserContext && !string.IsNullOrEmpty(_initiatedBy))
+            {
+                metadata["InitiatedBy"] = _initiatedBy;
+            }
 
             var entry = new AuditEntry(
                 executionId,

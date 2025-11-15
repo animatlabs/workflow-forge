@@ -55,6 +55,7 @@ Major release v2.0.0:
   <ItemGroup>
     <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.OpenTelemetry" />
     <InternalsVisibleTo Include="WorkflowForge.Tests" />
+	<InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
     <InternalsVisibleTo Include="WorkflowForge.Extensions.Resilience.Tests" />
     <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.Performance.Tests" />
     <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.HealthChecks.Tests" />
@@ -66,8 +67,8 @@ Major release v2.0.0:
     <None Include="../../../icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+    </ItemGroup>
 
 </Project> 

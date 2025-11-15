@@ -1,5 +1,4 @@
 using WorkflowForge.Abstractions;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
 
@@ -32,7 +31,7 @@ public class ErrorHandlingSample : ISample
     {
         Console.WriteLine("\n--- Retry Logic Scenario ---");
 
-        using var foundry = WorkflowForge.CreateFoundry("RetryWorkflow", FoundryConfiguration.Development());
+        using var foundry = WorkflowForge.CreateFoundry("RetryWorkflow");
 
         foundry.Properties["max_retries"] = 3;
         foundry.Properties["service_endpoint"] = "https://api.unreliable-service.com";
@@ -58,7 +57,7 @@ public class ErrorHandlingSample : ISample
     {
         Console.WriteLine("\n--- Alternative Path Scenario ---");
 
-        using var foundry = WorkflowForge.CreateFoundry("AlternativePathWorkflow", FoundryConfiguration.Development());
+        using var foundry = WorkflowForge.CreateFoundry("AlternativePathWorkflow");
 
         foundry.Properties["primary_service"] = "MainPaymentGateway";
         foundry.Properties["fallback_service"] = "BackupPaymentGateway";
@@ -103,7 +102,7 @@ public class ErrorHandlingSample : ISample
     {
         Console.WriteLine("\n--- Circuit Breaker Scenario ---");
 
-        using var foundry = WorkflowForge.CreateFoundry("CircuitBreakerWorkflow", FoundryConfiguration.Development());
+        using var foundry = WorkflowForge.CreateFoundry("CircuitBreakerWorkflow");
 
         foundry.Properties["circuit_state"] = "Closed"; // Closed, Open, HalfOpen
         foundry.Properties["failure_count"] = 0;

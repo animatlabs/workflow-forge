@@ -29,6 +29,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\core\WorkflowForge\WorkflowForge.csproj" />
     <ProjectReference Include="..\..\src\extensions\WorkflowForge.Extensions.Resilience\WorkflowForge.Extensions.Resilience.csproj" />
+    <ProjectReference Include="..\..\src\extensions\WorkflowForge.Extensions.Resilience.Polly\WorkflowForge.Extensions.Resilience.Polly.csproj" />
   </ItemGroup>
 
   <ItemGroup>

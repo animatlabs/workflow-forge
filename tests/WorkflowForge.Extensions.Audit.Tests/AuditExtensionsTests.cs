@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions.Audit.Options;
 using WF = WorkflowForge;
 
 namespace WorkflowForge.Extensions.Audit.Tests
@@ -25,27 +26,28 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public void EnableAudit_ShouldAddMiddleware()
+        public void UseAudit_ShouldAddMiddleware()
         {
-            var result = _foundry.EnableAudit(_auditProvider, _timeProvider, "test-user", includeMetadata: true);
+            var options = new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Verbose };
+            var result = _foundry.UseAudit(_auditProvider, options, _timeProvider, "test-user");
 
             Assert.Same(_foundry, result);
         }
 
         [Fact]
-        public void EnableAudit_WithNullFoundry_ShouldThrowArgumentNullException()
+        public void UseAudit_WithNullFoundry_ShouldThrowArgumentNullException()
         {
             IWorkflowFoundry? nullFoundry = null;
 
             Assert.Throws<ArgumentNullException>(() =>
-                nullFoundry!.EnableAudit(_auditProvider));
+                nullFoundry!.UseAudit(_auditProvider));
         }
 
         [Fact]
-        public void EnableAudit_WithNullAuditProvider_ShouldThrowArgumentNullException()
+        public void UseAudit_WithNullAuditProvider_ShouldThrowArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                _foundry.EnableAudit(null!));
+                _foundry.UseAudit(null!));
         }
 
         [Fact]

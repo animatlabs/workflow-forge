@@ -103,6 +103,52 @@ public class AuditEntry
 
 ## Configuration
 
+### Via appsettings.json
+
+```json
+{
+  "WorkflowForge": {
+    "Extensions": {
+      "Audit": {
+        "Enabled": true,
+        "DetailLevel": "Standard",
+        "LogDataPayloads": false,
+        "IncludeTimestamps": true,
+        "IncludeUserContext": true
+      }
+    }
+  }
+}
+```
+
+### Via Code
+
+```csharp
+using WorkflowForge.Extensions.Audit.Options;
+
+var options = new AuditMiddlewareOptions
+{
+    Enabled = true,
+    DetailLevel = AuditDetailLevel.Standard,
+    LogDataPayloads = false,
+    IncludeTimestamps = true,
+    IncludeUserContext = true
+};
+
+foundry.UseAudit(auditProvider, options);
+```
+
+### Via Dependency Injection
+
+```csharp
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using WorkflowForge.Extensions.Audit;
+
+services.AddAuditConfiguration(configuration);
+var options = serviceProvider.GetRequiredService<IOptions<AuditMiddlewareOptions>>().Value;
+```
+
 See [Configuration Guide](../../../docs/configuration.md#audit-extension) for complete options.
 
 ## Storage Provider Examples

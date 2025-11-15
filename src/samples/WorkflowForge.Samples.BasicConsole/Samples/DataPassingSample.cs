@@ -1,5 +1,4 @@
 using WorkflowForge.Abstractions;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
@@ -34,7 +33,7 @@ public class DataPassingSample : ISample
             ["customer_id"] = 12345,
             ["order_amount"] = 99.50m
         };
-        using var foundry = WorkflowForge.CreateFoundryWithData("DataPassingWorkflow", initialData, FoundryConfiguration.Development());
+        using var foundry = WorkflowForge.CreateFoundry("DataPassingWorkflow", null, initialData);
 
         Console.WriteLine($"Initial data - Customer: {foundry.GetPropertyOrDefault<int>("customer_id")}, Amount: ${foundry.GetPropertyOrDefault<decimal>("order_amount")}");
 

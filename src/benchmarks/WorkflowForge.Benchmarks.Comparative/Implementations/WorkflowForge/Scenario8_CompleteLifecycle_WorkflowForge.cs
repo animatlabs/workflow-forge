@@ -1,5 +1,4 @@
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 
 namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
@@ -7,7 +6,6 @@ namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
 public class Scenario8_CompleteLifecycle_WorkflowForge : IWorkflowScenario
 {
     private readonly ScenarioParameters _parameters;
-    private FoundryConfiguration _config = null!;
 
     public string Name => "Complete Lifecycle";
     public string Description => "Full create→execute→cleanup cycle";
@@ -19,14 +17,13 @@ public class Scenario8_CompleteLifecycle_WorkflowForge : IWorkflowScenario
 
     public Task SetupAsync()
     {
-        _config = FoundryConfiguration.HighPerformance();
         return Task.CompletedTask;
     }
 
     public async Task<ScenarioResult> ExecuteAsync()
     {
         // Create
-        using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry("Lifecycle", _config);
+        using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry("Lifecycle");
 
         // Configure
         foundry.WithOperation("Op1", async (foundry) =>

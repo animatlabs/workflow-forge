@@ -1,5 +1,4 @@
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
 
@@ -12,7 +11,6 @@ namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
 public class Scenario3_ConditionalBranching_WorkflowForge : IWorkflowScenario
 {
     private readonly ScenarioParameters _parameters;
-    private FoundryConfiguration _config = null!;
 
     public string Name => "Conditional Branching";
     public string Description => $"Execute {_parameters.OperationCount} conditional operations (50/50 true/false)";
@@ -24,13 +22,12 @@ public class Scenario3_ConditionalBranching_WorkflowForge : IWorkflowScenario
 
     public Task SetupAsync()
     {
-        _config = FoundryConfiguration.HighPerformance();
         return Task.CompletedTask;
     }
 
     public async Task<ScenarioResult> ExecuteAsync()
     {
-        using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry("ConditionalBranching", _config);
+        using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry("ConditionalBranching");
 
         foundry.Properties["true_count"] = 0;
         foundry.Properties["false_count"] = 0;

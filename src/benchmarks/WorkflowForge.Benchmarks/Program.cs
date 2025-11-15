@@ -31,7 +31,6 @@ public class Program
             BenchmarkRunner.Run<WorkflowThroughputBenchmark>();
             BenchmarkRunner.Run<MemoryAllocationBenchmark>();
             BenchmarkRunner.Run<ConcurrencyBenchmark>();
-            BenchmarkRunner.Run<ConfigurationProfilesBenchmark>();
 
             Console.WriteLine();
             Console.WriteLine("================================================================");

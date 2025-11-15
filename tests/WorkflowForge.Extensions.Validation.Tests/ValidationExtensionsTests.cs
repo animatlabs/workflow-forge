@@ -1,7 +1,10 @@
 using FluentValidation;
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions.Validation;
+using WorkflowForge.Extensions.Validation.Options;
 using WF = WorkflowForge;
 
 namespace WorkflowForge.Extensions.Validation.Tests
@@ -23,43 +26,44 @@ namespace WorkflowForge.Extensions.Validation.Tests
         }
 
         [Fact]
-        public void AddValidation_WithFluentValidator_ShouldAddMiddleware()
+        public void UseValidation_WithFluentValidator_ShouldAddMiddleware()
         {
             var validator = new TestValidator();
+            var options = new ValidationMiddlewareOptions { ThrowOnValidationError = true };
 
-            var result = _foundry.AddValidation(
+            var result = _foundry.UseValidation(
                 validator,
                 f => new TestModel { Value = 10 },
-                throwOnFailure: true);
+                options);
 
             Assert.Same(_foundry, result);
         }
 
         [Fact]
-        public void AddValidation_WithNullFoundry_ShouldThrowArgumentNullException()
+        public void UseValidation_WithNullFoundry_ShouldThrowArgumentNullException()
         {
             var validator = new TestValidator();
             IWorkflowFoundry? nullFoundry = null;
 
             Assert.Throws<ArgumentNullException>(() =>
-                nullFoundry!.AddValidation(validator, f => new TestModel(), true));
+                nullFoundry!.UseValidation(validator, f => new TestModel(), null));
         }
 
         [Fact]
-        public void AddValidation_WithNullValidator_ShouldThrowArgumentNullException()
+        public void UseValidation_WithNullValidator_ShouldThrowArgumentNullException()
         {
             IValidator<TestModel>? nullValidator = null;
             Assert.Throws<ArgumentNullException>(() =>
-                _foundry.AddValidation(nullValidator!, f => new TestModel(), true));
+                _foundry.UseValidation(nullValidator!, f => new TestModel(), null));
         }
 
         [Fact]
-        public void AddValidation_WithNullDataExtractor_ShouldThrowArgumentNullException()
+        public void UseValidation_WithNullDataExtractor_ShouldThrowArgumentNullException()
         {
             var validator = new TestValidator();
 
             Assert.Throws<ArgumentNullException>(() =>
-                _foundry.AddValidation(validator, null!, true));
+                _foundry.UseValidation(validator, null!, null));
         }
 
         [Fact]
@@ -101,6 +105,46 @@ namespace WorkflowForge.Extensions.Validation.Tests
 
             Assert.True(_foundry.Properties.ContainsKey("CustomValidation"));
             Assert.True(_foundry.Properties.ContainsKey("CustomValidation.IsValid"));
+        }
+
+        [Fact]
+        public void UseValidation_WithEnabledFalse_ShouldNotAddMiddleware()
+        {
+            var validator = new TestValidator();
+            var options = new ValidationMiddlewareOptions { Enabled = false };
+            
+            // Create a new foundry to test with
+            using var testFoundry = WF.WorkflowForge.CreateFoundry("Test");
+            var initialCount = GetMiddlewareCount(testFoundry);
+
+            var result = testFoundry.UseValidation(validator, f => new TestModel { Value = 10 }, options);
+
+            Assert.Same(testFoundry, result);
+            Assert.Equal(initialCount, GetMiddlewareCount(testFoundry));
+        }
+
+        [Fact]
+        public void UseValidation_WithEnabledTrue_ShouldAddMiddleware()
+        {
+            var validator = new TestValidator();
+            var options = new ValidationMiddlewareOptions { Enabled = true };
+            
+            // Create a new foundry to test with
+            using var testFoundry = WF.WorkflowForge.CreateFoundry("Test");
+            var initialCount = GetMiddlewareCount(testFoundry);
+
+            var result = testFoundry.UseValidation(validator, f => new TestModel { Value = 10 }, options);
+
+            Assert.Same(testFoundry, result);
+            Assert.Equal(initialCount + 1, GetMiddlewareCount(testFoundry));
+        }
+
+        private static int GetMiddlewareCount(IWorkflowFoundry foundry)
+        {
+            // Use reflection to access MiddlewareCount since it's not on the interface
+            var type = foundry.GetType();
+            var property = type.GetProperty("MiddlewareCount");
+            return property != null ? (int)property.GetValue(foundry)! : 0;
         }
 
         private class TestModel

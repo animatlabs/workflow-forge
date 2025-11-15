@@ -71,5 +71,17 @@ namespace WorkflowForge.Abstractions
         /// <param name="serviceProvider">Optional service provider for dependency injection.</param>
         /// <returns>A new foundry instance with the provided data.</returns>
         IWorkflowFoundry CreateFoundryWithData(ConcurrentDictionary<string, object?> data, IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null);
+
+        /// <summary>
+        /// Adds workflow-level middleware to the execution pipeline.
+        /// Workflow middleware executes OUTSIDE the foundry pipeline and wraps the entire workflow execution.
+        /// </summary>
+        /// <param name="middleware">The workflow middleware to add.</param>
+        /// <exception cref="ArgumentNullException">Thrown when middleware is null.</exception>
+        /// <remarks>
+        /// Workflow middleware executes in the order they are added (first added = outermost layer).
+        /// Use workflow middleware for cross-cutting concerns like timeouts, logging, authorization, etc.
+        /// </remarks>
+        void AddWorkflowMiddleware(IWorkflowMiddleware middleware);
     }
 }

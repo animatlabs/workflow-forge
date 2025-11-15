@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Exceptions;
 using WorkflowForge.Extensions;
-using WorkflowForge.Extensions.Resilience.Polly.Configurations;
+using WorkflowForge.Extensions.Resilience.Polly.Options;
 using WorkflowForge.Operations;
 
 namespace WorkflowForge.Extensions.Resilience.Polly
@@ -235,7 +235,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <returns>A new comprehensive Polly retry operation.</returns>
         public static PollyRetryOperation WithComprehensivePolicy(
             IWorkflowOperation innerOperation,
-            PollySettings settings,
+            PollyMiddlewareOptions settings,
             IWorkflowForgeLogger? logger = null,
             string? name = null)
         {
@@ -244,7 +244,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             // Add timeout if enabled
             if (settings.Timeout.IsEnabled)
             {
-                pipelineBuilder.AddTimeout(settings.Timeout.TimeoutDuration);
+                pipelineBuilder.AddTimeout(settings.Timeout.DefaultTimeout);
             }
 
             // Add retry if enabled
@@ -276,12 +276,12 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     ShouldHandle = new PredicateBuilder().Handle<Exception>(ex => !(ex is OperationCanceledException)),
                     FailureRatio = settings.CircuitBreaker.FailureThreshold / 10.0,
                     MinimumThroughput = settings.CircuitBreaker.MinimumThroughput,
-                    BreakDuration = settings.CircuitBreaker.DurationOfBreak,
+                    BreakDuration = settings.CircuitBreaker.BreakDuration,
                     OnOpened = args =>
                     {
                         if (settings.EnableDetailedLogging)
                         {
-                            logger?.LogWarning($"Circuit breaker opened for operation '{innerOperation.Name}' for {settings.CircuitBreaker.DurationOfBreak.TotalSeconds}s");
+                            logger?.LogWarning($"Circuit breaker opened for operation '{innerOperation.Name}' for {settings.CircuitBreaker.BreakDuration.TotalSeconds}s");
                         }
                         return default;
                     },
@@ -329,7 +329,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             IWorkflowForgeLogger? logger = null,
             string? name = null)
         {
-            var settings = PollySettings.ForDevelopment();
+            var settings = PollyMiddlewareOptions.ForDevelopment();
             return WithComprehensivePolicy(innerOperation, settings, logger, name);
         }
 
@@ -345,7 +345,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             IWorkflowForgeLogger? logger = null,
             string? name = null)
         {
-            var settings = PollySettings.ForProduction();
+            var settings = PollyMiddlewareOptions.ForProduction();
             return WithComprehensivePolicy(innerOperation, settings, logger, name);
         }
 
@@ -361,7 +361,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             IWorkflowForgeLogger? logger = null,
             string? name = null)
         {
-            var settings = PollySettings.ForEnterprise();
+            var settings = PollyMiddlewareOptions.ForEnterprise();
             return WithComprehensivePolicy(innerOperation, settings, logger, name);
         }
 
@@ -418,7 +418,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <returns>A comprehensively protected Polly-wrapped operation.</returns>
         public static PollyRetryOperation WithPollyComprehensive(
             this IWorkflowOperation operation,
-            PollySettings settings,
+            PollyMiddlewareOptions settings,
             IWorkflowForgeLogger? logger = null)
         {
             return PollyRetryOperation.WithComprehensivePolicy(operation, settings, logger);

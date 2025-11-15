@@ -1,5 +1,4 @@
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
 
@@ -12,7 +11,6 @@ namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
 public class Scenario4_LoopProcessing_WorkflowForge : IWorkflowScenario
 {
     private readonly ScenarioParameters _parameters;
-    private FoundryConfiguration _config = null!;
 
     public string Name => "Loop/ForEach Processing";
     public string Description => $"Process {_parameters.ItemCount} items in collection";
@@ -24,13 +22,12 @@ public class Scenario4_LoopProcessing_WorkflowForge : IWorkflowScenario
 
     public Task SetupAsync()
     {
-        _config = FoundryConfiguration.HighPerformance();
         return Task.CompletedTask;
     }
 
     public async Task<ScenarioResult> ExecuteAsync()
     {
-        using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry("LoopProcessing", _config);
+        using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry("LoopProcessing");
 
         // Generate collection to process
         var items = Enumerable.Range(1, _parameters.ItemCount).Select(i => $"Item_{i}").ToArray();

@@ -69,14 +69,50 @@ await smith.ForgeAsync(workflow, foundry);
 
 ## Configuration
 
+### Via appsettings.json
+
+```json
+{
+  "WorkflowForge": {
+    "Extensions": {
+      "Validation": {
+        "Enabled": true,
+        "ThrowOnValidationError": true,
+        "LogValidationErrors": true,
+        "StoreValidationResults": true,
+        "IgnoreValidationFailures": false
+      }
+    }
+  }
+}
+```
+
+### Via Code
+
 ```csharp
-// From foundry properties
+using WorkflowForge.Extensions.Validation.Options;
+
+var options = new ValidationMiddlewareOptions
+{
+    Enabled = true,
+    ThrowOnValidationError = true,
+    LogValidationErrors = true,
+    StoreValidationResults = true
+};
+
 var validator = new OrderValidator();
-foundry.AddMiddleware(new ValidationMiddleware<Order>(
-    validator,
-    f => f.GetPropertyOrDefault<Order>("Order"),
-    throwOnFailure: true  // Throw ValidationException on failure
-));
+foundry.AddValidation(validator, f => f.GetPropertyOrDefault<Order>("Order"), options);
+```
+
+### Via Dependency Injection
+
+```csharp
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using WorkflowForge.Extensions.Validation;
+
+services.AddValidationConfiguration(configuration);
+var options = serviceProvider.GetRequiredService<IOptions<ValidationMiddlewareOptions>>().Value;
 ```
 
 See [Configuration Guide](../../../docs/configuration.md#validation-extension) for complete options.

@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using WorkflowForge.Extensions.Persistence.Recovery;
+using WorkflowForge.Extensions.Persistence.Recovery.Options;
 using WorkflowForge.Extensions.Resilience;
 using Xunit;
 using PersistenceAbstractions = global::WorkflowForge.Extensions.Persistence.Abstractions;
@@ -79,7 +80,7 @@ public class ResilienceRecoverySampleTests
                 provider,
                 key.foundryKey,
                 key.workflowKey,
-                new RecoveryPolicy { MaxAttempts = 2, BaseDelay = TimeSpan.FromMilliseconds(10), UseExponentialBackoff = true });
+                new RecoveryMiddlewareOptions { MaxRetryAttempts = 2, BaseDelay = TimeSpan.FromMilliseconds(10), UseExponentialBackoff = true });
 
             Assert.True(f2.GetPropertyOrDefault("done", false));
             // Transient window should have elapsed across resume, so completion expected

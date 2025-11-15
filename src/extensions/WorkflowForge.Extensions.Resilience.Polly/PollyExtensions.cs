@@ -1,7 +1,7 @@
 using Polly;
 using System;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.Resilience.Polly.Configurations;
+using WorkflowForge.Extensions.Resilience.Polly.Options;
 
 namespace WorkflowForge.Extensions.Resilience.Polly
 {
@@ -129,9 +129,9 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <returns>The foundry for method chaining.</returns>
         public static IWorkflowFoundry UsePollyFromSettings(
             this IWorkflowFoundry foundry,
-            PollySettings settings)
+            PollyMiddlewareOptions settings)
         {
-            if (!settings.IsEnabled)
+            if (!settings.Enabled)
             {
                 foundry.Logger.LogInformation(ResilienceLogMessages.ResilienceDisabled);
                 return foundry;
@@ -143,8 +143,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     settings.Retry.MaxRetryAttempts,
                     settings.Retry.BaseDelay,
                     settings.CircuitBreaker.FailureThreshold,
-                    settings.CircuitBreaker.DurationOfBreak,
-                    settings.Timeout.TimeoutDuration);
+                    settings.CircuitBreaker.BreakDuration,
+                    settings.Timeout.DefaultTimeout);
 
                 foundry.Logger.LogInformation(ResilienceLogMessages.ComprehensiveResiliencePoliciesApplied);
             }
@@ -156,19 +156,19 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     foundry.UsePollyRetry(
                         settings.Retry.MaxRetryAttempts,
                         settings.Retry.BaseDelay,
-                        settings.Retry.MaxDelay);
+                        settings.Retry.BaseDelay); // MaxDelay doesn't exist, using BaseDelay
                 }
 
                 if (settings.CircuitBreaker.IsEnabled)
                 {
                     foundry.UsePollyCircuitBreaker(
                         settings.CircuitBreaker.FailureThreshold,
-                        settings.CircuitBreaker.DurationOfBreak);
+                        settings.CircuitBreaker.BreakDuration);
                 }
 
                 if (settings.Timeout.IsEnabled)
                 {
-                    foundry.UsePollyTimeout(settings.Timeout.TimeoutDuration);
+                    foundry.UsePollyTimeout(settings.Timeout.DefaultTimeout);
                 }
 
                 foundry.Logger.LogInformation(ResilienceLogMessages.IndividualResiliencePoliciesApplied);
@@ -185,7 +185,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <returns>The foundry for method chaining.</returns>
         public static IWorkflowFoundry UsePollyEnterpriseResilience(this IWorkflowFoundry foundry)
         {
-            var settings = PollySettings.ForEnterprise();
+            var settings = PollyMiddlewareOptions.ForEnterprise();
             return foundry.UsePollyFromSettings(settings);
         }
 
@@ -196,7 +196,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <returns>The foundry for method chaining.</returns>
         public static IWorkflowFoundry UsePollyDevelopmentResilience(this IWorkflowFoundry foundry)
         {
-            var settings = PollySettings.ForDevelopment();
+            var settings = PollyMiddlewareOptions.ForDevelopment();
             return foundry.UsePollyFromSettings(settings);
         }
 
@@ -207,7 +207,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <returns>The foundry for method chaining.</returns>
         public static IWorkflowFoundry UsePollyProductionResilience(this IWorkflowFoundry foundry)
         {
-            var settings = PollySettings.ForProduction();
+            var settings = PollyMiddlewareOptions.ForProduction();
             return foundry.UsePollyFromSettings(settings);
         }
 
@@ -218,7 +218,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <returns>The foundry for method chaining.</returns>
         public static IWorkflowFoundry UsePollyMinimalResilience(this IWorkflowFoundry foundry)
         {
-            var settings = PollySettings.Minimal();
+            var settings = PollyMiddlewareOptions.Minimal();
             return foundry.UsePollyFromSettings(settings);
         }
     }

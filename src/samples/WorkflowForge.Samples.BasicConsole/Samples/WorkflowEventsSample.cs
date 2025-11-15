@@ -131,7 +131,7 @@ public class WorkflowEventsSample : ISample
 
     private static void OnWorkflowFailed(object? sender, WorkflowFailedEventArgs e)
     {
-        Console.WriteLine($"   [WORKFLOW FAILED] Foundry: {e.Foundry?.CurrentWorkflow?.Name ?? "Unknown"}, Exception: {e.Exception.Message}");
+        Console.WriteLine($"   [WORKFLOW FAILED] Foundry: {e.Foundry?.CurrentWorkflow?.Name ?? "Unknown"}, Exception: {e.Exception?.Message ?? "No exception details"}");
     }
 
     private static void OnCompensationTriggered(object? sender, CompensationTriggeredEventArgs e)

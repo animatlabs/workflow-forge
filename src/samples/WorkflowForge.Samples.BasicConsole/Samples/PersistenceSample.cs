@@ -1,6 +1,7 @@
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Persistence;
 using WorkflowForge.Extensions.Persistence.Recovery;
+using WorkflowForge.Extensions.Persistence.Recovery.Options;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -73,7 +74,7 @@ public class PersistenceSample : ISample
                 fileProvider,
                 foundryKey,
                 workflowKey,
-                new RecoveryPolicy { MaxAttempts = 5, BaseDelay = TimeSpan.FromMilliseconds(50), UseExponentialBackoff = true });
+                new RecoveryMiddlewareOptions { MaxRetryAttempts = 5, BaseDelay = TimeSpan.FromMilliseconds(50), UseExponentialBackoff = true });
             Console.WriteLine($"After resume: progress = {foundryResume.GetPropertyOrDefault<int>("progress")}");
         }
     }

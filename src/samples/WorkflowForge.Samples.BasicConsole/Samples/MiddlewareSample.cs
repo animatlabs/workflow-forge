@@ -1,6 +1,5 @@
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
-using WorkflowForge.Middleware;
 using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
@@ -79,9 +78,9 @@ public class MiddlewareSample : ISample
 
         // Create a comprehensive middleware pipeline
         foundry.AddMiddleware(new SecurityMiddleware());           // First: Security check
-        foundry.AddMiddleware(new TimingMiddleware());             // Second: Performance timing
+        foundry.UseTiming();                                       // Second: Performance timing
         foundry.AddMiddleware(new ValidationMiddleware());         // Third: Input validation
-        foundry.UseLogging(); // Detailed logging
+        foundry.UseLogging();                                      // Fourth: Detailed logging
         foundry.AddMiddleware(new AuditMiddleware());              // Fifth: Audit trail
 
         foundry.SetProperty("user_id", "admin_user");

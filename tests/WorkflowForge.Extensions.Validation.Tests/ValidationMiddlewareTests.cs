@@ -3,6 +3,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions.Validation.Options;
 using WF = WorkflowForge;
 
 namespace WorkflowForge.Extensions.Validation.Tests
@@ -31,12 +32,13 @@ namespace WorkflowForge.Extensions.Validation.Tests
             var validator = new TestDataValidator();
             var adapter = new FluentValidationAdapter<TestData>(validator);
             var dataExtractor = new Func<IWorkflowFoundry, object?>(f => new TestData { Value = 10 });
+            var options = new ValidationMiddlewareOptions { ThrowOnValidationError = true };
 
             var middleware = new ValidationMiddleware(
                 _foundry.Logger,
                 new TestWorkflowValidator(adapter),
                 dataExtractor,
-                throwOnFailure: true);
+                options);
 
             var nextCalled = false;
             Task<object?> Next() { nextCalled = true; return Task.FromResult<object?>(null); }
@@ -44,7 +46,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
             await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
 
             Assert.True(nextCalled);
-            Assert.Equal("Success", _foundry.Properties[$"Validation.{_operation.Name}.Status"]);
+            Assert.Equal("Success", _foundry.Properties["Validation.Status"]);
         }
 
         [Fact]
@@ -53,19 +55,20 @@ namespace WorkflowForge.Extensions.Validation.Tests
             var validator = new TestDataValidator();
             var adapter = new FluentValidationAdapter<TestData>(validator);
             var dataExtractor = new Func<IWorkflowFoundry, object?>(f => new TestData { Value = -1 });
+            var options = new ValidationMiddlewareOptions { ThrowOnValidationError = true };
 
             var middleware = new ValidationMiddleware(
                 _foundry.Logger,
                 new TestWorkflowValidator(adapter),
                 dataExtractor,
-                throwOnFailure: true);
+                options);
 
             Task<object?> Next() => Task.FromResult<object?>(null);
 
             await Assert.ThrowsAsync<WorkflowValidationException>(() =>
                 middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None));
 
-            Assert.Equal("Failed", _foundry.Properties[$"Validation.{_operation.Name}.Status"]);
+            Assert.Equal("Failed", _foundry.Properties["Validation.Status"]);
         }
 
         [Fact]
@@ -74,12 +77,13 @@ namespace WorkflowForge.Extensions.Validation.Tests
             var validator = new TestDataValidator();
             var adapter = new FluentValidationAdapter<TestData>(validator);
             var dataExtractor = new Func<IWorkflowFoundry, object?>(f => new TestData { Value = -1 });
+            var options = new ValidationMiddlewareOptions { ThrowOnValidationError = false };
 
             var middleware = new ValidationMiddleware(
                 _foundry.Logger,
                 new TestWorkflowValidator(adapter),
                 dataExtractor,
-                throwOnFailure: false);
+                options);
 
             var nextCalled = false;
             Task<object?> Next() { nextCalled = true; return Task.FromResult<object?>(null); }
@@ -87,7 +91,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
             await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
 
             Assert.True(nextCalled);
-            Assert.Equal("Failed", _foundry.Properties[$"Validation.{_operation.Name}.Status"]);
+            Assert.Equal("Failed", _foundry.Properties["Validation.Status"]);
         }
 
         [Fact]
@@ -96,12 +100,13 @@ namespace WorkflowForge.Extensions.Validation.Tests
             var validator = new TestDataValidator();
             var adapter = new FluentValidationAdapter<TestData>(validator);
             var dataExtractor = new Func<IWorkflowFoundry, object?>(f => null);
+            var options = new ValidationMiddlewareOptions { ThrowOnValidationError = true };
 
             var middleware = new ValidationMiddleware(
                 _foundry.Logger,
                 new TestWorkflowValidator(adapter),
                 dataExtractor,
-                throwOnFailure: true);
+                options);
 
             var nextCalled = false;
             Task<object?> Next() { nextCalled = true; return Task.FromResult<object?>(null); }

@@ -8,13 +8,40 @@ namespace WorkflowForge.Abstractions
     /// It serves as the execution context for workflow operations, maintaining runtime state and services.
     /// In the WorkflowForge metaphor, the foundry is where raw materials (data) are shaped into finished products (results).
     ///
-    /// The foundry maintains a reference to the current workflow being executed and can be reused across multiple workflows
-    /// for advanced scenarios like pipeline processing or batch operations.
+    /// <para><strong>Execution Context Pattern:</strong></para>
+    /// <para>
+    /// The foundry implements the "Ambient Context" pattern, providing operations with access to:
+    /// <list type="bullet">
+    /// <item><description><strong>Properties</strong>: Thread-safe state management (ConcurrentDictionary) isolated per foundry instance</description></item>
+    /// <item><description><strong>Logger</strong>: Structured logging capabilities for operation diagnostics</description></item>
+    /// <item><description><strong>ServiceProvider</strong>: Dependency injection for user operations to resolve services</description></item>
+    /// <item><description><strong>CurrentWorkflow</strong>: Reference to the workflow being executed</description></item>
+    /// </list>
+    /// </para>
+    ///
+    /// <para><strong>Isolation Guarantees:</strong></para>
+    /// <para>
+    /// Each foundry instance is completely isolated:
+    /// <list type="bullet">
+    /// <item><description>Unique ExecutionId (Guid.NewGuid())</description></item>
+    /// <item><description>Separate Properties dictionary (new ConcurrentDictionary per foundry)</description></item>
+    /// <item><description>Independent middleware pipeline</description></item>
+    /// <item><description>Isolated event subscriptions</description></item>
+    /// </list>
+    /// This ensures parallel foundry executions never interfere with each other.
+    /// </para>
+    ///
+    /// <para><strong>Lifecycle:</strong></para>
+    /// <para>
+    /// Foundries can be reused across multiple workflows for advanced scenarios like pipeline processing
+    /// or batch operations. Properties persist across workflow executions within the same foundry instance.
+    /// Dispose the foundry when done to release resources.
+    /// </para>
     /// </summary>
     /// <remarks>
     /// The foundry is the execution environment where operations are performed.
     /// It provides thread-safe access to shared properties, logging capabilities, and dependency injection services.
-    /// Each foundry instance represents an execution context that can host one or more workflow executions.
+    /// Each foundry instance represents an isolated execution context that can host one or more workflow executions.
     /// </remarks>
     public interface IWorkflowFoundry : IDisposable, IOperationLifecycleEvents
     {
@@ -35,8 +62,15 @@ namespace WorkflowForge.Abstractions
         /// <summary>
         /// Gets the properties dictionary for the foundry.
         /// Thread-safe dictionary for storing and retrieving properties during workflow execution.
-        /// Properties persist across multiple workflow executions within the same foundry instance.
-        /// Use extension methods for convenient access patterns.
+        ///
+        /// <para><strong>Isolation:</strong> Each foundry instance gets its OWN ConcurrentDictionary
+        /// (created via 'new ConcurrentDictionary&lt;string, object?&gt;()' in WorkflowSmith.CreateFoundry()).
+        /// This ensures parallel foundry executions never share or collide on property data.</para>
+        ///
+        /// <para><strong>Lifecycle:</strong> Properties persist across multiple workflow executions
+        /// within the same foundry instance, but are completely isolated from other foundry instances.</para>
+        ///
+        /// <para>Use extension methods (GetProperty, SetProperty, TryGetProperty) for convenient access patterns.</para>
         /// </summary>
         ConcurrentDictionary<string, object?> Properties { get; }
 

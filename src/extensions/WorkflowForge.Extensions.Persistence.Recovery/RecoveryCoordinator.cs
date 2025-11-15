@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.Persistence.Abstractions;
+using WorkflowForge.Extensions.Persistence.Recovery.Options;
 
 namespace WorkflowForge.Extensions.Persistence.Recovery
 {
@@ -13,12 +14,12 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
     public sealed class RecoveryCoordinator : IRecoveryCoordinator
     {
         private readonly IWorkflowPersistenceProvider _provider;
-        private readonly RecoveryPolicy _policy;
+        private readonly RecoveryMiddlewareOptions _options;
 
-        public RecoveryCoordinator(IWorkflowPersistenceProvider provider, RecoveryPolicy? policy = null)
+        public RecoveryCoordinator(IWorkflowPersistenceProvider provider, RecoveryMiddlewareOptions? options = null)
         {
             _provider = provider ?? throw new ArgumentNullException(nameof(provider));
-            _policy = policy ?? new RecoveryPolicy();
+            _options = options ?? new RecoveryMiddlewareOptions();
         }
 
         public async Task ResumeAsync(
@@ -47,10 +48,10 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
             var smith = WorkflowForge.CreateSmith(foundry.Logger, foundry.ServiceProvider);
             foundry.SetCurrentWorkflow(workflow);
 
-            // Minimal retry on resume failures per policy
+            // Minimal retry on resume failures per options
             int attempts = 0;
             Exception? lastEx = null;
-            while (attempts < _policy.MaxAttempts)
+            while (attempts < _options.MaxRetryAttempts)
             {
                 try
                 {
@@ -65,13 +66,13 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
                 {
                     lastEx = ex;
                     attempts++;
-                    if (attempts >= _policy.MaxAttempts) break;
+                    if (attempts >= _options.MaxRetryAttempts) break;
 
-                    var delay = _policy.BaseDelay;
-                    if (_policy.UseExponentialBackoff)
+                    var delay = _options.BaseDelay;
+                    if (_options.UseExponentialBackoff)
                     {
                         var factor = Math.Pow(2, attempts - 1);
-                        delay = TimeSpan.FromMilliseconds(_policy.BaseDelay.TotalMilliseconds * factor);
+                        delay = TimeSpan.FromMilliseconds(_options.BaseDelay.TotalMilliseconds * factor);
                     }
                     await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                 }
