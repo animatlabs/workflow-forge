@@ -1,7 +1,7 @@
 # WorkflowForge Operations Guide
 
 <p align="center">
-  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Complete guide to creating and using operations in WorkflowForge.
@@ -572,6 +572,13 @@ public class CreateOrderOperation : WorkflowOperationBase
 4. Executes `RestoreAsync` in **reverse order** on completed operations
 5. Only operations with `SupportsRestore = true` are compensated
 
+### Execution and Compensation Modes
+
+- **Default**: stop on first error, best-effort compensation.
+- **ContinueOnError**: run all operations and throw `AggregateException` at the end.
+- **FailFastCompensation**: stop compensation on first restore failure.
+- **ThrowOnCompensationError**: surface compensation failures as `AggregateException`.
+
 ---
 
 ## Best Practices
@@ -595,9 +602,9 @@ Each operation should do one thing well:
 ### 2. Use Foundry Properties for Shared State
 
 ```csharp
-// Good: Store in foundry
-foundry.Properties["OrderId"] = orderId;
-foundry.Properties["ProcessedAt"] = DateTime.UtcNow;
+// Good: Store in foundry (typed helpers)
+foundry.SetProperty("OrderId", orderId);
+foundry.SetProperty("ProcessedAt", DateTime.UtcNow);
 
 // Bad: Hidden state
 private static string _orderId; // Don't do this
@@ -688,11 +695,11 @@ public class ResourceOperation : WorkflowOperationBase
 
 ## Next Steps
 
-- **[Architecture](architecture.md)** - Understanding WorkflowForge design
+- **[Architecture](../architecture/overview.md)** - Understanding WorkflowForge design
 - **[Event System](events.md)** - Monitoring operation execution
-- **[Samples Guide](samples-guide.md)** - See operations in action
-- **[API Reference](api-reference.md)** - Complete API documentation
+- **[Samples Guide](../getting-started/samples-guide.md)** - See operations in action
+- **[API Reference](../reference/api-reference.md)** - Complete API documentation
 
 ---
 
-[Back to Documentation Hub](README.md)
+**← Back to [Documentation Home](../index.md)**

@@ -413,7 +413,7 @@ WorkflowForge Core is optimized for production workloads:
 - **Memory**: 296-1912 bytes per operation execution
 - **Concurrency**: 8x faster than sequential execution with parallel workflows
 
-See [Performance Documentation](../../../docs/performance.md) for detailed benchmarks.
+See [Performance Documentation](../../../docs/performance/performance.md) for detailed benchmarks.
 
 ## Testing
 
@@ -450,14 +450,14 @@ public class WorkflowTests
 
 ## Documentation
 
-- **[Getting Started Guide](../../../docs/getting-started.md)** - Step-by-step tutorial
-- **[Architecture](../../../docs/architecture.md)** - Design principles and patterns
-- **[Operations Guide](../../../docs/operations.md)** - All operation types and patterns
-- **[Events System](../../../docs/events.md)** - Lifecycle events and monitoring
-- **[Configuration](../../../docs/configuration.md)** - All configuration options
-- **[Extensions](../../../docs/extensions.md)** - Available extensions
+- **[Getting Started Guide](../../../docs/getting-started/getting-started.md)** - Step-by-step tutorial
+- **[Architecture](../../../docs/architecture/overview.md)** - Design principles and patterns
+- **[Operations Guide](../../../docs/core/operations.md)** - All operation types and patterns
+- **[Events System](../../../docs/core/events.md)** - Lifecycle events and monitoring
+- **[Configuration](../../../docs/core/configuration.md)** - All configuration options
+- **[Extensions](../../../docs/extensions/index.md)** - Available extensions
 - **[Samples](../../samples/WorkflowForge.Samples.BasicConsole/README.md)** - 24 hands-on examples
-- **[API Reference](../../../docs/api-reference.md)** - Complete API documentation
+- **[API Reference](../../../docs/reference/api-reference.md)** - Complete API documentation
 
 ## Extensions
 
@@ -466,7 +466,7 @@ While Core has zero dependencies, extend functionality with official extensions:
 - **WorkflowForge.Extensions.Logging.Serilog** - Structured logging
 - **WorkflowForge.Extensions.Resilience** - Retry strategies (zero dependencies)
 - **WorkflowForge.Extensions.Resilience.Polly** - Advanced resilience with Polly
-- **WorkflowForge.Extensions.Validation** - FluentValidation integration
+- **WorkflowForge.Extensions.Validation** - DataAnnotations-based validation
 - **WorkflowForge.Extensions.Audit** - Comprehensive audit logging
 - **WorkflowForge.Extensions.Persistence** - Workflow state persistence
 - **WorkflowForge.Extensions.Persistence.Recovery** - Recovery coordinator

@@ -83,7 +83,7 @@ smith.WorkflowStarted += (s, e) => healthCheck.RecordWorkflowExecution();
 smith.WorkflowCompleted += (s, e) => healthCheck.RecordWorkflowExecution();
 ```
 
-See [Configuration Guide](../../../docs/configuration.md#health-checks-extension) for complete options.
+See [Configuration Guide](../../../docs/core/configuration.md#health-checks-extension) for complete options.
 
 ## Health Status Logic
 
@@ -126,9 +126,9 @@ Health checks can be monitored via:
 
 ## Documentation
 
-- **[Getting Started](../../../docs/getting-started.md)**
-- **[Configuration Guide](../../../docs/configuration.md#health-checks-extension)**
-- **[Extensions Overview](../../../docs/extensions.md)**
+- **[Getting Started](../../../docs/getting-started/getting-started.md)**
+- **[Configuration Guide](../../../docs/core/configuration.md#health-checks-extension)**
+- **[Extensions Overview](../../../docs/extensions/index.md)**
 - **[Sample 16: Health Checks](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
 
 ---

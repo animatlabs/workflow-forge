@@ -1,7 +1,7 @@
 # WorkflowForge Configuration
 
 <p align="center">
-  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Complete configuration guide for WorkflowForge workflows across all environments.
@@ -29,8 +29,7 @@ WorkflowForge provides flexible configuration through multiple mechanisms:
 1. **appsettings.json Configuration**: Options pattern with strongly-typed classes (recommended for production)
 2. **Programmatic Configuration**: Direct API calls for dynamic scenarios
 3. **Service Provider Integration**: DI-based configuration
-4. **Property-Based Configuration**: Runtime configuration via foundry properties
-5. **Extension Configuration**: Per-extension settings
+4. **Extension Configuration**: Per-extension settings
 
 ### Configuration Philosophy
 
@@ -50,8 +49,9 @@ WorkflowForge configuration is defined in `WorkflowForgeOptions` class and can b
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `MaxConcurrentWorkflows` | int | 0 (unlimited) | Maximum concurrent workflows (0-10000, 0 = unlimited) |
-| `OperationTimeout` | TimeSpan? | null | Per-operation timeout (null = no timeout) |
-| `WorkflowTimeout` | TimeSpan? | null | Per-workflow timeout (null = no timeout) |
+| `ContinueOnError` | bool | false | Continue execution and throw AggregateException at end |
+| `FailFastCompensation` | bool | false | Stop compensation on first restore failure |
+| `ThrowOnCompensationError` | bool | false | Throw AggregateException when compensation fails |
 
 **Configuration Section**: `"WorkflowForge"` in `appsettings.json`
 
@@ -69,8 +69,9 @@ WorkflowForge configuration is defined in `WorkflowForgeOptions` class and can b
 {
   "WorkflowForge": {
     "MaxConcurrentWorkflows": 10,
-    "OperationTimeout": "00:00:30",
-    "WorkflowTimeout": "00:05:00",
+    "ContinueOnError": false,
+    "FailFastCompensation": false,
+    "ThrowOnCompensationError": false,
     "Extensions": {
       "Polly": {
         "Enabled": true,
@@ -181,7 +182,7 @@ public class OrderWorkflowService
         // Configuration is automatically loaded from appsettings.json
         var settings = _workflowOptions.Value;
         Console.WriteLine($"MaxConcurrentWorkflows: {settings.MaxConcurrentWorkflows}");
-        Console.WriteLine($"OperationTimeout: {settings.OperationTimeout}");
+        Console.WriteLine($"ContinueOnError: {settings.ContinueOnError}");
         
         // Create foundry and apply configuration
         using var foundry = WorkflowForge.CreateFoundry($"Order-{order.Id}");
@@ -216,37 +217,41 @@ public class OrderWorkflowService
 
 ---
 
-## Core Settings (Legacy)
+## Core Settings
 
-### IWorkflowSettings Interface
-
-WorkflowForge core uses `IWorkflowSettings` for execution behavior:
+WorkflowForge core uses `WorkflowForgeOptions` for execution behavior:
 
 ```csharp
-public interface IWorkflowSettings
+public sealed class WorkflowForgeOptions
 {
-    bool AutoRestore { get; }                    // Auto-compensation on failure
-    bool ContinueOnRestorationFailure { get; }   // Continue rollback on errors
-    int MaxConcurrentFlows { get; }              // Concurrent workflow limit
-    int RestorationRetryAttempts { get; }        // Compensation retry count
-    TimeSpan OperationTimeout { get; }           // Per-operation timeout
-    TimeSpan FlowTimeout { get; }                // Workflow timeout
-    bool EnableMetrics { get; }                  // Performance metrics
-    bool EnableTracing { get; }                  // Distributed tracing
-    string MinimumLogLevel { get; }              // Log level filter
+    public int MaxConcurrentWorkflows { get; set; } = 0;
+    public bool ContinueOnError { get; set; } = false;
+    public bool FailFastCompensation { get; set; } = false;
+    public bool ThrowOnCompensationError { get; set; } = false;
 }
 ```
-
-**Current Implementation**: These settings are defined but not yet fully wired into `WorkflowSmith` execution. Version 2.0 focuses on the foundation; full settings integration is planned for 2.1.
 
 ### Default Behavior
 
 Without explicit settings, WorkflowForge operates with:
 
-- **No automatic compensation**: `RestoreAsync` must be called explicitly
-- **No timeouts**: Operations run until completion or exception
+- **Automatic compensation**: On failure, `WorkflowSmith` triggers `RestoreAsync` (only for operations with `SupportsRestore`)
+- **Stop-on-first-error**: Execution stops at the first failed operation
+- **Best-effort compensation**: Compensation continues even if a restore fails
 - **No concurrency limits**: Limited only by system resources
 - **Minimal logging**: Via injected `IWorkflowForgeLogger`
+
+### Behavior Switches
+
+- `ContinueOnError = true`: Continue execution, then throw `AggregateException`
+- `FailFastCompensation = true`: Stop compensation on the first restore failure
+- `ThrowOnCompensationError = true`: Surface restore failures via `AggregateException`
+
+### When to Use Each Switch
+
+- **ContinueOnError**: Use for batch workflows where partial success is acceptable and you want a full failure report at the end.
+- **FailFastCompensation**: Use when a single failed rollback should halt further compensation to avoid compounding damage.
+- **ThrowOnCompensationError**: Use when compensation failures must be visible to callers for alerting and remediation.
 
 ---
 
@@ -623,75 +628,6 @@ var checkpointOp = new DelegateWorkflowOperation(async (foundry, ct) =>
 **Zero Dependencies (InMemory)**: Pure WorkflowForge extension.  
 **Dependency Isolation (SQLite)**: Microsoft.Data.Sqlite embedded.
 
-### Recovery Extension
-
-```csharp
-using WorkflowForge.Extensions.Persistence.Recovery;
-using WorkflowForge.Extensions.Persistence.Abstractions;
-
-// Configure recovery policy
-var policy = new RecoveryPolicy
-{
-    MaxAttempts = 3,
-    BaseDelay = TimeSpan.FromSeconds(1),
-    UseExponentialBackoff = true
-};
-
-// Create recovery coordinator
-var provider = new SQLitePersistenceProvider("workflows.db");
-var coordinator = new RecoveryCoordinator(provider, policy);
-
-// Resume from last checkpoint
-await coordinator.ResumeAsync(
-    foundryFactory: () => WorkflowForge.CreateFoundry("OrderService"),
-    workflowFactory: BuildProcessOrderWorkflow,
-    foundryKey: stableFoundryKey,
-    workflowKey: stableWorkflowKey);
-
-// Or use extension method for automatic recovery
-await smith.ForgeWithRecoveryAsync(
-    workflow,
-    foundry,
-    provider,
-    foundryKey,
-    workflowKey,
-    policy);
-```
-
-**Recovery Features**:
-- Resume from last checkpoint
-- Exponential backoff for retry
-- Skip already-completed operations
-- Catalog-based batch recovery
-
-**Zero Dependencies**: Pure WorkflowForge extension built on Persistence abstractions.
-
-### Health Checks Extension
-
-```csharp
-using WorkflowForge.Extensions.Observability.HealthChecks;
-
-// Configure health checks
-var healthCheck = new WorkflowHealthCheck(
-    timeProvider: new SystemTimeProvider(),
-    unhealthyThresholdSeconds: 30);
-
-// Register workflow execution
-smith.WorkflowStarted += (s, e) => healthCheck.RecordWorkflowExecution();
-smith.WorkflowCompleted += (s, e) => healthCheck.RecordWorkflowExecution();
-
-// Check health
-var healthStatus = await healthCheck.CheckHealthAsync(new HealthCheckContext());
-
-if (healthStatus.Status == HealthStatus.Unhealthy)
-{
-    logger.LogWarning("WorkflowForge health check failed: {Description}", 
-        healthStatus.Description);
-}
-```
-
-**Zero Dependencies**: Pure WorkflowForge extension. Implements `IHealthCheck` from Microsoft.Extensions.Diagnostics.HealthChecks (interface only, no DLL dependency).
-
 ---
 
 ## Environment Strategies
@@ -1010,13 +946,13 @@ var operation = new TimeSensitiveOperation(mockTime);
 
 ## Next Steps
 
-- **[Getting Started](getting-started.md)** - Initial setup and first workflow
-- **[Architecture](architecture.md)** - Understanding the configuration model
+- **[Getting Started](../getting-started/getting-started.md)** - Initial setup and first workflow
+- **[Architecture](../architecture/overview.md)** - Understanding the configuration model
 - **[Operations](operations.md)** - Creating configurable operations
 - **[Events](events.md)** - Event-based configuration
-- **[Extensions](extensions.md)** - All 10 extensions with configuration examples
-- **[Samples Guide](samples-guide.md)** - 24 practical configuration examples
+- **[Extensions](../extensions/index.md)** - All 10 extensions with configuration examples
+- **[Samples Guide](../getting-started/samples-guide.md)** - 24 practical configuration examples
 
 ---
 
-[Back to Documentation Hub](README.md)
+**← Back to [Documentation Home](../index.md)**

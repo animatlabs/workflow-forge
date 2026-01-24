@@ -40,10 +40,12 @@ public class Scenario2_DataPassing_WorkflowForge : IWorkflowScenario
                 await Task.Yield();
 
                 // Read existing data
-                var currentValue = foundry.Properties.GetValueOrDefault("initial_value", 0);
+                var currentValue = foundry.Properties.TryGetValue("initial_value", out var value) && value is int initialValue
+                    ? initialValue
+                    : 0;
 
                 // Modify data
-                var newValue = (int)currentValue + 1;
+                var newValue = currentValue + 1;
 
                 // Write back
                 foundry.Properties["initial_value"] = newValue;
@@ -53,8 +55,10 @@ public class Scenario2_DataPassing_WorkflowForge : IWorkflowScenario
 
         await foundry.ForgeAsync();
 
-        var finalValue = foundry.Properties.GetValueOrDefault("initial_value", 0);
-        var success = (int)finalValue == _parameters.OperationCount;
+        var finalValue = foundry.Properties.TryGetValue("initial_value", out var finalValueObj) && finalValueObj is int finalValueCount
+            ? finalValueCount
+            : 0;
+        var success = finalValue == _parameters.OperationCount;
 
         return new ScenarioResult
         {

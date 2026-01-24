@@ -1,31 +1,25 @@
 using System;
 using System.Collections.Generic;
+using WorkflowForge.Options;
 
 namespace WorkflowForge.Extensions.Persistence.Recovery.Options
 {
     /// <summary>
     /// Configuration options for Recovery middleware.
     /// Controls workflow recovery and retry behavior.
-    /// Zero-dependency POCO for configuration binding.
+    /// Inherits common options functionality from <see cref="WorkflowForgeOptionsBase"/>.
     /// </summary>
-    public sealed class RecoveryMiddlewareOptions
+    public sealed class RecoveryMiddlewareOptions : WorkflowForgeOptionsBase
     {
         /// <summary>
         /// Default configuration section name for binding from appsettings.json.
-        /// This is the default value; users can specify a custom section name when binding.
         /// </summary>
         public const string DefaultSectionName = "WorkflowForge:Extensions:Recovery";
 
         /// <summary>
-        /// Gets the configuration section name for this instance.
-        /// Can be customized via constructor for non-standard configuration layouts.
-        /// </summary>
-        public string SectionName { get; }
-
-        /// <summary>
         /// Initializes a new instance with default section name.
         /// </summary>
-        public RecoveryMiddlewareOptions() : this(DefaultSectionName)
+        public RecoveryMiddlewareOptions() : base(null, DefaultSectionName)
         {
         }
 
@@ -33,18 +27,9 @@ namespace WorkflowForge.Extensions.Persistence.Recovery.Options
         /// Initializes a new instance with custom section name.
         /// </summary>
         /// <param name="sectionName">Custom configuration section name.</param>
-        public RecoveryMiddlewareOptions(string sectionName)
+        public RecoveryMiddlewareOptions(string sectionName) : base(sectionName, DefaultSectionName)
         {
-            SectionName = sectionName ?? DefaultSectionName;
         }
-
-        /// <summary>
-        /// Gets or sets whether recovery middleware is enabled.
-        /// When true, workflow recovery and retry logic is active.
-        /// When false, middleware is not registered.
-        /// Default is true.
-        /// </summary>
-        public bool Enabled { get; set; } = true;
 
         /// <summary>
         /// Gets or sets the maximum number of retry attempts before surfacing the last error.
@@ -89,7 +74,7 @@ namespace WorkflowForge.Extensions.Persistence.Recovery.Options
         /// Validates the configuration settings and returns any validation errors.
         /// </summary>
         /// <returns>A list of validation error messages, empty if valid.</returns>
-        public IList<string> Validate()
+        public override IList<string> Validate()
         {
             var errors = new List<string>();
             
@@ -104,6 +89,23 @@ namespace WorkflowForge.Extensions.Persistence.Recovery.Options
             }
             
             return errors;
+        }
+
+        /// <summary>
+        /// Creates a deep copy of this options instance.
+        /// </summary>
+        /// <returns>A new instance with the same configuration values.</returns>
+        public override object Clone()
+        {
+            return new RecoveryMiddlewareOptions(SectionName)
+            {
+                Enabled = Enabled,
+                MaxRetryAttempts = MaxRetryAttempts,
+                BaseDelay = BaseDelay,
+                UseExponentialBackoff = UseExponentialBackoff,
+                AttemptResume = AttemptResume,
+                LogRecoveryAttempts = LogRecoveryAttempts
+            };
         }
     }
 }

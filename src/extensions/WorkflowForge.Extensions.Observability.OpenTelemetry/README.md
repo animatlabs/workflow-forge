@@ -82,7 +82,7 @@ var tracer = tracerProvider.GetTracer("WorkflowForge");
 await smith.ForgeAsync(workflow, foundry);
 ```
 
-See [Configuration Guide](../../../docs/configuration.md#opentelemetry-extension) for complete options.
+See [Configuration Guide](../../../docs/core/configuration.md#opentelemetry-extension) for complete options.
 
 ## Exporters
 
@@ -177,9 +177,9 @@ View traces in:
 
 ## Documentation
 
-- **[Getting Started](../../../docs/getting-started.md)**
-- **[Configuration Guide](../../../docs/configuration.md#opentelemetry-extension)**
-- **[Extensions Overview](../../../docs/extensions.md)**
+- **[Getting Started](../../../docs/getting-started/getting-started.md)**
+- **[Configuration Guide](../../../docs/core/configuration.md#opentelemetry-extension)**
+- **[Extensions Overview](../../../docs/extensions/index.md)**
 - **[Sample 15: OpenTelemetry](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
 
 ---

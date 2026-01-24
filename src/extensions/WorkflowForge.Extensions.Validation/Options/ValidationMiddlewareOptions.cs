@@ -1,31 +1,25 @@
 using System;
 using System.Collections.Generic;
+using WorkflowForge.Options;
 
 namespace WorkflowForge.Extensions.Validation.Options
 {
     /// <summary>
     /// Configuration options for Validation middleware.
     /// Controls validation behavior and error handling.
-    /// Zero-dependency POCO for configuration binding.
+    /// Inherits common options functionality from <see cref="WorkflowForgeOptionsBase"/>.
     /// </summary>
-    public sealed class ValidationMiddlewareOptions
+    public sealed class ValidationMiddlewareOptions : WorkflowForgeOptionsBase
     {
         /// <summary>
         /// Default configuration section name for binding from appsettings.json.
-        /// This is the default value; users can specify a custom section name when binding.
         /// </summary>
         public const string DefaultSectionName = "WorkflowForge:Extensions:Validation";
 
         /// <summary>
-        /// Gets the configuration section name for this instance.
-        /// Can be customized via constructor for non-standard configuration layouts.
-        /// </summary>
-        public string SectionName { get; }
-
-        /// <summary>
         /// Initializes a new instance with default section name.
         /// </summary>
-        public ValidationMiddlewareOptions() : this(DefaultSectionName)
+        public ValidationMiddlewareOptions() : base(null, DefaultSectionName)
         {
         }
 
@@ -33,18 +27,9 @@ namespace WorkflowForge.Extensions.Validation.Options
         /// Initializes a new instance with custom section name.
         /// </summary>
         /// <param name="sectionName">Custom configuration section name.</param>
-        public ValidationMiddlewareOptions(string sectionName)
+        public ValidationMiddlewareOptions(string sectionName) : base(sectionName, DefaultSectionName)
         {
-            SectionName = sectionName ?? DefaultSectionName;
         }
-
-        /// <summary>
-        /// Gets or sets whether validation middleware is enabled.
-        /// When true, FluentValidation validators are executed on workflow data.
-        /// When false, middleware is not registered.
-        /// Default is true.
-        /// </summary>
-        public bool Enabled { get; set; } = true;
 
         /// <summary>
         /// Gets or sets whether to ignore validation failures.
@@ -82,7 +67,7 @@ namespace WorkflowForge.Extensions.Validation.Options
         /// Validates the configuration settings and returns any validation errors.
         /// </summary>
         /// <returns>A list of validation error messages, empty if valid.</returns>
-        public IList<string> Validate()
+        public override IList<string> Validate()
         {
             var errors = new List<string>();
             
@@ -93,6 +78,22 @@ namespace WorkflowForge.Extensions.Validation.Options
             }
             
             return errors;
+        }
+
+        /// <summary>
+        /// Creates a deep copy of this options instance.
+        /// </summary>
+        /// <returns>A new instance with the same configuration values.</returns>
+        public override object Clone()
+        {
+            return new ValidationMiddlewareOptions(SectionName)
+            {
+                Enabled = Enabled,
+                IgnoreValidationFailures = IgnoreValidationFailures,
+                ThrowOnValidationError = ThrowOnValidationError,
+                LogValidationErrors = LogValidationErrors,
+                StoreValidationResults = StoreValidationResults
+            };
         }
     }
 }

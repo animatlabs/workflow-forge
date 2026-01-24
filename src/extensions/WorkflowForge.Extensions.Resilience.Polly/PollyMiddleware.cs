@@ -43,7 +43,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             IWorkflowOperation operation,
             IWorkflowFoundry foundry,
             object? inputData,
-            Func<Task<object?>> next,
+            Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default)
         {
             var policyProperties = new Dictionary<string, string>
@@ -61,7 +61,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
 
                 var result = await _pipeline.ExecuteAsync(async (ct) =>
                 {
-                    return await next().ConfigureAwait(false);
+                    return await next(ct).ConfigureAwait(false);
                 }, cancellationToken).ConfigureAwait(false);
 
                 _logger.LogDebug(ResilienceLogMessages.PolicyPipelineExecutionCompleted);

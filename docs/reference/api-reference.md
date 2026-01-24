@@ -1,7 +1,7 @@
 # WorkflowForge API Reference
 
 <p align="center">
-  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Complete API reference for WorkflowForge core types and abstractions.
@@ -56,19 +56,21 @@ var workflow = WorkflowForge.CreateWorkflow("OrderProcessing")
 ```csharp
 public static IWorkflowFoundry CreateFoundry(
     string name,
-    IServiceProvider? serviceProvider = null)
+    IServiceProvider? serviceProvider = null,
+    WorkflowForgeOptions? options = null)
 ```
 Creates a new foundry (execution context) for workflow operations.
 
 **Parameters**:
 - `name`: Foundry name for identification
 - `serviceProvider`: Optional DI container for operation dependencies
+- `options`: Optional execution options for the foundry
 
 **Returns**: `IWorkflowFoundry` execution context
 
 **Example**:
 ```csharp
-using var foundry = WorkflowForge.CreateFoundry("MyFoundry", serviceProvider);
+using var foundry = WorkflowForge.CreateFoundry("MyFoundry", serviceProvider, options);
 ```
 
 ---
@@ -213,7 +215,7 @@ Executes the operation's main logic.
 
 **Returns**: Operation result (optional)
 
-**Best Practice**: Read from and write to `foundry.Properties` instead of using `inputData`/return values.
+**Best Practice**: Read from and write to `foundry.Properties` using `SetProperty`/`GetPropertyOrDefault` helpers instead of relying on `inputData`/return values.
 
 ---
 
@@ -439,6 +441,7 @@ Executes a workflow with the provided foundry.
 2. Executes operations in sequence
 3. Fires `WorkflowCompleted` on success
 4. Fires `WorkflowFailed` and triggers compensation on failure
+5. If `ContinueOnError` is enabled, throws `AggregateException` after execution
 
 **Example**:
 ```csharp
@@ -546,6 +549,20 @@ smith.OperationRestoreStarted += (s, e) =>
 
 ---
 
+## Core Options
+
+```csharp
+public sealed class WorkflowForgeOptions
+{
+    public int MaxConcurrentWorkflows { get; set; } = 0;
+    public bool ContinueOnError { get; set; } = false;
+    public bool FailFastCompensation { get; set; } = false;
+    public bool ThrowOnCompensationError { get; set; } = false;
+}
+```
+
+---
+
 ## Extension Interfaces
 
 ### IWorkflowOperationMiddleware
@@ -558,7 +575,8 @@ public interface IWorkflowOperationMiddleware
     Task<object?> ExecuteAsync(
         IWorkflowOperation operation,
         IWorkflowFoundry foundry,
-        Func<Task<object?>> next,
+        object? inputData,
+        Func<CancellationToken, Task<object?>> next,
         CancellationToken cancellationToken);
 }
 ```
@@ -570,7 +588,8 @@ public interface IWorkflowOperationMiddleware
 Task<object?> ExecuteAsync(
     IWorkflowOperation operation,
     IWorkflowFoundry foundry,
-    Func<Task<object?>> next,
+    object? inputData,
+    Func<CancellationToken, Task<object?>> next,
     CancellationToken cancellationToken)
 ```
 Executes middleware logic in the operation pipeline.
@@ -590,13 +609,14 @@ public class TimingMiddleware : IWorkflowOperationMiddleware
     public async Task<object?> ExecuteAsync(
         IWorkflowOperation operation,
         IWorkflowFoundry foundry,
-        Func<Task<object?>> next,
+        object? inputData,
+        Func<CancellationToken, Task<object?>> next,
         CancellationToken cancellationToken)
     {
         var sw = Stopwatch.StartNew();
         try
         {
-            return await next();
+            return await next(cancellationToken);
         }
         finally
         {
@@ -672,29 +692,6 @@ public class TimeSensitiveOperation : WorkflowOperationBase
     }
 }
 ```
-
----
-
-### IWorkflowSettings
-
-Configuration settings for workflow execution (defined but not fully wired in 2.0).
-
-```csharp
-public interface IWorkflowSettings
-{
-    bool AutoRestore { get; }
-    bool ContinueOnRestorationFailure { get; }
-    int MaxConcurrentFlows { get; }
-    int RestorationRetryAttempts { get; }
-    TimeSpan OperationTimeout { get; }
-    TimeSpan FlowTimeout { get; }
-    bool EnableMetrics { get; }
-    bool EnableTracing { get; }
-    string MinimumLogLevel { get; }
-}
-```
-
-**Status**: Interface defined, full integration planned for 2.1
 
 ---
 
@@ -790,12 +787,12 @@ var forEachOp = ForEachWorkflowOperation.Create(
 
 ## Next Steps
 
-- **[Architecture](architecture.md)** - Understanding the design
-- **[Operations](operations.md)** - Creating operations
-- **[Events](events.md)** - Event system details
-- **[Configuration](configuration.md)** - Configuring workflows
-- **[Extensions](extensions.md)** - Extension ecosystem
+- **[Architecture](../architecture/overview.md)** - Understanding the design
+- **[Operations](../core/operations.md)** - Creating operations
+- **[Events](../core/events.md)** - Event system details
+- **[Configuration](../core/configuration.md)** - Configuring workflows
+- **[Extensions](../extensions/index.md)** - Extension ecosystem
 
 ---
 
-[Back to Documentation Hub](README.md)
+**← Back to [Documentation Home](../index.md)**

@@ -50,7 +50,7 @@ namespace WorkflowForge.Extensions.Validation
             IWorkflowOperation operation,
             IWorkflowFoundry foundry,
             object? inputData,
-            Func<Task<object?>> next,
+            Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default)
         {
             var dataToValidate = _dataExtractor(foundry);
@@ -61,7 +61,7 @@ namespace WorkflowForge.Extensions.Validation
                 {
                     _logger.LogWarning($"Validation skipped for operation '{operation.Name}': no data to validate");
                 }
-                return await next();
+                return await next(cancellationToken);
             }
 
             var validationResult = await _validator.ValidateAsync(dataToValidate, cancellationToken);
@@ -73,7 +73,7 @@ namespace WorkflowForge.Extensions.Validation
                 {
                     foundry.Properties["Validation.Status"] = "Success";
                 }
-                return await next();
+                return await next(cancellationToken);
             }
 
             var errorMessages = string.Join("; ", validationResult.Errors.Select(e => e.ToString()));
@@ -96,7 +96,7 @@ namespace WorkflowForge.Extensions.Validation
                     validationResult.Errors);
             }
 
-            return await next();
+            return await next(cancellationToken);
         }
     }
 }

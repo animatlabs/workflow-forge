@@ -87,41 +87,28 @@ namespace WorkflowForge.Operations
                 Name, workflowName, workflowId, _operations.Count, effectiveMaxConcurrency?.ToString() ?? "unlimited");
 
             object?[] results;
+            using var timeoutCts = _timeout.HasValue ? new CancellationTokenSource(_timeout.Value) : null;
+            using var combinedCts = _timeout.HasValue
+                ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts!.Token)
+                : null;
+            var effectiveToken = combinedCts?.Token ?? cancellationToken;
 
             if (effectiveMaxConcurrency.HasValue)
             {
                 // Execute with throttling
                 using var semaphore = new SemaphoreSlim(effectiveMaxConcurrency.Value, effectiveMaxConcurrency.Value);
                 var tasks = _operations.Select((op, index) =>
-                    ForgeOperationWithThrottlingAsync(op, inputData, index, foundry, semaphore, cancellationToken)).ToArray();
+                    ForgeOperationWithThrottlingAsync(op, inputData, index, foundry, semaphore, effectiveToken)).ToArray();
 
-                if (_timeout.HasValue)
-                {
-                    using var timeoutCts = new CancellationTokenSource(_timeout.Value);
-                    using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
-                    results = await Task.WhenAll(tasks).ConfigureAwait(false);
-                }
-                else
-                {
-                    results = await Task.WhenAll(tasks).ConfigureAwait(false);
-                }
+                results = await Task.WhenAll(tasks).ConfigureAwait(false);
             }
             else
             {
                 // Execute without throttling
                 var tasks = _operations.Select((op, index) =>
-                    ForgeOperationAsync(op, inputData, index, foundry, cancellationToken)).ToArray();
+                    ForgeOperationAsync(op, inputData, index, foundry, effectiveToken)).ToArray();
 
-                if (_timeout.HasValue)
-                {
-                    using var timeoutCts = new CancellationTokenSource(_timeout.Value);
-                    using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
-                    results = await Task.WhenAll(tasks).ConfigureAwait(false);
-                }
-                else
-                {
-                    results = await Task.WhenAll(tasks).ConfigureAwait(false);
-                }
+                results = await Task.WhenAll(tasks).ConfigureAwait(false);
             }
 
             foundry.Logger.LogInformation(

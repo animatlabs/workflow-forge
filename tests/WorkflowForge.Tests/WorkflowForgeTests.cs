@@ -61,10 +61,13 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateWorkflow_WithNull_ThrowsArgumentException()
+    public void CreateWorkflow_WithNull_CreatesBuilder()
     {
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => WorkflowForge.CreateWorkflow((string)null!));
+        // Act
+        var builder = WorkflowForge.CreateWorkflow(workflowName: null);
+        
+        // Assert - null is valid, builder created successfully
+        Assert.NotNull(builder);
     }
 
     [Fact]
@@ -279,24 +282,33 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithNullInitialData_ThrowsArgumentNullException()
+    public void CreateFoundry_WithNullLogger_CreatesFoundry()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
 
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => WorkflowForge.CreateFoundry(workflowName, null!));
+        // Act - null logger is valid (optional parameter)
+        using var foundry = WorkflowForge.CreateFoundry(workflowName, logger: null);
+
+        // Assert
+        Assert.NotNull(foundry);
+        Assert.NotNull(foundry.Properties);
+        Assert.NotNull(foundry.Logger);
     }
 
     [Fact]
-    public void CreateFoundry_WithNullConfiguration_ThrowsArgumentNullException()
+    public void CreateFoundry_WithNullInitialProperties_CreatesFoundry()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
-        var initialData = new Dictionary<string, object?> { { "key", "value" } };
 
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => WorkflowForge.CreateFoundry(workflowName, null!));
+        // Act - null initialProperties is valid (optional parameter)
+        using var foundry = WorkflowForge.CreateFoundry(workflowName, null, initialProperties: null);
+
+        // Assert
+        Assert.NotNull(foundry);
+        Assert.NotNull(foundry.Properties);
+        Assert.Empty(foundry.Properties);
     }
 
     [Fact]

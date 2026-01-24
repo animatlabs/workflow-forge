@@ -1,9 +1,9 @@
-using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Threading.Tasks;
 using WorkflowForge;
@@ -37,9 +37,8 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
             var options = provider.GetRequiredService<IOptions<ValidationMiddlewareOptions>>().Value;
 
             var foundry = WorkflowForge.CreateFoundry("Test");
-            var validator = new TestValidator();
             
-            foundry.UseValidation(validator, f => new TestModel { Value = -1 }, options);
+            foundry.UseValidation(f => new TestModel { Value = -1 }, options);
             
             var workflow = WorkflowForge.CreateWorkflow("TestWorkflow")
                 .AddOperation("Op1", async (f, ct) => { f.SetProperty("result", "success"); })
@@ -69,9 +68,8 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
             var options = provider.GetRequiredService<IOptions<ValidationMiddlewareOptions>>().Value;
 
             var foundry = WorkflowForge.CreateFoundry("Test");
-            var validator = new TestValidator();
             
-            foundry.UseValidation(validator, f => new TestModel { Value = -1 }, options);
+            foundry.UseValidation(f => new TestModel { Value = -1 }, options);
 
             var workflow = WorkflowForge.CreateWorkflow("TestWorkflow")
                 .AddOperation("Op1", async (f, ct) => { })
@@ -154,15 +152,8 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
 
         private class TestModel
         {
+            [Range(1, int.MaxValue, ErrorMessage = "Value must be greater than 0")]
             public int Value { get; set; }
-        }
-
-        private class TestValidator : AbstractValidator<TestModel>
-        {
-            public TestValidator()
-            {
-                RuleFor(x => x.Value).GreaterThan(0).WithMessage("Value must be greater than 0");
-            }
         }
 
         private class InMemoryPersistenceProvider : IWorkflowPersistenceProvider

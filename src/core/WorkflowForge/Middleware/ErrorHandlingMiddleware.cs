@@ -61,7 +61,7 @@ namespace WorkflowForge.Middleware
             IWorkflowOperation operation,
             IWorkflowFoundry foundry,
             object? inputData,
-            Func<Task<object?>> next,
+            Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default)
         {
             // Note: Enabled check is done at registration time (UseDefaultMiddleware)
@@ -69,7 +69,7 @@ namespace WorkflowForge.Middleware
 
             try
             {
-                return await next().ConfigureAwait(false);
+                return await next(cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {

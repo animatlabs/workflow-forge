@@ -40,7 +40,7 @@ public class Scenario6_ErrorHandling_WorkflowForge : IWorkflowScenario
             await errorOp.RestoreAsync("error_context", foundry);
         }
 
-        var compensated = (bool)foundry.Properties.GetValueOrDefault("compensated", false);
+        var compensated = foundry.Properties.TryGetValue("compensated", out var compensatedValue) && compensatedValue is bool compensatedFlag && compensatedFlag;
 
         return new ScenarioResult
         {

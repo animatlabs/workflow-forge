@@ -91,7 +91,7 @@ foundry.UseSerilogLogger(Log.Logger);
 }
 ```
 
-See [Configuration Guide](../../../docs/configuration.md#serilog-extension) for complete options.
+See [Configuration Guide](../../../docs/core/configuration.md#serilog-extension) for complete options.
 
 ## Structured Logging Examples
 
@@ -159,9 +159,9 @@ foundry.Logger.LogInformation(
 
 ## Documentation
 
-- **[Getting Started](../../../docs/getting-started.md)**
-- **[Configuration Guide](../../../docs/configuration.md#serilog-extension)**
-- **[Extensions Overview](../../../docs/extensions.md)**
+- **[Getting Started](../../../docs/getting-started/getting-started.md)**
+- **[Configuration Guide](../../../docs/core/configuration.md#serilog-extension)**
+- **[Extensions Overview](../../../docs/extensions/index.md)**
 - **[Sample 13: Serilog Integration](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
 
 ---

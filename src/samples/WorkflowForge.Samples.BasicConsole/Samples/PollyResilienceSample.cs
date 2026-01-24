@@ -1,6 +1,7 @@
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Resilience.Polly;
+using WorkflowForge.Extensions.Resilience.Polly.Options;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -34,7 +35,7 @@ public class PollyResilienceSample : ISample
         using var foundry = WorkflowForge.CreateFoundry("DevelopmentResilience");
 
         // Apply development resilience settings (lenient for debugging)
-        foundry.UsePollyDevelopmentResilience();
+        foundry.UsePollyFromSettings(new PollyMiddlewareOptions());
 
         foundry.Properties["scenario"] = "development";
         foundry.Properties["max_failures"] = 1; // Fail once, then succeed
@@ -62,7 +63,11 @@ public class PollyResilienceSample : ISample
         using var foundry = WorkflowForge.CreateFoundry("ProductionResilience");
 
         // Apply production resilience settings (strict for reliability)
-        foundry.UsePollyProductionResilience();
+        foundry.UsePollyFromSettings(new PollyMiddlewareOptions 
+        {
+            Retry = { MaxRetryAttempts = 5 },
+            CircuitBreaker = { IsEnabled = true }
+        });
 
         foundry.Properties["scenario"] = "production";
         foundry.Properties["max_failures"] = 2; // Fail twice, then succeed
@@ -90,7 +95,13 @@ public class PollyResilienceSample : ISample
         using var foundry = WorkflowForge.CreateFoundry("EnterpriseResilience");
 
         // Apply enterprise resilience settings (comprehensive)
-        foundry.UsePollyEnterpriseResilience();
+        foundry.UsePollyFromSettings(new PollyMiddlewareOptions 
+        {
+            Retry = { MaxRetryAttempts = 7 },
+            CircuitBreaker = { IsEnabled = true },
+            Timeout = { IsEnabled = true },
+            EnableComprehensivePolicies = true
+        });
 
         foundry.Properties["scenario"] = "enterprise";
         foundry.Properties["max_failures"] = 1; // Succeed after one failure

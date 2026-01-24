@@ -1,7 +1,7 @@
 # WorkflowForge Event System
 
 <p align="center">
-  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Comprehensive guide to the WorkflowForge event system for workflow monitoring and observability.
@@ -610,11 +610,11 @@ foundry.OperationCompleted += (s, e) => {
 
 ## Next Steps
 
-- **[Architecture](architecture.md)** - Understanding event system design
+- **[Architecture](../architecture/overview.md)** - Understanding event system design
 - **[Operations](operations.md)** - Creating operations that fire events
-- **[Samples Guide](samples-guide.md)** - See events in action (Sample 11: Workflow Events)
-- **[Extensions](extensions.md)** - Audit and Performance extensions use events
+- **[Samples Guide](../getting-started/samples-guide.md)** - See events in action (Sample 11: Workflow Events)
+- **[Extensions](../extensions/index.md)** - Audit and Performance extensions use events
 
 ---
 
-[Back to Documentation Hub](README.md)
+**← Back to [Documentation Home](../index.md)**

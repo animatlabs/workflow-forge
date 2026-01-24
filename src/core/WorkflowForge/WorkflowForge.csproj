@@ -42,8 +42,7 @@
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
 Major release v2.0.0:
-- ZERO VERSION CONFLICTS: Extensions use Costura.Fody for dependency isolation
-- NEW: Validation extension with FluentValidation bridge
+- NEW: Validation extension using DataAnnotations
 - NEW: Audit extension for compliance and operational monitoring
 - BREAKING: Events system refactored for SRP (3 focused interfaces)
 - ISystemTimeProvider injected via DI for testability
@@ -68,7 +67,7 @@ Major release v2.0.0:
   </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.102" PrivateAssets="All" />
     </ItemGroup>
 
 </Project> 

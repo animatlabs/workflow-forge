@@ -317,54 +317,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             return new PollyRetryOperation(innerOperation, pipeline, logger, name);
         }
 
-        /// <summary>
-        /// Creates development-friendly Polly retry operation with lenient settings.
-        /// </summary>
-        /// <param name="innerOperation">The operation to wrap.</param>
-        /// <param name="logger">Optional logger for operation events.</param>
-        /// <param name="name">Optional custom name.</param>
-        /// <returns>A new development-optimized Polly retry operation.</returns>
-        public static PollyRetryOperation ForDevelopment(
-            IWorkflowOperation innerOperation,
-            IWorkflowForgeLogger? logger = null,
-            string? name = null)
-        {
-            var settings = PollyMiddlewareOptions.ForDevelopment();
-            return WithComprehensivePolicy(innerOperation, settings, logger, name);
-        }
-
-        /// <summary>
-        /// Creates production-optimized Polly retry operation with strict settings.
-        /// </summary>
-        /// <param name="innerOperation">The operation to wrap.</param>
-        /// <param name="logger">Optional logger for operation events.</param>
-        /// <param name="name">Optional custom name.</param>
-        /// <returns>A new production-optimized Polly retry operation.</returns>
-        public static PollyRetryOperation ForProduction(
-            IWorkflowOperation innerOperation,
-            IWorkflowForgeLogger? logger = null,
-            string? name = null)
-        {
-            var settings = PollyMiddlewareOptions.ForProduction();
-            return WithComprehensivePolicy(innerOperation, settings, logger, name);
-        }
-
-        /// <summary>
-        /// Creates enterprise-grade Polly retry operation with comprehensive policies.
-        /// </summary>
-        /// <param name="innerOperation">The operation to wrap.</param>
-        /// <param name="logger">Optional logger for operation events.</param>
-        /// <param name="name">Optional custom name.</param>
-        /// <returns>A new enterprise-grade Polly retry operation.</returns>
-        public static PollyRetryOperation ForEnterprise(
-            IWorkflowOperation innerOperation,
-            IWorkflowForgeLogger? logger = null,
-            string? name = null)
-        {
-            var settings = PollyMiddlewareOptions.ForEnterprise();
-            return WithComprehensivePolicy(innerOperation, settings, logger, name);
-        }
-
         #endregion Factory Methods
     }
 
@@ -424,43 +376,5 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             return PollyRetryOperation.WithComprehensivePolicy(operation, settings, logger);
         }
 
-        /// <summary>
-        /// Wraps an operation with development-friendly Polly policies.
-        /// </summary>
-        /// <param name="operation">The operation to wrap.</param>
-        /// <param name="logger">Optional logger.</param>
-        /// <returns>A development-optimized Polly-wrapped operation.</returns>
-        public static PollyRetryOperation WithPollyDevelopment(
-            this IWorkflowOperation operation,
-            IWorkflowForgeLogger? logger = null)
-        {
-            return PollyRetryOperation.ForDevelopment(operation, logger);
-        }
-
-        /// <summary>
-        /// Wraps an operation with production-optimized Polly policies.
-        /// </summary>
-        /// <param name="operation">The operation to wrap.</param>
-        /// <param name="logger">Optional logger.</param>
-        /// <returns>A production-optimized Polly-wrapped operation.</returns>
-        public static PollyRetryOperation WithPollyProduction(
-            this IWorkflowOperation operation,
-            IWorkflowForgeLogger? logger = null)
-        {
-            return PollyRetryOperation.ForProduction(operation, logger);
-        }
-
-        /// <summary>
-        /// Wraps an operation with enterprise-grade Polly policies.
-        /// </summary>
-        /// <param name="operation">The operation to wrap.</param>
-        /// <param name="logger">Optional logger.</param>
-        /// <returns>An enterprise-grade Polly-wrapped operation.</returns>
-        public static PollyRetryOperation WithPollyEnterprise(
-            this IWorkflowOperation operation,
-            IWorkflowForgeLogger? logger = null)
-        {
-            return PollyRetryOperation.ForEnterprise(operation, logger);
-        }
     }
 }

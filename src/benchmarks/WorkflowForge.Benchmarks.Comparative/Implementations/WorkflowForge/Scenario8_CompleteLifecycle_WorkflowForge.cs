@@ -36,7 +36,7 @@ public class Scenario8_CompleteLifecycle_WorkflowForge : IWorkflowScenario
         await foundry.ForgeAsync();
 
         // Cleanup happens via Dispose
-        var executed = (bool)foundry.Properties.GetValueOrDefault("executed", false);
+        var executed = foundry.Properties.TryGetValue("executed", out var executedValue) && executedValue is bool executedFlag && executedFlag;
 
         return new ScenarioResult
         {

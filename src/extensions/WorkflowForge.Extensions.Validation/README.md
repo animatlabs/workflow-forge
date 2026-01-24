@@ -4,19 +4,13 @@
   <img src="../../../icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
-Validation extension for WorkflowForge with FluentValidation integration for comprehensive input validation.
+Validation extension for WorkflowForge with DataAnnotations-based validation for comprehensive input validation.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Validation.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Validation/)
 
-## Zero Version Conflicts
+## No External Validation Dependencies
 
-**This extension uses Costura.Fody to embed FluentValidation.** This means:
-
-- NO DLL Hell - No conflicts with your application's FluentValidation version
-- NO Version Conflicts - Works with ANY version of FluentValidation in your app
-- Clean Deployment - Professional dependency isolation
-
-**How it works**: FluentValidation is embedded as compressed resources at build time and loaded at runtime, completely isolated from your application.
+This extension uses **System.ComponentModel.DataAnnotations**, so you get validation without additional third-party validation libraries.
 
 ## Installation
 
@@ -30,16 +24,26 @@ dotnet add package WorkflowForge.Extensions.Validation
 
 ```csharp
 using WorkflowForge.Extensions.Validation;
-using FluentValidation;
+using System.ComponentModel.DataAnnotations;
 
 // Define validator
-public class OrderValidator : AbstractValidator<Order>
+public class Order : IValidatableObject
 {
-    public OrderValidator()
+    [Required(ErrorMessage = "Customer ID required")]
+    public string CustomerId { get; set; } = string.Empty;
+
+    [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be positive")]
+    public decimal Amount { get; set; }
+
+    [MinLength(1, ErrorMessage = "Order must have items")]
+    public string[] Items { get; set; } = Array.Empty<string>();
+
+    public IEnumerable<System.ComponentModel.DataAnnotations.ValidationResult> Validate(ValidationContext context)
     {
-        RuleFor(x => x.CustomerId).NotEmpty().WithMessage("Customer ID required");
-        RuleFor(x => x.Amount).GreaterThan(0).WithMessage("Amount must be positive");
-        RuleFor(x => x.Items).NotEmpty().WithMessage("Order must have items");
+        if (!CustomerId.StartsWith("CUST-"))
+            yield return new System.ComponentModel.DataAnnotations.ValidationResult(
+                "Customer ID must start with 'CUST-'",
+                new[] { nameof(CustomerId) });
     }
 }
 
@@ -47,12 +51,7 @@ public class OrderValidator : AbstractValidator<Order>
 using var foundry = WorkflowForge.CreateFoundry("ValidatedWorkflow");
 foundry.SetProperty("Order", order);
 
-var validator = new OrderValidator();
-foundry.AddMiddleware(new ValidationMiddleware<Order>(
-    validator,
-    f => f.GetPropertyOrDefault<Order>("Order"),
-    throwOnFailure: true
-));
+foundry.UseValidation(f => f.GetPropertyOrDefault<Order>("Order"));
 
 // Validation runs before every operation
 await smith.ForgeAsync(workflow, foundry);
@@ -60,7 +59,7 @@ await smith.ForgeAsync(workflow, foundry);
 
 ## Key Features
 
-- **FluentValidation Integration**: Full FluentValidation API access
+- **DataAnnotations Validation**: Attributes and IValidatableObject support
 - **Middleware-Based**: Validates before operations execute
 - **Flexible Extraction**: Custom data extraction from foundry
 - **Configurable Behavior**: Throw or log validation failures
@@ -100,8 +99,7 @@ var options = new ValidationMiddlewareOptions
     StoreValidationResults = true
 };
 
-var validator = new OrderValidator();
-foundry.AddValidation(validator, f => f.GetPropertyOrDefault<Order>("Order"), options);
+foundry.UseValidation(f => f.GetPropertyOrDefault<Order>("Order"), options);
 ```
 
 ### Via Dependency Injection
@@ -115,31 +113,30 @@ services.AddValidationConfiguration(configuration);
 var options = serviceProvider.GetRequiredService<IOptions<ValidationMiddlewareOptions>>().Value;
 ```
 
-See [Configuration Guide](../../../docs/configuration.md#validation-extension) for complete options.
+See [Configuration Guide](../../../docs/core/configuration.md#validation-extension) for complete options.
 
 ## Validation Examples
 
 ### Complex Validation Rules
 
 ```csharp
-public class OrderValidator : AbstractValidator<Order>
+public class Order : IValidatableObject
 {
-    public OrderValidator()
+    [Required]
+    public string CustomerId { get; set; } = string.Empty;
+
+    [Range(0.01, 10000)]
+    public decimal Amount { get; set; }
+
+    [EmailAddress]
+    public string? Email { get; set; }
+
+    public IEnumerable<System.ComponentModel.DataAnnotations.ValidationResult> Validate(ValidationContext context)
     {
-        RuleFor(x => x.CustomerId)
-            .NotEmpty()
-            .Length(5, 20);
-            
-        RuleFor(x => x.Amount)
-            .GreaterThan(0)
-            .LessThan(10000);
-            
-        RuleFor(x => x.Email)
-            .EmailAddress()
-            .When(x => !string.IsNullOrEmpty(x.Email));
-            
-        RuleForEach(x => x.Items)
-            .SetValidator(new OrderItemValidator());
+        if (CustomerId.Length < 5)
+            yield return new System.ComponentModel.DataAnnotations.ValidationResult(
+                "Customer ID must be at least 5 characters",
+                new[] { nameof(CustomerId) });
     }
 }
 ```
@@ -147,18 +144,16 @@ public class OrderValidator : AbstractValidator<Order>
 ### Custom Error Handling
 
 ```csharp
-foundry.AddMiddleware(new ValidationMiddleware<Order>(
-    validator,
+foundry.UseValidation(
     f => f.GetPropertyOrDefault<Order>("Order"),
-    throwOnFailure: false  // Log instead of throw
-));
+    new ValidationMiddlewareOptions { ThrowOnValidationError = false });
 ```
 
 ## Documentation
 
-- **[Getting Started](../../../docs/getting-started.md)**
-- **[Configuration Guide](../../../docs/configuration.md#validation-extension)**
-- **[Extensions Overview](../../../docs/extensions.md)**
+- **[Getting Started](../../../docs/getting-started/getting-started.md)**
+- **[Configuration Guide](../../../docs/core/configuration.md#validation-extension)**
+- **[Extensions Overview](../../../docs/extensions/index.md)**
 - **[Sample 23: Validation](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
 
 ---

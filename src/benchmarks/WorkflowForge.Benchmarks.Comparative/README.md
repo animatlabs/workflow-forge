@@ -161,9 +161,9 @@ See [BENCHMARK_EXCLUSIONS.md](BENCHMARK_EXCLUSIONS.md) for technical details on 
 
 ## Documentation
 
-- **[Performance Documentation](../../../docs/performance.md)** - Detailed performance analysis
-- **[Competitive Analysis](../../../docs/competitive-analysis.md)** - Framework comparison
-- **[Architecture](../../../docs/architecture.md)** - Design decisions
+- **[Performance Documentation](../../../docs/performance/performance.md)** - Detailed performance analysis
+- **[Competitive Analysis](../../../docs/performance/competitive-analysis.md)** - Framework comparison
+- **[Architecture](../../../docs/architecture/overview.md)** - Design decisions
 
 ## Reproducing Results
 

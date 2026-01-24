@@ -115,9 +115,9 @@ Results are saved to `BenchmarkDotNet.Artifacts/results/` in multiple formats:
 
 ## Documentation
 
-- **[Performance Documentation](../../../docs/performance.md)** - Detailed analysis and interpretation
-- **[Competitive Analysis](../../../docs/competitive-analysis.md)** - Comparison with other frameworks
-- **[Architecture](../../../docs/architecture.md)** - Design decisions affecting performance
+- **[Performance Documentation](../../../docs/performance/performance.md)** - Detailed analysis and interpretation
+- **[Competitive Analysis](../../../docs/performance/competitive-analysis.md)** - Comparison with other frameworks
+- **[Architecture](../../../docs/architecture/overview.md)** - Design decisions affecting performance
 
 ## Benchmark Best Practices
 

@@ -52,4 +52,5 @@ public class ScenarioParameters
     public int ItemCount { get; set; } = 100;
     public int ConcurrencyLevel { get; set; } = 4;
     public bool IncludeLogging { get; set; } = false;
+    public int DelayMilliseconds { get; set; } = 1;
 }

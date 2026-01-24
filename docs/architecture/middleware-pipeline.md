@@ -87,18 +87,18 @@ The code iterates backwards (`_middlewares.Count - 1` down to `0`) because:
 
 ```csharp
 // Start with the core operation
-Func<Task<object?>> next = () => operation.ForgeAsync(inputData, this, cancellationToken);
+Func<CancellationToken, Task<object?>> next = token => operation.ForgeAsync(inputData, this, token);
 
 // Wrap each middleware in reverse order
 for (int i = _middlewares.Count - 1; i >= 0; i--)
 {
     var middleware = _middlewares[i];
     var currentNext = next;
-    next = () => middleware.ExecuteAsync(operation, this, inputData, currentNext, cancellationToken);
+    next = token => middleware.ExecuteAsync(operation, this, inputData, currentNext, token);
 }
 
 // Execute the fully-wrapped chain
-return await next().ConfigureAwait(false);
+return await next(cancellationToken).ConfigureAwait(false);
 ```
 
 ### Middleware Interface
@@ -110,7 +110,7 @@ Task<object?> ExecuteAsync(
     IWorkflowOperation operation,
     IWorkflowFoundry foundry,
     object? inputData,
-    Func<Task<object?>> next,
+    Func<CancellationToken, Task<object?>> next,
     CancellationToken cancellationToken);
 ```
 

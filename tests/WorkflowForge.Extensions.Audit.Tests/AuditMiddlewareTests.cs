@@ -36,7 +36,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
             var middleware = new AuditMiddleware(_auditProvider, options, _timeProvider, "test-user");
 
             var nextCalled = false;
-            Task<object?> Next() { nextCalled = true; return Task.FromResult<object?>("result"); }
+            Task<object?> Next(CancellationToken _) { nextCalled = true; return Task.FromResult<object?>("result"); }
 
             var result = await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
 
@@ -63,7 +63,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
             var options = new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Standard };
             var middleware = new AuditMiddleware(_auditProvider, options, _timeProvider, "test-user");
 
-            Task<object?> Next() => throw new InvalidOperationException("Test error");
+            Task<object?> Next(CancellationToken _) => throw new InvalidOperationException("Test error");
 
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
                 middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None));
@@ -84,7 +84,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
             var options = new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Verbose };
             var middleware = new AuditMiddleware(_auditProvider, options, _timeProvider, "test-user");
 
-            Task<object?> Next() => Task.FromResult<object?>(null);
+            Task<object?> Next(CancellationToken _) => Task.FromResult<object?>(null);
 
             await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
 
@@ -106,7 +106,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
             };
             var middleware = new AuditMiddleware(_auditProvider, options, _timeProvider, "test-user");
 
-            Task<object?> Next() => Task.FromResult<object?>(null);
+            Task<object?> Next(CancellationToken _) => Task.FromResult<object?>(null);
 
             await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
 
@@ -128,7 +128,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
             var options = new AuditMiddlewareOptions();
             var middleware = new AuditMiddleware(_auditProvider, options);
 
-            Task<object?> Next() => Task.FromResult<object?>(null);
+            Task<object?> Next(CancellationToken _) => Task.FromResult<object?>(null);
 
             var beforeExecution = DateTimeOffset.UtcNow;
             await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);

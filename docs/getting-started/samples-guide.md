@@ -1,7 +1,7 @@
 # WorkflowForge Samples Catalog
 
 <p align="center">
-  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 **Total Samples**: 24  
@@ -60,7 +60,7 @@ await smith.ForgeAsync(workflow);
 ### Sample 2: DataPassingSample.cs
 **Purpose**: Dictionary-based data flow between operations  
 **Demonstrates**:
-- Using `foundry.Properties` (ConcurrentDictionary)
+- Using `foundry.SetProperty` / `GetPropertyOrDefault` (typed helpers)
 - Passing data between operations
 - Reading and writing properties
 
@@ -242,18 +242,18 @@ public override async Task RestoreAsync(...) {
 ### Sample 9: OptionsPatternSample.cs
 **Purpose**: Configuration management  
 **Demonstrates**:
-- `IWorkflowSettings` configuration
+- `WorkflowForgeOptions` configuration
 - Options pattern
 - Configuration binding
 - appsettings.json integration
 
 **Key Code Pattern**:
 ```csharp
-services.Configure<WorkflowForgeConfiguration>(
-    Configuration.GetSection("WorkflowForge")
+services.Configure<WorkflowForgeOptions>(
+    Configuration.GetSection(WorkflowForgeOptions.DefaultSectionName)
 );
 
-var config = serviceProvider.GetRequiredService<IOptions<WorkflowForgeConfiguration>>();
+var config = serviceProvider.GetRequiredService<IOptions<WorkflowForgeOptions>>();
 ```
 
 **Data Flow**: Dictionary-based  
@@ -265,21 +265,27 @@ var config = serviceProvider.GetRequiredService<IOptions<WorkflowForgeConfigurat
 ### Sample 10: ConfigurationProfilesSample.cs
 **Purpose**: Environment-specific configuration  
 **Demonstrates**:
-- `FoundryConfiguration` profiles
-- Minimal, Development, Production, HighPerformance
-- Profile customization
-- Performance implications
+- `WorkflowForgeOptions` presets
+- Production vs. high-throughput tradeoffs
 
 **Key Code Pattern**:
 ```csharp
-var minimalFoundry = WorkflowForge.CreateFoundry("Workflow", 
-    FoundryConfiguration.Minimal());
+var productionOptions = new WorkflowForgeOptions
+{
+    ContinueOnError = false,
+    FailFastCompensation = false,
+    ThrowOnCompensationError = true
+};
 
-var productionFoundry = WorkflowForge.CreateFoundry("Workflow", 
-    FoundryConfiguration.ForProduction());
+var highThroughputOptions = new WorkflowForgeOptions
+{
+    ContinueOnError = true,
+    FailFastCompensation = false,
+    ThrowOnCompensationError = false
+};
 
-var highPerfFoundry = WorkflowForge.CreateFoundry("Workflow", 
-    FoundryConfiguration.HighPerformance());
+var productionFoundry = WorkflowForge.CreateFoundry("Workflow", options: productionOptions);
+var highPerfFoundry = WorkflowForge.CreateFoundry("Workflow", options: highThroughputOptions);
 ```
 
 **Data Flow**: Dictionary-based  
@@ -333,12 +339,12 @@ public class TimingMiddleware : IWorkflowOperationMiddleware
         IWorkflowOperation operation,
         IWorkflowFoundry foundry,
         object? inputData,
-        Func<Task<object?>> next,
+        Func<CancellationToken, Task<object?>> next,
         CancellationToken cancellationToken)
     {
         var sw = Stopwatch.StartNew();
         try {
-            return await next();
+            return await next(cancellationToken);
         } finally {
             sw.Stop();
             foundry.SetProperty($"{operation.Name}.ExecutionTime", sw.ElapsedMilliseconds);
@@ -760,10 +766,9 @@ public class ProcessOperation : IWorkflowOperation<Order, OrderResult>
 ## Related Documentation
 
 - **[Getting Started](getting-started.md)** - Learn the basics before exploring samples
-- **[Operations Guide](operations.md)** - Detailed operation documentation
-- **[Extensions](extensions.md)** - Extension usage in samples
-- **[Configuration](configuration.md)** - Configuration patterns in samples
-- **[Events System](events.md)** - Event handling in samples
+- **[Operations Guide](../core/operations.md)** - Detailed operation documentation
+- **[Extensions](../extensions/index.md)** - Extension usage in samples
+- **[Configuration](../core/configuration.md)** - Configuration patterns in samples
+- **[Events System](../core/events.md)** - Event handling in samples
 
-**← Back to [Documentation Home](README.md)**
-
+**← Back to [Documentation Home](../index.md)**

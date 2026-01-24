@@ -1,7 +1,7 @@
 # Getting Started with WorkflowForge
 
 <p align="center">
-  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Welcome to WorkflowForge! This guide will walk you through installing, configuring, and creating your first workflow in just a few minutes.
@@ -30,7 +30,7 @@ Extensions now use **Costura.Fody** to embed dependencies, eliminating DLL hell.
 - **Audit**: Production-ready audit logging with pluggable providers
 
 ### Breaking Changes
-- **Event System**: Refactored from single `IWorkflowEvents` to three focused interfaces (`IWorkflowLifecycleEvents`, `IOperationLifecycleEvents`, `ICompensationLifecycleEvents`) for SRP compliance. See [Events Guide](events.md) for migration.
+- **Event System**: Refactored from single `IWorkflowEvents` to three focused interfaces (`IWorkflowLifecycleEvents`, `IOperationLifecycleEvents`, `ICompensationLifecycleEvents`) for SRP compliance. See [Events Guide](../core/events.md) for migration.
 - **ISystemTimeProvider**: Now injected via DI instead of static instance
 
 ### Enhancements
@@ -338,7 +338,7 @@ WorkflowForge uses an industrial manufacturing metaphor where workflows are "for
 - **Smith**: Orchestrator that executes workflows
 - **Operation**: Individual executable task
 
-For detailed explanation of the metaphor and architecture, see [Architecture Guide](architecture.md#core-metaphor).
+For detailed explanation of the metaphor and architecture, see [Architecture Guide](../architecture/overview.md#core-metaphor).
 
 ### Data Flow Pattern
 
@@ -394,15 +394,16 @@ public class MyOperation : WorkflowOperationBase
 }
 ```
 
-Configure automatic restoration:
+Configure execution behavior via options:
 ```csharp
-var config = new FoundryConfiguration
+var options = new WorkflowForgeOptions
 {
-    AutoRestore = true,
-    ContinueOnRestorationFailure = false
+    ContinueOnError = false,
+    FailFastCompensation = false,
+    ThrowOnCompensationError = false
 };
 
-var foundry = WorkflowForge.CreateFoundry("MyWorkflow", config);
+var foundry = WorkflowForge.CreateFoundry("MyWorkflow", options: options);
 ```
 
 ## Next Steps
@@ -462,15 +463,15 @@ foundry.AddValidation(
 );
 ```
 
-[Extensions Guide](extensions.md)
+[Extensions Guide](../extensions/index.md)
 
 ### Learn Advanced Patterns
 
-- **[Architecture Overview](architecture.md)** - Design patterns and principles
-- **[Operations Guide](operations.md)** - Built-in and custom operations
-- **[Event System](events.md)** - Lifecycle events and monitoring
-- **[Configuration](configuration.md)** - Environment-specific settings
-- **[API Reference](api-reference.md)** - Complete API documentation
+- **[Architecture Overview](../architecture/overview.md)** - Design patterns and principles
+- **[Operations Guide](../core/operations.md)** - Built-in and custom operations
+- **[Event System](../core/events.md)** - Lifecycle events and monitoring
+- **[Configuration](../core/configuration.md)** - Environment-specific settings
+- **[API Reference](../reference/api-reference.md)** - Complete API documentation
 
 ## Troubleshooting
 
@@ -505,18 +506,18 @@ You've learned:
 - Data flow patterns (dictionary-based preferred)
 - Compensation/rollback (Saga pattern)
 
-**Next**: Explore the [24 samples](samples-guide.md) to see WorkflowForge in action, or dive into [architecture](architecture.md) to understand the design principles.
+**Next**: Explore the [24 samples](samples-guide.md) to see WorkflowForge in action, or dive into [architecture](../architecture/overview.md) to understand the design principles.
 
 ---
 
 ## Related Documentation
 
-- **[Architecture Overview](architecture.md)** - Design patterns and core concepts
-- **[Operations Guide](operations.md)** - All operation types and patterns
-- **[Events System](events.md)** - Monitoring and observability
-- **[Extensions](extensions.md)** - Available extensions
-- **[Configuration](configuration.md)** - Environment-specific setup
+- **[Architecture Overview](../architecture/overview.md)** - Design patterns and core concepts
+- **[Operations Guide](../core/operations.md)** - All operation types and patterns
+- **[Events System](../core/events.md)** - Monitoring and observability
+- **[Extensions](../extensions/index.md)** - Available extensions
+- **[Configuration](../core/configuration.md)** - Environment-specific setup
 - **[Samples Guide](samples-guide.md)** - All 24 samples with learning path
-- **[API Reference](api-reference.md)** - Complete API documentation
+- **[API Reference](../reference/api-reference.md)** - Complete API documentation
 
-**← Back to [Documentation Home](README.md)**
+**← Back to [Documentation Home](../index.md)**

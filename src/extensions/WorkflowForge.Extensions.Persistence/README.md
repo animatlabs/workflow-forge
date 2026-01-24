@@ -122,7 +122,7 @@ services.AddPersistenceConfiguration(configuration);
 var options = serviceProvider.GetRequiredService<IOptions<PersistenceOptions>>().Value;
 ```
 
-See [Configuration Guide](../../../docs/configuration.md#persistence-extensions) for complete options.
+See [Configuration Guide](../../../docs/core/configuration.md#persistence-extensions) for complete options.
 
 ## Workflow State Structure
 
@@ -206,9 +206,9 @@ if (state != null)
 
 ## Documentation
 
-- **[Getting Started](../../../docs/getting-started.md)**
-- **[Configuration Guide](../../../docs/configuration.md#persistence-extensions)**
-- **[Extensions Overview](../../../docs/extensions.md)**
+- **[Getting Started](../../../docs/getting-started/getting-started.md)**
+- **[Configuration Guide](../../../docs/core/configuration.md#persistence-extensions)**
+- **[Extensions Overview](../../../docs/extensions/index.md)**
 - **[Sample 18: Persistence](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
 - **[Recovery Extension](../WorkflowForge.Extensions.Persistence.Recovery/README.md)** - Recovery orchestration on top of persistence
 

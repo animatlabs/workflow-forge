@@ -177,49 +177,5 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             return foundry;
         }
 
-        /// <summary>
-        /// Adds enterprise-grade resilience configuration with predefined best practices.
-        /// Includes retry with exponential backoff, circuit breaker, timeout, and rate limiting.
-        /// </summary>
-        /// <param name="foundry">The foundry to configure.</param>
-        /// <returns>The foundry for method chaining.</returns>
-        public static IWorkflowFoundry UsePollyEnterpriseResilience(this IWorkflowFoundry foundry)
-        {
-            var settings = PollyMiddlewareOptions.ForEnterprise();
-            return foundry.UsePollyFromSettings(settings);
-        }
-
-        /// <summary>
-        /// Adds development-friendly resilience configuration with more lenient settings.
-        /// </summary>
-        /// <param name="foundry">The foundry to configure.</param>
-        /// <returns>The foundry for method chaining.</returns>
-        public static IWorkflowFoundry UsePollyDevelopmentResilience(this IWorkflowFoundry foundry)
-        {
-            var settings = PollyMiddlewareOptions.ForDevelopment();
-            return foundry.UsePollyFromSettings(settings);
-        }
-
-        /// <summary>
-        /// Adds production-optimized resilience configuration with strict settings.
-        /// </summary>
-        /// <param name="foundry">The foundry to configure.</param>
-        /// <returns>The foundry for method chaining.</returns>
-        public static IWorkflowFoundry UsePollyProductionResilience(this IWorkflowFoundry foundry)
-        {
-            var settings = PollyMiddlewareOptions.ForProduction();
-            return foundry.UsePollyFromSettings(settings);
-        }
-
-        /// <summary>
-        /// Adds minimal resilience configuration with basic retry only.
-        /// </summary>
-        /// <param name="foundry">The foundry to configure.</param>
-        /// <returns>The foundry for method chaining.</returns>
-        public static IWorkflowFoundry UsePollyMinimalResilience(this IWorkflowFoundry foundry)
-        {
-            var settings = PollyMiddlewareOptions.Minimal();
-            return foundry.UsePollyFromSettings(settings);
-        }
     }
 }

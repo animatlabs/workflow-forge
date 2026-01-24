@@ -576,10 +576,10 @@ public class WorkflowIntegrationTests
             _log = log;
         }
 
-        public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData, Func<Task<object?>> next, CancellationToken cancellationToken = default)
+        public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData, Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
         {
             _log.Add("Middleware-Before");
-            var result = await next();
+            var result = await next(cancellationToken);
             _log.Add("Middleware-After");
             return result;
         }
@@ -587,11 +587,11 @@ public class WorkflowIntegrationTests
 
     private class ErrorRecoveryMiddleware : IWorkflowOperationMiddleware
     {
-        public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData, Func<Task<object?>> next, CancellationToken cancellationToken = default)
+        public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData, Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
         {
             try
             {
-                return await next();
+                return await next(cancellationToken);
             }
             catch (WorkflowOperationException)
             {

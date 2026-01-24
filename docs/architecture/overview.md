@@ -1,7 +1,7 @@
 # WorkflowForge Architecture
 
 <p align="center">
-  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Complete architectural overview of WorkflowForge's design principles, patterns, and implementation.
@@ -147,12 +147,10 @@ public static class WorkflowForge
     public static IWorkflowBuilder CreateWorkflow()
     
     // Foundry creation
-    public static IWorkflowFoundry CreateFoundry(string workflowName)
-    public static IWorkflowFoundry CreateFoundry(IWorkflowSettings settings)
+    public static IWorkflowFoundry CreateFoundry(string workflowName, IServiceProvider? serviceProvider = null, WorkflowForgeOptions? options = null)
     
     // Smith creation  
     public static IWorkflowSmith CreateSmith()
-    public static IWorkflowSmith CreateSmith(IWorkflowSettings settings)
 }
 ```
 
@@ -257,16 +255,16 @@ WorkflowForge supports two data flow patterns, each with specific use cases.
 var workflow = WorkflowForge.CreateWorkflow()
     .WithName("OrderProcessing")
     .AddOperation("ValidateOrder", async (input, foundry, ct) => {
-        // Store data in foundry.Properties
-        foundry.Properties["OrderId"] = orderId;
-        foundry.Properties["Customer"] = customer;
-        foundry.Properties["TotalAmount"] = 100.50m;
+        // Store data in foundry properties (typed helpers)
+        foundry.SetProperty("OrderId", orderId);
+        foundry.SetProperty("Customer", customer);
+        foundry.SetProperty("TotalAmount", 100.50m);
         return input;
     })
     .AddOperation("ProcessPayment", async (input, foundry, ct) => {
-        // Retrieve data from foundry.Properties
-        var orderId = (string)foundry.Properties["OrderId"];
-        var amount = (decimal)foundry.Properties["TotalAmount"];
+        // Retrieve data from foundry properties
+        var orderId = foundry.GetPropertyOrDefault<string>("OrderId");
+        var amount = foundry.GetPropertyOrDefault<decimal>("TotalAmount");
         // Process payment...
         return input;
     })
@@ -385,7 +383,7 @@ public abstract class BaseWorkflowForgeEventArgs : EventArgs
 }
 ```
 
-For complete event documentation, see [Event System Guide](events.md).
+For complete event documentation, see [Event System Guide](../core/events.md).
 
 ---
 
@@ -406,13 +404,11 @@ Request → Middleware 1 → Middleware 2 → Operation → Middleware 2 → Mid
 ```csharp
 public interface IWorkflowOperationMiddleware
 {
-    int Order { get; }  // Execution order (lower executes first)
-    
-    Task<object?> InvokeAsync(
+    Task<object?> ExecuteAsync(
         IWorkflowOperation operation,
-        object? inputData,
         IWorkflowFoundry foundry,
-        Func<Task<object?>> next,
+        object? inputData,
+        Func<CancellationToken, Task<object?>> next,
         CancellationToken cancellationToken);
 }
 ```
@@ -422,19 +418,17 @@ public interface IWorkflowOperationMiddleware
 ```csharp
 public class TimingMiddleware : IWorkflowOperationMiddleware
 {
-    public int Order => 100;
-    
-    public async Task<object?> InvokeAsync(
+    public async Task<object?> ExecuteAsync(
         IWorkflowOperation operation,
-        object? inputData,
         IWorkflowFoundry foundry,
-        Func<Task<object?>> next,
+        object? inputData,
+        Func<CancellationToken, Task<object?>> next,
         CancellationToken cancellationToken)
     {
         var sw = Stopwatch.StartNew();
         try
         {
-            return await next(); // Call next middleware or operation
+            return await next(cancellationToken); // Call next middleware or operation
         }
         finally
         {
@@ -450,11 +444,9 @@ public class TimingMiddleware : IWorkflowOperationMiddleware
 
 ### Middleware Order
 
-Middleware executes based on `Order` property (ascending):
-- Order 0-99: Pre-processing (logging, validation)
-- Order 100-199: Core concerns (timing, caching)
-- Order 200-299: Resilience (retry, circuit breaker)
-- Order 300+: Post-processing (cleanup, auditing)
+Middleware executes in the order they are added:
+- First added = outermost layer
+- Last added = innermost layer (wraps the operation)
 
 ---
 
@@ -499,7 +491,7 @@ public class CreateOrderOperation : WorkflowOperationBase
 2. Operation fails
 3. WorkflowSmith triggers compensation
 4. Executes `RestoreAsync` in **reverse order** on completed operations
-5. Fires `CompensationStarted`, `CompensationCompleted` events
+5. Fires `CompensationTriggered`, `CompensationCompleted` events
 
 **Design Decision**: Compensation is opt-in via `SupportsRestore` property.
 
@@ -578,7 +570,7 @@ public static class SerilogExtensions
 }
 ```
 
-For complete extension documentation, see [Extensions Guide](extensions.md).
+For complete extension documentation, see [Extensions Guide](../extensions/index.md).
 
 ---
 
@@ -617,12 +609,12 @@ For complete extension documentation, see [Extensions Guide](extensions.md).
 
 ## Next Steps
 
-- **[API Reference](api-reference.md)** - Complete API documentation
-- **[Operations Guide](operations.md)** - Creating custom operations
-- **[Event System](events.md)** - Working with events
-- **[Performance](performance.md)** - Optimization techniques
-- **[Extensions](extensions.md)** - Available extensions
+- **[API Reference](../reference/api-reference.md)** - Complete API documentation
+- **[Operations Guide](../core/operations.md)** - Creating custom operations
+- **[Event System](../core/events.md)** - Working with events
+- **[Performance](../performance/performance.md)** - Optimization techniques
+- **[Extensions](../extensions/index.md)** - Available extensions
 
 ---
 
-[Back to Documentation Hub](README.md)
+**← Back to [Documentation Home](../index.md)**

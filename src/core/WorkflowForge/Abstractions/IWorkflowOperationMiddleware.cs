@@ -59,7 +59,7 @@ namespace WorkflowForge.Abstractions
         /// <remarks>
         /// <para>Middleware should:</para>
         /// <list type="bullet">
-        /// <item><description>Call <paramref name="next"/>() to continue operation execution</description></item>
+        /// <item><description>Call <paramref name="next"/>(cancellationToken) to continue operation execution</description></item>
         /// <item><description>Handle exceptions appropriately (log, transform, or rethrow)</description></item>
         /// <item><description>Clean up resources in finally blocks</description></item>
         /// <item><description>Respect cancellation tokens</description></item>
@@ -72,7 +72,7 @@ namespace WorkflowForge.Abstractions
         ///     IWorkflowOperation operation,
         ///     IWorkflowFoundry foundry,
         ///     object? inputData,
-        ///     Func&lt;Task&lt;object?&gt;&gt; next,
+        ///     Func&lt;CancellationToken, Task&lt;object?&gt;&gt; next,
         ///     CancellationToken cancellationToken)
         /// {
         ///     // Pre-execution logic
@@ -81,7 +81,7 @@ namespace WorkflowForge.Abstractions
         ///     try
         ///     {
         ///         // Execute operation
-        ///         var result = await next().ConfigureAwait(false);
+        ///         var result = await next(cancellationToken).ConfigureAwait(false);
         ///
         ///         // Post-execution logic (success)
         ///         Logger.LogInformation("Operation completed: {Name}", operation.Name);
@@ -100,7 +100,7 @@ namespace WorkflowForge.Abstractions
             IWorkflowOperation operation,
             IWorkflowFoundry foundry,
             object? inputData,
-            Func<Task<object?>> next,
+            Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default);
     }
 }

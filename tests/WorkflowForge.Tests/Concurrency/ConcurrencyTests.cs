@@ -345,7 +345,8 @@ public class ConcurrencyTests
         Assert.Empty(exceptions);
         Assert.All(foundries, foundry =>
         {
-            Assert.Equal(operationsPerFoundry * 2, foundry.Properties.Count); // Each operation creates 2 properties
+            var expectedCount = (operationsPerFoundry * 3) + 3; // result + timestamp + output per op, plus last-completed keys
+            Assert.Equal(expectedCount, foundry.Properties.Count);
         });
 
         _output.WriteLine($"Stress test completed successfully with {foundryCount} foundries and {foundryCount * operationsPerFoundry} total operations");

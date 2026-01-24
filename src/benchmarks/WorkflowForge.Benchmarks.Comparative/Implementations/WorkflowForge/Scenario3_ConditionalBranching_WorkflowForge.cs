@@ -41,16 +41,20 @@ public class Scenario3_ConditionalBranching_WorkflowForge : IWorkflowScenario
             var thenOperation = new DelegateWorkflowOperation($"Then_{operationIndex}", async (input, foundry, token) =>
             {
                 await Task.Yield();
-                var count = foundry.Properties.GetValueOrDefault("true_count", 0);
-                foundry.Properties["true_count"] = (int)count + 1;
+                var count = foundry.Properties.TryGetValue("true_count", out var trueValue) && trueValue is int trueCount
+                    ? trueCount
+                    : 0;
+                foundry.Properties["true_count"] = count + 1;
                 return "Then executed";
             });
 
             var elseOperation = new DelegateWorkflowOperation($"Else_{operationIndex}", async (input, foundry, token) =>
             {
                 await Task.Yield();
-                var count = foundry.Properties.GetValueOrDefault("false_count", 0);
-                foundry.Properties["false_count"] = (int)count + 1;
+                var count = foundry.Properties.TryGetValue("false_count", out var falseValue) && falseValue is int falseCount
+                    ? falseCount
+                    : 0;
+                foundry.Properties["false_count"] = count + 1;
                 return "Else executed";
             });
 
@@ -65,8 +69,12 @@ public class Scenario3_ConditionalBranching_WorkflowForge : IWorkflowScenario
 
         await foundry.ForgeAsync();
 
-        var trueCount = (int)foundry.Properties.GetValueOrDefault("true_count", 0);
-        var falseCount = (int)foundry.Properties.GetValueOrDefault("false_count", 0);
+        var trueCount = foundry.Properties.TryGetValue("true_count", out var trueFinalValue) && trueFinalValue is int finalTrueCount
+            ? finalTrueCount
+            : 0;
+        var falseCount = foundry.Properties.TryGetValue("false_count", out var falseFinalValue) && falseFinalValue is int finalFalseCount
+            ? finalFalseCount
+            : 0;
         var success = (trueCount + falseCount) == _parameters.OperationCount;
 
         return new ScenarioResult

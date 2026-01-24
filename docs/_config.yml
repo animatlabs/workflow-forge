@@ -1,0 +1,10 @@
+title: WorkflowForge
+description: High-performance workflow orchestration for .NET
+theme: minima
+markdown: kramdown
+permalink: pretty
+relative_links:
+  enabled: true
+  collections: false
+include:
+  - _includes

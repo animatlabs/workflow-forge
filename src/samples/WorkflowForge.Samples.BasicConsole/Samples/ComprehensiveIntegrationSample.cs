@@ -3,6 +3,7 @@ using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Observability.OpenTelemetry;
 using WorkflowForge.Extensions.Resilience.Polly;
+using WorkflowForge.Extensions.Resilience.Polly.Options;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -43,7 +44,11 @@ public class ComprehensiveIntegrationSample : ISample
             using var foundry = WorkflowForge.CreateFoundry("ECommerceOrderProcessing");
 
             // Enable Polly resilience patterns
-            foundry.UsePollyProductionResilience();
+            foundry.UsePollyFromSettings(new PollyMiddlewareOptions 
+            {
+                Retry = { MaxRetryAttempts = 5 },
+                CircuitBreaker = { IsEnabled = true }
+            });
 
             // Enable OpenTelemetry observability
             var telemetryOptions = new WorkflowForgeOpenTelemetryOptions

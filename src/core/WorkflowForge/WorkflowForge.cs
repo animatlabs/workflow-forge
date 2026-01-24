@@ -74,6 +74,7 @@ namespace WorkflowForge
         /// <param name="workflowName">The name of the workflow.</param>
         /// <param name="logger">Optional logger for the foundry. If null, a null logger will be used.</param>
         /// <param name="initialProperties">Optional initial properties for the foundry. If null, an empty dictionary will be created.</param>
+        /// <param name="options">Optional execution options for the foundry.</param>
         /// <returns>A new foundry instance.</returns>
         /// <exception cref="ArgumentException">Thrown when workflowName is null, empty, or whitespace.</exception>
         /// <example>
@@ -95,7 +96,8 @@ namespace WorkflowForge
         public static IWorkflowFoundry CreateFoundry(
             string workflowName,
             IWorkflowForgeLogger? logger = null,
-            IDictionary<string, object?>? initialProperties = null)
+            IDictionary<string, object?>? initialProperties = null,
+            WorkflowForgeOptions? options = null)
         {
             if (string.IsNullOrWhiteSpace(workflowName))
                 throw new ArgumentException("Workflow name cannot be null, empty, or whitespace.", nameof(workflowName));
@@ -105,8 +107,8 @@ namespace WorkflowForge
                 : new ConcurrentDictionary<string, object?>();
 
             return logger != null
-                ? new WorkflowFoundry(Guid.NewGuid(), properties, logger)
-                : new WorkflowFoundry(Guid.NewGuid(), properties);
+                ? new WorkflowFoundry(Guid.NewGuid(), properties, logger, options: options)
+                : new WorkflowFoundry(Guid.NewGuid(), properties, options: options);
         }
 
         /// <summary>

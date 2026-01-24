@@ -1,7 +1,7 @@
 # WorkflowForge Extension System
 
 <p align="center">
-  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 WorkflowForge follows an extension-first architecture where the core library provides minimal functionality, and rich features are delivered through a comprehensive extension ecosystem.
@@ -103,9 +103,15 @@ Log.Logger = new LoggerConfiguration()
     .Enrich.WithProperty("Application", "WorkflowApp")
     .CreateLogger();
 
-// Bind via configuration and create foundry
-var config = FoundryConfiguration.ForProduction().UseSerilog(Log.Logger);
-var foundry = WorkflowForge.CreateFoundry("ProcessOrder", config);
+// Create foundry with options and attach Serilog middleware
+var options = new WorkflowForgeOptions
+{
+    ContinueOnError = false,
+    FailFastCompensation = false,
+    ThrowOnCompensationError = true
+};
+var foundry = WorkflowForge.CreateFoundry("ProcessOrder", options: options);
+foundry.UseSerilog(Log.Logger);
 ```
 
 **Configuration:**
@@ -918,7 +924,7 @@ public class CustomMiddleware : IWorkflowOperationMiddleware
         IWorkflowOperation operation,
         IWorkflowFoundry foundry,
         object? inputData,
-        Func<Task<object?>> next,
+        Func<CancellationToken, Task<object?>> next,
         CancellationToken cancellationToken)
     {
         // Pre-execution logic
@@ -926,7 +932,7 @@ public class CustomMiddleware : IWorkflowOperationMiddleware
 
         try
         {
-            var result = await next();
+            var result = await next(cancellationToken);
             
             // Post-execution logic
             await _customService.PostProcessAsync(operation, result);
@@ -1117,11 +1123,11 @@ public class ExtensionIntegrationTests
 
 ## Related Documentation
 
-- **[Getting Started](getting-started.md)** - Basic extension usage
-- **[Architecture](architecture.md)** - Extension architecture details
-- **[Configuration](configuration.md)** - Configuration patterns
-- **[Operations Guide](operations.md)** - Custom operation patterns
-- **[Events System](events.md)** - Event-driven integration
+- **[Getting Started](../getting-started/getting-started.md)** - Basic extension usage
+- **[Architecture](../architecture/overview.md)** - Extension architecture details
+- **[Configuration](../core/configuration.md)** - Configuration patterns
+- **[Operations Guide](../core/operations.md)** - Custom operation patterns
+- **[Events System](../core/events.md)** - Event-driven integration
 
 Refer to extension package READMEs for details:
 - Core logging integration: `src/core/WorkflowForge/README.md`
@@ -1136,4 +1142,4 @@ Refer to extension package READMEs for details:
 
 ---
 
-**← Back to [Documentation Home](README.md)** 
+**← Back to [Documentation Home](../index.md)**

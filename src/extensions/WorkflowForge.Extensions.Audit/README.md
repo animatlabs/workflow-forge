@@ -149,7 +149,7 @@ services.AddAuditConfiguration(configuration);
 var options = serviceProvider.GetRequiredService<IOptions<AuditMiddlewareOptions>>().Value;
 ```
 
-See [Configuration Guide](../../../docs/configuration.md#audit-extension) for complete options.
+See [Configuration Guide](../../../docs/core/configuration.md#audit-extension) for complete options.
 
 ## Storage Provider Examples
 
@@ -187,9 +187,9 @@ public class AzureAuditProvider : IAuditProvider
 
 ## Documentation
 
-- **[Getting Started](../../../docs/getting-started.md)**
-- **[Configuration Guide](../../../docs/configuration.md#audit-extension)**
-- **[Extensions Overview](../../../docs/extensions.md)**
+- **[Getting Started](../../../docs/getting-started/getting-started.md)**
+- **[Configuration Guide](../../../docs/core/configuration.md#audit-extension)**
+- **[Extensions Overview](../../../docs/extensions/index.md)**
 - **[Sample 24: Audit](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
 
 ---

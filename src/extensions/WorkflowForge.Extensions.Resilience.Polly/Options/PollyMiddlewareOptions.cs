@@ -1,31 +1,25 @@
 using System;
 using System.Collections.Generic;
+using WorkflowForge.Options;
 
 namespace WorkflowForge.Extensions.Resilience.Polly.Options
 {
     /// <summary>
     /// Configuration options for Polly resilience middleware.
     /// Provides comprehensive resilience configuration for workflows including retry, circuit breaker, timeout, and rate limiting.
-    /// Zero-dependency POCO for configuration binding.
+    /// Inherits common options functionality from <see cref="WorkflowForgeOptionsBase"/>.
     /// </summary>
-    public sealed class PollyMiddlewareOptions
+    public sealed class PollyMiddlewareOptions : WorkflowForgeOptionsBase
     {
         /// <summary>
         /// Default configuration section name for binding from appsettings.json.
-        /// This is the default value; users can specify a custom section name when binding.
         /// </summary>
         public const string DefaultSectionName = "WorkflowForge:Extensions:Polly";
 
         /// <summary>
-        /// Gets the configuration section name for this instance.
-        /// Can be customized via constructor for non-standard configuration layouts.
-        /// </summary>
-        public string SectionName { get; }
-
-        /// <summary>
         /// Initializes a new instance with default section name.
         /// </summary>
-        public PollyMiddlewareOptions() : this(DefaultSectionName)
+        public PollyMiddlewareOptions() : base(null, DefaultSectionName)
         {
         }
 
@@ -33,18 +27,9 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
         /// Initializes a new instance with custom section name.
         /// </summary>
         /// <param name="sectionName">Custom configuration section name.</param>
-        public PollyMiddlewareOptions(string sectionName)
+        public PollyMiddlewareOptions(string sectionName) : base(sectionName, DefaultSectionName)
         {
-            SectionName = sectionName ?? DefaultSectionName;
         }
-
-        /// <summary>
-        /// Gets or sets whether Polly resilience middleware is enabled.
-        /// When true, resilience policies are applied to workflow operations.
-        /// When false, middleware is not registered.
-        /// Default is true.
-        /// </summary>
-        public bool Enabled { get; set; } = true;
 
         /// <summary>Gets or sets the retry configuration.</summary>
         public PollyRetrySettings Retry { get; set; } = new();
@@ -71,7 +56,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
         /// Validates the configuration settings and returns any validation errors.
         /// </summary>
         /// <returns>A list of validation error messages, empty if valid.</returns>
-        public IList<string> Validate()
+        public override IList<string> Validate()
         {
             var errors = new List<string>();
 
@@ -118,8 +103,11 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
             return errors;
         }
 
-        /// <summary>Creates a deep copy of the options.</summary>
-        public PollyMiddlewareOptions Clone()
+        /// <summary>
+        /// Creates a deep copy of this options instance.
+        /// </summary>
+        /// <returns>A new instance with the same configuration values.</returns>
+        public override object Clone()
         {
             return new PollyMiddlewareOptions(SectionName)
             {
@@ -133,54 +121,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
                 EnableDetailedLogging = EnableDetailedLogging
             };
         }
-
-        /// <summary>Creates development-friendly options with lenient policies.</summary>
-        public static PollyMiddlewareOptions ForDevelopment() => new()
-        {
-            Enabled = true,
-            Retry = PollyRetrySettings.ForDevelopment(),
-            CircuitBreaker = PollyCircuitBreakerSettings.ForDevelopment(),
-            Timeout = PollyTimeoutSettings.ForDevelopment(),
-            RateLimiter = PollyRateLimiterSettings.ForDevelopment(),
-            EnableComprehensivePolicies = false,
-            EnableDetailedLogging = true
-        };
-
-        /// <summary>Creates production-optimized options with strict policies.</summary>
-        public static PollyMiddlewareOptions ForProduction() => new()
-        {
-            Enabled = true,
-            Retry = PollyRetrySettings.ForProduction(),
-            CircuitBreaker = PollyCircuitBreakerSettings.ForProduction(),
-            Timeout = PollyTimeoutSettings.ForProduction(),
-            RateLimiter = PollyRateLimiterSettings.ForProduction(),
-            EnableComprehensivePolicies = true,
-            EnableDetailedLogging = false
-        };
-
-        /// <summary>Creates enterprise-grade options with comprehensive policies.</summary>
-        public static PollyMiddlewareOptions ForEnterprise() => new()
-        {
-            Enabled = true,
-            Retry = PollyRetrySettings.ForEnterprise(),
-            CircuitBreaker = PollyCircuitBreakerSettings.ForEnterprise(),
-            Timeout = PollyTimeoutSettings.ForEnterprise(),
-            RateLimiter = PollyRateLimiterSettings.ForEnterprise(),
-            EnableComprehensivePolicies = true,
-            EnableDetailedLogging = true
-        };
-
-        /// <summary>Creates minimal options with basic retry only.</summary>
-        public static PollyMiddlewareOptions Minimal() => new()
-        {
-            Enabled = true,
-            Retry = PollyRetrySettings.Minimal(),
-            CircuitBreaker = new PollyCircuitBreakerSettings { IsEnabled = false },
-            Timeout = new PollyTimeoutSettings { IsEnabled = false },
-            RateLimiter = new PollyRateLimiterSettings { IsEnabled = false },
-            EnableComprehensivePolicies = false,
-            EnableDetailedLogging = false
-        };
     }
 
     // Keep nested settings classes in same file for consistency with original
@@ -214,11 +154,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
             BackoffType = BackoffType,
             UseJitter = UseJitter
         };
-
-        public static PollyRetrySettings ForDevelopment() => new() { MaxRetryAttempts = 3, BaseDelay = TimeSpan.FromSeconds(1) };
-        public static PollyRetrySettings ForProduction() => new() { MaxRetryAttempts = 5, BaseDelay = TimeSpan.FromSeconds(2) };
-        public static PollyRetrySettings ForEnterprise() => new() { MaxRetryAttempts = 7, BaseDelay = TimeSpan.FromSeconds(3) };
-        public static PollyRetrySettings Minimal() => new() { MaxRetryAttempts = 2, BaseDelay = TimeSpan.FromMilliseconds(500) };
     }
 
     /// <summary>
@@ -249,10 +184,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
             SamplingDuration = SamplingDuration,
             MinimumThroughput = MinimumThroughput
         };
-
-        public static PollyCircuitBreakerSettings ForDevelopment() => new() { IsEnabled = false };
-        public static PollyCircuitBreakerSettings ForProduction() => new() { IsEnabled = true, FailureThreshold = 10, BreakDuration = TimeSpan.FromMinutes(1) };
-        public static PollyCircuitBreakerSettings ForEnterprise() => new() { IsEnabled = true, FailureThreshold = 15, BreakDuration = TimeSpan.FromMinutes(2) };
     }
 
     /// <summary>
@@ -275,10 +206,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
             DefaultTimeout = DefaultTimeout,
             UseOptimisticTimeout = UseOptimisticTimeout
         };
-
-        public static PollyTimeoutSettings ForDevelopment() => new() { IsEnabled = false };
-        public static PollyTimeoutSettings ForProduction() => new() { IsEnabled = true, DefaultTimeout = TimeSpan.FromSeconds(30) };
-        public static PollyTimeoutSettings ForEnterprise() => new() { IsEnabled = true, DefaultTimeout = TimeSpan.FromMinutes(1) };
     }
 
     /// <summary>
@@ -305,10 +232,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
             Window = Window,
             QueueLimit = QueueLimit
         };
-
-        public static PollyRateLimiterSettings ForDevelopment() => new() { IsEnabled = false };
-        public static PollyRateLimiterSettings ForProduction() => new() { IsEnabled = true, PermitLimit = 1000, Window = TimeSpan.FromMinutes(1) };
-        public static PollyRateLimiterSettings ForEnterprise() => new() { IsEnabled = true, PermitLimit = 10000, Window = TimeSpan.FromMinutes(1) };
     }
 
     #endregion

@@ -44,7 +44,7 @@ namespace WorkflowForge.Middleware
             IWorkflowOperation operation,
             IWorkflowFoundry foundry,
             object? inputData,
-            Func<Task<object?>> next,
+            Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default)
         {
             // Note: Enabled check is done at registration time (UseDefaultMiddleware)
@@ -55,7 +55,7 @@ namespace WorkflowForge.Middleware
 
             try
             {
-                var result = await next().ConfigureAwait(false);
+                var result = await next(cancellationToken).ConfigureAwait(false);
 
                 stopwatch.Stop();
                 var elapsedMs = stopwatch.ElapsedMilliseconds;

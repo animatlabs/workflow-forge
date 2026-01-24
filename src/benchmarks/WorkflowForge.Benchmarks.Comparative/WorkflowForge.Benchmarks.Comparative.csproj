@@ -16,22 +16,22 @@
 
   <ItemGroup>
     <!-- BenchmarkDotNet for scientific performance measurement -->
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.12" />
-    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.13.12" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.8" />
     
     <!-- Workflow Core - Established workflow engine (latest stable) -->
     <PackageReference Include="WorkflowCore" Version="3.17.0" />
     
     <!-- Elsa Workflows - Popular alternative (latest v3.x) -->
-    <PackageReference Include="Elsa" Version="3.5.1" />
-    <PackageReference Include="Elsa.Workflows.Core" Version="3.5.1" />
-    <PackageReference Include="Elsa.Workflows.Runtime" Version="3.5.1" />
+    <PackageReference Include="Elsa" Version="3.5.3" />
+    <PackageReference Include="Elsa.Workflows.Core" Version="3.5.3" />
+    <PackageReference Include="Elsa.Workflows.Runtime" Version="3.5.3" />
     
     <!-- Microsoft Extensions - Match Elsa's requirements -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.9" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.2" />
   </ItemGroup>
 
   <ItemGroup>

@@ -47,6 +47,25 @@ namespace WorkflowForge.Options
         public int MaxConcurrentWorkflows { get; set; } = 0;
 
         /// <summary>
+        /// Gets or sets whether to continue executing remaining operations after a failure.
+        /// When true, failures are aggregated and thrown after execution completes.
+        /// Default is false (stop on first error).
+        /// </summary>
+        public bool ContinueOnError { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets whether compensation should stop on the first restore failure.
+        /// Default is false (best-effort).
+        /// </summary>
+        public bool FailFastCompensation { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets whether compensation failures should be surfaced as an aggregate exception.
+        /// Default is false (best-effort, original error rethrown).
+        /// </summary>
+        public bool ThrowOnCompensationError { get; set; } = false;
+
+        /// <summary>
         /// Validates the configuration settings and returns any validation errors.
         /// </summary>
         /// <returns>A list of validation error messages, empty if valid.</returns>
@@ -72,7 +91,10 @@ namespace WorkflowForge.Options
         {
             return new WorkflowForgeOptions
             {
-                MaxConcurrentWorkflows = MaxConcurrentWorkflows
+                MaxConcurrentWorkflows = MaxConcurrentWorkflows,
+                ContinueOnError = ContinueOnError,
+                FailFastCompensation = FailFastCompensation,
+                ThrowOnCompensationError = ThrowOnCompensationError
             };
         }
 

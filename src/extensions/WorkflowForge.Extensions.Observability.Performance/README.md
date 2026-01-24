@@ -61,7 +61,7 @@ using var foundry = WorkflowForge.CreateFoundry("PerformanceMonitored");
 foundry.AddMiddleware(new TimingMiddleware(logger));
 ```
 
-The extension works out-of-the-box with sensible defaults. See [Configuration Guide](../../../docs/configuration.md#performance-extension) for more information.
+The extension works out-of-the-box with sensible defaults. See [Configuration Guide](../../../docs/core/configuration.md#performance-extension) for more information.
 
 ## Advanced Usage
 
@@ -164,9 +164,9 @@ The extension tracks:
 
 ## Documentation
 
-- **[Getting Started](../../../docs/getting-started.md)**
-- **[Configuration Guide](../../../docs/configuration.md#performance-extension)**
-- **[Extensions Overview](../../../docs/extensions.md)**
+- **[Getting Started](../../../docs/getting-started/getting-started.md)**
+- **[Configuration Guide](../../../docs/core/configuration.md#performance-extension)**
+- **[Extensions Overview](../../../docs/extensions/index.md)**
 - **[Sample 17: Performance Monitoring](../../samples/WorkflowForge.Samples.BasicConsole/)**
 
 ---

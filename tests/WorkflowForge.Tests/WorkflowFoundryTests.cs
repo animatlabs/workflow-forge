@@ -7,6 +7,7 @@ using WorkflowForge.Abstractions;
 using WorkflowForge.Exceptions;
 using WorkflowForge.Loggers;
 using WorkflowForge.Operations;
+using WorkflowForge.Options;
 using Xunit.Abstractions;
 
 namespace WorkflowForge.Tests;
@@ -495,6 +496,46 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
+    public async Task ForgeAsync_WithContinueAndAggregate_ThrowsAggregateException()
+    {
+        // Arrange
+        var options = new WorkflowForgeOptions { ContinueOnError = true };
+        var foundry = CreateTestFoundry(options: options);
+
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("Fail1", (input, f, ct) =>
+            Task.FromException<string>(new InvalidOperationException("fail-1"))));
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("Fail2", (input, f, ct) =>
+            Task.FromException<string>(new InvalidOperationException("fail-2"))));
+
+        // Act
+        var exception = await Assert.ThrowsAsync<AggregateException>(() => foundry.ForgeAsync());
+
+        // Assert
+        Assert.Equal(2, exception.InnerExceptions.Count);
+    }
+
+    [Fact]
+    public async Task ForgeAsync_StoresOperationOutputInProperties()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var operation = new DelegateWorkflowOperation<object, string>("ResultOp", (input, f, ct) =>
+            Task.FromResult("result"));
+
+        foundry.AddOperation(operation);
+
+        // Act
+        await foundry.ForgeAsync();
+
+        // Assert
+        var outputKey = $"Operation.{operation.Id}.Output";
+        Assert.True(foundry.Properties.TryGetValue(outputKey, out var storedOutput));
+        Assert.Equal("result", storedOutput);
+        Assert.Equal(0, foundry.Properties["Operation.LastCompletedIndex"]);
+        Assert.Equal(operation.Name, foundry.Properties["Operation.LastCompletedName"]);
+    }
+
+    [Fact]
     public async Task ForgeAsync_WithMultipleOperations_ExecutesInOrder()
     {
         // Arrange
@@ -721,11 +762,15 @@ public class WorkflowFoundryTests
 
     #region Helper Methods
 
-    private static WorkflowFoundry CreateTestFoundry(Guid? executionId = null, IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null)
+    private static WorkflowFoundry CreateTestFoundry(
+        Guid? executionId = null,
+        IWorkflowForgeLogger? logger = null,
+        IServiceProvider? serviceProvider = null,
+        WorkflowForgeOptions? options = null)
     {
         var id = executionId ?? Guid.NewGuid();
         var properties = new ConcurrentDictionary<string, object?>();
-        return new WorkflowFoundry(id, properties, logger, serviceProvider);
+        return new WorkflowFoundry(id, properties, logger, serviceProvider, options: options);
     }
 
     private static IWorkflow CreateMockWorkflow(string name, Guid? id = null)
@@ -764,10 +809,10 @@ public class WorkflowFoundryTests
             _name = name;
         }
 
-        public Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData, Func<Task<object?>> next, CancellationToken cancellationToken = default)
+        public Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData, Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
         {
             // Simple pass-through middleware for testing
-            return next();
+            return next(cancellationToken);
         }
     }
 

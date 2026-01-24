@@ -1,5 +1,5 @@
-using FluentValidation;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
@@ -26,13 +26,11 @@ namespace WorkflowForge.Extensions.Validation.Tests
         }
 
         [Fact]
-        public void UseValidation_WithFluentValidator_ShouldAddMiddleware()
+        public void UseValidation_WithDataAnnotations_ShouldAddMiddleware()
         {
-            var validator = new TestValidator();
             var options = new ValidationMiddlewareOptions { ThrowOnValidationError = true };
 
             var result = _foundry.UseValidation(
-                validator,
                 f => new TestModel { Value = 10 },
                 options);
 
@@ -42,7 +40,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
         [Fact]
         public void UseValidation_WithNullFoundry_ShouldThrowArgumentNullException()
         {
-            var validator = new TestValidator();
+            var validator = new DataAnnotationsWorkflowValidator<TestModel>();
             IWorkflowFoundry? nullFoundry = null;
 
             Assert.Throws<ArgumentNullException>(() =>
@@ -52,7 +50,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
         [Fact]
         public void UseValidation_WithNullValidator_ShouldThrowArgumentNullException()
         {
-            IValidator<TestModel>? nullValidator = null;
+            IWorkflowValidator<TestModel>? nullValidator = null;
             Assert.Throws<ArgumentNullException>(() =>
                 _foundry.UseValidation(nullValidator!, f => new TestModel(), null));
         }
@@ -60,7 +58,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
         [Fact]
         public void UseValidation_WithNullDataExtractor_ShouldThrowArgumentNullException()
         {
-            var validator = new TestValidator();
+            var validator = new DataAnnotationsWorkflowValidator<TestModel>();
 
             Assert.Throws<ArgumentNullException>(() =>
                 _foundry.UseValidation(validator, null!, null));
@@ -69,10 +67,9 @@ namespace WorkflowForge.Extensions.Validation.Tests
         [Fact]
         public async Task ValidateAsync_WithValidData_ShouldStoreSuccessInProperties()
         {
-            var validator = new TestValidator();
             var data = new TestModel { Value = 10 };
 
-            var result = await _foundry.ValidateAsync(validator, data);
+            var result = await _foundry.ValidateAsync(data);
 
             Assert.True(result.IsValid);
             Assert.True(_foundry.Properties.ContainsKey("ValidationResult"));
@@ -83,10 +80,9 @@ namespace WorkflowForge.Extensions.Validation.Tests
         [Fact]
         public async Task ValidateAsync_WithInvalidData_ShouldStoreFailureInProperties()
         {
-            var validator = new TestValidator();
             var data = new TestModel { Value = -1 };
 
-            var result = await _foundry.ValidateAsync(validator, data);
+            var result = await _foundry.ValidateAsync(data);
 
             Assert.False(result.IsValid);
             Assert.True(_foundry.Properties.ContainsKey("ValidationResult"));
@@ -98,10 +94,9 @@ namespace WorkflowForge.Extensions.Validation.Tests
         [Fact]
         public async Task ValidateAsync_WithCustomPropertyKey_ShouldUseCustomKey()
         {
-            var validator = new TestValidator();
             var data = new TestModel { Value = 10 };
 
-            await _foundry.ValidateAsync(validator, data, "CustomValidation");
+            await _foundry.ValidateAsync(data, "CustomValidation");
 
             Assert.True(_foundry.Properties.ContainsKey("CustomValidation"));
             Assert.True(_foundry.Properties.ContainsKey("CustomValidation.IsValid"));
@@ -110,14 +105,13 @@ namespace WorkflowForge.Extensions.Validation.Tests
         [Fact]
         public void UseValidation_WithEnabledFalse_ShouldNotAddMiddleware()
         {
-            var validator = new TestValidator();
             var options = new ValidationMiddlewareOptions { Enabled = false };
             
             // Create a new foundry to test with
             using var testFoundry = WF.WorkflowForge.CreateFoundry("Test");
             var initialCount = GetMiddlewareCount(testFoundry);
 
-            var result = testFoundry.UseValidation(validator, f => new TestModel { Value = 10 }, options);
+            var result = testFoundry.UseValidation(f => new TestModel { Value = 10 }, options);
 
             Assert.Same(testFoundry, result);
             Assert.Equal(initialCount, GetMiddlewareCount(testFoundry));
@@ -126,14 +120,13 @@ namespace WorkflowForge.Extensions.Validation.Tests
         [Fact]
         public void UseValidation_WithEnabledTrue_ShouldAddMiddleware()
         {
-            var validator = new TestValidator();
             var options = new ValidationMiddlewareOptions { Enabled = true };
             
             // Create a new foundry to test with
             using var testFoundry = WF.WorkflowForge.CreateFoundry("Test");
             var initialCount = GetMiddlewareCount(testFoundry);
 
-            var result = testFoundry.UseValidation(validator, f => new TestModel { Value = 10 }, options);
+            var result = testFoundry.UseValidation(f => new TestModel { Value = 10 }, options);
 
             Assert.Same(testFoundry, result);
             Assert.Equal(initialCount + 1, GetMiddlewareCount(testFoundry));
@@ -149,15 +142,8 @@ namespace WorkflowForge.Extensions.Validation.Tests
 
         private class TestModel
         {
+            [Range(1, int.MaxValue, ErrorMessage = "Value must be greater than 0")]
             public int Value { get; set; }
-        }
-
-        private class TestValidator : AbstractValidator<TestModel>
-        {
-            public TestValidator()
-            {
-                RuleFor(x => x.Value).GreaterThan(0).WithMessage("Value must be greater than 0");
-            }
         }
     }
 }

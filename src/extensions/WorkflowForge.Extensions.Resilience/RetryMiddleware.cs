@@ -32,12 +32,12 @@ namespace WorkflowForge.Extensions.Resilience
             IWorkflowOperation operation,
             IWorkflowFoundry foundry,
             object? inputData,
-            Func<Task<object?>> next,
+            Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default)
         {
             return await _retryStrategy.ExecuteAsync(async () =>
             {
-                return await next().ConfigureAwait(false);
+                return await next(cancellationToken).ConfigureAwait(false);
             }, cancellationToken).ConfigureAwait(false);
         }
 

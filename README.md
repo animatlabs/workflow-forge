@@ -21,7 +21,7 @@ High-performance, dependency-free workflow orchestration library for .NET. Execu
 - **6-1,495x less** memory allocation
 - **Microsecond-scale** execution vs. millisecond-scale competitors
 
-[Full Performance Details](docs/performance.md) | [Competitive Analysis](docs/competitive-analysis.md)
+[Full Performance Details](docs/performance/performance.md) | [Competitive Analysis](docs/performance/competitive-analysis.md)
 
 ---
 
@@ -38,15 +38,9 @@ High-performance, dependency-free workflow orchestration library for .NET. Execu
 - **Middleware Pipeline**: Russian Doll pattern for cross-cutting concerns
 - **Event System**: SRP-compliant lifecycle events for workflows, operations, and compensation
 
-### Zero Version Conflicts
+### Dependency Boundaries
 
-**All extensions use Costura.Fody** to embed third-party dependencies. This means:
-
-- **NO DLL Hell**: Use ANY version of Serilog, Polly, FluentValidation, etc. in your app
-- **NO Conflicts**: Extension versions won't clash with your application's dependency versions
-- **Clean Deployment**: Professional-grade dependency isolation
-
-**Example**: Your app uses FluentValidation 12.x, the Validation extension uses 11.9.0 - both coexist perfectly.
+Extensions declare explicit NuGet dependencies where needed. The validation extension uses **DataAnnotations** from the BCL, so no third‑party validation library is required.
 
 ### Extension Ecosystem (10 Extensions)
 
@@ -67,12 +61,12 @@ High-performance, dependency-free workflow orchestration library for .NET. Execu
 - Recovery and resume capabilities (dependency-free)
 
 **Validation**:
-- FluentValidation bridge for workflow validation
+- DataAnnotations-based workflow validation
 
 **Audit**:
 - Comprehensive audit logging with pluggable providers (dependency-free)
 
-[Extension Documentation](docs/extensions.md)
+[Extension Documentation](docs/extensions/index.md)
 
 ---
 
@@ -126,7 +120,7 @@ using var smith = WorkflowForge.CreateSmith();
 await smith.ForgeAsync(workflow);
 ```
 
-[Getting Started Guide](docs/getting-started.md)
+[Getting Started Guide](docs/getting-started/getting-started.md)
 
 ---
 
@@ -148,7 +142,7 @@ WorkflowForge follows **production-grade design patterns**:
 - `IWorkflowSmith`: Orchestration engine
 - `IWorkflowOperationMiddleware`: Middleware abstraction
 
-[Architecture Documentation](docs/architecture.md)
+[Architecture Documentation](docs/architecture/overview.md)
 
 ---
 
@@ -165,7 +159,7 @@ WorkflowForge excels at:
 7. **Event Processing**: Low-latency event handling
 8. **Request/Response Workflows**: API request processing
 
-[Competitive Comparison](docs/competitive-analysis.md)
+[Competitive Comparison](docs/performance/competitive-analysis.md)
 
 ---
 
@@ -180,24 +174,24 @@ WorkflowForge excels at:
 - All 10 extensions (Serilog, Polly, OpenTelemetry, Validation, Audit, etc.)
 - Advanced patterns (comprehensive integration, operation creation patterns)
 
-[Sample Applications](src/samples/WorkflowForge.Samples.BasicConsole/README.md) | [Samples Guide](docs/samples-guide.md)
+[Sample Applications](src/samples/WorkflowForge.Samples.BasicConsole/README.md) | [Samples Guide](docs/getting-started/samples-guide.md)
 
 ---
 
 ## Documentation
 
-- [Getting Started](docs/getting-started.md) - Installation and first workflow
-- [Architecture](docs/architecture.md) - Design patterns and core concepts
-- [Operations](docs/operations.md) - Built-in and custom operations
-- [Events](docs/events.md) - Lifecycle event system
-- [Extensions](docs/extensions.md) - All 10 extensions with examples
-- [Configuration](docs/configuration.md) - Environment-specific setup
-- [API Reference](docs/api-reference.md) - Complete API documentation
-- [Performance](docs/performance.md) - Benchmark results and optimization
-- [Competitive Analysis](docs/competitive-analysis.md) - vs. Workflow Core and Elsa
-- [Samples Guide](docs/samples-guide.md) - Learning path through 24 samples
+- [Getting Started](docs/getting-started/getting-started.md) - Installation and first workflow
+- [Architecture](docs/architecture/overview.md) - Design patterns and core concepts
+- [Operations](docs/core/operations.md) - Built-in and custom operations
+- [Events](docs/core/events.md) - Lifecycle event system
+- [Extensions](docs/extensions/index.md) - All 10 extensions with examples
+- [Configuration](docs/core/configuration.md) - Environment-specific setup
+- [API Reference](docs/reference/api-reference.md) - Complete API documentation
+- [Performance](docs/performance/performance.md) - Benchmark results and optimization
+- [Competitive Analysis](docs/performance/competitive-analysis.md) - vs. Workflow Core and Elsa
+- [Samples Guide](docs/getting-started/samples-guide.md) - Learning path through 24 samples
 
-[Full Documentation](docs/README.md)
+[Full Documentation](docs/index.md)
 
 ---
 
@@ -222,7 +216,7 @@ WorkflowForge excels at:
 - Minimal workflow: 2.65KB
 - No Gen2 collections
 
-[Internal Benchmarks](docs/performance.md#internal-benchmarks)
+[Internal Benchmarks](docs/performance/performance.md#internal-performance-benchmarks)
 
 ### Competitive Performance
 
@@ -241,7 +235,7 @@ WorkflowForge excels at:
 - Workflow Core: 871μs median (130x slower)
 - Elsa: 2,568μs median (383x slower)
 
-[Competitive Benchmarks](docs/competitive-analysis.md)
+[Competitive Benchmarks](docs/performance/competitive-analysis.md)
 
 ---
 

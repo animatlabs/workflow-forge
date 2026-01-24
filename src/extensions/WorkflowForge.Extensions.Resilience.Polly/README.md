@@ -153,7 +153,7 @@ var enterpriseOptions = PollyMiddlewareOptions.ForEnterprise();
 var minimalOptions = PollyMiddlewareOptions.Minimal();
 ```
 
-See [Configuration Guide](../../../docs/configuration.md#polly-extension) for complete options.
+See [Configuration Guide](../../../docs/core/configuration.md#polly-extension) for complete options.
 
 ## Policy Examples
 
@@ -192,9 +192,9 @@ var combinedPolicy = Policy.WrapAsync(
 
 ## Documentation
 
-- **[Getting Started](../../../docs/getting-started.md)**
-- **[Configuration Guide](../../../docs/configuration.md#polly-extension)**
-- **[Extensions Overview](../../../docs/extensions.md)**
+- **[Getting Started](../../../docs/getting-started/getting-started.md)**
+- **[Configuration Guide](../../../docs/core/configuration.md#polly-extension)**
+- **[Extensions Overview](../../../docs/extensions/index.md)**
 - **[Sample 14: Polly Resilience](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
 
 ---

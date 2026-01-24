@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Events;
 using WorkflowForge.Loggers;
+using WorkflowForge.Options;
 
 namespace WorkflowForge
 {
@@ -20,6 +21,7 @@ namespace WorkflowForge
         private readonly List<IWorkflowOperation> _operations = new();
         private readonly List<IWorkflowOperationMiddleware> _middlewares = new();
         private readonly ISystemTimeProvider _timeProvider;
+        private readonly WorkflowForgeOptions _options;
         private volatile bool _disposed;
         private IWorkflow? _currentWorkflow;
 
@@ -42,6 +44,9 @@ namespace WorkflowForge
         public IWorkflowForgeLogger Logger { get; }
 
         /// <inheritdoc />
+        public WorkflowForgeOptions Options => _options;
+
+        /// <inheritdoc />
         public IServiceProvider? ServiceProvider { get; }
 
         /// <summary>
@@ -53,6 +58,7 @@ namespace WorkflowForge
         /// <param name="serviceProvider">Optional service provider for dependency injection.</param>
         /// <param name="currentWorkflow">Optional initial workflow to associate with this foundry.</param>
         /// <param name="timeProvider">The time provider to use for timestamps.</param>
+        /// <param name="options">Optional execution options for this foundry.</param>
         /// <exception cref="ArgumentNullException">Thrown when properties is null.</exception>
         public WorkflowFoundry(
             Guid executionId,
@@ -60,7 +66,8 @@ namespace WorkflowForge
             IWorkflowForgeLogger? logger = null,
             IServiceProvider? serviceProvider = null,
             IWorkflow? currentWorkflow = null,
-            ISystemTimeProvider? timeProvider = null)
+            ISystemTimeProvider? timeProvider = null,
+            WorkflowForgeOptions? options = null)
         {
             ExecutionId = executionId;
             Properties = properties ?? throw new ArgumentNullException(nameof(properties));
@@ -68,6 +75,7 @@ namespace WorkflowForge
             ServiceProvider = serviceProvider;
             _currentWorkflow = currentWorkflow;
             _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
+            _options = options?.CloneTyped() ?? new WorkflowForgeOptions();
         }
 
         /// <inheritdoc />
@@ -164,8 +172,14 @@ namespace WorkflowForge
                 operationsSnapshot = _operations.ToArray();
             }
 
-            foreach (var operation in operationsSnapshot)
+            var shouldAggregate = Options.ContinueOnError;
+            var errors = shouldAggregate
+                ? new List<Exception>()
+                : null;
+
+            for (int i = 0; i < operationsSnapshot.Length; i++)
             {
+                var operation = operationsSnapshot[i];
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var operationStartTime = _timeProvider.UtcNow;
@@ -176,6 +190,11 @@ namespace WorkflowForge
                     OperationStarted?.Invoke(this, new OperationStartedEventArgs(operation, this, null));
 
                     var result = await ExecuteOperationWithMiddleware(operation, null, cancellationToken).ConfigureAwait(false);
+
+                    Properties[$"Operation.{operation.Id}.Output"] = result;
+                    Properties["Operation.LastCompletedIndex"] = i;
+                    Properties["Operation.LastCompletedName"] = operation.Name;
+                    Properties["Operation.LastCompletedId"] = operation.Id;
 
                     var operationDuration = _timeProvider.UtcNow - operationStartTime;
 
@@ -189,6 +208,10 @@ namespace WorkflowForge
                 }
                 catch (Exception ex)
                 {
+                    Properties["Operation.LastFailedIndex"] = i;
+                    Properties["Operation.LastFailedName"] = operation.Name;
+                    Properties["Operation.LastFailedId"] = operation.Id;
+
                     var operationDuration = _timeProvider.UtcNow - operationStartTime;
 
                     // FIRE: OperationFailed event
@@ -199,8 +222,24 @@ namespace WorkflowForge
                         ex,
                         TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
 
+                    if (ex is OperationCanceledException)
+                    {
+                        throw;
+                    }
+
+                    if (errors != null)
+                    {
+                        errors.Add(ex);
+                        continue;
+                    }
+
                     throw;
                 }
+            }
+
+            if (errors != null && errors.Count > 0)
+            {
+                throw new AggregateException("One or more operations failed during execution.", errors);
             }
         }
 
@@ -225,16 +264,16 @@ namespace WorkflowForge
             // Russian Doll pattern: Middleware wraps from inside-out (reverse iteration).
             // First middleware added = outermost layer. See /docs/architecture/middleware-pipeline.md
 
-            Func<Task<object?>> next = () => operation.ForgeAsync(inputData, this, cancellationToken);
+            Func<CancellationToken, Task<object?>> next = token => operation.ForgeAsync(inputData, this, token);
 
             for (int i = _middlewares.Count - 1; i >= 0; i--)
             {
                 var middleware = _middlewares[i];
                 var currentNext = next;
-                next = () => middleware.ExecuteAsync(operation, this, inputData, currentNext, cancellationToken);
+                next = token => middleware.ExecuteAsync(operation, this, inputData, currentNext, token);
             }
 
-            return await next().ConfigureAwait(false);
+            return await next(cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -262,5 +301,6 @@ namespace WorkflowForge
             Properties.Clear();
             GC.SuppressFinalize(this);
         }
+
     }
 }

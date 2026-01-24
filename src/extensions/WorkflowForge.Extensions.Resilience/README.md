@@ -179,7 +179,7 @@ var workflow = WorkflowForge.CreateWorkflow("ResilientProcess")
 - `FixedIntervalStrategy` - Best for databases
 - `RandomIntervalStrategy` - Prevents thundering herd
 
-See [Configuration Guide](../../../docs/configuration.md#resilience-extension) for complete options.
+See [Configuration Guide](../../../docs/core/configuration.md#resilience-extension) for complete options.
 
 ## Interfaces
 
@@ -212,9 +212,9 @@ Both extensions use Costura.Fody for zero version conflicts where applicable.
 
 ## Documentation
 
-- **[Getting Started](../../../docs/getting-started.md)** - Basic tutorial
-- **[Configuration Guide](../../../docs/configuration.md#resilience-extension)** - Full configuration options
-- **[Extensions Overview](../../../docs/extensions.md)** - All extensions
+- **[Getting Started](../../../docs/getting-started/getting-started.md)** - Basic tutorial
+- **[Configuration Guide](../../../docs/core/configuration.md#resilience-extension)** - Full configuration options
+- **[Extensions Overview](../../../docs/extensions/index.md)** - All extensions
 - **[Samples](../../samples/WorkflowForge.Samples.BasicConsole/)** - Sample 14: Polly Resilience (demonstrates patterns)
 
 ## Sample Usage

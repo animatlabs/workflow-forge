@@ -1,9 +1,9 @@
-using FluentValidation;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Validation;
 using WorkflowForge.Extensions.Validation.Options;
 using WF = WorkflowForge;
+using System.ComponentModel.DataAnnotations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -13,7 +13,7 @@ namespace WorkflowForge.Samples.BasicConsole.Samples;
 public class ValidationSample : ISample
 {
     public string Name => "Validation Extension";
-    public string Description => "Demonstrates FluentValidation integration and validation patterns";
+    public string Description => "Demonstrates DataAnnotations validation patterns";
 
     public async Task RunAsync()
     {
@@ -77,11 +77,8 @@ public class ValidationSample : ISample
 
         using var foundry = WF.WorkflowForge.CreateFoundry("AutoValidation");
 
-        // Add validation middleware
-        var validator = new OrderValidator();
         var options = new ValidationMiddlewareOptions { ThrowOnValidationError = true };
         foundry.UseValidation(
-            validator,
             f => f.GetPropertyOrDefault<Order>("Order"),
             options);
 
@@ -127,13 +124,12 @@ public class ValidationSample : ISample
         foundry.SetProperty("Order", order);
 
         // Stage 1: Basic validation
-        var basicValidator = new OrderValidator();
-        var basicResult = await foundry.ValidateAsync(basicValidator, order, "BasicValidation");
+        var basicResult = await foundry.ValidateAsync(order, "BasicValidation");
         Console.WriteLine($"   Basic Validation: {(basicResult.IsValid ? "PASSED" : "FAILED")}");
 
         // Stage 2: Business rules validation
-        var businessValidator = new BusinessRuleValidator();
-        var businessResult = await foundry.ValidateAsync(businessValidator, order, "BusinessValidation");
+        var businessOrder = new BusinessOrder(order);
+        var businessResult = await foundry.ValidateAsync(businessOrder, "BusinessValidation");
         Console.WriteLine($"   Business Rules: {(businessResult.IsValid ? "PASSED" : "FAILED")}");
 
         if (basicResult.IsValid && businessResult.IsValid)
@@ -162,10 +158,8 @@ public class ValidationSample : ISample
         foundry.SetProperty("Order", invalidOrder);
 
         // Add validation with throwOnFailure = false
-        var validator = new OrderValidator();
         var options = new ValidationMiddlewareOptions { ThrowOnValidationError = false };
         foundry.UseValidation(
-            validator,
             f => f.GetPropertyOrDefault<Order>("Order"),
             options);
 
@@ -194,41 +188,68 @@ public class ValidationSample : ISample
     }
 
     // Model classes
-    public class Order
+    public class Order : IValidatableObject
     {
+        [Required(ErrorMessage = "Customer ID is required")]
         public string CustomerId { get; set; } = string.Empty;
+
+        [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than 0")]
         public decimal Amount { get; set; }
+
+        [Required(ErrorMessage = "Currency is required")]
         public string Currency { get; set; } = string.Empty;
+
+        [MinLength(1, ErrorMessage = "At least one item is required")]
         public string[] Items { get; set; } = Array.Empty<string>();
-    }
 
-    // Validators
-    public class OrderValidator : AbstractValidator<Order>
-    {
-        public OrderValidator()
+        public IEnumerable<System.ComponentModel.DataAnnotations.ValidationResult> Validate(ValidationContext validationContext)
         {
-            RuleFor(x => x.CustomerId)
-                .NotEmpty().WithMessage("Customer ID is required")
-                .Must(id => id.StartsWith("CUST-")).WithMessage("Customer ID must start with 'CUST-'");
+            if (!string.IsNullOrWhiteSpace(CustomerId) && !CustomerId.StartsWith("CUST-", StringComparison.OrdinalIgnoreCase))
+            {
+                yield return new System.ComponentModel.DataAnnotations.ValidationResult(
+                    "Customer ID must start with 'CUST-'",
+                    new[] { nameof(CustomerId) });
+            }
 
-            RuleFor(x => x.Amount)
-                .GreaterThan(0).WithMessage("Amount must be greater than 0");
-
-            RuleFor(x => x.Currency)
-                .Must(c => c == "USD" || c == "EUR" || c == "GBP")
-                .WithMessage("Currency must be USD, EUR, or GBP");
-
-            RuleFor(x => x.Items)
-                .NotEmpty().WithMessage("At least one item is required");
+            if (!string.IsNullOrWhiteSpace(Currency)
+                && Currency != "USD"
+                && Currency != "EUR"
+                && Currency != "GBP")
+            {
+                yield return new System.ComponentModel.DataAnnotations.ValidationResult(
+                    "Currency must be USD, EUR, or GBP",
+                    new[] { nameof(Currency) });
+            }
         }
     }
 
-    public class BusinessRuleValidator : AbstractValidator<Order>
+    public sealed class BusinessOrder : Order
     {
-        public BusinessRuleValidator()
+        public BusinessOrder()
         {
-            RuleFor(x => x.Amount)
-                .LessThan(10000).WithMessage("Orders over $10,000 require manager approval");
+        }
+
+        public BusinessOrder(Order order)
+        {
+            CustomerId = order.CustomerId;
+            Amount = order.Amount;
+            Currency = order.Currency;
+            Items = order.Items;
+        }
+
+        public new IEnumerable<System.ComponentModel.DataAnnotations.ValidationResult> Validate(ValidationContext validationContext)
+        {
+            foreach (var result in base.Validate(validationContext))
+            {
+                yield return result;
+            }
+
+            if (Amount >= 10000)
+            {
+                yield return new System.ComponentModel.DataAnnotations.ValidationResult(
+                    "Orders over $10,000 require manager approval",
+                    new[] { nameof(Amount) });
+            }
         }
     }
 
@@ -247,8 +268,7 @@ public class ValidationSample : ISample
                 throw new InvalidOperationException("Order not found");
             }
 
-            var validator = new OrderValidator();
-            var result = await foundry.ValidateAsync(validator, order);
+            var result = await foundry.ValidateAsync(order);
 
             if (!result.IsValid)
             {

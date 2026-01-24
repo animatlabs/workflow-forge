@@ -67,7 +67,7 @@ namespace WorkflowForge.Middleware
             IWorkflowOperation operation,
             IWorkflowFoundry foundry,
             object? inputData,
-            Func<Task<object?>> next,
+            Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default)
         {
             if (operation == null) throw new ArgumentNullException(nameof(operation));
@@ -86,35 +86,41 @@ namespace WorkflowForge.Middleware
             // TimeSpan.Zero = no timeout enforcement
             if (timeout == TimeSpan.Zero)
             {
-                return await next().ConfigureAwait(false);
+                return await next(cancellationToken).ConfigureAwait(false);
             }
 
             _logger.LogDebug($"Operation '{operation.Name}' executing with {timeout.TotalSeconds}s timeout");
 
-            using var timeoutCts = new CancellationTokenSource(timeout);
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-                cancellationToken, timeoutCts.Token);
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            var effectiveToken = timeoutCts.Token;
+            var executionTask = next(effectiveToken);
+            var timeoutTask = Task.Delay(timeout, cancellationToken);
 
-            try
+            var completedTask = await Task.WhenAny(executionTask, timeoutTask).ConfigureAwait(false);
+            if (completedTask == timeoutTask)
             {
-                // Execute operation with timeout
-                var result = await next().ConfigureAwait(false);
+                timeoutCts.Cancel();
+                _ = executionTask.ContinueWith(
+                    t => _ = t.Exception,
+                    TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
 
-                _logger.LogDebug($"Operation '{operation.Name}' completed within timeout ({timeout.TotalSeconds}s)");
-                return result;
-            }
-            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
-            {
-                // Timeout occurred (timeoutCts was cancelled, but not the user's cancellationToken)
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    throw new OperationCanceledException(cancellationToken);
+                }
+
                 var errorMessage = $"Operation '{operation.Name}' execution exceeded the configured timeout of {timeout.TotalSeconds} seconds.";
                 _logger.LogError(errorMessage);
 
-                // Store timeout info in foundry properties (using static keys, operation is in context)
                 foundry.Properties["Operation.TimedOut"] = true;
                 foundry.Properties["Operation.TimeoutDuration"] = timeout;
 
                 throw new TimeoutException(errorMessage);
             }
+
+            var result = await executionTask.ConfigureAwait(false);
+            _logger.LogDebug($"Operation '{operation.Name}' completed within timeout ({timeout.TotalSeconds}s)");
+            return result;
         }
     }
 }

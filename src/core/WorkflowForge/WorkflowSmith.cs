@@ -209,12 +209,38 @@ namespace WorkflowForge
 
                     // FIRE: WorkflowFailed event
                     var duration = _timeProvider.UtcNow - startTime;
+                    var failedOperationName = foundry.Properties.TryGetValue("Operation.LastFailedName", out var failedNameValue)
+                        ? failedNameValue?.ToString() ?? "Unknown"
+                        : "Unknown";
                     WorkflowFailed?.Invoke(this, new WorkflowFailedEventArgs(
                         foundry,
                         _timeProvider.UtcNow,
                         ex,
-                        "Unknown",
+                        failedOperationName,
                         duration));
+
+                    if (workflow.SupportsRestore)
+                    {
+                        var lastForgedIndex = -1;
+                        if (foundry.Properties.TryGetValue("Operation.LastCompletedIndex", out var lastCompletedValue)
+                            && lastCompletedValue is int completedIndex)
+                        {
+                            lastForgedIndex = completedIndex;
+                        }
+
+                        var compensationErrors = await CompensateForgedOperationsAsync(
+                            workflow.Operations,
+                            lastForgedIndex,
+                            foundry,
+                            cancellationToken).ConfigureAwait(false);
+
+                        if (compensationErrors.Count > 0 && (foundry.Options.FailFastCompensation || foundry.Options.ThrowOnCompensationError))
+                        {
+                            throw new AggregateException(
+                                "Workflow failed and compensation encountered errors.",
+                                PrependOriginalException(ex, compensationErrors));
+                        }
+                    }
 
                     throw;
                 }
@@ -250,7 +276,8 @@ namespace WorkflowForge
                 Guid.NewGuid(),                                    // Unique execution ID
                 properties,                                         // Isolated properties
                 logger ?? _logger,                                  // Logger (override or use smith's)
-                serviceProvider ?? _serviceProvider);               // ServiceProvider (override or use smith's)
+                serviceProvider ?? _serviceProvider,                // ServiceProvider (override or use smith's)
+                options: _options.CloneTyped());                    // Clone options to avoid mutation
         }
 
         /// <inheritdoc />
@@ -271,7 +298,8 @@ namespace WorkflowForge
                 properties,                                         // Isolated properties
                 logger ?? _logger,                                  // Logger (override or use smith's)
                 serviceProvider ?? _serviceProvider,                // ServiceProvider (override or use smith's)
-                workflow);                                          // Pre-associate with workflow
+                workflow,
+                options: _options.CloneTyped());                    // Pre-associate + options
         }
 
         /// <inheritdoc />
@@ -284,7 +312,8 @@ namespace WorkflowForge
                 Guid.NewGuid(),
                 data,
                 logger ?? _logger,
-                serviceProvider ?? _serviceProvider);
+                serviceProvider ?? _serviceProvider,
+                options: _options.CloneTyped());
         }
 
         /// <summary>
@@ -294,13 +323,16 @@ namespace WorkflowForge
         /// <param name="lastForgedIndex">The index of the last successfully forged operation.</param>
         /// <param name="foundry">The workflow foundry.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        private async Task CompensateForgedOperationsAsync(
+        private async Task<IReadOnlyList<Exception>> CompensateForgedOperationsAsync(
             IReadOnlyList<IWorkflowOperation> operations,
             int lastForgedIndex,
             IWorkflowFoundry foundry,
             CancellationToken cancellationToken)
         {
-            if (lastForgedIndex < 0) return;
+            if (lastForgedIndex < 0) return Array.Empty<Exception>();
+
+            var failFast = GetFailFastCompensation(foundry);
+            var errors = new List<Exception>();
 
             // Create compensation scope using helper
             using var compensationScope = _logger.CreateCompensationScope(lastForgedIndex + 1);
@@ -354,7 +386,14 @@ namespace WorkflowForge
                     // FIRE: OperationRestoreStarted event
                     OperationRestoreStarted?.Invoke(this, new OperationRestoreStartedEventArgs(operation, foundry));
 
-                    await operation.RestoreAsync(null, foundry, cancellationToken).ConfigureAwait(false);
+                    object? outputData = null;
+                    var outputKey = $"Operation.{operation.Id}.Output";
+                    if (foundry.Properties.TryGetValue(outputKey, out var storedOutput))
+                    {
+                        outputData = storedOutput;
+                    }
+
+                    await operation.RestoreAsync(outputData, foundry, cancellationToken).ConfigureAwait(false);
 
                     _logger.LogDebug(WorkflowLogMessageConstants.CompensationActionCompleted);
 
@@ -384,7 +423,12 @@ namespace WorkflowForge
                         restoreDuration));
 
                     failureCount++;
-                    // Continue with other compensations even if one fails
+                    errors.Add(compensationEx);
+
+                    if (failFast)
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -401,6 +445,22 @@ namespace WorkflowForge
                 successCount,
                 failureCount,
                 TimeSpan.FromMilliseconds(totalCompensationDuration.TotalMilliseconds)));
+
+            return errors;
+        }
+
+        private static IEnumerable<Exception> PrependOriginalException(Exception original, IReadOnlyList<Exception> compensationErrors)
+        {
+            yield return original;
+            foreach (var error in compensationErrors)
+            {
+                yield return error;
+            }
+        }
+
+        private static bool GetFailFastCompensation(IWorkflowFoundry foundry)
+        {
+            return foundry.Options.FailFastCompensation;
         }
 
         private IWorkflowFoundry CreateFoundryFor(IWorkflow workflow)
@@ -412,7 +472,8 @@ namespace WorkflowForge
                 properties,
                 _logger,
                 _serviceProvider,
-                workflow);
+                workflow,
+                options: _options.CloneTyped());
         }
 
         private IWorkflowFoundry CreateFoundryWithData(ConcurrentDictionary<string, object?> properties)
@@ -421,7 +482,8 @@ namespace WorkflowForge
                 Guid.NewGuid(),
                 properties,
                 _logger,
-                _serviceProvider);
+                _serviceProvider,
+                options: _options.CloneTyped());
         }
 
         /// <inheritdoc />

@@ -1,6 +1,5 @@
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
 using WorkflowForge.Extensions;
-using WorkflowForge.Operations;
 
 namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
 
@@ -34,28 +33,26 @@ public class Scenario4_LoopProcessing_WorkflowForge : IWorkflowScenario
 
         foundry.Properties["processed_count"] = 0;
 
-        // Create ForEach operation
-        var processOperation = new DelegateWorkflowOperation("ProcessItem", async (input, foundry, token) =>
+        for (int i = 0; i < items.Length; i++)
         {
-            await Task.Yield();
-            var count = foundry.Properties.GetValueOrDefault("processed_count", 0);
-            foundry.Properties["processed_count"] = (int)count + 1;
-            return "Processed";
-        });
+            var operationIndex = i;
+            var item = items[i];
+            foundry.WithOperation($"ProcessItem_{operationIndex}", async (foundry) =>
+            {
+                await Task.Yield();
+                var count = foundry.Properties.TryGetValue("processed_count", out var countValue) && countValue is int processedCount
+                    ? processedCount
+                    : 0;
+                foundry.Properties["processed_count"] = count + 1;
+                foundry.Properties[$"processed_{operationIndex}"] = item;
+            });
+        }
 
-        var forEachOp = new ForEachWorkflowOperation(
-            new[] { processOperation },
-            TimeSpan.FromMinutes(1),
-            ForEachDataStrategy.SharedInput,
-            null,
-            "ProcessItems"
-        );
+        await foundry.ForgeAsync();
 
-        foundry.WithOperation(forEachOp);
-
-        await forEachOp.ForgeAsync(items, foundry);
-
-        var processedCount = (int)foundry.Properties.GetValueOrDefault("processed_count", 0);
+        var processedCount = foundry.Properties.TryGetValue("processed_count", out var finalValue) && finalValue is int totalCount
+            ? totalCount
+            : 0;
         var success = processedCount == _parameters.ItemCount;
 
         return new ScenarioResult

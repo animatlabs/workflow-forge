@@ -42,7 +42,7 @@ dotnet run
 - **18. Persistence** - Workflow state checkpointing (BYO storage provider)
 - **21. Recovery Only** - Retry workflows without persistence
 - **22. Resilience + Recovery** - Combined Polly resilience and recovery
-- **23. Validation** - FluentValidation integration (zero conflicts)
+- **23. Validation** - DataAnnotations-based validation
 - **24. Audit** - Compliance audit logging with pluggable providers
 
 ### Advanced (19-20)
@@ -81,17 +81,17 @@ Samples use `appsettings.json` for environment-specific configuration including 
 - **Control Flow**: Conditionals, loops (ForEach), error handling with compensation
 - **Configuration**: IOptions<T> pattern, environment profiles, middleware
 - **Events**: SRP-compliant event system (Workflow, Operation, Compensation)
-- **Extensions**: All 10 extensions with zero dependency conflicts (Costura.Fody)
+- **Extensions**: All 10 extensions with focused dependency boundaries
 - **Resilience**: Retry, circuit breaker, timeout policies with Polly
 - **Observability**: Logging, tracing, health checks, performance monitoring
 - **Persistence**: Workflow state checkpointing and recovery
-- **Validation**: FluentValidation integration for input validation
+- **Validation**: DataAnnotations-based input validation
 - **Audit**: Compliance audit logging with pluggable storage
 - **Best Practices**: Production-grade patterns and proven architectures
 
 ## Documentation
 
-For detailed explanations of all samples, see [docs/samples-guide.md](../../../docs/samples-guide.md)
+For detailed explanations of all samples, see [docs/samples-guide.md](../../../docs/getting-started/samples-guide.md)
 
 ---
 

@@ -144,7 +144,7 @@ public static class Program
             Console.WriteLine("  18. Persistence (BYO Storage) - Resumable workflows");
             Console.WriteLine("  21. Recovery Only            - Resume + retry without re-running completed steps");
             Console.WriteLine("  22. Recovery + Resilience    - Unified resume plus retry via Resilience middleware");
-            Console.WriteLine("  23. Validation              - FluentValidation integration");
+            Console.WriteLine("  23. Validation              - DataAnnotations validation");
             Console.WriteLine("  24. Audit Logging           - Comprehensive audit trails");
             Console.WriteLine("  25. Configuration-Driven    - Enable/disable via config");
             Console.WriteLine();

@@ -10,6 +10,12 @@ namespace WorkflowForge.Options
     public abstract class WorkflowForgeOptionsBase : ICloneable
     {
         /// <summary>
+        /// Gets or sets whether the associated feature/middleware is enabled.
+        /// Default is true.
+        /// </summary>
+        public bool Enabled { get; set; } = true;
+
+        /// <summary>
         /// Gets the configuration section name for this options class.
         /// </summary>
         public string SectionName { get; }

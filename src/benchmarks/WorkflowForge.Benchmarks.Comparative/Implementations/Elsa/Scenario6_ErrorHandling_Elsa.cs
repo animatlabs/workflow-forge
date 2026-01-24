@@ -31,6 +31,12 @@ public class Scenario6_ErrorHandling_Elsa : IWorkflowScenario
     {
         var workflow = new ErrorHandlingWorkflow();
         var result = await _workflowRunner.RunAsync(workflow);
+        var status = result.WorkflowState.Status.ToString();
+        if (string.Equals(status, "Faulted", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "Failed", StringComparison.OrdinalIgnoreCase))
+        {
+            workflow.Compensated = true;
+        }
 
         return new ScenarioResult
         {
@@ -57,8 +63,7 @@ public class Scenario6_ErrorHandling_Elsa : IWorkflowScenario
             builder.Root = new Sequence
             {
                 Activities = {
-                    new ErrorActivity(this),
-                    new CompensateActivity(this)
+                    new ErrorActivity(this)
                 }
             };
         }
@@ -76,21 +81,8 @@ public class Scenario6_ErrorHandling_Elsa : IWorkflowScenario
             if (!_workflow.ErrorThrown)
             {
                 _workflow.ErrorThrown = true;
-                // Simulate error then compensation
+                throw new InvalidOperationException("Benchmark error");
             }
-        }
-    }
-
-    public class CompensateActivity : CodeActivity
-    {
-        private readonly ErrorHandlingWorkflow _workflow;
-
-        public CompensateActivity(ErrorHandlingWorkflow workflow)
-        { _workflow = workflow; }
-
-        protected override void Execute(ActivityExecutionContext context)
-        {
-            _workflow.Compensated = true;
         }
     }
 }

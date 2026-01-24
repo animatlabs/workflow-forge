@@ -44,7 +44,7 @@ namespace WorkflowForge.Extensions.Audit
             IWorkflowOperation operation,
             IWorkflowFoundry foundry,
             object? inputData,
-            Func<Task<object?>> next,
+            Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default)
         {
             var startTime = _timeProvider.UtcNow;
@@ -69,7 +69,7 @@ namespace WorkflowForge.Extensions.Audit
 
             try
             {
-                var result = await next();
+                var result = await next(cancellationToken);
                 stopwatch.Stop();
 
                 // Log operation completed

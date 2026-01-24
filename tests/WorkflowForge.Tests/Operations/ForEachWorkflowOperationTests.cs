@@ -172,7 +172,7 @@ namespace WorkflowForge.Tests.Operations
         [Fact]
         public async Task ForgeAsync_WithTimeout_CompletesWithoutTimeout()
         {
-            // Arrange - The current implementation doesn't properly enforce timeouts
+            // Arrange
             var operations = new[] { CreateSlowMockOperation("Op1", TimeSpan.FromMilliseconds(50)).Object };
             var foundry = CreateMockFoundry();
             var foreachOp = new ForEachWorkflowOperation(operations, timeout: TimeSpan.FromSeconds(2));
@@ -182,6 +182,19 @@ namespace WorkflowForge.Tests.Operations
 
             // Assert
             Assert.NotNull(result);
+        }
+
+        [Fact]
+        public async Task ForgeAsync_WithTimeout_ThrowsOperationCanceledException()
+        {
+            // Arrange
+            var operations = new[] { CreateSlowMockOperation("Op1", TimeSpan.FromMilliseconds(200)).Object };
+            var foundry = CreateMockFoundry();
+            var foreachOp = new ForEachWorkflowOperation(operations, timeout: TimeSpan.FromMilliseconds(50));
+
+            // Act & Assert
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+                foreachOp.ForgeAsync("input", foundry.Object));
         }
 
         [Fact]

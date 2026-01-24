@@ -1,7 +1,7 @@
 # WorkflowForge Performance Benchmarks
 
 <p align="center">
-  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 This document provides comprehensive performance analysis of WorkflowForge, including both internal performance characteristics and competitive comparisons.
@@ -194,25 +194,33 @@ public class ProcessDataOperation : WorkflowOperationBase
 .AddOperation("ProcessData", async (foundry, ct) => { /* logic */ })
 ```
 
-### 2. Use Appropriate Configuration Profiles
+### 2. Use Appropriate Options
 
-**Production Profile** for production workloads:
+**Production defaults**:
 ```csharp
 var foundry = WorkflowForge.CreateFoundry(
     "MyWorkflow",
-    FoundryConfiguration.ForProduction()
-);
+    options: new WorkflowForgeOptions
+    {
+        ContinueOnError = false,
+        FailFastCompensation = false,
+        ThrowOnCompensationError = true
+    });
 ```
 
-**High Performance Profile** for latency-sensitive scenarios:
+**High-throughput batch scenarios**:
 ```csharp
 var foundry = WorkflowForge.CreateFoundry(
     "MyWorkflow",
-    FoundryConfiguration.HighPerformance()
-);
+    options: new WorkflowForgeOptions
+    {
+        ContinueOnError = true,
+        FailFastCompensation = false,
+        ThrowOnCompensationError = false
+    });
 ```
 
-**Configuration overhead is negligible** (<5μs), so choose based on features, not performance.
+Choose based on behavior requirements rather than micro-optimizations.
 
 ### 3. Optimize Data Passing
 
@@ -263,7 +271,7 @@ foundry.AddMiddleware(new TimingMiddleware());       // ~1-2μs overhead
 foundry.AddMiddleware(new ValidationMiddleware());   // ~1-5μs overhead
 ```
 
-**Middleware ordering matters** (see [operations.md](operations.md#middleware-pipeline)).
+**Middleware ordering matters** (see [operations.md](../core/operations.md#middleware-pipeline)).
 
 ### 6. Reuse Workflows and Foundries
 

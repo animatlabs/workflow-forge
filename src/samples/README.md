@@ -48,11 +48,11 @@ The application provides an interactive menu to run individual samples or all sa
 
 ## Documentation
 
-- **[Samples Guide](../../docs/samples-guide.md)** - Detailed breakdown of all 24 samples
-- **[Getting Started](../../docs/getting-started.md)** - Step-by-step tutorial
-- **[Operations Guide](../../docs/operations.md)** - All operation types
-- **[Configuration](../../docs/configuration.md)** - Configuration options
-- **[Extensions](../../docs/extensions.md)** - Available extensions
+- **[Samples Guide](../../docs/getting-started/samples-guide.md)** - Detailed breakdown of all 24 samples
+- **[Getting Started](../../docs/getting-started/getting-started.md)** - Step-by-step tutorial
+- **[Operations Guide](../../docs/core/operations.md)** - All operation types
+- **[Configuration](../../docs/core/configuration.md)** - Configuration options
+- **[Extensions](../../docs/extensions/index.md)** - Available extensions
 
 ## Running Samples
 

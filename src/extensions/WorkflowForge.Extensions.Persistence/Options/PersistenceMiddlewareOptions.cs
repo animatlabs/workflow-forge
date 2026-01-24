@@ -1,31 +1,25 @@
 using System;
 using System.Collections.Generic;
+using WorkflowForge.Options;
 
 namespace WorkflowForge.Extensions.Persistence.Options
 {
     /// <summary>
     /// Configuration options for Persistence middleware.
     /// Controls workflow state persistence behavior.
-    /// Zero-dependency POCO for configuration binding.
+    /// Inherits common options functionality from <see cref="WorkflowForgeOptionsBase"/>.
     /// </summary>
-    public sealed class PersistenceMiddlewareOptions
+    public sealed class PersistenceMiddlewareOptions : WorkflowForgeOptionsBase
     {
         /// <summary>
         /// Default configuration section name for binding from appsettings.json.
-        /// This is the default value; users can specify a custom section name when binding.
         /// </summary>
         public const string DefaultSectionName = "WorkflowForge:Extensions:Persistence";
 
         /// <summary>
-        /// Gets the configuration section name for this instance.
-        /// Can be customized via constructor for non-standard configuration layouts.
-        /// </summary>
-        public string SectionName { get; }
-
-        /// <summary>
         /// Initializes a new instance with default section name.
         /// </summary>
-        public PersistenceMiddlewareOptions() : this(DefaultSectionName)
+        public PersistenceMiddlewareOptions() : base(null, DefaultSectionName)
         {
         }
 
@@ -33,18 +27,9 @@ namespace WorkflowForge.Extensions.Persistence.Options
         /// Initializes a new instance with custom section name.
         /// </summary>
         /// <param name="sectionName">Custom configuration section name.</param>
-        public PersistenceMiddlewareOptions(string sectionName)
+        public PersistenceMiddlewareOptions(string sectionName) : base(sectionName, DefaultSectionName)
         {
-            SectionName = sectionName ?? DefaultSectionName;
         }
-
-        /// <summary>
-        /// Gets or sets whether persistence middleware is enabled.
-        /// When true, workflow state is persisted to the configured provider.
-        /// When false, middleware is not registered.
-        /// Default is true.
-        /// </summary>
-        public bool Enabled { get; set; } = true;
 
         /// <summary>
         /// Gets or sets whether to persist workflow state after each operation completes.
@@ -89,7 +74,7 @@ namespace WorkflowForge.Extensions.Persistence.Options
         /// Validates the configuration settings and returns any validation errors.
         /// </summary>
         /// <returns>A list of validation error messages, empty if valid.</returns>
-        public IList<string> Validate()
+        public override IList<string> Validate()
         {
             var errors = new List<string>();
             
@@ -99,6 +84,23 @@ namespace WorkflowForge.Extensions.Persistence.Options
             }
             
             return errors;
+        }
+
+        /// <summary>
+        /// Creates a deep copy of this options instance.
+        /// </summary>
+        /// <returns>A new instance with the same configuration values.</returns>
+        public override object Clone()
+        {
+            return new PersistenceMiddlewareOptions(SectionName)
+            {
+                Enabled = Enabled,
+                PersistOnOperationComplete = PersistOnOperationComplete,
+                PersistOnWorkflowComplete = PersistOnWorkflowComplete,
+                PersistOnFailure = PersistOnFailure,
+                CompressData = CompressData,
+                MaxVersions = MaxVersions
+            };
         }
     }
 }

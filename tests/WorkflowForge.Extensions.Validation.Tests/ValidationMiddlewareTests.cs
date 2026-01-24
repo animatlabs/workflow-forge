@@ -1,5 +1,5 @@
-using FluentValidation;
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
@@ -29,8 +29,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
         [Fact]
         public async Task ExecuteAsync_WithValidData_ShouldCallNext()
         {
-            var validator = new TestDataValidator();
-            var adapter = new FluentValidationAdapter<TestData>(validator);
+            var adapter = new DataAnnotationsWorkflowValidator<TestData>();
             var dataExtractor = new Func<IWorkflowFoundry, object?>(f => new TestData { Value = 10 });
             var options = new ValidationMiddlewareOptions { ThrowOnValidationError = true };
 
@@ -41,7 +40,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
                 options);
 
             var nextCalled = false;
-            Task<object?> Next() { nextCalled = true; return Task.FromResult<object?>(null); }
+            Task<object?> Next(CancellationToken _) { nextCalled = true; return Task.FromResult<object?>(null); }
 
             await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
 
@@ -52,8 +51,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
         [Fact]
         public async Task ExecuteAsync_WithInvalidData_ThrowOnFailureTrue_ShouldThrow()
         {
-            var validator = new TestDataValidator();
-            var adapter = new FluentValidationAdapter<TestData>(validator);
+            var adapter = new DataAnnotationsWorkflowValidator<TestData>();
             var dataExtractor = new Func<IWorkflowFoundry, object?>(f => new TestData { Value = -1 });
             var options = new ValidationMiddlewareOptions { ThrowOnValidationError = true };
 
@@ -63,7 +61,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
                 dataExtractor,
                 options);
 
-            Task<object?> Next() => Task.FromResult<object?>(null);
+            Task<object?> Next(CancellationToken _) => Task.FromResult<object?>(null);
 
             await Assert.ThrowsAsync<WorkflowValidationException>(() =>
                 middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None));
@@ -74,8 +72,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
         [Fact]
         public async Task ExecuteAsync_WithInvalidData_ThrowOnFailureFalse_ShouldCallNext()
         {
-            var validator = new TestDataValidator();
-            var adapter = new FluentValidationAdapter<TestData>(validator);
+            var adapter = new DataAnnotationsWorkflowValidator<TestData>();
             var dataExtractor = new Func<IWorkflowFoundry, object?>(f => new TestData { Value = -1 });
             var options = new ValidationMiddlewareOptions { ThrowOnValidationError = false };
 
@@ -86,7 +83,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
                 options);
 
             var nextCalled = false;
-            Task<object?> Next() { nextCalled = true; return Task.FromResult<object?>(null); }
+            Task<object?> Next(CancellationToken _) { nextCalled = true; return Task.FromResult<object?>(null); }
 
             await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
 
@@ -97,8 +94,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
         [Fact]
         public async Task ExecuteAsync_WithNullData_ShouldLogWarningAndCallNext()
         {
-            var validator = new TestDataValidator();
-            var adapter = new FluentValidationAdapter<TestData>(validator);
+            var adapter = new DataAnnotationsWorkflowValidator<TestData>();
             var dataExtractor = new Func<IWorkflowFoundry, object?>(f => null);
             var options = new ValidationMiddlewareOptions { ThrowOnValidationError = true };
 
@@ -109,7 +105,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
                 options);
 
             var nextCalled = false;
-            Task<object?> Next() { nextCalled = true; return Task.FromResult<object?>(null); }
+            Task<object?> Next(CancellationToken _) { nextCalled = true; return Task.FromResult<object?>(null); }
 
             await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
 
@@ -118,15 +114,8 @@ namespace WorkflowForge.Extensions.Validation.Tests
 
         private class TestData
         {
+            [Range(1, int.MaxValue, ErrorMessage = "Value must be greater than 0")]
             public int Value { get; set; }
-        }
-
-        private class TestDataValidator : AbstractValidator<TestData>
-        {
-            public TestDataValidator()
-            {
-                RuleFor(x => x.Value).GreaterThan(0).WithMessage("Value must be greater than 0");
-            }
         }
 
         private class TestWorkflowValidator : IWorkflowValidator<object>

@@ -35,42 +35,6 @@ namespace WorkflowForge.Extensions.Resilience.Tests.Options
         }
 
         [Fact]
-        public void ForDevelopment_ShouldReturnDevelopmentSettings()
-        {
-            var options = PollyMiddlewareOptions.ForDevelopment();
-            Assert.True(options.Enabled);
-            Assert.True(options.Retry.IsEnabled);
-        }
-
-        [Fact]
-        public void ForProduction_ShouldReturnProductionSettings()
-        {
-            var options = PollyMiddlewareOptions.ForProduction();
-            Assert.True(options.Enabled);
-            Assert.True(options.Retry.IsEnabled);
-            Assert.True(options.CircuitBreaker.IsEnabled);
-        }
-
-        [Fact]
-        public void ForEnterprise_ShouldReturnEnterpriseSettings()
-        {
-            var options = PollyMiddlewareOptions.ForEnterprise();
-            Assert.True(options.Enabled);
-            Assert.True(options.Retry.IsEnabled);
-            Assert.True(options.CircuitBreaker.IsEnabled);
-            Assert.True(options.Timeout.IsEnabled);
-        }
-
-        [Fact]
-        public void Minimal_ShouldReturnMinimalSettings()
-        {
-            var options = PollyMiddlewareOptions.Minimal();
-            Assert.True(options.Enabled);
-            Assert.True(options.Retry.IsEnabled);
-            Assert.False(options.CircuitBreaker.IsEnabled);
-        }
-
-        [Fact]
         public void Validate_WithValidConfiguration_ShouldReturnEmptyErrors()
         {
             var options = new PollyMiddlewareOptions { Retry = { IsEnabled = true, MaxRetryAttempts = 5 } };

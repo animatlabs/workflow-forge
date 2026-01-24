@@ -1,7 +1,7 @@
 # WorkflowForge Competitive Benchmark Analysis
 
 <p align="center">
-  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 **Analysis Date**: October 21, 2025  
@@ -404,8 +404,7 @@ WorkflowForge is the **fastest .NET workflow engine** for high-performance, prog
 ## Related Documentation
 
 - **[Performance Benchmarks](performance.md)** - Internal WorkflowForge benchmarks
-- **[Architecture Overview](architecture.md)** - Design principles
-- **[Getting Started](getting-started.md)** - Quick start guide
+- **[Architecture Overview](../architecture/overview.md)** - Design principles
+- **[Getting Started](../getting-started/getting-started.md)** - Quick start guide
 
-**← Back to [Documentation Home](README.md)**
-
+**← Back to [Documentation Home](../index.md)**

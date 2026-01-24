@@ -62,6 +62,22 @@ public class Program
                     Console.WriteLine("Running Scenario 8: Complete Lifecycle");
                     BenchmarkRunner.Run<Scenario8Benchmark>(CreateConfig());
                     break;
+                case "scenario9":
+                    Console.WriteLine("Running Scenario 9: State Machine");
+                    BenchmarkRunner.Run<Scenario9Benchmark>(CreateConfig());
+                    break;
+                case "scenario10":
+                    Console.WriteLine("Running Scenario 10: Long Running");
+                    BenchmarkRunner.Run<Scenario10Benchmark>(CreateConfig());
+                    break;
+                case "scenario11":
+                    Console.WriteLine("Running Scenario 11: Parallel Execution");
+                    BenchmarkRunner.Run<Scenario11Benchmark>(CreateConfig());
+                    break;
+                case "scenario12":
+                    Console.WriteLine("Running Scenario 12: Event-Driven");
+                    BenchmarkRunner.Run<Scenario12Benchmark>(CreateConfig());
+                    break;
 
                 default:
                     Console.WriteLine($"Unknown scenario: {scenario}");
@@ -70,7 +86,7 @@ public class Program
         }
         else
         {
-            Console.WriteLine("Running ALL comparative benchmarks (8 scenarios)...");
+            Console.WriteLine("Running ALL comparative benchmarks (12 scenarios)...");
             Console.WriteLine();
             Console.WriteLine("Available benchmarks:");
             Console.WriteLine("  1. Simple Sequential Workflow");
@@ -81,6 +97,10 @@ public class Program
             Console.WriteLine("  6. Error Handling");
             Console.WriteLine("  7. Creation Overhead");
             Console.WriteLine("  8. Complete Lifecycle");
+            Console.WriteLine("  9. State Machine");
+            Console.WriteLine("  10. Long Running");
+            Console.WriteLine("  11. Parallel Execution");
+            Console.WriteLine("  12. Event-Driven");
             Console.WriteLine();
             Console.WriteLine("To run specific scenario: dotnet run --configuration Release -- scenario1");
             Console.WriteLine();
@@ -102,6 +122,14 @@ public class Program
             BenchmarkRunner.Run<Scenario7Benchmark>(CreateConfig());
             Console.WriteLine("Running Scenario 8...");
             BenchmarkRunner.Run<Scenario8Benchmark>(CreateConfig());
+            Console.WriteLine("Running Scenario 9...");
+            BenchmarkRunner.Run<Scenario9Benchmark>(CreateConfig());
+            Console.WriteLine("Running Scenario 10...");
+            BenchmarkRunner.Run<Scenario10Benchmark>(CreateConfig());
+            Console.WriteLine("Running Scenario 11...");
+            BenchmarkRunner.Run<Scenario11Benchmark>(CreateConfig());
+            Console.WriteLine("Running Scenario 12...");
+            BenchmarkRunner.Run<Scenario12Benchmark>(CreateConfig());
 
             Console.WriteLine();
             Console.WriteLine("═══════════════════════════════════════════════════════════════════");

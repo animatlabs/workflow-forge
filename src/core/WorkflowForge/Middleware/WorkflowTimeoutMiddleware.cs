@@ -93,29 +93,34 @@ namespace WorkflowForge.Middleware
 
             _logger.LogDebug($"Workflow '{workflow.Name}' executing with {timeout.TotalSeconds}s timeout");
 
-            using var timeoutCts = new CancellationTokenSource(timeout);
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
-                cancellationToken, timeoutCts.Token);
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            var executionTask = next();
+            var timeoutTask = Task.Delay(timeout, cancellationToken);
 
-            try
+            var completedTask = await Task.WhenAny(executionTask, timeoutTask).ConfigureAwait(false);
+            if (completedTask == timeoutTask)
             {
-                // Execute workflow with timeout
-                await next().ConfigureAwait(false);
+                timeoutCts.Cancel();
+                _ = executionTask.ContinueWith(
+                    t => _ = t.Exception,
+                    TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
 
-                _logger.LogDebug($"Workflow '{workflow.Name}' completed within timeout ({timeout.TotalSeconds}s)");
-            }
-            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
-            {
-                // Timeout occurred (timeoutCts was cancelled, but not the user's cancellationToken)
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    throw new OperationCanceledException(cancellationToken);
+                }
+
                 var errorMessage = $"Workflow '{workflow.Name}' execution exceeded the configured timeout of {timeout.TotalSeconds} seconds.";
                 _logger.LogError(errorMessage);
 
-                // Store timeout info in foundry properties
                 foundry.Properties["Workflow.TimedOut"] = true;
                 foundry.Properties["Workflow.TimeoutDuration"] = timeout;
 
                 throw new TimeoutException(errorMessage);
             }
+
+            await executionTask.ConfigureAwait(false);
+            _logger.LogDebug($"Workflow '{workflow.Name}' completed within timeout ({timeout.TotalSeconds}s)");
         }
     }
 }
