@@ -1,4 +1,3 @@
-using Polly;
 using System;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.Resilience.Polly.Options;
@@ -100,23 +99,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                 circuitBreakerDuration,
                 timeoutDuration);
 
-            foundry.AddMiddleware(middleware);
-            return foundry;
-        }
-
-        /// <summary>
-        /// Adds a custom Polly pipeline as middleware to the foundry.
-        /// </summary>
-        /// <param name="foundry">The foundry to configure.</param>
-        /// <param name="pipeline">The custom Polly pipeline to apply.</param>
-        /// <param name="name">Optional name for the middleware.</param>
-        /// <returns>The foundry for method chaining.</returns>
-        public static IWorkflowFoundry UsePollyPipeline(
-            this IWorkflowFoundry foundry,
-            ResiliencePipeline pipeline,
-            string? name = null)
-        {
-            var middleware = new PollyMiddleware(pipeline, foundry.Logger, name);
             foundry.AddMiddleware(middleware);
             return foundry;
         }

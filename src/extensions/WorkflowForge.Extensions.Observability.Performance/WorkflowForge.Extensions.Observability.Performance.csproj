@@ -43,8 +43,8 @@
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
 Major release v2.0.0:
-- ZERO VERSION CONFLICTS: Dependencies embedded via Costura.Fody (where applicable)
-- Users can use ANY version of third-party libraries
+- Dependencies internalized via ILRepack (where applicable)
+- Users can avoid third-party version conflicts
 - ISystemTimeProvider integrated for testability
 - Enhanced documentation and samples
 - Enterprise-ready for production workflows
@@ -58,13 +58,6 @@ Major release v2.0.0:
   <ItemGroup>
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.2" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
-    <PackageReference Include="Fody" Version="6.9.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Costura.Fody" Version="6.0.0">
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.102" PrivateAssets="All" />
   </ItemGroup>
 

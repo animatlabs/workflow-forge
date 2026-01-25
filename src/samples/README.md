@@ -8,17 +8,18 @@
 
 ## Available Sample Projects
 
-### 1. Basic Console Samples (24 Examples)
+### 1. Basic Console Samples (33 Examples)
 
 **Location**: `WorkflowForge.Samples.BasicConsole`
 
 Interactive console application with 24 hands-on examples covering:
 
-- **Basic Workflows (1-4)**: Hello World, Data Passing, Multiple Outcomes, Inline Operations
+- **Basic Workflows (1-4)**: Hello World, Data Passing, Multiple Outcomes, Class-Based Operations
 - **Control Flow (5-8)**: Conditionals, ForEach Loops, Error Handling, Built-in Operations
 - **Configuration & Middleware (9-12)**: Options Pattern, Configuration Profiles, Events, Middleware
-- **Extensions (13-18, 21-24)**: Serilog, Polly, OpenTelemetry, Health Checks, Performance, Persistence, Recovery, Validation, Audit
+- **Extensions (13-18, 21-25)**: Serilog, Polly, OpenTelemetry, Health Checks, Performance, Persistence, Recovery, Validation, Audit, Configuration-Driven
 - **Advanced (19-20)**: Comprehensive Integration, Operation Creation Patterns
+- **Onboarding & Best Practices (26-33)**: DI, workflow middleware, cancellation/timeout, continue-on-error, compensation, foundry reuse, output chaining, service resolution
 
 #### Quick Start
 

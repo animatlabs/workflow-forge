@@ -20,6 +20,7 @@ namespace WorkflowForge
     {
         private readonly List<IWorkflowOperation> _operations = new();
         private readonly List<IWorkflowOperationMiddleware> _middlewares = new();
+        private readonly object _middlewareLock = new();
         private readonly ISystemTimeProvider _timeProvider;
         private readonly WorkflowForgeOptions _options;
         private volatile bool _disposed;
@@ -103,6 +104,24 @@ namespace WorkflowForge
         }
 
         /// <summary>
+        /// Replaces the current operations with a new sequence.
+        /// </summary>
+        /// <param name="operations">The operations to set.</param>
+        /// <exception cref="ArgumentNullException">Thrown when operations is null.</exception>
+        /// <exception cref="ObjectDisposedException">Thrown when the foundry has been disposed.</exception>
+        internal void SetOperations(IEnumerable<IWorkflowOperation> operations)
+        {
+            if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
+            if (operations == null) throw new ArgumentNullException(nameof(operations));
+
+            lock (_operations)
+            {
+                _operations.Clear();
+                _operations.AddRange(operations);
+            }
+        }
+
+        /// <summary>
         /// Adds middleware to the execution pipeline.
         /// </summary>
         /// <param name="middleware">The middleware to add.</param>
@@ -113,7 +132,10 @@ namespace WorkflowForge
             if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
             if (middleware == null) throw new ArgumentNullException(nameof(middleware));
 
-            _middlewares.Add(middleware);
+            lock (_middlewareLock)
+            {
+                _middlewares.Add(middleware);
+            }
         }
 
         /// <summary>
@@ -127,7 +149,10 @@ namespace WorkflowForge
             if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
             if (middlewares == null) throw new ArgumentNullException(nameof(middlewares));
 
-            _middlewares.AddRange(middlewares);
+            lock (_middlewareLock)
+            {
+                _middlewares.AddRange(middlewares);
+            }
         }
 
         /// <summary>
@@ -139,7 +164,10 @@ namespace WorkflowForge
         public bool RemoveMiddleware(IWorkflowOperationMiddleware middleware)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
-            return _middlewares.Remove(middleware);
+            lock (_middlewareLock)
+            {
+                return _middlewares.Remove(middleware);
+            }
         }
 
         /// <summary>
@@ -151,7 +179,10 @@ namespace WorkflowForge
             get
             {
                 if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
-                return _middlewares.Count;
+                lock (_middlewareLock)
+                {
+                    return _middlewares.Count;
+                }
             }
         }
 
@@ -177,6 +208,8 @@ namespace WorkflowForge
                 ? new List<Exception>()
                 : null;
 
+            object? inputData = null;
+
             for (int i = 0; i < operationsSnapshot.Length; i++)
             {
                 var operation = operationsSnapshot[i];
@@ -189,7 +222,8 @@ namespace WorkflowForge
                     // FIRE: OperationStarted event
                     OperationStarted?.Invoke(this, new OperationStartedEventArgs(operation, this, null));
 
-                    var result = await ExecuteOperationWithMiddleware(operation, null, cancellationToken).ConfigureAwait(false);
+                    var result = await ExecuteOperationWithMiddleware(operation, inputData, cancellationToken).ConfigureAwait(false);
+                    inputData = result;
 
                     Properties[$"Operation.{operation.Id}.Output"] = result;
                     Properties["Operation.LastCompletedIndex"] = i;
@@ -255,7 +289,13 @@ namespace WorkflowForge
             object? inputData,
             CancellationToken cancellationToken)
         {
-            if (_middlewares.Count == 0)
+            IWorkflowOperationMiddleware[] middlewareSnapshot;
+            lock (_middlewareLock)
+            {
+                middlewareSnapshot = _middlewares.ToArray();
+            }
+
+            if (middlewareSnapshot.Length == 0)
             {
                 // No middleware, execute operation directly
                 return await operation.ForgeAsync(inputData, this, cancellationToken).ConfigureAwait(false);
@@ -266,9 +306,9 @@ namespace WorkflowForge
 
             Func<CancellationToken, Task<object?>> next = token => operation.ForgeAsync(inputData, this, token);
 
-            for (int i = _middlewares.Count - 1; i >= 0; i--)
+            for (int i = middlewareSnapshot.Length - 1; i >= 0; i--)
             {
-                var middleware = _middlewares[i];
+                var middleware = middlewareSnapshot[i];
                 var currentNext = next;
                 next = token => middleware.ExecuteAsync(operation, this, inputData, currentNext, token);
             }
@@ -296,6 +336,10 @@ namespace WorkflowForge
                     }
                 }
                 _operations.Clear();
+            }
+            lock (_middlewareLock)
+            {
+                _middlewares.Clear();
             }
             // Dispose properties
             Properties.Clear();

@@ -26,7 +26,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <param name="pipeline">The Polly resilience pipeline to apply.</param>
         /// <param name="logger">The logger for middleware events.</param>
         /// <param name="name">Optional name for the middleware.</param>
-        public PollyMiddleware(ResiliencePipeline pipeline, IWorkflowForgeLogger logger, string? name = null)
+        internal PollyMiddleware(ResiliencePipeline pipeline, IWorkflowForgeLogger logger, string? name = null)
         {
             _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

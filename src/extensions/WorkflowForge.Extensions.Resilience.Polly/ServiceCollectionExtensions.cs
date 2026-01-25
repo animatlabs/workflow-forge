@@ -103,7 +103,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
     /// <summary>
     /// Factory interface for creating Polly resilience strategies.
     /// </summary>
-    public interface IPollyResilienceFactory
+    internal interface IPollyResilienceFactory
     {
         /// <summary>
         /// Creates a default resilience strategy based on configuration.

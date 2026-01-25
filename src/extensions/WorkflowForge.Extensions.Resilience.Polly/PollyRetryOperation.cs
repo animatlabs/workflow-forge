@@ -32,7 +32,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <param name="pipeline">The Polly resilience pipeline to use.</param>
         /// <param name="logger">Optional logger for operation events.</param>
         /// <param name="name">Optional custom name for the operation.</param>
-        public PollyRetryOperation(
+        internal PollyRetryOperation(
             IWorkflowOperation innerOperation,
             ResiliencePipeline pipeline,
             IWorkflowForgeLogger? logger = null,
@@ -297,23 +297,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             }
 
             var pipeline = pipelineBuilder.Build();
-            return new PollyRetryOperation(innerOperation, pipeline, logger, name);
-        }
-
-        /// <summary>
-        /// Creates a Polly retry operation from an existing resilience pipeline.
-        /// </summary>
-        /// <param name="innerOperation">The operation to wrap.</param>
-        /// <param name="pipeline">The Polly resilience pipeline to use.</param>
-        /// <param name="logger">Optional logger for operation events.</param>
-        /// <param name="name">Optional custom name.</param>
-        /// <returns>A new Polly retry operation.</returns>
-        public static PollyRetryOperation FromPipeline(
-            IWorkflowOperation innerOperation,
-            ResiliencePipeline pipeline,
-            IWorkflowForgeLogger? logger = null,
-            string? name = null)
-        {
             return new PollyRetryOperation(innerOperation, pipeline, logger, name);
         }
 

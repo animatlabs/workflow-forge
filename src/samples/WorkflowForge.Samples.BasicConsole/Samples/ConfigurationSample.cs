@@ -96,10 +96,7 @@ public class ConfigurationSample : ISample
         }
 
         var workflow = WF.WorkflowForge.CreateWorkflow("ConfigWorkflow")
-            .AddOperation("Op1", async (f, ct) =>
-            {
-                f.Logger.LogInformation("Operation executed");
-            })
+            .AddOperation(new ConfigLogOperation("Op1", "Operation executed"))
             .Build();
 
         var smith = WF.WorkflowForge.CreateSmith();
@@ -133,10 +130,7 @@ public class ConfigurationSample : ISample
         }
 
         var workflow = WF.WorkflowForge.CreateWorkflow("DisabledWorkflow")
-            .AddOperation("Op1", async (f, ct) =>
-            {
-                f.Logger.LogInformation("Operation executed");
-            })
+            .AddOperation(new ConfigLogOperation("Op1", "Operation executed"))
             .Build();
 
         var smith = WF.WorkflowForge.CreateSmith();
@@ -239,5 +233,32 @@ public class ConfigurationSample : ISample
             _store.Remove((foundryExecutionId, workflowId));
             return Task.CompletedTask;
         }
+    }
+
+    private sealed class ConfigLogOperation : IWorkflowOperation
+    {
+        private readonly string _message;
+
+        public ConfigLogOperation(string name, string message)
+        {
+            Name = name;
+            _message = message;
+        }
+
+        public Guid Id { get; } = Guid.NewGuid();
+        public string Name { get; }
+        public bool SupportsRestore => false;
+
+        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        {
+            foundry.Logger.LogInformation(_message);
+            return Task.FromResult(inputData);
+        }
+
+        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public void Dispose()
+        { }
     }
 }

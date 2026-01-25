@@ -1,42 +1,47 @@
 using Serilog;
+using Serilog.Events;
+using System;
 using WorkflowForge.Abstractions;
 
 namespace WorkflowForge.Extensions.Logging.Serilog
 {
     /// <summary>
-    /// Extension methods for creating Serilog-based WorkflowForge loggers.
-    /// NOTE: This extension does NOT work with foundries - it creates loggers for WorkflowSmith.
-    /// The foundry's Logger property is immutable and set during construction.
+    /// Factory methods for creating Serilog-based WorkflowForge loggers
+    /// without exposing Serilog types in public APIs.
     /// </summary>
-    public static class SerilogExtensions
+    public static class SerilogLoggerFactory
     {
         /// <summary>
-        /// Creates a WorkflowForge logger wrapper around a Serilog ILogger.
-        /// Use this when creating a WorkflowSmith or WorkflowFoundry.
+        /// Creates a WorkflowForge logger using the provided options.
         /// </summary>
-        /// <param name="serilogLogger">The configured Serilog ILogger instance.</param>
-        /// <returns>A WorkflowForge logger that wraps Serilog.</returns>
-        /// <example>
-        /// var logger = Log.Logger.ToWorkflowForgeLogger();
-        /// var smith = WorkflowForge.CreateSmith(logger);
-        /// </example>
-        public static IWorkflowForgeLogger ToWorkflowForgeLogger(this ILogger serilogLogger)
+        /// <param name="options">Serilog logger options.</param>
+        /// <returns>A WorkflowForge logger instance.</returns>
+        public static IWorkflowForgeLogger CreateLogger(SerilogLoggerOptions? options = null)
         {
-            if (serilogLogger == null) throw new System.ArgumentNullException(nameof(serilogLogger));
-            return new SerilogWorkflowForgeLogger(serilogLogger);
+            options ??= new SerilogLoggerOptions();
+            var level = ParseLevel(options.MinimumLevel);
+            var template = options.ConsoleOutputTemplate ?? SerilogLoggerOptions.DefaultConsoleOutputTemplate;
+
+            var configuration = new LoggerConfiguration()
+                .MinimumLevel.Is(level);
+
+            if (options.EnableConsoleSink)
+            {
+                configuration.WriteTo.Console(outputTemplate: template);
+            }
+
+            var logger = configuration.CreateLogger();
+            return new SerilogWorkflowForgeLogger(logger);
         }
 
-        /// <summary>
-        /// Creates a WorkflowForge logger wrapper around the global Serilog logger.
-        /// </summary>
-        /// <returns>A WorkflowForge logger that wraps the global Serilog logger.</returns>
-        /// <remarks>
-        /// This method uses Log.Logger as the Serilog instance.
-        /// Ensure Serilog is properly configured before calling this method.
-        /// </remarks>
-        public static IWorkflowForgeLogger CreateWorkflowForgeLogger()
+        private static LogEventLevel ParseLevel(string? level)
         {
-            return new SerilogWorkflowForgeLogger(Log.Logger);
+            if (!string.IsNullOrWhiteSpace(level) && Enum.TryParse(level, true, out LogEventLevel parsed))
+            {
+                return parsed;
+            }
+
+            return LogEventLevel.Information;
         }
     }
 }

@@ -11,7 +11,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog
     /// <summary>
     /// Serilog adapter for WorkflowForge logging that implements IWorkflowForgeLogger.
     /// </summary>
-    public sealed class SerilogWorkflowForgeLogger : IWorkflowForgeLogger
+    internal sealed class SerilogWorkflowForgeLogger : IWorkflowForgeLogger
     {
         private readonly ILogger _logger;
 

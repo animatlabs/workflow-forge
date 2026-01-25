@@ -182,7 +182,14 @@ namespace WorkflowForge
                 try
                 {
                     // Route execution through foundry pipeline so operation middlewares are applied
-                    foundry.WithOperations(workflow.Operations);
+                    if (foundry is WorkflowFoundry workflowFoundry)
+                    {
+                        workflowFoundry.SetOperations(workflow.Operations);
+                    }
+                    else
+                    {
+                        foundry.WithOperations(workflow.Operations);
+                    }
                     await foundry.ForgeAsync(cancellationToken).ConfigureAwait(false);
 
                     // Log workflow completion

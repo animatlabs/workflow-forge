@@ -1,6 +1,6 @@
-using Serilog;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
+using WorkflowForge.Extensions.Logging.Serilog;
 using WorkflowForge.Extensions.Observability.OpenTelemetry;
 using WorkflowForge.Extensions.Resilience.Polly;
 using WorkflowForge.Extensions.Resilience.Polly.Options;
@@ -27,21 +27,15 @@ public class ComprehensiveIntegrationSample : ISample
         Console.WriteLine("Demonstrating comprehensive WorkflowForge integration...");
         Console.WriteLine("This sample combines multiple extensions in a realistic e-commerce scenario.");
 
-        // Configure Serilog for enterprise logging
-        var logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
-            .Enrich.FromLogContext()
-            .Enrich.WithProperty("Application", "ECommerce.OrderProcessing")
-            .Enrich.WithProperty("Environment", "Production")
-            .Enrich.WithProperty("Version", "2.1.0")
-            .WriteTo.Console(outputTemplate:
-                "[{Timestamp:HH:mm:ss} {Level:u3}] [{Application}] {Message:lj} {Properties:j}{NewLine}{Exception}")
-            .CreateLogger();
+        var logger = SerilogLoggerFactory.CreateLogger(new SerilogLoggerOptions
+        {
+            MinimumLevel = "Information",
+            ConsoleOutputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
+        });
 
         try
         {
-            // Create foundry (Serilog configured globally)
-            using var foundry = WorkflowForge.CreateFoundry("ECommerceOrderProcessing");
+            using var foundry = WorkflowForge.CreateFoundry("ECommerceOrderProcessing", logger);
 
             // Enable Polly resilience patterns
             foundry.UsePollyFromSettings(new PollyMiddlewareOptions 
@@ -96,11 +90,7 @@ public class ComprehensiveIntegrationSample : ISample
         catch (Exception ex)
         {
             Console.WriteLine($"\n[ERROR] Comprehensive integration failed: {ex.Message}");
-            logger.Error(ex, "Comprehensive integration sample failed");
-        }
-        finally
-        {
-            logger.Dispose();
+            logger.LogError(ex, "Comprehensive integration sample failed");
         }
     }
 }

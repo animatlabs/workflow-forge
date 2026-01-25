@@ -1,6 +1,6 @@
-using Serilog;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
+using WorkflowForge.Extensions.Logging.Serilog;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -17,20 +17,15 @@ public class SerilogIntegrationSample : ISample
     {
         Console.WriteLine("Setting up Serilog for structured logging...");
 
-        // Configure Serilog with multiple sinks and enrichment
-        var logger = new LoggerConfiguration()
-            .MinimumLevel.Debug()
-            .Enrich.FromLogContext()
-            .Enrich.WithProperty("Application", "WorkflowForge.Sample")
-            .Enrich.WithProperty("Environment", "Development")
-            .WriteTo.Console(outputTemplate:
-                "[{Timestamp:HH:mm:ss} {Level:u3}] [{Application}] {Message:lj} {Properties:j}{NewLine}{Exception}")
-            .CreateLogger();
+        var logger = SerilogLoggerFactory.CreateLogger(new SerilogLoggerOptions
+        {
+            MinimumLevel = "Debug",
+            ConsoleOutputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
+        });
 
         Console.WriteLine("Running workflow with structured logging...");
 
-        // Create foundry (Serilog is configured globally via host builder)
-        using var foundry = WorkflowForge.CreateFoundry("SerilogIntegration");
+        using var foundry = WorkflowForge.CreateFoundry("SerilogIntegration", logger);
 
         // Add workflow data for context
         foundry.Properties["user_id"] = "usr_12345";
@@ -44,8 +39,6 @@ public class SerilogIntegrationSample : ISample
 
         await foundry.ForgeAsync();
 
-        // Dispose Serilog logger
-        logger.Dispose();
     }
 }
 

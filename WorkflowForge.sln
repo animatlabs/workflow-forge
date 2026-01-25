@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.2.11415.280 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}"
 EndProject
@@ -54,6 +54,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkflowForge.Extensions.Audit.Tests", "tests\WorkflowForge.Extensions.Audit.Tests\WorkflowForge.Extensions.Audit.Tests.csproj", "{E6EB3D26-9505-470A-BD16-9D318E873683}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkflowForge.Benchmarks.Comparative", "src\benchmarks\WorkflowForge.Benchmarks.Comparative\WorkflowForge.Benchmarks.Comparative.csproj", "{836BA2B6-B112-4806-8DCD-D928F84FD7AD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkflowForge.Extensions.DependencyInjection", "src\extensions\WorkflowForge.Extensions.DependencyInjection\WorkflowForge.Extensions.DependencyInjection.csproj", "{BDCD40A7-C2A6-B3CE-5D05-DB393CE04C13}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -305,6 +307,18 @@ Global
 		{836BA2B6-B112-4806-8DCD-D928F84FD7AD}.Release|x64.Build.0 = Release|Any CPU
 		{836BA2B6-B112-4806-8DCD-D928F84FD7AD}.Release|x86.ActiveCfg = Release|Any CPU
 		{836BA2B6-B112-4806-8DCD-D928F84FD7AD}.Release|x86.Build.0 = Release|Any CPU
+		{BDCD40A7-C2A6-B3CE-5D05-DB393CE04C13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDCD40A7-C2A6-B3CE-5D05-DB393CE04C13}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDCD40A7-C2A6-B3CE-5D05-DB393CE04C13}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BDCD40A7-C2A6-B3CE-5D05-DB393CE04C13}.Debug|x64.Build.0 = Debug|Any CPU
+		{BDCD40A7-C2A6-B3CE-5D05-DB393CE04C13}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BDCD40A7-C2A6-B3CE-5D05-DB393CE04C13}.Debug|x86.Build.0 = Debug|Any CPU
+		{BDCD40A7-C2A6-B3CE-5D05-DB393CE04C13}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDCD40A7-C2A6-B3CE-5D05-DB393CE04C13}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDCD40A7-C2A6-B3CE-5D05-DB393CE04C13}.Release|x64.ActiveCfg = Release|Any CPU
+		{BDCD40A7-C2A6-B3CE-5D05-DB393CE04C13}.Release|x64.Build.0 = Release|Any CPU
+		{BDCD40A7-C2A6-B3CE-5D05-DB393CE04C13}.Release|x86.ActiveCfg = Release|Any CPU
+		{BDCD40A7-C2A6-B3CE-5D05-DB393CE04C13}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -334,6 +348,7 @@ Global
 		{D723CCAA-134D-44DE-8B19-74DDCE6EA101} = {9CD0E1F2-A3B4-C5D6-E7F8-A9B0C1D2E3F4}
 		{E6EB3D26-9505-470A-BD16-9D318E873683} = {9CD0E1F2-A3B4-C5D6-E7F8-A9B0C1D2E3F4}
 		{836BA2B6-B112-4806-8DCD-D928F84FD7AD} = {B2C3D4E5-F6A7-8B9C-0D1E-2F3A4B5C6D7E}
+		{BDCD40A7-C2A6-B3CE-5D05-DB393CE04C13} = {B2B2B2B2-C3C3-D4D4-E5E5-F6F6F6F6F6F6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C36F16B3-8CC7-4F09-B114-F967F0AACD95}
