@@ -1,5 +1,8 @@
 # WorkflowForge.Testing
 
+[![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Testing.svg)](https://www.nuget.org/packages/WorkflowForge.Testing/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/WorkflowForge.Testing.svg)](https://www.nuget.org/packages/WorkflowForge.Testing/)
+
 Testing utilities for WorkflowForge. This package provides test doubles and helpers for unit testing workflow operations without requiring the full workflow infrastructure.
 
 ## Installation

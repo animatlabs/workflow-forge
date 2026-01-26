@@ -1,5 +1,8 @@
 # WorkflowForge.Extensions.DependencyInjection
 
+[![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.DependencyInjection.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.DependencyInjection/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/WorkflowForge.Extensions.DependencyInjection.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.DependencyInjection/)
+
 **Microsoft.Extensions.DependencyInjection integration for WorkflowForge**
 
 This extension provides seamless integration with Microsoft's dependency injection container, enabling:

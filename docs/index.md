@@ -8,6 +8,11 @@ title: WorkflowForge Documentation
   <div>
     <h1>WorkflowForge Documentation</h1>
     <p>Build high-performance workflows in .NET with clear guidance, focused examples, and a zero-dependency core.</p>
+    <p>
+      <a href="https://www.nuget.org/packages/WorkflowForge/"><img src="https://img.shields.io/nuget/v/WorkflowForge.svg" alt="NuGet"></a>
+      <a href="https://www.nuget.org/packages/WorkflowForge/"><img src="https://img.shields.io/nuget/dt/WorkflowForge.svg" alt="NuGet Downloads"></a>
+      <a href="https://github.com/animatlabs/workflow-forge/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+    </p>
     <div class="wf-hero-actions">
       <a href="{{ "/getting-started/getting-started/" | relative_url }}">Get started</a>
       <a class="secondary" href="{{ "/reference/api-reference/" | relative_url }}">API reference</a>
@@ -32,20 +37,6 @@ title: WorkflowForge Documentation
 
 ---
 
-## Table of Contents
-
-- [Quick Navigation](#quick-navigation)
-- [What is WorkflowForge?](#what-is-workflowforge)
-- [Why Choose WorkflowForge?](#why-choose-workflowforge)
-- [Core Architecture](#core-architecture)
-- [Documentation Structure](#documentation-structure)
-- [Quick Start](#quick-start)
-- [Learning Path](#learning-path)
-- [Extension Ecosystem](#extension-ecosystem)
-- [Performance Highlights](#performance-highlights)
-- [Getting Help](#getting-help)
-
----
 ## What is WorkflowForge?
 
 WorkflowForge is a **zero-dependency workflow orchestration framework** for .NET with **microsecond-level performance** and **minimal memory footprint**. It provides a clean, industrial metaphor for building workflows that are fast, maintainable, and production-ready.
