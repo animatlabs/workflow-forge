@@ -1,7 +1,6 @@
 using System;
-using Polly;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.Resilience.Polly.Configurations;
+using WorkflowForge.Extensions.Resilience.Polly.Options;
 
 namespace WorkflowForge.Extensions.Resilience.Polly
 {
@@ -105,23 +104,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         }
 
         /// <summary>
-        /// Adds a custom Polly pipeline as middleware to the foundry.
-        /// </summary>
-        /// <param name="foundry">The foundry to configure.</param>
-        /// <param name="pipeline">The custom Polly pipeline to apply.</param>
-        /// <param name="name">Optional name for the middleware.</param>
-        /// <returns>The foundry for method chaining.</returns>
-        public static IWorkflowFoundry UsePollyPipeline(
-            this IWorkflowFoundry foundry,
-            ResiliencePipeline pipeline,
-            string? name = null)
-        {
-            var middleware = new PollyMiddleware(pipeline, foundry.Logger, name);
-            foundry.AddMiddleware(middleware);
-            return foundry;
-        }
-
-        /// <summary>
         /// Adds Polly middleware based on configuration settings.
         /// </summary>
         /// <param name="foundry">The foundry to configure.</param>
@@ -129,9 +111,9 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <returns>The foundry for method chaining.</returns>
         public static IWorkflowFoundry UsePollyFromSettings(
             this IWorkflowFoundry foundry,
-            PollySettings settings)
+            PollyMiddlewareOptions settings)
         {
-            if (!settings.IsEnabled)
+            if (!settings.Enabled)
             {
                 foundry.Logger.LogInformation(ResilienceLogMessages.ResilienceDisabled);
                 return foundry;
@@ -143,8 +125,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     settings.Retry.MaxRetryAttempts,
                     settings.Retry.BaseDelay,
                     settings.CircuitBreaker.FailureThreshold,
-                    settings.CircuitBreaker.DurationOfBreak,
-                    settings.Timeout.TimeoutDuration);
+                    settings.CircuitBreaker.BreakDuration,
+                    settings.Timeout.DefaultTimeout);
 
                 foundry.Logger.LogInformation(ResilienceLogMessages.ComprehensiveResiliencePoliciesApplied);
             }
@@ -156,19 +138,19 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     foundry.UsePollyRetry(
                         settings.Retry.MaxRetryAttempts,
                         settings.Retry.BaseDelay,
-                        settings.Retry.MaxDelay);
+                        settings.Retry.BaseDelay); // MaxDelay doesn't exist, using BaseDelay
                 }
 
                 if (settings.CircuitBreaker.IsEnabled)
                 {
                     foundry.UsePollyCircuitBreaker(
                         settings.CircuitBreaker.FailureThreshold,
-                        settings.CircuitBreaker.DurationOfBreak);
+                        settings.CircuitBreaker.BreakDuration);
                 }
 
                 if (settings.Timeout.IsEnabled)
                 {
-                    foundry.UsePollyTimeout(settings.Timeout.TimeoutDuration);
+                    foundry.UsePollyTimeout(settings.Timeout.DefaultTimeout);
                 }
 
                 foundry.Logger.LogInformation(ResilienceLogMessages.IndividualResiliencePoliciesApplied);
@@ -176,51 +158,5 @@ namespace WorkflowForge.Extensions.Resilience.Polly
 
             return foundry;
         }
-
-        /// <summary>
-        /// Adds enterprise-grade resilience configuration with predefined best practices.
-        /// Includes retry with exponential backoff, circuit breaker, timeout, and rate limiting.
-        /// </summary>
-        /// <param name="foundry">The foundry to configure.</param>
-        /// <returns>The foundry for method chaining.</returns>
-        public static IWorkflowFoundry UsePollyEnterpriseResilience(this IWorkflowFoundry foundry)
-        {
-            var settings = PollySettings.ForEnterprise();
-            return foundry.UsePollyFromSettings(settings);
-        }
-
-        /// <summary>
-        /// Adds development-friendly resilience configuration with more lenient settings.
-        /// </summary>
-        /// <param name="foundry">The foundry to configure.</param>
-        /// <returns>The foundry for method chaining.</returns>
-        public static IWorkflowFoundry UsePollyDevelopmentResilience(this IWorkflowFoundry foundry)
-        {
-            var settings = PollySettings.ForDevelopment();
-            return foundry.UsePollyFromSettings(settings);
-        }
-
-        /// <summary>
-        /// Adds production-optimized resilience configuration with strict settings.
-        /// </summary>
-        /// <param name="foundry">The foundry to configure.</param>
-        /// <returns>The foundry for method chaining.</returns>
-        public static IWorkflowFoundry UsePollyProductionResilience(this IWorkflowFoundry foundry)
-        {
-            var settings = PollySettings.ForProduction();
-            return foundry.UsePollyFromSettings(settings);
-        }
-
-        /// <summary>
-        /// Adds minimal resilience configuration with basic retry only.
-        /// </summary>
-        /// <param name="foundry">The foundry to configure.</param>
-        /// <returns>The foundry for method chaining.</returns>
-        public static IWorkflowFoundry UsePollyMinimalResilience(this IWorkflowFoundry foundry)
-        {
-            var settings = PollySettings.Minimal();
-            return foundry.UsePollyFromSettings(settings);
-        }
-
     }
 }

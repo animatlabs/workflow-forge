@@ -1,4 +1,3 @@
-using WorkflowForge.Configurations;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
@@ -32,7 +31,7 @@ public class ErrorHandlingSample : ISample
     {
         Console.WriteLine("\n--- Retry Logic Scenario ---");
 
-        using var foundry = WorkflowForge.CreateFoundry("RetryWorkflow", FoundryConfiguration.Development());
+        using var foundry = WorkflowForge.CreateFoundry("RetryWorkflow");
 
         foundry.Properties["max_retries"] = 3;
         foundry.Properties["service_endpoint"] = "https://api.unreliable-service.com";
@@ -58,7 +57,7 @@ public class ErrorHandlingSample : ISample
     {
         Console.WriteLine("\n--- Alternative Path Scenario ---");
 
-        using var foundry = WorkflowForge.CreateFoundry("AlternativePathWorkflow", FoundryConfiguration.Development());
+        using var foundry = WorkflowForge.CreateFoundry("AlternativePathWorkflow");
 
         foundry.Properties["primary_service"] = "MainPaymentGateway";
         foundry.Properties["fallback_service"] = "BackupPaymentGateway";
@@ -103,7 +102,7 @@ public class ErrorHandlingSample : ISample
     {
         Console.WriteLine("\n--- Circuit Breaker Scenario ---");
 
-        using var foundry = WorkflowForge.CreateFoundry("CircuitBreakerWorkflow", FoundryConfiguration.Development());
+        using var foundry = WorkflowForge.CreateFoundry("CircuitBreakerWorkflow");
 
         foundry.Properties["circuit_state"] = "Closed"; // Closed, Open, HalfOpen
         foundry.Properties["failure_count"] = 0;
@@ -199,7 +198,8 @@ public class RetryableExternalServiceOperation : IWorkflowOperation
         return Task.CompletedTask;
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 public class TryPrimaryPaymentOperation : IWorkflowOperation
@@ -246,7 +246,8 @@ public class TryPrimaryPaymentOperation : IWorkflowOperation
         }
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 public class TryFallbackPaymentOperation : IWorkflowOperation
@@ -293,7 +294,8 @@ public class TryFallbackPaymentOperation : IWorkflowOperation
         }
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 public class UnstableServiceOperation : IWorkflowOperation
@@ -334,7 +336,8 @@ public class UnstableServiceOperation : IWorkflowOperation
         return Task.CompletedTask;
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 // Helper operations
@@ -353,7 +356,9 @@ public class InitializeConnectionOperation : IWorkflowOperation
     }
 
     public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-    public void Dispose() { }
+
+    public void Dispose()
+    { }
 }
 
 public class ValidateResponseOperation : IWorkflowOperation
@@ -370,7 +375,9 @@ public class ValidateResponseOperation : IWorkflowOperation
     }
 
     public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-    public void Dispose() { }
+
+    public void Dispose()
+    { }
 }
 
 public class LogSuccessOperation : IWorkflowOperation
@@ -387,7 +394,9 @@ public class LogSuccessOperation : IWorkflowOperation
     }
 
     public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-    public void Dispose() { }
+
+    public void Dispose()
+    { }
 }
 
 // More helper operations with minimal implementation
@@ -396,14 +405,18 @@ public class PreparePaymentOperation : IWorkflowOperation
     public Guid Id { get; } = Guid.NewGuid();
     public string Name => "PreparePayment";
     public bool SupportsRestore => false;
+
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         Console.WriteLine("   [INFO] Preparing payment...");
         await Task.Delay(50, cancellationToken);
         return "Payment prepared";
     }
+
     public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-    public void Dispose() { }
+
+    public void Dispose()
+    { }
 }
 
 public class RequireManualInterventionOperation : IWorkflowOperation
@@ -411,6 +424,7 @@ public class RequireManualInterventionOperation : IWorkflowOperation
     public Guid Id { get; } = Guid.NewGuid();
     public string Name => "RequireManualIntervention";
     public bool SupportsRestore => false;
+
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         Console.WriteLine("   [WARNING] Payment requires manual processing");
@@ -418,8 +432,11 @@ public class RequireManualInterventionOperation : IWorkflowOperation
         foundry.Properties["manual_intervention_required"] = true;
         return "Manual intervention flagged";
     }
+
     public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-    public void Dispose() { }
+
+    public void Dispose()
+    { }
 }
 
 public class FinalizePaymentOperation : IWorkflowOperation
@@ -427,6 +444,7 @@ public class FinalizePaymentOperation : IWorkflowOperation
     public Guid Id { get; } = Guid.NewGuid();
     public string Name => "FinalizePayment";
     public bool SupportsRestore => false;
+
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         Console.WriteLine("   [INFO] Finalizing payment...");
@@ -443,8 +461,11 @@ public class FinalizePaymentOperation : IWorkflowOperation
 
         return "Payment finalized";
     }
+
     public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-    public void Dispose() { }
+
+    public void Dispose()
+    { }
 }
 
 public class CheckCircuitStateOperation : IWorkflowOperation
@@ -452,6 +473,7 @@ public class CheckCircuitStateOperation : IWorkflowOperation
     public Guid Id { get; } = Guid.NewGuid();
     public string Name => "CheckCircuitState";
     public bool SupportsRestore => false;
+
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         var state = (string)foundry.Properties["circuit_state"]!;
@@ -459,8 +481,11 @@ public class CheckCircuitStateOperation : IWorkflowOperation
         await Task.Delay(20, cancellationToken);
         return state;
     }
+
     public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-    public void Dispose() { }
+
+    public void Dispose()
+    { }
 }
 
 public class FailFastOperation : IWorkflowOperation
@@ -468,14 +493,18 @@ public class FailFastOperation : IWorkflowOperation
     public Guid Id { get; } = Guid.NewGuid();
     public string Name => "FailFast";
     public bool SupportsRestore => false;
+
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         Console.WriteLine("   [FAST_FAIL] Circuit breaker is open - failing fast");
         await Task.Delay(10, cancellationToken);
         throw new CircuitBreakerOpenException("Circuit breaker is open - service calls are blocked");
     }
+
     public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-    public void Dispose() { }
+
+    public void Dispose()
+    { }
 }
 
 public class ResetCircuitOperation : IWorkflowOperation
@@ -483,6 +512,7 @@ public class ResetCircuitOperation : IWorkflowOperation
     public Guid Id { get; } = Guid.NewGuid();
     public string Name => "ResetCircuit";
     public bool SupportsRestore => false;
+
     public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         Console.WriteLine("   [RESET] Resetting circuit breaker");
@@ -491,24 +521,39 @@ public class ResetCircuitOperation : IWorkflowOperation
         foundry.Properties["failure_count"] = 0;
         return "Circuit reset";
     }
+
     public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-    public void Dispose() { }
+
+    public void Dispose()
+    { }
 }
 
 // Custom exception types
 public class ExternalServiceException : Exception
 {
-    public ExternalServiceException(string message) : base(message) { }
-    public ExternalServiceException(string message, Exception innerException) : base(message, innerException) { }
+    public ExternalServiceException(string message) : base(message)
+    {
+    }
+
+    public ExternalServiceException(string message, Exception innerException) : base(message, innerException)
+    {
+    }
 }
 
 public class WorkflowExecutionException : Exception
 {
-    public WorkflowExecutionException(string message) : base(message) { }
-    public WorkflowExecutionException(string message, Exception innerException) : base(message, innerException) { }
+    public WorkflowExecutionException(string message) : base(message)
+    {
+    }
+
+    public WorkflowExecutionException(string message, Exception innerException) : base(message, innerException)
+    {
+    }
 }
 
 public class CircuitBreakerOpenException : Exception
 {
-    public CircuitBreakerOpenException(string message) : base(message) { }
+    public CircuitBreakerOpenException(string message) : base(message)
+    {
+    }
 }

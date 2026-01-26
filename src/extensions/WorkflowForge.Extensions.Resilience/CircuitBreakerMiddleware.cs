@@ -38,7 +38,7 @@ namespace WorkflowForge.Extensions.Resilience
             IWorkflowOperation operation,
             IWorkflowFoundry foundry,
             object? inputData,
-            Func<Task<object?>> next,
+            Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default)
         {
             var operationName = operation.Name;
@@ -49,7 +49,7 @@ namespace WorkflowForge.Extensions.Resilience
                 await _policy.ExecuteAsync(async () =>
                 {
                     foundry.Logger.LogDebug("Executing operation '{OperationName}' through circuit breaker", operationName);
-                    result = await next().ConfigureAwait(false);
+                    result = await next(cancellationToken).ConfigureAwait(false);
                 }, cancellationToken).ConfigureAwait(false);
 
                 _logger?.LogDebug("Operation {OperationName} completed successfully through circuit breaker", operationName);

@@ -100,7 +100,7 @@ namespace WorkflowForge.Operations
         public override bool SupportsRestore => _trueOperation?.SupportsRestore == true || _falseOperation?.SupportsRestore == true;
 
         /// <inheritdoc />
-        public override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ConditionalWorkflowOperation));
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));

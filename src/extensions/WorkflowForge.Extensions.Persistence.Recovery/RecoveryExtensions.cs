@@ -1,9 +1,9 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.Persistence.Abstractions;
+using WorkflowForge.Extensions.Persistence.Recovery.Options;
 
 namespace WorkflowForge.Extensions.Persistence.Recovery
 {
@@ -14,7 +14,7 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
     public static class RecoveryExtensions
     {
         /// <summary>
-        /// Attempts to resume a workflow from the last checkpoint before starting a new execution.
+        /// Attempts to resume a workflow from the last checkpoint before starting a new execution with options.
         /// If no snapshot exists, proceeds to execute normally.
         /// </summary>
         public static async Task ForgeWithRecoveryAsync(
@@ -24,7 +24,7 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
             IWorkflowPersistenceProvider provider,
             Guid foundryKey,
             Guid workflowKey,
-            RecoveryPolicy? policy = null,
+            RecoveryMiddlewareOptions? options = null,
             CancellationToken cancellationToken = default)
         {
             if (smith == null) throw new ArgumentNullException(nameof(smith));
@@ -32,8 +32,17 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
             if (provider == null) throw new ArgumentNullException(nameof(provider));
 
+            options ??= new RecoveryMiddlewareOptions();
+
+            if (!options.Enabled)
+            {
+                foundry.Logger.LogInformation("Recovery is disabled via configuration, executing without recovery");
+                await smith.ForgeAsync(workflow, foundry, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
             // Try recovery first
-            var coordinator = new RecoveryCoordinator(provider, policy);
+            var coordinator = new RecoveryCoordinator(provider, options);
             // Phase 1: attempt resume (best-effort). If it throws, swallow here and move to fresh execution retries.
             try
             {
@@ -43,19 +52,17 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
                     foundryKey: foundryKey,
                     workflowKey: workflowKey,
                     cancellationToken: cancellationToken).ConfigureAwait(false);
+                return; // Success
             }
             catch
             {
                 // ignore and proceed to fresh execution attempts
             }
 
-            // Ensure non-null policy instance
-            policy ??= new RecoveryPolicy();
-
-            // Phase 2: attempt a fresh execution with retry policy
+            // Phase 2: attempt a fresh execution with retry options
             var attempts = 0;
             Exception? lastEx = null;
-            while (attempts < policy.MaxAttempts)
+            while (attempts < options.MaxRetryAttempts)
             {
                 try
                 {
@@ -70,13 +77,13 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
                 {
                     lastEx = ex;
                     attempts++;
-                    if (attempts >= policy.MaxAttempts) break;
+                    if (attempts >= options.MaxRetryAttempts) break;
 
-                    var delay = policy.BaseDelay;
-                    if (policy.UseExponentialBackoff)
+                    var delay = options.BaseDelay;
+                    if (options.UseExponentialBackoff)
                     {
                         var factor = Math.Pow(2, attempts - 1);
-                        delay = TimeSpan.FromMilliseconds(policy.BaseDelay.TotalMilliseconds * factor);
+                        delay = TimeSpan.FromMilliseconds(options.BaseDelay.TotalMilliseconds * factor);
                     }
                     await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                 }
@@ -86,5 +93,3 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
         }
     }
 }
-
-

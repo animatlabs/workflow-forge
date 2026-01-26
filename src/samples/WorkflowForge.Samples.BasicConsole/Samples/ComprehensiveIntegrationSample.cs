@@ -1,10 +1,9 @@
-using WorkflowForge.Configurations;
-using Serilog;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Logging.Serilog;
 using WorkflowForge.Extensions.Observability.OpenTelemetry;
 using WorkflowForge.Extensions.Resilience.Polly;
+using WorkflowForge.Extensions.Resilience.Polly.Options;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -28,27 +27,22 @@ public class ComprehensiveIntegrationSample : ISample
         Console.WriteLine("Demonstrating comprehensive WorkflowForge integration...");
         Console.WriteLine("This sample combines multiple extensions in a realistic e-commerce scenario.");
 
-        // Configure Serilog for enterprise logging
-        var logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
-            .Enrich.FromLogContext()
-            .Enrich.WithProperty("Application", "ECommerce.OrderProcessing")
-            .Enrich.WithProperty("Environment", "Production")
-            .Enrich.WithProperty("Version", "2.1.0")
-            .WriteTo.Console(outputTemplate:
-                "[{Timestamp:HH:mm:ss} {Level:u3}] [{Application}] {Message:lj} {Properties:j}{NewLine}{Exception}")
-            .CreateLogger();
+        var logger = SerilogLoggerFactory.CreateLogger(new SerilogLoggerOptions
+        {
+            MinimumLevel = "Information",
+            ConsoleOutputTemplate = "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
+        });
 
         try
         {
-            // Create foundry with comprehensive configuration
-            var config = FoundryConfiguration.ForProduction()
-                .UseSerilog(logger);
-
-            using var foundry = WorkflowForge.CreateFoundry("ECommerceOrderProcessing", config);
+            using var foundry = WorkflowForge.CreateFoundry("ECommerceOrderProcessing", logger);
 
             // Enable Polly resilience patterns
-            foundry.UsePollyProductionResilience();
+            foundry.UsePollyFromSettings(new PollyMiddlewareOptions
+            {
+                Retry = { MaxRetryAttempts = 5 },
+                CircuitBreaker = { IsEnabled = true }
+            });
 
             // Enable OpenTelemetry observability
             var telemetryOptions = new WorkflowForgeOpenTelemetryOptions
@@ -96,11 +90,7 @@ public class ComprehensiveIntegrationSample : ISample
         catch (Exception ex)
         {
             Console.WriteLine($"\n[ERROR] Comprehensive integration failed: {ex.Message}");
-            logger.Error(ex, "Comprehensive integration sample failed");
-        }
-        finally
-        {
-            logger.Dispose();
+            logger.LogError(ex, "Comprehensive integration sample failed");
         }
     }
 }
@@ -217,7 +207,8 @@ public class OrderValidationWithResilienceOperation : IWorkflowOperation
         foundry.Logger.LogInformation("Order validation restoration completed");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -295,7 +286,8 @@ public class PaymentProcessingWithRetryOperation : IWorkflowOperation
         foundry.Logger.LogInformation("Payment reversal completed for payment {PaymentId}", paymentId);
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -357,7 +349,8 @@ public class InventoryReservationOperation : IWorkflowOperation
         foundry.Logger.LogInformation("Inventory reservation released: {ReservationId}", reservationId);
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -412,7 +405,8 @@ public class ShippingArrangementOperation : IWorkflowOperation
         throw new NotSupportedException("Shipping arrangement does not support restoration");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -496,7 +490,8 @@ public class NotificationDispatchOperation : IWorkflowOperation
         throw new NotSupportedException("Notification dispatch does not support restoration");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }
 
 /// <summary>
@@ -572,5 +567,6 @@ public class OrderFinalizationOperation : IWorkflowOperation
         throw new NotSupportedException("Order finalization does not support restoration");
     }
 
-    public void Dispose() { }
+    public void Dispose()
+    { }
 }

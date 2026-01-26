@@ -4,6 +4,8 @@ namespace WorkflowForge.Abstractions
 {
     /// <summary>
     /// Default implementation of <see cref="ISystemTimeProvider"/> that provides real system time.
+    /// This is the standard implementation used throughout WorkflowForge.
+    /// Use the singleton Instance property, or inject a custom ISystemTimeProvider for testing.
     /// </summary>
     public sealed class SystemTimeProvider : ISystemTimeProvider
     {

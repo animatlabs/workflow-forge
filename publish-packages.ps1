@@ -1,13 +1,17 @@
-﻿param (
-    [string]$CoreVersion = "1.1.0",
-    [string]$SerilogVersion = "1.1.0",
-    [string]$PollyVersion = "1.1.0",
-    [string]$ResilienceVersion = "1.1.0",
-    [string]$PerformanceVersion = "1.1.0",
-    [string]$HealthChecksVersion = "1.1.0",
-    [string]$OpenTelemetryVersion = "1.1.0",
-    [string]$PersistenceVersion = "1.0.0",
-    [string]$RecoveryVersion = "1.0.0",
+param (
+    [string]$CoreVersion = "2.0.0",
+    [string]$TestingVersion = "2.0.0",
+    [string]$DependencyInjectionVersion = "2.0.0",
+    [string]$SerilogVersion = "2.0.0",
+    [string]$PollyVersion = "2.0.0",
+    [string]$ResilienceVersion = "2.0.0",
+    [string]$PerformanceVersion = "2.0.0",
+    [string]$HealthChecksVersion = "2.0.0",
+    [string]$OpenTelemetryVersion = "2.0.0",
+    [string]$PersistenceVersion = "2.0.0",
+    [string]$RecoveryVersion = "2.0.0",
+    [string]$ValidationVersion = "2.0.0",
+    [string]$AuditVersion = "2.0.0",
     [string]$NuGetApiKey,
     [switch]$Publish
 )
@@ -64,7 +68,7 @@ function PackAndPublish {
                 $hasIcon = Test-Path (Join-Path $tempDir "icon.png")
                 
                 if ($hasReadme -and $hasIcon) {
-                    Write-Host "✓ Package includes README.md and icon.png" -ForegroundColor Green
+                    Write-Host "Package includes README.md and icon.png" -ForegroundColor Green
                 } else {
                     Write-Warning "Package missing assets - README: $hasReadme, Icon: $hasIcon"
                 }
@@ -131,6 +135,14 @@ Write-Host "============================================================" -Foreg
 $results = @()
 
 $packages = @(
+    # Core packages (must be built first as dependencies)
+    @{ Path = "./src/core/WorkflowForge/WorkflowForge.csproj"; Name = "WorkflowForge"; Version = $CoreVersion },
+    @{ Path = "./src/core/WorkflowForge.Testing/WorkflowForge.Testing.csproj"; Name = "WorkflowForge.Testing"; Version = $TestingVersion },
+    
+    # Extension packages
+    @{ Path = "./src/extensions/WorkflowForge.Extensions.DependencyInjection/WorkflowForge.Extensions.DependencyInjection.csproj"; Name = "WorkflowForge.Extensions.DependencyInjection"; Version = $DependencyInjectionVersion },
+    @{ Path = "./src/extensions/WorkflowForge.Extensions.Validation/WorkflowForge.Extensions.Validation.csproj"; Name = "WorkflowForge.Extensions.Validation"; Version = $ValidationVersion },
+    @{ Path = "./src/extensions/WorkflowForge.Extensions.Audit/WorkflowForge.Extensions.Audit.csproj"; Name = "WorkflowForge.Extensions.Audit"; Version = $AuditVersion },
     @{ Path = "./src/extensions/WorkflowForge.Extensions.Logging.Serilog/WorkflowForge.Extensions.Logging.Serilog.csproj"; Name = "WorkflowForge.Extensions.Logging.Serilog"; Version = $SerilogVersion },
     @{ Path = "./src/extensions/WorkflowForge.Extensions.Resilience/WorkflowForge.Extensions.Resilience.csproj"; Name = "WorkflowForge.Extensions.Resilience"; Version = $ResilienceVersion },
     @{ Path = "./src/extensions/WorkflowForge.Extensions.Resilience.Polly/WorkflowForge.Extensions.Resilience.Polly.csproj"; Name = "WorkflowForge.Extensions.Resilience.Polly"; Version = $PollyVersion },
@@ -149,59 +161,8 @@ foreach ($package in $packages) {
 }
 
 Write-Host ""
-Write-Host "Processing WorkflowForge Core (dependency package)..." -ForegroundColor Cyan
-$corePackagePath = Join-Path $OutputDir "WorkflowForge.$CoreVersion.nupkg"
-if (Test-Path $corePackagePath) {
-    Write-Host "Core package already created as dependency" -ForegroundColor Green
-    
-    Write-Host "Verifying core package contents..." -ForegroundColor Yellow
-    try {
-        $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([System.Guid]::NewGuid().ToString())
-        New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-        
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($corePackagePath, $tempDir)
-        
-        $hasReadme = Test-Path (Join-Path $tempDir "README.md")
-        $hasIcon = Test-Path (Join-Path $tempDir "icon.png")
-        
-        if ($hasReadme -and $hasIcon) {
-            Write-Host "✓ Core package includes README.md and icon.png" -ForegroundColor Green
-        } else {
-            Write-Warning "Core package missing assets - README: $hasReadme, Icon: $hasIcon"
-        }
-        
-        Remove-Item $tempDir -Recurse -Force -ErrorAction SilentlyContinue
-    }
-    catch {
-        Write-Warning "Could not verify core package contents: $_"
-    }
-    
-    if ($Publish) {
-        Write-Host "Publishing WorkflowForge Core to NuGet..." -ForegroundColor Yellow
-        try {
-            dotnet nuget push $corePackagePath --api-key $NuGetApiKey --source https://api.nuget.org/v3/index.json --timeout 300
-            Write-Host "WorkflowForge Core published successfully!" -ForegroundColor Green
-            $results += @{ Name = "WorkflowForge"; Version = $CoreVersion; Success = $true }
-        }
-        catch {
-            Write-Error "Failed to publish WorkflowForge Core: $_"
-            $results += @{ Name = "WorkflowForge"; Version = $CoreVersion; Success = $false }
-        }
-    } else {
-        Write-Host "Pack-only mode: Skipping publish for WorkflowForge Core" -ForegroundColor Yellow
-        $results += @{ Name = "WorkflowForge"; Version = $CoreVersion; Success = $true }
-    }
-} else {
-    Write-Warning "Core package not found, attempting to build it directly..."
-    $success = PackAndPublish -ProjectPath "./src/core/WorkflowForge/WorkflowForge.csproj" -PackageName "WorkflowForge" -PackageVersion $CoreVersion
-    $results += @{ Name = "WorkflowForge"; Version = $CoreVersion; Success = $success }
-}
-Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
-
-Write-Host ""
 $summary = if ($Publish) { "PUBLISHING" } else { "PACKING" }
-Write-Host (("{0} SUMMARY" -f $summary)) -ForegroundColor Yellow
+Write-Host ("{0} SUMMARY" -f $summary) -ForegroundColor Yellow
 Write-Host "============================================================" -ForegroundColor DarkGray
 
 $successful = ($results | Where-Object { $_.Success }).Count

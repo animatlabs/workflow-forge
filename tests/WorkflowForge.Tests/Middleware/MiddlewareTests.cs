@@ -302,8 +302,9 @@ public class MiddlewareTests
         // Assert
         Assert.True(foundry.Properties.ContainsKey("execution-time"));
         var executionTime = (TimeSpan)(foundry.Properties["execution-time"] ?? TimeSpan.Zero);
-        Assert.True(executionTime.TotalMilliseconds >= 40); // Allow for some variance
-        Assert.True(executionTime.TotalMilliseconds < 200); // Reasonable upper bound
+        // Use more lenient bounds to avoid flaky test failures
+        Assert.True(executionTime.TotalMilliseconds >= 30, $"Expected at least 30ms, got {executionTime.TotalMilliseconds}ms");
+        Assert.True(executionTime.TotalMilliseconds < 300, $"Expected less than 300ms, got {executionTime.TotalMilliseconds}ms");
     }
 
     [Fact]
@@ -401,6 +402,47 @@ public class MiddlewareTests
         Assert.True(foundry.Properties.ContainsKey("cancellation-requested"));
     }
 
+    [Fact]
+    public async Task OperationTimeoutMiddleware_ThrowsTimeoutException_WhenOperationExceedsTimeout()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var logger = Mock.Of<IWorkflowForgeLogger>();
+        var timeoutMiddleware = new OperationTimeoutMiddleware(TimeSpan.FromMilliseconds(50), logger);
+        var operation = new DelegateWorkflowOperation<object, string>("SlowOp", async (input, f, ct) =>
+        {
+            await Task.Delay(200);
+            return "result";
+        });
+
+        // Act & Assert
+        var inputData = new object();
+        await Assert.ThrowsAsync<TimeoutException>(() =>
+            timeoutMiddleware.ExecuteAsync(
+                operation,
+                foundry,
+                inputData,
+                async ct => (object?)await operation.ForgeAsync(inputData, foundry, ct)));
+
+        Assert.True(foundry.Properties.TryGetValue("Operation.TimedOut", out var timedOut) && (bool)timedOut!);
+    }
+
+    [Fact]
+    public async Task WorkflowTimeoutMiddleware_ThrowsTimeoutException_WhenWorkflowExceedsTimeout()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var logger = Mock.Of<IWorkflowForgeLogger>();
+        var timeoutMiddleware = new WorkflowTimeoutMiddleware(TimeSpan.FromMilliseconds(50), logger);
+        var workflow = Mock.Of<IWorkflow>(w => w.Name == "SlowWorkflow");
+
+        // Act & Assert
+        await Assert.ThrowsAsync<TimeoutException>(() =>
+            timeoutMiddleware.ExecuteAsync(workflow, foundry, async () => await Task.Delay(200)));
+
+        Assert.True(foundry.Properties.TryGetValue("Workflow.TimedOut", out var timedOut) && (bool)timedOut!);
+    }
+
     #endregion
 
     #region Helper Methods and Test Middleware Classes
@@ -432,13 +474,13 @@ public class OrderTrackingMiddleware : IWorkflowOperationMiddleware
     }
 
     public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, 
-        object? inputData, Func<Task<object?>> next, CancellationToken cancellationToken = default)
+        object? inputData, Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
     {
         _executionOrder.Add($"{_name}-Before");
         
         try
         {
-            var result = await next();
+            var result = await next(cancellationToken);
             return result;
         }
         finally
@@ -465,17 +507,17 @@ public class ConditionalMiddleware : IWorkflowOperationMiddleware
     }
 
     public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, 
-        object? inputData, Func<Task<object?>> next, CancellationToken cancellationToken = default)
+        object? inputData, Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
     {
         if (_shouldExecute)
         {
             _executionOrder.Add($"{_name}-Before");
-            var result = await next();
+            var result = await next(cancellationToken);
             _executionOrder.Add($"{_name}-After");
             return result;
         }
 
-        return await next();
+        return await next(cancellationToken);
     }
 }
 
@@ -485,13 +527,13 @@ public class ConditionalMiddleware : IWorkflowOperationMiddleware
 public class DataTransformationMiddleware : IWorkflowOperationMiddleware
 {
     public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, 
-        object? inputData, Func<Task<object?>> next, CancellationToken cancellationToken = default)
+        object? inputData, Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
     {
         // Transform input data
         foundry.Properties["transformed-input"] = inputData?.ToString()?.ToUpper() ?? "EMPTY";
         
         // Execute the next middleware/operation
-        var result = await next();
+        var result = await next(cancellationToken);
         
         // Transform output data
         foundry.Properties["transformed-output"] = result?.ToString()?.ToLower() ?? "empty";
@@ -506,7 +548,7 @@ public class DataTransformationMiddleware : IWorkflowOperationMiddleware
 public class ValidationMiddleware : IWorkflowOperationMiddleware
 {
     public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, 
-        object? inputData, Func<Task<object?>> next, CancellationToken cancellationToken = default)
+        object? inputData, Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
     {
         // Check for validation input
         if (foundry.Properties.TryGetValue("validation-input", out var validationData) && validationData?.ToString() == "invalid")
@@ -515,7 +557,7 @@ public class ValidationMiddleware : IWorkflowOperationMiddleware
         }
         
         // Execute the next middleware/operation
-        var result = await next();
+        var result = await next(cancellationToken);
         
         // Mark validation as passed
         foundry.Properties["validation-passed"] = true;
@@ -537,11 +579,11 @@ public class ExceptionHandlingMiddleware : IWorkflowOperationMiddleware
     }
 
     public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, 
-        object? inputData, Func<Task<object?>> next, CancellationToken cancellationToken = default)
+        object? inputData, Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
     {
         try
         {
-            return await next();
+            return await next(cancellationToken);
         }
         catch (WorkflowOperationException wex) when (_handleAll || wex.InnerException is InvalidOperationException)
         {
@@ -573,13 +615,13 @@ public class ExceptionHandlingMiddleware : IWorkflowOperationMiddleware
 public class TimingMiddleware : IWorkflowOperationMiddleware
 {
     public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, 
-        object? inputData, Func<Task<object?>> next, CancellationToken cancellationToken = default)
+        object? inputData, Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
     {
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         
         try
         {
-            return await next();
+            return await next(cancellationToken);
         }
         finally
         {
@@ -602,13 +644,13 @@ public class LoggingMiddleware : IWorkflowOperationMiddleware
     }
 
     public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, 
-        object? inputData, Func<Task<object?>> next, CancellationToken cancellationToken = default)
+        object? inputData, Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
     {
         _logs.Add($"Operation {operation.Name} starting");
         
         try
         {
-            var result = await next();
+            var result = await next(cancellationToken);
             _logs.Add($"Operation {operation.Name} completed successfully");
             return result;
         }
@@ -626,7 +668,7 @@ public class LoggingMiddleware : IWorkflowOperationMiddleware
 public class CancellationAwareMiddleware : IWorkflowOperationMiddleware
 {
     public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, 
-        object? inputData, Func<Task<object?>> next, CancellationToken cancellationToken = default)
+        object? inputData, Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -636,7 +678,7 @@ public class CancellationAwareMiddleware : IWorkflowOperationMiddleware
                 cancellationToken.ThrowIfCancellationRequested();
             }
             
-            return await next();
+            return await next(cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
-using WorkflowForge.Extensions.Persistence;
 using WorkflowForge.Extensions.Persistence.Recovery;
+using WorkflowForge.Extensions.Persistence.Recovery.Options;
 using WorkflowForge.Extensions.Resilience;
 using Xunit;
 using PersistenceAbstractions = global::WorkflowForge.Extensions.Persistence.Abstractions;
@@ -80,7 +80,7 @@ public class ResilienceRecoverySampleTests
                 provider,
                 key.foundryKey,
                 key.workflowKey,
-                new RecoveryPolicy { MaxAttempts = 2, BaseDelay = TimeSpan.FromMilliseconds(10), UseExponentialBackoff = true });
+                new RecoveryMiddlewareOptions { MaxRetryAttempts = 2, BaseDelay = TimeSpan.FromMilliseconds(10), UseExponentialBackoff = true });
 
             Assert.True(f2.GetPropertyOrDefault("done", false));
             // Transient window should have elapsed across resume, so completion expected
@@ -110,7 +110,9 @@ public class ResilienceRecoverySampleTests
         }
 
         public bool HasSnapshot(Guid foundryKey, Guid workflowKey) => _store.ContainsKey((foundryKey, workflowKey));
+
         public int Count => _store.Count;
+
         public (Guid foundryKey, Guid workflowKey)? FirstKey()
         {
             foreach (var kv in _store)
@@ -131,5 +133,3 @@ public class ResilienceRecoverySampleTests
         return new Guid(guidBytes);
     }
 }
-
-

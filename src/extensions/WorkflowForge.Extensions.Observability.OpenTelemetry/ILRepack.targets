@@ -1,0 +1,27 @@
+<Project>
+  <Target Name="WorkflowForgeILRepack" AfterTargets="Build" Condition="$(Configuration.Contains('Release'))">
+    <Message Importance="high" Text="ILRepack: merging OpenTelemetry dependencies" />
+    <ItemGroup>
+      <InputAssemblies Include="$(OutputPath)$(TargetName)$(TargetExt)" />
+      <InputAssemblies Include="$(OutputPath)OpenTelemetry.dll" Condition="Exists('$(OutputPath)OpenTelemetry.dll')" />
+      <InputAssemblies Include="$(OutputPath)OpenTelemetry.Api.dll" Condition="Exists('$(OutputPath)OpenTelemetry.Api.dll')" />
+      <InputAssemblies Include="$(OutputPath)OpenTelemetry.Api.ProviderBuilderExtensions.dll" Condition="Exists('$(OutputPath)OpenTelemetry.Api.ProviderBuilderExtensions.dll')" />
+    </ItemGroup>
+
+    <ILRepack
+      InputAssemblies="@(InputAssemblies)"
+      OutputFile="$(OutputPath)$(TargetName)$(TargetExt)"
+      LibraryPath="$(OutputPath)"
+      TargetKind="SameAsPrimaryAssembly"
+      Internalize="true"
+      Parallel="true"
+      DebugInfo="false" />
+  </Target>
+
+  <Target Name="ILRepackCleanup" AfterTargets="WorkflowForgeILRepack" Condition="$(Configuration.Contains('Release'))">
+    <Message Importance="high" Text="ILRepack: cleaning OpenTelemetry dependency DLLs" />
+    <Delete Files="$(OutputPath)OpenTelemetry.dll" Condition="Exists('$(OutputPath)OpenTelemetry.dll')" />
+    <Delete Files="$(OutputPath)OpenTelemetry.Api.dll" Condition="Exists('$(OutputPath)OpenTelemetry.Api.dll')" />
+    <Delete Files="$(OutputPath)OpenTelemetry.Api.ProviderBuilderExtensions.dll" Condition="Exists('$(OutputPath)OpenTelemetry.Api.ProviderBuilderExtensions.dll')" />
+  </Target>
+</Project>

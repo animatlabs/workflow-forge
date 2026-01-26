@@ -1,8 +1,8 @@
-using System;
-using System.Collections.Generic;
 using Serilog.Context;
 using Serilog.Core;
 using Serilog.Core.Enrichers;
+using System;
+using System.Collections.Generic;
 using WorkflowForge.Abstractions;
 using ILogger = Serilog.ILogger;
 
@@ -11,7 +11,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog
     /// <summary>
     /// Serilog adapter for WorkflowForge logging that implements IWorkflowForgeLogger.
     /// </summary>
-    public sealed class SerilogWorkflowForgeLogger : IWorkflowForgeLogger
+    internal sealed class SerilogWorkflowForgeLogger : IWorkflowForgeLogger
     {
         private readonly ILogger _logger;
 

@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using WorkflowForge.Configurations;
 using WorkflowForge.Extensions.Observability.Performance.Configurations;
-using WorkflowForge.Extensions.Resilience.Polly.Configurations;
+using WorkflowForge.Extensions.Resilience.Polly.Options;
+using WorkflowForge.Options;
 using WorkflowForge.Samples.BasicConsole.Samples;
 
 namespace WorkflowForge.Samples.BasicConsole;
@@ -24,7 +24,7 @@ public static class Program
         ["1"] = new HelloWorldSample(),
         ["2"] = new DataPassingSample(),
         ["3"] = new MultipleOutcomesSample(),
-        ["4"] = new InlineOperationsSample(),
+        ["4"] = new ClassBasedOperationsSample(),
 
         // Control Flow Samples (5-8)
         ["5"] = new ConditionalWorkflowSample(),
@@ -38,7 +38,7 @@ public static class Program
         ["11"] = new WorkflowEventsSample(),
         ["12"] = new MiddlewareSample(),
 
-        // Extension Samples (13-18)
+        // Extension Samples (13-18 + 23-24)
         ["13"] = new SerilogIntegrationSample(),
         ["14"] = new PollyResilienceSample(),
         ["15"] = new OpenTelemetryObservabilitySample(),
@@ -47,6 +47,19 @@ public static class Program
         ["18"] = new PersistenceSample(),
         ["21"] = new RecoveryOnlySample(),
         ["22"] = new ResilienceRecoverySample(),
+        ["23"] = new ValidationSample(),
+        ["24"] = new AuditSample(),
+        ["25"] = new ConfigurationSample(),
+
+        // Onboarding Samples (26-33)
+        ["26"] = new DependencyInjectionSample(),
+        ["27"] = new WorkflowMiddlewareSample(),
+        ["28"] = new CancellationAndTimeoutSample(),
+        ["29"] = new ContinueOnErrorSample(),
+        ["30"] = new CompensationBehaviorSample(),
+        ["31"] = new FoundryReuseSample(),
+        ["32"] = new OutputChainingSample(),
+        ["33"] = new ServiceProviderResolutionSample(),
 
         // Advanced Samples (19-20)
         ["19"] = new ComprehensiveIntegrationSample(),
@@ -67,8 +80,8 @@ public static class Program
         // Setup services
         var services = new ServiceCollection();
         services.AddSingleton(Configuration);
-        services.Configure<WorkflowForgeConfiguration>(Configuration.GetSection(WorkflowForgeConfiguration.SectionName));
-        services.Configure<PollySettings>(Configuration.GetSection("WorkflowForge:Polly"));
+        services.Configure<WorkflowForgeOptions>(Configuration.GetSection(WorkflowForgeOptions.DefaultSectionName));
+        services.Configure<PollyMiddlewareOptions>(Configuration.GetSection("WorkflowForge:Extensions:Polly"));
         services.Configure<PerformanceSettings>(Configuration.GetSection("WorkflowForge:Performance"));
         services.AddLogging(builder =>
         {
@@ -88,8 +101,11 @@ public static class Program
         catch (Exception ex)
         {
             Console.WriteLine($"\nERROR: {ex.Message}");
-            Console.WriteLine("Press any key to exit...");
-            Console.ReadKey();
+            if (Environment.UserInteractive && !Console.IsInputRedirected)
+            {
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey();
+            }
         }
     }
 
@@ -115,7 +131,7 @@ public static class Program
             Console.WriteLine("  1.  Hello World              - Simple workflow demonstration");
             Console.WriteLine("  2.  Data Passing             - Pass data between operations");
             Console.WriteLine("  3.  Multiple Outcomes        - Workflows with different results");
-            Console.WriteLine("  4.  Inline Operations        - Quick operations with lambdas");
+            Console.WriteLine("  4.  Class-Based Operations  - Preferred class-based operations");
             Console.WriteLine();
             Console.WriteLine("CONTROL FLOW:");
             Console.WriteLine("  5.  Conditional Workflows    - If/else logic in workflows");
@@ -138,6 +154,19 @@ public static class Program
             Console.WriteLine("  18. Persistence (BYO Storage) - Resumable workflows");
             Console.WriteLine("  21. Recovery Only            - Resume + retry without re-running completed steps");
             Console.WriteLine("  22. Recovery + Resilience    - Unified resume plus retry via Resilience middleware");
+            Console.WriteLine("  23. Validation              - DataAnnotations validation");
+            Console.WriteLine("  24. Audit Logging           - Comprehensive audit trails");
+            Console.WriteLine("  25. Configuration-Driven    - Enable/disable via config");
+            Console.WriteLine();
+            Console.WriteLine("ONBOARDING & BEST PRACTICES:");
+            Console.WriteLine("  26. Dependency Injection    - Configure via DI and run with IWorkflowSmith");
+            Console.WriteLine("  27. Workflow Middleware     - Workflow-level middleware behavior");
+            Console.WriteLine("  28. Cancellation + Timeout  - Cancellation tokens and timeout middleware");
+            Console.WriteLine("  29. Continue On Error       - Aggregate errors and continue execution");
+            Console.WriteLine("  30. Compensation Behaviors  - Compensation success vs failures");
+            Console.WriteLine("  31. Foundry Reuse            - Reuse foundry across workflows");
+            Console.WriteLine("  32. Output Chaining          - Operation output to next input");
+            Console.WriteLine("  33. Service Provider Access  - Resolve services inside operations");
             Console.WriteLine();
             Console.WriteLine("ADVANCED:");
             Console.WriteLine("  19. Comprehensive Demo      - Full-featured example");
@@ -187,7 +216,7 @@ public static class Program
                     else
                     {
                         Console.WriteLine($"Invalid choice: {input}");
-                        Console.WriteLine("Please enter a number (1-22), A for all, B for basic, or Q to quit.");
+                        Console.WriteLine("Please enter a number (1-33), A for all, B for basic, or Q to quit.");
                     }
                     break;
             }
@@ -195,8 +224,11 @@ public static class Program
             if (running && input != "A" && input != "B")
             {
                 Console.WriteLine();
-                Console.WriteLine("Press any key to return to menu...");
-                Console.ReadKey();
+                if (Environment.UserInteractive && !Console.IsInputRedirected)
+                {
+                    Console.WriteLine("Press any key to return to menu...");
+                    Console.ReadKey();
+                }
                 Console.Clear();
                 PrintHeader();
             }
@@ -217,8 +249,11 @@ public static class Program
 
         Console.WriteLine("All samples completed successfully.");
         Console.WriteLine();
-        Console.WriteLine("Press any key to return to menu...");
-        Console.ReadKey();
+        if (Environment.UserInteractive && !Console.IsInputRedirected)
+        {
+            Console.WriteLine("Press any key to return to menu...");
+            Console.ReadKey();
+        }
         Console.Clear();
         PrintHeader();
     }
@@ -240,8 +275,11 @@ public static class Program
 
         Console.WriteLine("Basic samples completed successfully.");
         Console.WriteLine();
-        Console.WriteLine("Press any key to return to menu...");
-        Console.ReadKey();
+        if (Environment.UserInteractive && !Console.IsInputRedirected)
+        {
+            Console.WriteLine("Press any key to return to menu...");
+            Console.ReadKey();
+        }
         Console.Clear();
         PrintHeader();
     }

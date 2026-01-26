@@ -24,15 +24,17 @@ namespace WorkflowForge
             string? description,
             string version,
             IList<IWorkflowOperation> operations,
-            IDictionary<string, object?> properties)
+            IDictionary<string, object?> properties,
+            ISystemTimeProvider? timeProvider = null)
         {
+            var time = timeProvider ?? SystemTimeProvider.Instance;
             Id = Guid.NewGuid();
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Description = description;
             Version = version ?? throw new ArgumentNullException(nameof(version));
             Operations = new List<IWorkflowOperation>(operations ?? throw new ArgumentNullException(nameof(operations)));
             Properties = new Dictionary<string, object?>(properties ?? throw new ArgumentNullException(nameof(properties)));
-            CreatedAt = DateTimeOffset.UtcNow;
+            CreatedAt = time.UtcNow;
             SupportsRestore = operations.All(op => op.SupportsRestore);
         }
 

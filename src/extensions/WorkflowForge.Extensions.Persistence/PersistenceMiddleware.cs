@@ -51,7 +51,7 @@ namespace WorkflowForge.Extensions.Persistence
             IWorkflowOperation operation,
             IWorkflowFoundry foundry,
             object? inputData,
-            Func<Task<object?>> next,
+            Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default)
         {
             if (foundry.CurrentWorkflow is { } wf)
@@ -79,7 +79,7 @@ namespace WorkflowForge.Extensions.Persistence
                 }
             }
 
-            var result = await next().ConfigureAwait(false);
+            var result = await next(cancellationToken).ConfigureAwait(false);
 
             if (foundry.CurrentWorkflow is { } workflow)
             {

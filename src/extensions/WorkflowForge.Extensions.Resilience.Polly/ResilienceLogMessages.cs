@@ -4,7 +4,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
     /// Resilience-specific log messages for the Polly extension.
     /// These messages complement the core WorkflowLogMessages with resilience patterns.
     /// </summary>
-    public static class ResilienceLogMessages
+    internal static class ResilienceLogMessages
     {
         #region Policy Configuration
 

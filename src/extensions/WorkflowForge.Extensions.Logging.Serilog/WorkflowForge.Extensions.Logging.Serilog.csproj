@@ -33,16 +33,19 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <DebugType>embedded</DebugType>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <ILRepackTargetsFile>$(MSBuildThisFileDirectory)ILRepack.targets</ILRepackTargetsFile>
     
     <!-- Documentation -->
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
-Initial release v1.0.0 of WorkflowForge Serilog Extension:
-- Professional structured logging with Serilog
-- Rich context and correlation support
-- Enterprise-ready log formatting and enrichment
-- Seamless integration with WorkflowForge core
+Major release v2.0.0:
+- Dependencies internalized via ILRepack (where applicable)
+- Users can avoid third-party version conflicts
+- ISystemTimeProvider integrated for testability
+- Enhanced documentation and samples
+- Enterprise-ready for production workflows
     </PackageReleaseNotes>
   </PropertyGroup>
 
@@ -52,13 +55,15 @@ Initial release v1.0.0 of WorkflowForge Serilog Extension:
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Serilog" Version="4.3.0" />
-    <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.2" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+    <PackageReference Include="Serilog" Version="4.3.0" PrivateAssets="all" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" PrivateAssets="all" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" PrivateAssets="all" />
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.44.1" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.102" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\core\WorkflowForge\WorkflowForge.csproj" />
   </ItemGroup>
 
-</Project> 
+</Project>

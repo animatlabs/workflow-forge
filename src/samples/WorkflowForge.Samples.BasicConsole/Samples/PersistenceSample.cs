@@ -1,7 +1,8 @@
+using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Persistence;
-using WorkflowForge.Extensions.Persistence.Abstractions;
 using WorkflowForge.Extensions.Persistence.Recovery;
+using WorkflowForge.Extensions.Persistence.Recovery.Options;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -16,31 +17,9 @@ public class PersistenceSample : ISample
 
         var workflow = WorkflowForge.CreateWorkflow()
             .WithName("PersistenceDemo")
-            .AddOperation("Step1", async (foundry, ct) =>
-            {
-                foundry.Logger.LogInformation("Executing Step 1");
-                foundry.SetProperty("progress", 1);
-                await Task.Delay(50, ct);
-            })
-            .AddOperation("Step2", async (foundry, ct) =>
-            {
-                foundry.Logger.LogInformation("Executing Step 2");
-                foundry.SetProperty("progress", 2);
-                await Task.Delay(50, ct);
-                // Simulate multiple failures before success to demonstrate recovery retries
-                var failures = foundry.GetPropertyOrDefault("__crashCount__", 0);
-                if (failures < 2)
-                {
-                    foundry.SetProperty("__crashCount__", failures + 1);
-                    throw new InvalidOperationException($"Simulated crash after Step 2 attempt #{failures + 1}");
-                }
-            })
-            .AddOperation("Step3", async (foundry, ct) =>
-            {
-                foundry.Logger.LogInformation("Executing Step 3");
-                foundry.SetProperty("progress", 3);
-                await Task.Delay(50, ct);
-            })
+            .AddOperation(new Step1Operation())
+            .AddOperation(new Step2Operation())
+            .AddOperation(new Step3Operation())
             .Build();
 
         var fileProvider = new FilePersistenceProvider(Path.Combine(AppContext.BaseDirectory, "checkpoints"));
@@ -74,7 +53,7 @@ public class PersistenceSample : ISample
                 fileProvider,
                 foundryKey,
                 workflowKey,
-                new RecoveryPolicy { MaxAttempts = 5, BaseDelay = TimeSpan.FromMilliseconds(50), UseExponentialBackoff = true });
+                new RecoveryMiddlewareOptions { MaxRetryAttempts = 5, BaseDelay = TimeSpan.FromMilliseconds(50), UseExponentialBackoff = true });
             Console.WriteLine($"After resume: progress = {foundryResume.GetPropertyOrDefault<int>("progress")}");
         }
     }
@@ -87,6 +66,77 @@ public class PersistenceSample : ISample
         var guidBytes = new byte[16];
         Array.Copy(hash, guidBytes, 16);
         return new Guid(guidBytes);
+    }
+
+    private sealed class Step1Operation : IWorkflowOperation
+    {
+        public Guid Id { get; } = Guid.NewGuid();
+        public string Name => "Step1";
+        public bool SupportsRestore => false;
+
+        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        {
+            foundry.Logger.LogInformation("Executing Step 1");
+            foundry.SetProperty("progress", 1);
+            await Task.Delay(50, cancellationToken);
+            return inputData;
+        }
+
+        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public void Dispose()
+        { }
+    }
+
+    private sealed class Step2Operation : IWorkflowOperation
+    {
+        public Guid Id { get; } = Guid.NewGuid();
+        public string Name => "Step2";
+        public bool SupportsRestore => false;
+
+        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        {
+            foundry.Logger.LogInformation("Executing Step 2");
+            foundry.SetProperty("progress", 2);
+            await Task.Delay(50, cancellationToken);
+
+            var failures = foundry.GetPropertyOrDefault("__crashCount__", 0);
+            if (failures < 2)
+            {
+                foundry.SetProperty("__crashCount__", failures + 1);
+                throw new InvalidOperationException($"Simulated crash after Step 2 attempt #{failures + 1}");
+            }
+
+            return inputData;
+        }
+
+        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public void Dispose()
+        { }
+    }
+
+    private sealed class Step3Operation : IWorkflowOperation
+    {
+        public Guid Id { get; } = Guid.NewGuid();
+        public string Name => "Step3";
+        public bool SupportsRestore => false;
+
+        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        {
+            foundry.Logger.LogInformation("Executing Step 3");
+            foundry.SetProperty("progress", 3);
+            await Task.Delay(50, cancellationToken);
+            return inputData;
+        }
+
+        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public void Dispose()
+        { }
     }
 }
 

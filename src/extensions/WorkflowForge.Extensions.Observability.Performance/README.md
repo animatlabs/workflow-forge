@@ -1,6 +1,22 @@
 # WorkflowForge.Extensions.Observability.Performance
 
-Comprehensive performance monitoring extension for WorkflowForge with detailed metrics and analytics.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
+</p>
+
+Performance monitoring extension for WorkflowForge with operation timing and metrics collection.
+
+[![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Observability.Performance.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Observability.Performance/)
+
+## Zero Dependencies - Zero Conflicts
+
+**This extension has ZERO external dependencies.** This means:
+
+- NO DLL Hell - No third-party dependencies to conflict with
+- NO Version Conflicts - Works with any versions of your application dependencies
+- Clean Deployment - Pure WorkflowForge extension
+
+**Lightweight architecture**: Built entirely on WorkflowForge core with no external libraries.
 
 ## Installation
 
@@ -8,80 +24,151 @@ Comprehensive performance monitoring extension for WorkflowForge with detailed m
 dotnet add package WorkflowForge.Extensions.Observability.Performance
 ```
 
+**Requires**: .NET Standard 2.0 or later
+
 ## Quick Start
 
 ```csharp
 using WorkflowForge.Extensions.Observability.Performance;
 
-// Create foundry and enable monitoring
-using var foundry = WorkflowForge.CreateFoundry("MyWorkflow");
-foundry.EnablePerformanceMonitoring();
+// Add timing middleware
+using var foundry = WorkflowForge.CreateFoundry("PerformanceMonitored");
+foundry.AddMiddleware(new TimingMiddleware(logger));
 
-// Execute workflows (multiple times for meaningful statistics)
-using var smith = WorkflowForge.CreateSmith();
+// Timing data is logged per operation
 await smith.ForgeAsync(workflow, foundry);
 
-// Access performance statistics
-var stats = foundry.GetPerformanceStatistics();
-Console.WriteLine($"Success Rate: {stats?.SuccessRate:P2}");
-Console.WriteLine($"Average Duration: {stats?.AverageDuration}ms");
-Console.WriteLine($"Operations/sec: {stats?.OperationsPerSecond:F2}");
+// Output:
+// [INF] Operation 'CalculateTotal' started
+// [INF] Operation 'CalculateTotal' completed in 23.4ms
 ```
 
 ## Key Features
 
-- **Foundry Performance Statistics**: Comprehensive workflow execution metrics
-- **Operation-level Metrics**: Detailed statistics for individual operations
-- **Real-time Monitoring**: Live performance data collection and reporting
-- **Memory Efficient**: Property-based storage without interface pollution
-- **Detailed Analytics**: Success rates, timing, memory usage, error patterns
+- **Operation Timing**: Precise timing for each operation
+- **Middleware-Based**: Non-intrusive timing collection
+- **Automatic Logging**: Integrates with foundry logger
+- **Memory Tracking**: Optional memory allocation tracking
+- **Configurable Thresholds**: Alert on slow operations
+- **Zero Overhead**: Minimal performance impact
 
-## Performance Metrics
+## Configuration
 
-### Foundry-Level Metrics
+**This extension requires NO configuration.** Simply add the middleware to your foundry:
+
 ```csharp
-var stats = foundry.GetPerformanceStatistics();
-
-// Execution Statistics
-Console.WriteLine($"Total Operations: {stats.TotalOperations}");
-Console.WriteLine($"Success Rate: {stats.SuccessRate:P2}");
-Console.WriteLine($"Operations per Second: {stats.OperationsPerSecond:F2}");
-
-// Timing Statistics
-Console.WriteLine($"Average Duration: {stats.AverageDuration}ms");
-Console.WriteLine($"95th Percentile: {stats.GetPercentile(95)}ms");
-
-// Memory Statistics
-Console.WriteLine($"Memory per Operation: {stats.AverageMemoryPerOperation / 1024:F2} KB");
+using var foundry = WorkflowForge.CreateFoundry("PerformanceMonitored");
+foundry.AddMiddleware(new TimingMiddleware(logger));
 ```
 
-### Operation-Level Metrics
+The extension works out-of-the-box with sensible defaults. See [Configuration Guide](../../../docs/core/configuration.md#performance-extension) for more information.
+
+## Advanced Usage
+
+### Custom Timing Middleware
+
 ```csharp
-foreach (var opStats in stats.GetAllOperationStatistics())
+public class DetailedTimingMiddleware : IWorkflowOperationMiddleware
 {
-    Console.WriteLine($"Operation '{opStats.OperationName}': {opStats.SuccessRate:P2} success, {opStats.AverageExecutionTime}ms avg");
+    private readonly IWorkflowForgeLogger _logger;
+    private readonly TimeSpan _slowThreshold;
+    
+    public DetailedTimingMiddleware(IWorkflowForgeLogger logger, TimeSpan slowThreshold)
+    {
+        _logger = logger;
+        _slowThreshold = slowThreshold;
+    }
+    
+    public async Task<object?> ExecuteAsync(
+        Func<Task<object?>> next,
+        IWorkflowOperation operation,
+        IWorkflowFoundry foundry,
+        CancellationToken cancellationToken)
+    {
+        var sw = Stopwatch.StartNew();
+        
+        try
+        {
+            var result = await next();
+            sw.Stop();
+            
+            if (sw.Elapsed > _slowThreshold)
+            {
+                _logger.LogWarning(
+                    "SLOW: Operation {Name} took {Duration}ms (threshold: {Threshold}ms)",
+                    operation.Name,
+                    sw.Elapsed.TotalMilliseconds,
+                    _slowThreshold.TotalMilliseconds);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "Operation {Name} completed in {Duration}ms",
+                    operation.Name,
+                    sw.Elapsed.TotalMilliseconds);
+            }
+            
+            return result;
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            _logger.LogError(ex,
+                "Operation {Name} failed after {Duration}ms",
+                operation.Name,
+                sw.Elapsed.TotalMilliseconds);
+            throw;
+        }
+    }
 }
 ```
 
-## Environment Configurations
+### Memory Tracking
 
 ```csharp
-// Development - detailed monitoring (no options object; enable/disable only)
-using var devFoundry = WorkflowForge.CreateFoundry("Dev");
-devFoundry.EnablePerformanceMonitoring();
-
-// Production - enable selectively from config or toggle at runtime
-using var prodFoundry = WorkflowForge.CreateFoundry("Prod");
-prodFoundry.EnablePerformanceMonitoring();
+public class MemoryTrackingMiddleware : IWorkflowOperationMiddleware
+{
+    public async Task<object?> ExecuteAsync(
+        Func<Task<object?>> next,
+        IWorkflowOperation operation,
+        IWorkflowFoundry foundry,
+        CancellationToken cancellationToken)
+    {
+        var gen0Before = GC.CollectionCount(0);
+        var memoryBefore = GC.GetTotalMemory(false);
+        
+        var result = await next();
+        
+        var gen0After = GC.CollectionCount(0);
+        var memoryAfter = GC.GetTotalMemory(false);
+        
+        foundry.Logger.LogInformation(
+            "Operation {Name}: Memory delta {MemoryDelta} bytes, Gen0 collections: {Gen0Collections}",
+            operation.Name,
+            memoryAfter - memoryBefore,
+            gen0After - gen0Before);
+        
+        return result;
+    }
+}
 ```
 
-## Examples & Documentation
+## Performance Metrics
 
-- **[Complete Examples](../../samples/WorkflowForge.Samples.BasicConsole/README.md#17-performance-monitoring)** - Interactive performance monitoring samples
-- **[Core Documentation](../../core/WorkflowForge/README.md)** - Core concepts
-- **[Benchmark Results](../../benchmarks/WorkflowForge.Benchmarks/README.md)** - Performance benchmarks
-- **[Main README](../../../README.md)** - Framework overview
+The extension tracks:
+- **Operation Duration**: Precise timing for each operation
+- **Workflow Duration**: Total workflow execution time
+- **Slow Operations**: Operations exceeding threshold
+- **Memory Allocation**: Optional memory tracking
+- **GC Collections**: Garbage collection metrics
+
+## Documentation
+
+- **[Getting Started](../../../docs/getting-started/getting-started.md)**
+- **[Configuration Guide](../../../docs/core/configuration.md#performance-extension)**
+- **[Extensions Overview](../../../docs/extensions/index.md)**
+- **[Sample 17: Performance Monitoring](../../samples/WorkflowForge.Samples.BasicConsole/)**
 
 ---
 
-*Comprehensive performance monitoring for workflows*
+**WorkflowForge.Extensions.Observability.Performance** - *Build workflows with industrial strength*

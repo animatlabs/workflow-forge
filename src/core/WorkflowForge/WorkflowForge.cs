@@ -2,9 +2,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Configurations;
 using WorkflowForge.Exceptions;
 using WorkflowForge.Loggers;
+using WorkflowForge.Options;
 
 namespace WorkflowForge
 {
@@ -31,50 +31,40 @@ namespace WorkflowForge
         /// <summary>
         /// Creates a new workflow builder for defining and constructing workflows.
         /// </summary>
+        /// <param name="workflowName">Optional name for the workflow. If not provided, a name can be set later using WithName().</param>
         /// <param name="serviceProvider">Optional service provider for dependency injection. Can be null for standalone usage.</param>
         /// <returns>A new workflow builder instance ready for configuration.</returns>
+        /// <exception cref="ArgumentException">Thrown when workflowName is provided but is empty or whitespace.</exception>
         /// <exception cref="InvalidOperationException">Thrown when the builder cannot be created due to system constraints.</exception>
         /// <example>
         /// <code>
+        /// // Without name (set later)
         /// var builder = WorkflowForge.CreateWorkflow();
         /// var workflow = builder
         ///     .WithName("ProcessOrder")
-        ///     .AddStep("ValidateOrder", order => ValidateOrder(order))
-        ///     .AddStep("ProcessPayment", order => ProcessPayment(order))
+        ///     .AddOperation("ValidateOrder", async (f, ct) => ValidateOrder())
         ///     .Build();
+        ///
+        /// // With name
+        /// var builder2 = WorkflowForge.CreateWorkflow("ProcessPayment");
         /// </code>
         /// </example>
-        public static WorkflowBuilder CreateWorkflow(IServiceProvider? serviceProvider = null)
+        public static WorkflowBuilder CreateWorkflow(string? workflowName = null, IServiceProvider? serviceProvider = null)
         {
-            try
-            {
-                return new WorkflowBuilder(serviceProvider);
-            }
-            catch (Exception ex)
-            {
-                throw new WorkflowForgeException("Failed to create workflow builder. Ensure the system has sufficient resources.", ex);
-            }
-        }
+            if (workflowName != null && string.IsNullOrWhiteSpace(workflowName))
+                throw new ArgumentException("Workflow name cannot be empty or whitespace.", nameof(workflowName));
 
-        /// <summary>
-        /// Creates a new workflow builder with a specified name and optional service provider.
-        /// </summary>
-        /// <param name="workflowName">The name of the workflow being built. Cannot be null or empty.</param>
-        /// <param name="serviceProvider">Optional service provider for dependency injection. Can be null for standalone usage.</param>
-        /// <returns>A new workflow builder instance configured with the specified name.</returns>
-        /// <exception cref="ArgumentException">Thrown when workflowName is null, empty, or whitespace.</exception>
-        /// <exception cref="InvalidOperationException">Thrown when the builder cannot be created due to system constraints.</exception>
-        public static WorkflowBuilder CreateWorkflow(string workflowName, IServiceProvider? serviceProvider = null)
-        {
-            if (string.IsNullOrWhiteSpace(workflowName))
-                throw new ArgumentException("Workflow name cannot be null, empty, or whitespace.", nameof(workflowName));
             try
             {
-                return (WorkflowBuilder)new WorkflowBuilder(serviceProvider).WithName(workflowName);
+                var builder = new WorkflowBuilder(serviceProvider);
+                return workflowName != null ? (WorkflowBuilder)builder.WithName(workflowName) : builder;
             }
             catch (Exception ex) when (!(ex is ArgumentException))
             {
-                throw new WorkflowForgeException($"Failed to create workflow builder for '{workflowName}'. Ensure the system has sufficient resources.", ex);
+                var message = workflowName != null
+                    ? $"Failed to create workflow builder for '{workflowName}'. Ensure the system has sufficient resources."
+                    : "Failed to create workflow builder. Ensure the system has sufficient resources.";
+                throw new WorkflowForgeException(message, ex);
             }
         }
 
@@ -82,95 +72,43 @@ namespace WorkflowForge
         /// Creates a foundry for workflow execution.
         /// </summary>
         /// <param name="workflowName">The name of the workflow.</param>
+        /// <param name="logger">Optional logger for the foundry. If null, a null logger will be used.</param>
+        /// <param name="initialProperties">Optional initial properties for the foundry. If null, an empty dictionary will be created.</param>
+        /// <param name="options">Optional execution options for the foundry.</param>
         /// <returns>A new foundry instance.</returns>
-        public static IWorkflowFoundry CreateFoundry(string workflowName)
+        /// <exception cref="ArgumentException">Thrown when workflowName is null, empty, or whitespace.</exception>
+        /// <example>
+        /// <code>
+        /// // Simple foundry
+        /// var foundry1 = WorkflowForge.CreateFoundry("MyWorkflow");
+        ///
+        /// // With logger
+        /// var foundry2 = WorkflowForge.CreateFoundry("MyWorkflow", logger);
+        ///
+        /// // With initial properties
+        /// var properties = new Dictionary&lt;string, object?&gt; { ["UserId"] = "123" };
+        /// var foundry3 = WorkflowForge.CreateFoundry("MyWorkflow", null, properties);
+        ///
+        /// // With both
+        /// var foundry4 = WorkflowForge.CreateFoundry("MyWorkflow", logger, properties);
+        /// </code>
+        /// </example>
+        public static IWorkflowFoundry CreateFoundry(
+            string workflowName,
+            IWorkflowForgeLogger? logger = null,
+            IDictionary<string, object?>? initialProperties = null,
+            WorkflowForgeOptions? options = null)
         {
             if (string.IsNullOrWhiteSpace(workflowName))
                 throw new ArgumentException("Workflow name cannot be null, empty, or whitespace.", nameof(workflowName));
 
-            return new WorkflowFoundry(
-                Guid.NewGuid(),
-                new ConcurrentDictionary<string, object?>(),
-                FoundryConfiguration.Minimal());
-        }
+            var properties = initialProperties != null
+                ? new ConcurrentDictionary<string, object?>(initialProperties)
+                : new ConcurrentDictionary<string, object?>();
 
-        /// <summary>
-        /// Creates a foundry for workflow execution with a logger.
-        /// </summary>
-        /// <param name="workflowName">The name of the workflow.</param>
-        /// <param name="logger">The logger to use.</param>
-        /// <returns>A new foundry instance.</returns>
-        public static IWorkflowFoundry CreateFoundry(string workflowName, IWorkflowForgeLogger logger)
-        {
-            if (string.IsNullOrWhiteSpace(workflowName))
-                throw new ArgumentException("Workflow name cannot be null, empty, or whitespace.", nameof(workflowName));
-
-            return new WorkflowFoundry(
-                Guid.NewGuid(),
-                new ConcurrentDictionary<string, object?>(),
-                logger);
-        }
-
-        /// <summary>
-        /// Creates a foundry for workflow execution with configuration.
-        /// </summary>
-        /// <param name="workflowName">The name of the workflow.</param>
-        /// <param name="configuration">The foundry configuration.</param>
-        /// <returns>A new foundry instance.</returns>
-        public static IWorkflowFoundry CreateFoundry(string workflowName, FoundryConfiguration configuration)
-        {
-            if (string.IsNullOrWhiteSpace(workflowName))
-                throw new ArgumentException("Workflow name cannot be null, empty, or whitespace.", nameof(workflowName));
-            if (configuration == null)
-                throw new ArgumentNullException(nameof(configuration));
-
-            return new WorkflowFoundry(
-                Guid.NewGuid(),
-                new ConcurrentDictionary<string, object?>(),
-                configuration);
-        }
-
-        /// <summary>
-        /// Creates a foundry for workflow execution with initial properties.
-        /// </summary>
-        /// <param name="workflowName">The name of the workflow.</param>
-        /// <param name="initialProperties">The initial properties for the foundry.</param>
-        /// <returns>A new foundry instance.</returns>
-        public static IWorkflowFoundry CreateFoundryWithData(string workflowName, IDictionary<string, object?> initialProperties)
-        {
-            if (string.IsNullOrWhiteSpace(workflowName))
-                throw new ArgumentException("Workflow name cannot be null, empty, or whitespace.", nameof(workflowName));
-            if (initialProperties == null)
-                throw new ArgumentNullException(nameof(initialProperties));
-
-            var properties = new ConcurrentDictionary<string, object?>(initialProperties);
-            return new WorkflowFoundry(
-                Guid.NewGuid(),
-                properties,
-                FoundryConfiguration.Minimal());
-        }
-
-        /// <summary>
-        /// Creates a foundry for workflow execution with initial properties and configuration.
-        /// </summary>
-        /// <param name="workflowName">The name of the workflow.</param>
-        /// <param name="initialProperties">The initial properties for the foundry.</param>
-        /// <param name="configuration">The foundry configuration.</param>
-        /// <returns>A new foundry instance.</returns>
-        public static IWorkflowFoundry CreateFoundryWithData(string workflowName, IDictionary<string, object?> initialProperties, FoundryConfiguration configuration)
-        {
-            if (string.IsNullOrWhiteSpace(workflowName))
-                throw new ArgumentException("Workflow name cannot be null, empty, or whitespace.", nameof(workflowName));
-            if (initialProperties == null)
-                throw new ArgumentNullException(nameof(initialProperties));
-            if (configuration == null)
-                throw new ArgumentNullException(nameof(configuration));
-
-            var properties = new ConcurrentDictionary<string, object?>(initialProperties);
-            return new WorkflowFoundry(
-                Guid.NewGuid(),
-                properties,
-                configuration);
+            return logger != null
+                ? new WorkflowFoundry(Guid.NewGuid(), properties, logger, options: options)
+                : new WorkflowFoundry(Guid.NewGuid(), properties, options: options);
         }
 
         /// <summary>
@@ -179,25 +117,36 @@ namespace WorkflowForge
         /// </summary>
         /// <param name="logger">Optional logger for the smith. If null, a null logger will be used.</param>
         /// <param name="serviceProvider">Optional service provider for dependency injection.</param>
+        /// <param name="options">Optional WorkflowForge configuration options.</param>
         /// <returns>A new workflow smith instance ready for workflow execution.</returns>
         /// <exception cref="InvalidOperationException">Thrown when the smith cannot be created due to system constraints.</exception>
         /// <example>
         /// <code>
-        /// // For development
-        /// var smith = WorkflowForge.CreateSmith(logger);
+        /// // Simple smith
+        /// var smith1 = WorkflowForge.CreateSmith();
         ///
-        /// // For production
-        /// var foundry = WorkflowForge.CreateFoundry("ProcessOrder", FoundryConfiguration.ForProduction());
+        /// // With logger
+        /// var smith2 = WorkflowForge.CreateSmith(logger);
         ///
-        /// // For high performance
-        /// var foundry = WorkflowForge.CreateFoundry("ProcessBatch", FoundryConfiguration.HighPerformance());
+        /// // With service provider
+        /// var smith3 = WorkflowForge.CreateSmith(null, serviceProvider);
+        ///
+        /// // With options
+        /// var options = new WorkflowForgeOptions { MaxConcurrentWorkflows = 10 };
+        /// var smith4 = WorkflowForge.CreateSmith(null, null, options);
+        ///
+        /// // With all parameters
+        /// var smith5 = WorkflowForge.CreateSmith(logger, serviceProvider, options);
         /// </code>
         /// </example>
-        public static IWorkflowSmith CreateSmith(IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null)
+        public static IWorkflowSmith CreateSmith(
+            IWorkflowForgeLogger? logger = null,
+            IServiceProvider? serviceProvider = null,
+            WorkflowForgeOptions? options = null)
         {
             try
             {
-                return new WorkflowSmith(logger ?? NullLogger.Instance, serviceProvider);
+                return new WorkflowSmith(logger ?? NullLogger.Instance, serviceProvider, options);
             }
             catch (Exception ex)
             {

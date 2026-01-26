@@ -32,7 +32,7 @@ namespace WorkflowForge.Operations
         }
 
         /// <inheritdoc />
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (foundry == null)
                 throw new ArgumentNullException(nameof(foundry));

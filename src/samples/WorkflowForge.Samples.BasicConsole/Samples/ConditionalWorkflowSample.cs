@@ -1,4 +1,3 @@
-using WorkflowForge.Configurations;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
@@ -64,7 +63,7 @@ public class ConditionalWorkflowSample : ISample
             ["customer_tier"] = customerTier,
             ["payment_method"] = amount > 500m ? "CreditCard" : "BankTransfer" // Higher amounts prefer credit card
         };
-        using var foundry = WorkflowForge.CreateFoundryWithData($"ConditionalWorkflow-{scenario}", initialData, FoundryConfiguration.Development());
+        using var foundry = WorkflowForge.CreateFoundry($"ConditionalWorkflow-{scenario}", null, initialData);
 
         Console.WriteLine($"Order amount: ${amount:F2}, Customer tier: {customerTier}");
 

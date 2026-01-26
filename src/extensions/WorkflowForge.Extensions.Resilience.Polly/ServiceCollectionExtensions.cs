@@ -1,12 +1,12 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.Resilience.Abstractions;
-using WorkflowForge.Extensions.Resilience.Polly.Configurations;
+using WorkflowForge.Extensions.Resilience.Polly.Options;
 
 namespace WorkflowForge.Extensions.Resilience.Polly
 {
@@ -23,10 +23,10 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <returns>The service collection for method chaining.</returns>
         public static IServiceCollection AddWorkflowForgePolly(
             this IServiceCollection services,
-            Action<PollySettings>? configureOptions = null)
+            Action<PollyMiddlewareOptions>? configureOptions = null)
         {
             // Register settings
-            var settings = new PollySettings();
+            var settings = new PollyMiddlewareOptions();
             configureOptions?.Invoke(settings);
             services.TryAddSingleton(settings);
 
@@ -55,12 +55,12 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             string sectionName = "WorkflowForge:Polly")
         {
             // Bind configuration
-            var settings = new PollySettings();
+            var settings = new PollyMiddlewareOptions();
             configuration.GetSection(sectionName).Bind(settings);
 
             return services.AddWorkflowForgePolly(opts =>
             {
-                opts.IsEnabled = settings.IsEnabled;
+                opts.Enabled = settings.Enabled;
                 opts.Retry = settings.Retry;
                 opts.CircuitBreaker = settings.CircuitBreaker;
                 opts.Timeout = settings.Timeout;
@@ -71,91 +71,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             });
         }
 
-        /// <summary>
-        /// Adds development-optimized Polly resilience services.
-        /// </summary>
-        /// <param name="services">The service collection.</param>
-        /// <returns>The service collection for method chaining.</returns>
-        public static IServiceCollection AddWorkflowForgePollyForDevelopment(
-            this IServiceCollection services)
-        {
-            return services.AddWorkflowForgePolly(settings =>
-            {
-                var devSettings = PollySettings.ForDevelopment();
-                settings.IsEnabled = devSettings.IsEnabled;
-                settings.Retry = devSettings.Retry;
-                settings.CircuitBreaker = devSettings.CircuitBreaker;
-                settings.Timeout = devSettings.Timeout;
-                settings.RateLimiter = devSettings.RateLimiter;
-                settings.EnableComprehensivePolicies = devSettings.EnableComprehensivePolicies;
-                settings.EnableDetailedLogging = devSettings.EnableDetailedLogging;
-            });
-        }
-
-        /// <summary>
-        /// Adds production-optimized Polly resilience services.
-        /// </summary>
-        /// <param name="services">The service collection.</param>
-        /// <returns>The service collection for method chaining.</returns>
-        public static IServiceCollection AddWorkflowForgePollyForProduction(
-            this IServiceCollection services)
-        {
-            return services.AddWorkflowForgePolly(settings =>
-            {
-                var prodSettings = PollySettings.ForProduction();
-                settings.IsEnabled = prodSettings.IsEnabled;
-                settings.Retry = prodSettings.Retry;
-                settings.CircuitBreaker = prodSettings.CircuitBreaker;
-                settings.Timeout = prodSettings.Timeout;
-                settings.RateLimiter = prodSettings.RateLimiter;
-                settings.EnableComprehensivePolicies = prodSettings.EnableComprehensivePolicies;
-                settings.EnableDetailedLogging = prodSettings.EnableDetailedLogging;
-            });
-        }
-
-        /// <summary>
-        /// Adds enterprise-grade Polly resilience services.
-        /// </summary>
-        /// <param name="services">The service collection.</param>
-        /// <returns>The service collection for method chaining.</returns>
-        public static IServiceCollection AddWorkflowForgePollyForEnterprise(
-            this IServiceCollection services)
-        {
-            return services.AddWorkflowForgePolly(settings =>
-            {
-                var enterpriseSettings = PollySettings.ForEnterprise();
-                settings.IsEnabled = enterpriseSettings.IsEnabled;
-                settings.Retry = enterpriseSettings.Retry;
-                settings.CircuitBreaker = enterpriseSettings.CircuitBreaker;
-                settings.Timeout = enterpriseSettings.Timeout;
-                settings.RateLimiter = enterpriseSettings.RateLimiter;
-                settings.EnableComprehensivePolicies = enterpriseSettings.EnableComprehensivePolicies;
-                settings.EnableDetailedLogging = enterpriseSettings.EnableDetailedLogging;
-            });
-        }
-
-        /// <summary>
-        /// Adds minimal Polly resilience services with basic retry only.
-        /// </summary>
-        /// <param name="services">The service collection.</param>
-        /// <returns>The service collection for method chaining.</returns>
-        public static IServiceCollection AddWorkflowForgePollyMinimal(
-            this IServiceCollection services)
-        {
-            return services.AddWorkflowForgePolly(settings =>
-            {
-                var minimalSettings = PollySettings.Minimal();
-                settings.IsEnabled = minimalSettings.IsEnabled;
-                settings.Retry = minimalSettings.Retry;
-                settings.CircuitBreaker = minimalSettings.CircuitBreaker;
-                settings.Timeout = minimalSettings.Timeout;
-                settings.RateLimiter = minimalSettings.RateLimiter;
-                settings.EnableComprehensivePolicies = minimalSettings.EnableComprehensivePolicies;
-                settings.EnableDetailedLogging = minimalSettings.EnableDetailedLogging;
-            });
-        }
-
-        private static PollyMiddleware CreateMiddlewareFromSettings(IServiceProvider provider, PollySettings settings)
+        private static PollyMiddleware CreateMiddlewareFromSettings(IServiceProvider provider, PollyMiddlewareOptions settings)
         {
             var logger = provider.GetRequiredService<IWorkflowForgeLogger>();
             var factory = provider.GetRequiredService<IPollyResilienceFactory>();
@@ -167,8 +83,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     settings.Retry.MaxRetryAttempts,
                     settings.Retry.BaseDelay,
                     settings.CircuitBreaker.FailureThreshold,
-                    settings.CircuitBreaker.DurationOfBreak,
-                    settings.Timeout.TimeoutDuration);
+                    settings.CircuitBreaker.BreakDuration,
+                    settings.Timeout.DefaultTimeout);
             }
             else if (settings.Retry.IsEnabled)
             {
@@ -176,7 +92,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     logger,
                     settings.Retry.MaxRetryAttempts,
                     settings.Retry.BaseDelay,
-                    settings.Retry.MaxDelay);
+                    settings.Retry.BaseDelay); // MaxDelay doesn't exist, using BaseDelay
             }
 
             // Fallback to simple retry
@@ -187,7 +103,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
     /// <summary>
     /// Factory interface for creating Polly resilience strategies.
     /// </summary>
-    public interface IPollyResilienceFactory
+    internal interface IPollyResilienceFactory
     {
         /// <summary>
         /// Creates a default resilience strategy based on configuration.
@@ -231,10 +147,10 @@ namespace WorkflowForge.Extensions.Resilience.Polly
     /// </summary>
     internal sealed class PollyResilienceFactory : IPollyResilienceFactory
     {
-        private readonly PollySettings _settings;
+        private readonly PollyMiddlewareOptions _settings;
         private readonly IWorkflowForgeLogger _logger;
 
-        public PollyResilienceFactory(PollySettings settings, IWorkflowForgeLogger logger)
+        public PollyResilienceFactory(PollyMiddlewareOptions settings, IWorkflowForgeLogger logger)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -242,7 +158,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
 
         public IWorkflowResilienceStrategy CreateDefaultStrategy()
         {
-            if (!_settings.IsEnabled)
+            if (!_settings.Enabled)
             {
                 return new NoOpResilienceStrategy();
             }
@@ -253,15 +169,15 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     _settings.Retry.MaxRetryAttempts,
                     _settings.Retry.BaseDelay,
                     _settings.CircuitBreaker.FailureThreshold,
-                    _settings.CircuitBreaker.DurationOfBreak,
-                    _settings.Timeout.TimeoutDuration,
+                    _settings.CircuitBreaker.BreakDuration,
+                    _settings.Timeout.DefaultTimeout,
                     _logger);
             }
 
             return PollyResilienceStrategy.CreateRetryPolicy(
                 _settings.Retry.MaxRetryAttempts,
                 _settings.Retry.BaseDelay,
-                _settings.Retry.MaxDelay,
+                _settings.Retry.BaseDelay, // MaxDelay doesn't exist, using BaseDelay
                 _logger);
         }
 
@@ -284,8 +200,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                 retrySettings.MaxRetryAttempts,
                 retrySettings.BaseDelay,
                 circuitBreakerSettings.FailureThreshold,
-                circuitBreakerSettings.DurationOfBreak,
-                timeoutSettings.TimeoutDuration,
+                circuitBreakerSettings.BreakDuration,
+                timeoutSettings.DefaultTimeout,
                 _logger);
         }
     }

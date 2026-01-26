@@ -15,6 +15,7 @@ namespace WorkflowForge.Operations
     public sealed class ForEachWorkflowOperation : WorkflowOperationBase
     {
         private readonly List<IWorkflowOperation> _operations;
+        private readonly ISystemTimeProvider _timeProvider;
         private readonly TimeSpan? _timeout;
         private readonly ForEachDataStrategy _dataStrategy;
         private readonly int? _maxConcurrency;
@@ -29,6 +30,7 @@ namespace WorkflowForge.Operations
         /// <param name="maxConcurrency">Optional maximum number of concurrent operations (throttling).</param>
         /// <param name="name">Optional name for the operation.</param>
         /// <param name="id">Optional operation ID. If null, a new GUID is generated.</param>
+        /// <param name="timeProvider">The time provider to use for timestamps.</param>
         /// <exception cref="ArgumentNullException">Thrown when operations is null.</exception>
         /// <exception cref="ArgumentException">Thrown when operations is empty or maxConcurrency is invalid.</exception>
         public ForEachWorkflowOperation(
@@ -37,7 +39,8 @@ namespace WorkflowForge.Operations
             ForEachDataStrategy dataStrategy = ForEachDataStrategy.SharedInput,
             int? maxConcurrency = null,
             string? name = null,
-            Guid? id = null)
+            Guid? id = null,
+            ISystemTimeProvider? timeProvider = null)
         {
             if (operations == null) throw new ArgumentNullException(nameof(operations));
 
@@ -47,6 +50,8 @@ namespace WorkflowForge.Operations
 
             if (maxConcurrency.HasValue && maxConcurrency.Value <= 0)
                 throw new ArgumentException("Max concurrency must be greater than zero.", nameof(maxConcurrency));
+
+            _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
 
             _timeout = timeout;
             _dataStrategy = dataStrategy;
@@ -66,59 +71,44 @@ namespace WorkflowForge.Operations
         public override bool SupportsRestore => _operations.All(op => op.SupportsRestore);
 
         /// <inheritdoc />
-        public override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ForEachWorkflowOperation));
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
 
-            // Respect framework-level MaxConcurrentOperations setting
-            var effectiveMaxConcurrency = GetEffectiveMaxConcurrency(foundry);
+            // Use operation-specific concurrency setting (from constructor)
+            var effectiveMaxConcurrency = _maxConcurrency;
 
             var workflowId = foundry.CurrentWorkflow?.Id ?? Guid.Empty;
             var workflowName = foundry.CurrentWorkflow?.Name ?? "Unknown";
-            var frameworkMaxConcurrency = foundry.Properties.TryGetValue("MaxConcurrentOperations", out var maxConcurrent)
-                ? maxConcurrent as int? : null;
 
             foundry.Logger.LogInformation(
                 "Starting ForEach operation {OperationName} for workflow {WorkflowName} ({WorkflowId}) with {ChildOperationCount} operations, max concurrency: {EffectiveMaxConcurrency}",
                 Name, workflowName, workflowId, _operations.Count, effectiveMaxConcurrency?.ToString() ?? "unlimited");
 
             object?[] results;
+            using var timeoutCts = _timeout.HasValue ? new CancellationTokenSource(_timeout.Value) : null;
+            using var combinedCts = _timeout.HasValue
+                ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts!.Token)
+                : null;
+            var effectiveToken = combinedCts?.Token ?? cancellationToken;
 
             if (effectiveMaxConcurrency.HasValue)
             {
                 // Execute with throttling
                 using var semaphore = new SemaphoreSlim(effectiveMaxConcurrency.Value, effectiveMaxConcurrency.Value);
                 var tasks = _operations.Select((op, index) =>
-                    ForgeOperationWithThrottlingAsync(op, inputData, index, foundry, semaphore, cancellationToken)).ToArray();
+                    ForgeOperationWithThrottlingAsync(op, inputData, index, foundry, semaphore, effectiveToken)).ToArray();
 
-                if (_timeout.HasValue)
-                {
-                    using var timeoutCts = new CancellationTokenSource(_timeout.Value);
-                    using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
-                    results = await Task.WhenAll(tasks).ConfigureAwait(false);
-                }
-                else
-                {
-                    results = await Task.WhenAll(tasks).ConfigureAwait(false);
-                }
+                results = await Task.WhenAll(tasks).ConfigureAwait(false);
             }
             else
             {
                 // Execute without throttling
                 var tasks = _operations.Select((op, index) =>
-                    ForgeOperationAsync(op, inputData, index, foundry, cancellationToken)).ToArray();
+                    ForgeOperationAsync(op, inputData, index, foundry, effectiveToken)).ToArray();
 
-                if (_timeout.HasValue)
-                {
-                    using var timeoutCts = new CancellationTokenSource(_timeout.Value);
-                    using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
-                    results = await Task.WhenAll(tasks).ConfigureAwait(false);
-                }
-                else
-                {
-                    results = await Task.WhenAll(tasks).ConfigureAwait(false);
-                }
+                results = await Task.WhenAll(tasks).ConfigureAwait(false);
             }
 
             foundry.Logger.LogInformation(
@@ -135,8 +125,8 @@ namespace WorkflowForge.Operations
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
             if (!SupportsRestore) throw new NotSupportedException($"ForEach operation '{Name}' does not support restoration because one or more child operations do not support restoration.");
 
-            // Respect framework-level MaxConcurrentOperations setting
-            var effectiveMaxConcurrency = GetEffectiveMaxConcurrency(foundry);
+            // Use operation-specific concurrency setting (from constructor)
+            var effectiveMaxConcurrency = _maxConcurrency;
 
             var workflowId = foundry.CurrentWorkflow?.Id ?? Guid.Empty;
             var workflowName = foundry.CurrentWorkflow?.Name ?? "Unknown";
@@ -249,7 +239,7 @@ namespace WorkflowForge.Operations
             {
                 Results = results,
                 TotalResults = results.Length,
-                Timestamp = DateTimeOffset.UtcNow
+                Timestamp = _timeProvider.UtcNow
             };
         }
 
@@ -366,29 +356,6 @@ namespace WorkflowForge.Operations
             TimeSpan? timeout = null)
         {
             return new ForEachWorkflowOperation(operations, timeout, ForEachDataStrategy.SharedInput, maxConcurrency);
-        }
-
-        /// <summary>
-        /// Gets the effective maximum concurrency by respecting both operation-specific and framework-level limits.
-        /// The framework-level MaxConcurrentOperations acts as a global cap that overrides operation-specific settings.
-        /// </summary>
-        /// <param name="foundry">The workflow foundry containing framework settings.</param>
-        /// <returns>The effective maximum concurrency to use, or null for unlimited.</returns>
-        private int? GetEffectiveMaxConcurrency(IWorkflowFoundry foundry)
-        {
-            var frameworkMax = foundry.Properties.TryGetValue("MaxConcurrentOperations", out var maxConcurrent) == true
-                ? maxConcurrent as int? : null;
-
-            // If no framework limit is set, use operation-specific limit
-            if (!frameworkMax.HasValue)
-                return _maxConcurrency;
-
-            // If no operation-specific limit is set, use framework limit
-            if (!_maxConcurrency.HasValue)
-                return frameworkMax;
-
-            // Use the minimum of both limits (most restrictive wins)
-            return Math.Min(_maxConcurrency.Value, frameworkMax.Value);
         }
     }
 }

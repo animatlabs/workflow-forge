@@ -3,7 +3,6 @@ using BenchmarkDotNet.Engines;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
-using WorkflowForge.Configurations;
 
 namespace WorkflowForge.Benchmarks;
 
@@ -20,23 +19,19 @@ namespace WorkflowForge.Benchmarks;
 [HtmlExporter]
 public class WorkflowThroughputBenchmark
 {
-    private FoundryConfiguration _minimalConfig = null!;
-    private FoundryConfiguration _performanceConfig = null!;
-
     [Params(1, 5, 10, 25, 50)]
     public int OperationCount { get; set; }
 
     [GlobalSetup]
     public void Setup()
     {
-        _minimalConfig = FoundryConfiguration.Minimal();
-        _performanceConfig = FoundryConfiguration.HighPerformance();
+        // Benchmarks use defaults - no custom configuration needed
     }
 
     [Benchmark(Baseline = true)]
     public async Task<string> SequentialDelegateOperations()
     {
-        using var foundry = WorkflowForge.CreateFoundry("SequentialBenchmark", _minimalConfig);
+        using var foundry = WorkflowForge.CreateFoundry("SequentialBenchmark");
 
         for (int i = 0; i < OperationCount; i++)
         {
@@ -56,7 +51,7 @@ public class WorkflowThroughputBenchmark
     [Benchmark]
     public async Task<string> SequentialCustomOperations()
     {
-        using var foundry = WorkflowForge.CreateFoundry("CustomOpsBenchmark", _minimalConfig);
+        using var foundry = WorkflowForge.CreateFoundry("CustomOpsBenchmark");
 
         for (int i = 0; i < OperationCount; i++)
         {
@@ -70,7 +65,7 @@ public class WorkflowThroughputBenchmark
     [Benchmark]
     public async Task<string> HighPerformanceConfiguration()
     {
-        using var foundry = WorkflowForge.CreateFoundry("HighPerfBenchmark", _performanceConfig);
+        using var foundry = WorkflowForge.CreateFoundry("HighPerfBenchmark");
 
         for (int i = 0; i < OperationCount; i++)
         {
@@ -90,7 +85,7 @@ public class WorkflowThroughputBenchmark
     [Benchmark]
     public async Task<string> DataPassingWorkflow()
     {
-        using var foundry = WorkflowForge.CreateFoundry("DataPassingBenchmark", _minimalConfig);
+        using var foundry = WorkflowForge.CreateFoundry("DataPassingBenchmark");
 
         foundry.Properties["counter"] = 0;
 
@@ -113,7 +108,7 @@ public class WorkflowThroughputBenchmark
     [Benchmark]
     public async Task<string> ConditionalOperationsWorkflow()
     {
-        using var foundry = WorkflowForge.CreateFoundry("ConditionalBenchmark", _minimalConfig);
+        using var foundry = WorkflowForge.CreateFoundry("ConditionalBenchmark");
 
         foundry.Properties["process_count"] = 0;
 
@@ -145,7 +140,7 @@ public class WorkflowThroughputBenchmark
     [Benchmark]
     public async Task<string> ForEachLoopWorkflow()
     {
-        using var foundry = WorkflowForge.CreateFoundry("ForEachBenchmark", _minimalConfig);
+        using var foundry = WorkflowForge.CreateFoundry("ForEachBenchmark");
 
         // Create a collection to iterate over
         var items = Enumerable.Range(1, OperationCount).Select(i => $"Item{i}").ToArray();
@@ -166,7 +161,7 @@ public class WorkflowThroughputBenchmark
     [Benchmark]
     public async Task<string> LoggingOperationsWorkflow()
     {
-        using var foundry = WorkflowForge.CreateFoundry("LoggingBenchmark", _minimalConfig);
+        using var foundry = WorkflowForge.CreateFoundry("LoggingBenchmark");
 
         for (int i = 0; i < OperationCount; i++)
         {
@@ -187,7 +182,7 @@ public class WorkflowThroughputBenchmark
     [Benchmark]
     public async Task<string> MemoryIntensiveWorkflow()
     {
-        using var foundry = WorkflowForge.CreateFoundry("MemoryBenchmark", _minimalConfig);
+        using var foundry = WorkflowForge.CreateFoundry("MemoryBenchmark");
 
         for (int i = 0; i < OperationCount; i++)
         {

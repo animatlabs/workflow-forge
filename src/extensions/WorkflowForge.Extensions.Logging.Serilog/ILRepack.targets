@@ -1,0 +1,27 @@
+<Project>
+  <Target Name="WorkflowForgeILRepack" AfterTargets="Build" Condition="$(Configuration.Contains('Release'))">
+    <Message Importance="high" Text="ILRepack: merging Serilog dependencies" />
+    <ItemGroup>
+      <InputAssemblies Include="$(OutputPath)$(TargetName)$(TargetExt)" />
+      <InputAssemblies Include="$(OutputPath)Serilog.dll" Condition="Exists('$(OutputPath)Serilog.dll')" />
+      <InputAssemblies Include="$(OutputPath)Serilog.Extensions.Logging.dll" Condition="Exists('$(OutputPath)Serilog.Extensions.Logging.dll')" />
+      <InputAssemblies Include="$(OutputPath)Serilog.Sinks.Console.dll" Condition="Exists('$(OutputPath)Serilog.Sinks.Console.dll')" />
+    </ItemGroup>
+
+    <ILRepack
+      InputAssemblies="@(InputAssemblies)"
+      OutputFile="$(OutputPath)$(TargetName)$(TargetExt)"
+      LibraryPath="$(OutputPath)"
+      TargetKind="SameAsPrimaryAssembly"
+      Internalize="true"
+      Parallel="true"
+      DebugInfo="false" />
+  </Target>
+
+  <Target Name="ILRepackCleanup" AfterTargets="WorkflowForgeILRepack" Condition="$(Configuration.Contains('Release'))">
+    <Message Importance="high" Text="ILRepack: cleaning Serilog dependency DLLs" />
+    <Delete Files="$(OutputPath)Serilog.dll" Condition="Exists('$(OutputPath)Serilog.dll')" />
+    <Delete Files="$(OutputPath)Serilog.Extensions.Logging.dll" Condition="Exists('$(OutputPath)Serilog.Extensions.Logging.dll')" />
+    <Delete Files="$(OutputPath)Serilog.Sinks.Console.dll" Condition="Exists('$(OutputPath)Serilog.Sinks.Console.dll')" />
+  </Target>
+</Project>

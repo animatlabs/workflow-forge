@@ -1,15 +1,14 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
 using Polly.Timeout;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions;
-using WorkflowForge.Extensions.Resilience.Polly.Configurations;
-using WorkflowForge.Operations;
 using WorkflowForge.Exceptions;
+using WorkflowForge.Extensions.Resilience.Polly.Options;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Extensions.Resilience.Polly
 {
@@ -32,7 +31,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <param name="pipeline">The Polly resilience pipeline to use.</param>
         /// <param name="logger">Optional logger for operation events.</param>
         /// <param name="name">Optional custom name for the operation.</param>
-        public PollyRetryOperation(
+        internal PollyRetryOperation(
             IWorkflowOperation innerOperation,
             ResiliencePipeline pipeline,
             IWorkflowForgeLogger? logger = null,
@@ -51,7 +50,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         public override bool SupportsRestore => _innerOperation.SupportsRestore;
 
         /// <inheritdoc />
-        public override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
 
@@ -70,6 +69,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                 throw new WorkflowOperationException(
                     $"Circuit breaker is open for operation '{_innerOperation.Name}'",
                     ex,
+                    foundry.ExecutionId,
+                    foundry.CurrentWorkflow?.Id,
                     _innerOperation.Name,
                     _innerOperation.Id);
             }
@@ -79,6 +80,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                 throw new WorkflowOperationException(
                     $"Operation '{_innerOperation.Name}' timed out",
                     ex,
+                    foundry.ExecutionId,
+                    foundry.CurrentWorkflow?.Id,
                     _innerOperation.Name,
                     _innerOperation.Id);
             }
@@ -235,7 +238,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <returns>A new comprehensive Polly retry operation.</returns>
         public static PollyRetryOperation WithComprehensivePolicy(
             IWorkflowOperation innerOperation,
-            PollySettings settings,
+            PollyMiddlewareOptions settings,
             IWorkflowForgeLogger? logger = null,
             string? name = null)
         {
@@ -244,7 +247,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             // Add timeout if enabled
             if (settings.Timeout.IsEnabled)
             {
-                pipelineBuilder.AddTimeout(settings.Timeout.TimeoutDuration);
+                pipelineBuilder.AddTimeout(settings.Timeout.DefaultTimeout);
             }
 
             // Add retry if enabled
@@ -276,12 +279,12 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     ShouldHandle = new PredicateBuilder().Handle<Exception>(ex => !(ex is OperationCanceledException)),
                     FailureRatio = settings.CircuitBreaker.FailureThreshold / 10.0,
                     MinimumThroughput = settings.CircuitBreaker.MinimumThroughput,
-                    BreakDuration = settings.CircuitBreaker.DurationOfBreak,
+                    BreakDuration = settings.CircuitBreaker.BreakDuration,
                     OnOpened = args =>
                     {
                         if (settings.EnableDetailedLogging)
                         {
-                            logger?.LogWarning($"Circuit breaker opened for operation '{innerOperation.Name}' for {settings.CircuitBreaker.DurationOfBreak.TotalSeconds}s");
+                            logger?.LogWarning($"Circuit breaker opened for operation '{innerOperation.Name}' for {settings.CircuitBreaker.BreakDuration.TotalSeconds}s");
                         }
                         return default;
                     },
@@ -298,71 +301,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly
 
             var pipeline = pipelineBuilder.Build();
             return new PollyRetryOperation(innerOperation, pipeline, logger, name);
-        }
-
-        /// <summary>
-        /// Creates a Polly retry operation from an existing resilience pipeline.
-        /// </summary>
-        /// <param name="innerOperation">The operation to wrap.</param>
-        /// <param name="pipeline">The Polly resilience pipeline to use.</param>
-        /// <param name="logger">Optional logger for operation events.</param>
-        /// <param name="name">Optional custom name.</param>
-        /// <returns>A new Polly retry operation.</returns>
-        public static PollyRetryOperation FromPipeline(
-            IWorkflowOperation innerOperation,
-            ResiliencePipeline pipeline,
-            IWorkflowForgeLogger? logger = null,
-            string? name = null)
-        {
-            return new PollyRetryOperation(innerOperation, pipeline, logger, name);
-        }
-
-        /// <summary>
-        /// Creates development-friendly Polly retry operation with lenient settings.
-        /// </summary>
-        /// <param name="innerOperation">The operation to wrap.</param>
-        /// <param name="logger">Optional logger for operation events.</param>
-        /// <param name="name">Optional custom name.</param>
-        /// <returns>A new development-optimized Polly retry operation.</returns>
-        public static PollyRetryOperation ForDevelopment(
-            IWorkflowOperation innerOperation,
-            IWorkflowForgeLogger? logger = null,
-            string? name = null)
-        {
-            var settings = PollySettings.ForDevelopment();
-            return WithComprehensivePolicy(innerOperation, settings, logger, name);
-        }
-
-        /// <summary>
-        /// Creates production-optimized Polly retry operation with strict settings.
-        /// </summary>
-        /// <param name="innerOperation">The operation to wrap.</param>
-        /// <param name="logger">Optional logger for operation events.</param>
-        /// <param name="name">Optional custom name.</param>
-        /// <returns>A new production-optimized Polly retry operation.</returns>
-        public static PollyRetryOperation ForProduction(
-            IWorkflowOperation innerOperation,
-            IWorkflowForgeLogger? logger = null,
-            string? name = null)
-        {
-            var settings = PollySettings.ForProduction();
-            return WithComprehensivePolicy(innerOperation, settings, logger, name);
-        }
-
-        /// <summary>
-        /// Creates enterprise-grade Polly retry operation with comprehensive policies.
-        /// </summary>
-        /// <param name="innerOperation">The operation to wrap.</param>
-        /// <param name="logger">Optional logger for operation events.</param>
-        /// <param name="name">Optional custom name.</param>
-        /// <returns>A new enterprise-grade Polly retry operation.</returns>
-        public static PollyRetryOperation ForEnterprise(
-            IWorkflowOperation innerOperation,
-            IWorkflowForgeLogger? logger = null,
-            string? name = null)
-        {
-            var settings = PollySettings.ForEnterprise();
-            return WithComprehensivePolicy(innerOperation, settings, logger, name);
         }
 
         #endregion Factory Methods
@@ -418,49 +356,10 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <returns>A comprehensively protected Polly-wrapped operation.</returns>
         public static PollyRetryOperation WithPollyComprehensive(
             this IWorkflowOperation operation,
-            PollySettings settings,
+            PollyMiddlewareOptions settings,
             IWorkflowForgeLogger? logger = null)
         {
             return PollyRetryOperation.WithComprehensivePolicy(operation, settings, logger);
-        }
-
-        /// <summary>
-        /// Wraps an operation with development-friendly Polly policies.
-        /// </summary>
-        /// <param name="operation">The operation to wrap.</param>
-        /// <param name="logger">Optional logger.</param>
-        /// <returns>A development-optimized Polly-wrapped operation.</returns>
-        public static PollyRetryOperation WithPollyDevelopment(
-            this IWorkflowOperation operation,
-            IWorkflowForgeLogger? logger = null)
-        {
-            return PollyRetryOperation.ForDevelopment(operation, logger);
-        }
-
-        /// <summary>
-        /// Wraps an operation with production-optimized Polly policies.
-        /// </summary>
-        /// <param name="operation">The operation to wrap.</param>
-        /// <param name="logger">Optional logger.</param>
-        /// <returns>A production-optimized Polly-wrapped operation.</returns>
-        public static PollyRetryOperation WithPollyProduction(
-            this IWorkflowOperation operation,
-            IWorkflowForgeLogger? logger = null)
-        {
-            return PollyRetryOperation.ForProduction(operation, logger);
-        }
-
-        /// <summary>
-        /// Wraps an operation with enterprise-grade Polly policies.
-        /// </summary>
-        /// <param name="operation">The operation to wrap.</param>
-        /// <param name="logger">Optional logger.</param>
-        /// <returns>An enterprise-grade Polly-wrapped operation.</returns>
-        public static PollyRetryOperation WithPollyEnterprise(
-            this IWorkflowOperation operation,
-            IWorkflowForgeLogger? logger = null)
-        {
-            return PollyRetryOperation.ForEnterprise(operation, logger);
         }
     }
 }

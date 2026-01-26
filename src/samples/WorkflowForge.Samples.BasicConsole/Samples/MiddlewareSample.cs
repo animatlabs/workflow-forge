@@ -1,6 +1,5 @@
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
-using WorkflowForge.Middleware;
 using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
@@ -79,9 +78,9 @@ public class MiddlewareSample : ISample
 
         // Create a comprehensive middleware pipeline
         foundry.AddMiddleware(new SecurityMiddleware());           // First: Security check
-        foundry.AddMiddleware(new TimingMiddleware());             // Second: Performance timing
+        foundry.UseTiming();                                       // Second: Performance timing
         foundry.AddMiddleware(new ValidationMiddleware());         // Third: Input validation
-        foundry.UseLogging(); // Detailed logging
+        foundry.UseLogging();                                      // Fourth: Detailed logging
         foundry.AddMiddleware(new AuditMiddleware());              // Fifth: Audit trail
 
         foundry.SetProperty("user_id", "admin_user");
@@ -151,7 +150,7 @@ public class MiddlewareSample : ISample
 public class SecurityMiddleware : IWorkflowOperationMiddleware
 {
     public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData,
-        Func<Task<object?>> next, CancellationToken cancellationToken = default)
+        Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
     {
         foundry.TryGetProperty<string>("user_id", out var userId);
         foundry.TryGetProperty<string>("security_token", out var token);
@@ -177,7 +176,7 @@ public class SecurityMiddleware : IWorkflowOperationMiddleware
         foundry.Logger.LogDebug("Security validation passed for user: {UserId}", userId);
 
         // Call next middleware/operation
-        return await next();
+        return await next(cancellationToken);
     }
 }
 
@@ -187,7 +186,7 @@ public class SecurityMiddleware : IWorkflowOperationMiddleware
 public class ValidationMiddleware : IWorkflowOperationMiddleware
 {
     public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData,
-        Func<Task<object?>> next, CancellationToken cancellationToken = default)
+        Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
     {
         foundry.Logger.LogInformation("Validation check for operation: {OperationName}", operation.Name);
 
@@ -216,7 +215,7 @@ public class ValidationMiddleware : IWorkflowOperationMiddleware
         foundry.Logger.LogDebug("Validation completed for operation: {OperationName}", operation.Name);
 
         // Call next middleware/operation
-        return await next();
+        return await next(cancellationToken);
     }
 }
 
@@ -226,7 +225,7 @@ public class ValidationMiddleware : IWorkflowOperationMiddleware
 public class AuditMiddleware : IWorkflowOperationMiddleware
 {
     public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData,
-        Func<Task<object?>> next, CancellationToken cancellationToken = default)
+        Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
     {
         var auditEntry = new
         {
@@ -245,7 +244,7 @@ public class AuditMiddleware : IWorkflowOperationMiddleware
         try
         {
             // Call next middleware/operation
-            var result = await next();
+            var result = await next(cancellationToken);
 
             var duration = DateTime.UtcNow - startTime;
 

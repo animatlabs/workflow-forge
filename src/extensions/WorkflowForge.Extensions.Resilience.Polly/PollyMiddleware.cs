@@ -1,14 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
 using Polly.Timeout;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Loggers;
-using WorkflowForge.Constants;
 
 namespace WorkflowForge.Extensions.Resilience.Polly
 {
@@ -28,7 +26,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <param name="pipeline">The Polly resilience pipeline to apply.</param>
         /// <param name="logger">The logger for middleware events.</param>
         /// <param name="name">Optional name for the middleware.</param>
-        public PollyMiddleware(ResiliencePipeline pipeline, IWorkflowForgeLogger logger, string? name = null)
+        internal PollyMiddleware(ResiliencePipeline pipeline, IWorkflowForgeLogger logger, string? name = null)
         {
             _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -45,7 +43,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             IWorkflowOperation operation,
             IWorkflowFoundry foundry,
             object? inputData,
-            Func<Task<object?>> next,
+            Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default)
         {
             var policyProperties = new Dictionary<string, string>
@@ -63,7 +61,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
 
                 var result = await _pipeline.ExecuteAsync(async (ct) =>
                 {
-                    return await next().ConfigureAwait(false);
+                    return await next(ct).ConfigureAwait(false);
                 }, cancellationToken).ConfigureAwait(false);
 
                 _logger.LogDebug(ResilienceLogMessages.PolicyPipelineExecutionCompleted);

@@ -1,6 +1,20 @@
 # WorkflowForge.Extensions.Resilience.Polly
 
-Advanced resilience extension for WorkflowForge using the battle-tested Polly library. Provides circuit breakers, retry policies, timeout management, and rate limiting.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
+</p>
+
+Advanced resilience extension for WorkflowForge with Polly integration for retry, circuit breaker, timeout, and rate limiting policies.
+
+[![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Resilience.Polly.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Resilience.Polly/)
+
+## Dependency Isolation
+
+**This extension internalizes Polly with ILRepack.** This means:
+
+- Reduced dependency conflicts for Polly
+- Public APIs stay WorkflowForge/BCL only
+- Microsoft/System assemblies remain external
 
 ## Installation
 
@@ -8,48 +22,179 @@ Advanced resilience extension for WorkflowForge using the battle-tested Polly li
 dotnet add package WorkflowForge.Extensions.Resilience.Polly
 ```
 
+**Requires**: .NET Standard 2.0 or later
+
 ## Quick Start
 
 ```csharp
 using WorkflowForge.Extensions.Resilience.Polly;
+using Polly;
 
-// Create foundry and apply Polly resilience (extension methods are on IWorkflowFoundry)
-var config = FoundryConfiguration.ForProduction();
-var foundry = WorkflowForge.CreateFoundry("MyWorkflow", config);
+// Configure retry policy
+var retryPolicy = Policy
+    .Handle<HttpRequestException>()
+    .WaitAndRetryAsync(
+        retryCount: 3,
+        sleepDurationProvider: attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
+        onRetry: (exception, timeSpan, retryCount, context) =>
+        {
+            logger.LogWarning("Retry {RetryCount} after {Delay}ms", 
+                retryCount, timeSpan.TotalMilliseconds);
+        });
 
-// Preset:
-foundry.UsePollyProductionResilience();
+// Wrap operation with policy
+var operation = new PollyWrappedOperation<HttpResponseMessage>(
+    new CallExternalApiOperation(),
+    retryPolicy);
 
-// Or custom policies:
-foundry
-    .UsePollyRetry(maxRetryAttempts: 5, baseDelay: TimeSpan.FromSeconds(1))
-    .UsePollyCircuitBreaker(failureThreshold: 3, durationOfBreak: TimeSpan.FromMinutes(1))
-    .UsePollyTimeout(TimeSpan.FromSeconds(30));
+var workflow = WorkflowForge.CreateWorkflow("ResilientWorkflow")
+    .AddOperation(operation)
+    .Build();
 ```
 
 ## Key Features
 
-- **Circuit Breakers**: Prevent cascading failures with configurable thresholds
-- **Retry Policies**: Exponential backoff, jitter, and custom retry strategies
-- **Timeout Management**: Operation-level and workflow-level timeouts
-- **Rate Limiting**: Control execution rates and resource usage
-- **Battle-Tested**: Built on the proven Polly resilience library
+- **Retry Policies**: Exponential backoff, fixed intervals, jitter
+- **Circuit Breaker**: Prevent cascading failures
+- **Timeout**: Operation-level timeouts
+- **Rate Limiting**: Control operation throughput
+- **Policy Composition**: Combine multiple policies
+- **Full Polly Integration**: Access entire Polly ecosystem
 
 ## Configuration
 
-```csharp
-// Configuration from strongly-typed settings
-var settings = PollySettings.ForProduction();
-foundry.UsePollyFromSettings(settings);
+### Via appsettings.json
+
+```json
+{
+  "WorkflowForge": {
+    "Extensions": {
+      "Polly": {
+        "Enabled": true,
+        "EnableComprehensivePolicies": false,
+        "EnableDetailedLogging": true,
+        "DefaultTags": {
+          "environment": "production",
+          "application": "my-app"
+        },
+        "Retry": {
+          "IsEnabled": true,
+          "MaxRetryAttempts": 3,
+          "BaseDelay": "00:00:01",
+          "BackoffType": "Exponential",
+          "UseJitter": true
+        },
+        "CircuitBreaker": {
+          "IsEnabled": true,
+          "FailureThreshold": 5,
+          "BreakDuration": "00:00:30",
+          "SamplingDuration": "00:00:30",
+          "MinimumThroughput": 10
+        },
+        "Timeout": {
+          "IsEnabled": true,
+          "DefaultTimeout": "00:00:30",
+          "UseOptimisticTimeout": true
+        },
+        "RateLimiter": {
+          "IsEnabled": false,
+          "PermitLimit": 100,
+          "Window": "00:01:00",
+          "QueueLimit": 0
+        }
+      }
+    }
+  }
+}
 ```
 
-## Documentation & Examples
+### Via Code
 
-- **[Interactive Samples](../../samples/WorkflowForge.Samples.BasicConsole/#14-polly-resilience)** - Sample #14: Polly integration
-- **[Extensions Documentation](../../../docs/extensions.md)** - Complete extensions guide
-- **[Getting Started](../../../docs/getting-started.md)** - Framework tutorial
-- **[Main Documentation](../../../docs/)** - Comprehensive guides
+```csharp
+using WorkflowForge.Extensions.Resilience.Polly.Options;
+
+var options = new PollyMiddlewareOptions
+{
+    Enabled = true,
+    Retry = { IsEnabled = true, MaxRetryAttempts = 3, BaseDelay = TimeSpan.FromSeconds(1) },
+    CircuitBreaker = { IsEnabled = true, FailureThreshold = 5 },
+    Timeout = { IsEnabled = true, DefaultTimeout = TimeSpan.FromSeconds(30) }
+};
+
+foundry.UsePollyFromSettings(options);
+```
+
+### Via Dependency Injection
+
+```csharp
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using WorkflowForge.Extensions.Resilience.Polly;
+
+services.AddWorkflowForgePolly(configuration, PollyMiddlewareOptions.DefaultSectionName);
+var options = serviceProvider.GetRequiredService<PollyMiddlewareOptions>();
+```
+
+### Preset Configurations
+
+```csharp
+// Development settings (minimal retry)
+var devOptions = PollyMiddlewareOptions.ForDevelopment();
+
+// Production settings (retry + circuit breaker)
+var prodOptions = PollyMiddlewareOptions.ForProduction();
+
+// Enterprise settings (all policies enabled)
+var enterpriseOptions = PollyMiddlewareOptions.ForEnterprise();
+
+// Minimal settings (basic retry only)
+var minimalOptions = PollyMiddlewareOptions.Minimal();
+```
+
+See [Configuration Guide](../../../docs/core/configuration.md#polly-extension) for complete options.
+
+## Policy Examples
+
+### Retry with Exponential Backoff
+
+```csharp
+var retryPolicy = Policy
+    .Handle<HttpRequestException>()
+    .WaitAndRetryAsync(3, 
+        attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+```
+
+### Circuit Breaker
+
+```csharp
+var circuitBreakerPolicy = Policy
+    .Handle<HttpRequestException>()
+    .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
+```
+
+### Timeout
+
+```csharp
+var timeoutPolicy = Policy
+    .TimeoutAsync(TimeSpan.FromSeconds(30));
+```
+
+### Combined Policies
+
+```csharp
+var combinedPolicy = Policy.WrapAsync(
+    retryPolicy,
+    circuitBreakerPolicy,
+    timeoutPolicy);
+```
+
+## Documentation
+
+- **[Getting Started](../../../docs/getting-started/getting-started.md)**
+- **[Configuration Guide](../../../docs/core/configuration.md#polly-extension)**
+- **[Extensions Overview](../../../docs/extensions/index.md)**
+- **[Sample 14: Polly Resilience](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
 
 ---
 
-*Advanced resilience patterns for robust workflows* 
+**WorkflowForge.Extensions.Resilience.Polly** - *Build workflows with industrial strength*

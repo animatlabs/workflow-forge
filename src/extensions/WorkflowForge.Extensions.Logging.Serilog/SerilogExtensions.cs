@@ -1,41 +1,47 @@
 using Serilog;
-using WorkflowForge.Configurations;
+using Serilog.Events;
+using System;
+using WorkflowForge.Abstractions;
 
 namespace WorkflowForge.Extensions.Logging.Serilog
 {
     /// <summary>
-    /// Extension methods for integrating Serilog with WorkflowForge.
+    /// Factory methods for creating Serilog-based WorkflowForge loggers
+    /// without exposing Serilog types in public APIs.
     /// </summary>
-    public static class SerilogExtensions
+    public static class SerilogLoggerFactory
     {
         /// <summary>
-        /// Configures WorkflowForge to use Serilog for structured logging.
+        /// Creates a WorkflowForge logger using the provided options.
         /// </summary>
-        /// <param name="configuration">The WorkflowForge configuration.</param>
-        /// <param name="serilogLogger">The configured Serilog ILogger instance.</param>
-        /// <returns>The configuration for method chaining.</returns>
-        public static FoundryConfiguration UseSerilog(
-            this FoundryConfiguration configuration,
-            ILogger serilogLogger)
+        /// <param name="options">Serilog logger options.</param>
+        /// <returns>A WorkflowForge logger instance.</returns>
+        public static IWorkflowForgeLogger CreateLogger(SerilogLoggerOptions? options = null)
         {
-            var workflowLogger = new SerilogWorkflowForgeLogger(serilogLogger);
-            configuration.Logger = workflowLogger;
-            return configuration;
+            options ??= new SerilogLoggerOptions();
+            var level = ParseLevel(options.MinimumLevel);
+            var template = options.ConsoleOutputTemplate ?? SerilogLoggerOptions.DefaultConsoleOutputTemplate;
+
+            var configuration = new LoggerConfiguration()
+                .MinimumLevel.Is(level);
+
+            if (options.EnableConsoleSink)
+            {
+                configuration.WriteTo.Console(outputTemplate: template);
+            }
+
+            var logger = configuration.CreateLogger();
+            return new SerilogWorkflowForgeLogger(logger);
         }
 
-        /// <summary>
-        /// Configures WorkflowForge to use the global Serilog logger for structured logging.
-        /// </summary>
-        /// <param name="configuration">The WorkflowForge configuration.</param>
-        /// <returns>The configuration for method chaining.</returns>
-        /// <remarks>
-        /// This method uses Log.Logger as the Serilog instance.
-        /// Ensure Serilog is properly configured before calling this method.
-        /// </remarks>
-        public static FoundryConfiguration UseSerilog(
-            this FoundryConfiguration configuration)
+        private static LogEventLevel ParseLevel(string? level)
         {
-            return configuration.UseSerilog(Log.Logger);
+            if (!string.IsNullOrWhiteSpace(level) && Enum.TryParse(level, true, out LogEventLevel parsed))
+            {
+                return parsed;
+            }
+
+            return LogEventLevel.Information;
         }
     }
 }

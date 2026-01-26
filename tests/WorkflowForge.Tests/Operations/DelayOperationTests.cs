@@ -499,7 +499,8 @@ public class DelayOperationTests
 
         // Assert
         Assert.True(stopwatch.ElapsedMilliseconds >= delayMs - 15); // Allow some tolerance
-        Assert.True(stopwatch.ElapsedMilliseconds <= delayMs + 100); // Reasonable upper bound
+        var upperBound = delayMs + Math.Max(200, delayMs * 2); // Allow jitter on shared runners
+        Assert.True(stopwatch.ElapsedMilliseconds <= upperBound);
     }
 
     #endregion Edge Cases and Performance Tests

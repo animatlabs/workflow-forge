@@ -1,7 +1,8 @@
+using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Persistence;
-using WorkflowForge.Extensions.Persistence.Abstractions;
 using WorkflowForge.Extensions.Persistence.Recovery;
+using WorkflowForge.Extensions.Persistence.Recovery.Options;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -16,33 +17,9 @@ public class RecoveryOnlySample : ISample
 
         var workflow = WorkflowForge.CreateWorkflow()
             .WithName("RecoveryOnlyDemo")
-            .AddOperation("Init", async (foundry, ct) =>
-            {
-                foundry.Logger.LogInformation("Init executed");
-                foundry.SetProperty("seq", new List<string> { "Init" });
-                await Task.Delay(25, ct);
-            })
-            .AddOperation("Flaky", async (foundry, ct) =>
-            {
-                var count = foundry.GetPropertyOrDefault("flaky.count", 0);
-                foundry.SetProperty("flaky.count", count + 1);
-                var seq = foundry.GetPropertyOrDefault("seq", new List<string>());
-                seq.Add($"FlakyAttempt:{count + 1}");
-
-                // Fail first 2 attempts
-                if (count < 2)
-                {
-                    throw new InvalidOperationException($"Flaky failed on attempt {count + 1}");
-                }
-                foundry.Logger.LogInformation("Flaky finally succeeded");
-            })
-            .AddOperation("Finalize", async (foundry, ct) =>
-            {
-                var seq = foundry.GetPropertyOrDefault("seq", new List<string>());
-                seq.Add("Finalize");
-                foundry.SetProperty("done", true);
-                foundry.Logger.LogInformation("Finalize executed");
-            })
+            .AddOperation(new InitOperation())
+            .AddOperation(new FlakyOperation())
+            .AddOperation(new FinalizeOperation())
             .Build();
 
         var checkpointsDir = Path.Combine(AppContext.BaseDirectory, "checkpoints");
@@ -77,7 +54,7 @@ public class RecoveryOnlySample : ISample
                 provider,
                 foundryKey,
                 workflowKey,
-                new RecoveryPolicy { MaxAttempts = 5, BaseDelay = TimeSpan.FromMilliseconds(50) });
+                new RecoveryMiddlewareOptions { MaxRetryAttempts = 5, BaseDelay = TimeSpan.FromMilliseconds(50) });
 
             var seq = f2.GetPropertyOrDefault<List<string>>("seq") ?? new();
             Console.WriteLine($"Sequence: {string.Join(" -> ", seq)}");
@@ -94,6 +71,76 @@ public class RecoveryOnlySample : ISample
         Array.Copy(hash, guidBytes, 16);
         return new Guid(guidBytes);
     }
+
+    private sealed class InitOperation : IWorkflowOperation
+    {
+        public Guid Id { get; } = Guid.NewGuid();
+        public string Name => "Init";
+        public bool SupportsRestore => false;
+
+        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        {
+            foundry.Logger.LogInformation("Init executed");
+            foundry.SetProperty("seq", new List<string> { "Init" });
+            await Task.Delay(25, cancellationToken);
+            return inputData;
+        }
+
+        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public void Dispose()
+        { }
+    }
+
+    private sealed class FlakyOperation : IWorkflowOperation
+    {
+        public Guid Id { get; } = Guid.NewGuid();
+        public string Name => "Flaky";
+        public bool SupportsRestore => false;
+
+        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        {
+            var count = foundry.GetPropertyOrDefault("flaky.count", 0);
+            foundry.SetProperty("flaky.count", count + 1);
+            var seq = foundry.GetPropertyOrDefault("seq", new List<string>());
+            seq.Add($"FlakyAttempt:{count + 1}");
+
+            if (count < 2)
+            {
+                throw new InvalidOperationException($"Flaky failed on attempt {count + 1}");
+            }
+
+            foundry.Logger.LogInformation("Flaky finally succeeded");
+            return Task.FromResult(inputData);
+        }
+
+        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public void Dispose()
+        { }
+    }
+
+    private sealed class FinalizeOperation : IWorkflowOperation
+    {
+        public Guid Id { get; } = Guid.NewGuid();
+        public string Name => "Finalize";
+        public bool SupportsRestore => false;
+
+        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        {
+            var seq = foundry.GetPropertyOrDefault("seq", new List<string>());
+            seq.Add("Finalize");
+            foundry.SetProperty("done", true);
+            foundry.Logger.LogInformation("Finalize executed");
+            return Task.FromResult(inputData);
+        }
+
+        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public void Dispose()
+        { }
+    }
 }
-
-

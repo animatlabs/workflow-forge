@@ -14,5 +14,3 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
         Task<IReadOnlyList<WorkflowExecutionSnapshot>> ListPendingAsync(CancellationToken cancellationToken = default);
     }
 }
-
-

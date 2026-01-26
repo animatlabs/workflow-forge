@@ -1,10 +1,10 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
 using Polly.Timeout;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.Resilience.Abstractions;
 
@@ -26,7 +26,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <param name="pipeline">The Polly resilience pipeline to use.</param>
         /// <param name="name">The name of the strategy.</param>
         /// <param name="logger">Optional logger for strategy events.</param>
-        public PollyResilienceStrategy(ResiliencePipeline pipeline, string name, IWorkflowForgeLogger? logger = null)
+        internal PollyResilienceStrategy(ResiliencePipeline pipeline, string name, IWorkflowForgeLogger? logger = null)
         {
             _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
             _name = name ?? throw new ArgumentNullException(nameof(name));

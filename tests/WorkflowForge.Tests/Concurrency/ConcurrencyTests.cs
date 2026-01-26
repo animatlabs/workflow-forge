@@ -56,11 +56,11 @@ public class ConcurrencyTests
         var tasks = new List<Task>();
         foreach (var foundry in foundries)
         {
-            var foundryTasks = operations.Take(10).Select(async operation =>
+            foundry.ReplaceOperations(operations.Take(10));
+            tasks.Add(Task.Run(async () =>
             {
                 try
                 {
-                    foundry.AddOperation(operation);
                     await foundry.ForgeAsync();
                 }
                 catch (Exception ex)
@@ -70,8 +70,7 @@ public class ConcurrencyTests
                         exceptions.Add(ex);
                     }
                 }
-            });
-            tasks.AddRange(foundryTasks);
+            }));
         }
 
         await Task.WhenAll(tasks);
@@ -345,7 +344,8 @@ public class ConcurrencyTests
         Assert.Empty(exceptions);
         Assert.All(foundries, foundry =>
         {
-            Assert.Equal(operationsPerFoundry * 2, foundry.Properties.Count); // Each operation creates 2 properties
+            var expectedCount = (operationsPerFoundry * 3) + 3; // result + timestamp + output per op, plus last-completed keys
+            Assert.Equal(expectedCount, foundry.Properties.Count);
         });
 
         _output.WriteLine($"Stress test completed successfully with {foundryCount} foundries and {foundryCount * operationsPerFoundry} total operations");

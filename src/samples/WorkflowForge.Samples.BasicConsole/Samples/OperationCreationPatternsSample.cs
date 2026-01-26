@@ -18,33 +18,8 @@ public class OperationCreationPatternsSample : ISample
         Console.WriteLine("Creating a workflow that demonstrates all operation creation patterns...");
         Console.WriteLine();
 
-        // =====================================================================
-        // SHOWCASE: Class-Based Operations (Recommended Approach)
-        // =====================================================================
-        Console.WriteLine("SHOWCASE: Class-Based Operations");
-        Console.WriteLine("=================================");
-
-        var showcaseWorkflow = WorkflowForge.CreateWorkflow()
-            .WithName("ShowcaseWorkflow")
-            .AddOperation(new CustomBusinessOperation("DEMO-001", "ShowcaseData"))
-            .Build();
-
-        using var showcaseFoundry = WorkflowForge.CreateFoundry("OperationShowcase");
-        showcaseFoundry.SetProperty("input", "Starting workflow with class-based operations");
-
-        using var showcaseSmith = WorkflowForge.CreateSmith();
-        await showcaseSmith.ForgeAsync(showcaseWorkflow, showcaseFoundry);
-        Console.WriteLine("Showcase workflow completed successfully!");
-        Console.WriteLine("   This demonstrates the RECOMMENDED approach for applications.\n");
-
-        // =====================================================================
-        // Now let's explore the various patterns available:
-        // =====================================================================
-
-        // =====================================================================
-        // PATTERN 1: Direct Constructor with new
-        // =====================================================================
-        Console.WriteLine("--- Pattern 1: Direct Constructor (new) ---");
+        // Pattern 1: Direct Constructor with new
+        Console.WriteLine("Pattern 1: Direct Constructor (new)");
         var workflow1 = WorkflowForge.CreateWorkflow()
             .WithName("DirectConstructorWorkflow")
             .AddOperation(new CustomBusinessOperation("Process-001", "Customer Data"))
@@ -57,13 +32,24 @@ public class OperationCreationPatternsSample : ISample
         await smith1.ForgeAsync(workflow1, foundry1);
         Console.WriteLine("Direct constructor pattern completed\n");
 
-        // Separate workflow for TypedMathOperation demonstration
-        Console.WriteLine("Demonstrating TypedMathOperation with proper integer input...");
+        // Demonstrate inline operations with foundry-based data passing
+        Console.WriteLine("Demonstrating inline math operations...");
         var mathWorkflow = WorkflowForge.CreateWorkflow()
             .WithName("MathWorkflow")
-            .AddOperation(WorkflowOperations.Create<object, int>("PrepareNumber",
-                input => 10)) // Convert to integer
-            .AddOperation(new TypedMathOperation(42))
+            .AddOperation("PrepareNumber", (foundry, ct) =>
+            {
+                foundry.SetProperty("numberInput", 10);
+                foundry.Logger.LogInformation("Prepared number: 10");
+                return Task.CompletedTask;
+            })
+            .AddOperation("Calculate", (foundry, ct) =>
+            {
+                var number = foundry.GetPropertyOrDefault<int>("numberInput");
+                var result = number * 42 * 1.5;
+                foundry.Logger.LogInformation("Calculating {Number} * 42 * 1.5 = {Result}", number, result);
+                foundry.SetProperty("mathResult", result);
+                return Task.CompletedTask;
+            })
             .Build();
 
         using var mathFoundry = WorkflowForge.CreateFoundry("MathDemo");
@@ -86,10 +72,9 @@ public class OperationCreationPatternsSample : ISample
         await paymentSmith.ForgeAsync(paymentWorkflow, paymentFoundry);
         Console.WriteLine("Payment operation pattern completed\n");
 
-        // =====================================================================
         // PATTERN 2: Generic TOperation with Factory Methods
-        // =====================================================================
-        Console.WriteLine("--- Pattern 2: Generic TOperation Factory Methods ---");
+
+        Console.WriteLine("Pattern 2: Generic TOperation Factory Methods ---");
         var workflow2 = WorkflowForge.CreateWorkflow()
             .WithName("GenericFactoryWorkflow")
             // Untyped operations that work with any input
@@ -122,10 +107,9 @@ public class OperationCreationPatternsSample : ISample
         await smith2.ForgeAsync(workflow2, foundry2);
         Console.WriteLine($"Generic factory pattern completed - Final result: {foundry2.GetPropertyOrDefault<object>("result")}\n");
 
-        // =====================================================================
         // PATTERN 3: DelegateWorkflowOperation Patterns
-        // =====================================================================
-        Console.WriteLine("--- Pattern 3: DelegateWorkflowOperation Patterns ---");
+
+        Console.WriteLine("Pattern 3: DelegateWorkflowOperation Patterns ---");
         var workflow3 = WorkflowForge.CreateWorkflow()
             .WithName("DelegateOperationWorkflow")
 
@@ -171,10 +155,9 @@ public class OperationCreationPatternsSample : ISample
         await smith3.ForgeAsync(workflow3, foundry3);
         Console.WriteLine("Delegate operation patterns completed\n");
 
-        // =====================================================================
         // PATTERN 4: WorkflowOperations Factory Class
-        // =====================================================================
-        Console.WriteLine("--- Pattern 4: WorkflowOperations Factory Class ---");
+
+        Console.WriteLine("Pattern 4: WorkflowOperations Factory Class ---");
         var workflow4 = WorkflowForge.CreateWorkflow()
             .WithName("FactoryClassWorkflow")
 
@@ -211,10 +194,9 @@ public class OperationCreationPatternsSample : ISample
         await smith4.ForgeAsync(workflow4, foundry4);
         Console.WriteLine("Factory class patterns completed\n");
 
-        // =====================================================================
         // PATTERN 5: Inline Lambda Operations (Quick prototyping)
-        // =====================================================================
-        Console.WriteLine("--- Pattern 5: Inline Lambda Operations (For Prototyping) ---");
+
+        Console.WriteLine("Pattern 5: Inline Lambda Operations (For Prototyping) ---");
         var workflow5 = WorkflowForge.CreateWorkflow()
             .WithName("InlineLambdaWorkflow")
 
@@ -278,10 +260,9 @@ public class OperationCreationPatternsSample : ISample
         Console.WriteLine("   Note: Inline operations are great for prototyping and simple logic,");
         Console.WriteLine("      but consider converting to classes for larger applications.\n");
 
-        // =====================================================================
         // PATTERN 6: Mixed Pattern Workflow (Real-world example)
-        // =====================================================================
-        Console.WriteLine("--- Pattern 6: Mixed Patterns (Real-world Example) ---");
+
+        Console.WriteLine("Pattern 6: Mixed Patterns (Real-world Example) ---");
         var workflow6 = WorkflowForge.CreateWorkflow()
             .WithName("MixedPatternWorkflow")
 
@@ -323,38 +304,14 @@ public class OperationCreationPatternsSample : ISample
         await smith6.ForgeAsync(workflow6, foundry6);
         Console.WriteLine("Mixed patterns workflow completed\n");
 
-        // =====================================================================
         // Summary
-        // =====================================================================
-        Console.WriteLine("Summary of Operation Creation Patterns:");
-        Console.WriteLine("  1. Direct Constructor (new) - RECOMMENDED for applications");
-        Console.WriteLine("  2. Generic TOperation - RECOMMENDED for type-safe operations");
-        Console.WriteLine("  3. DelegateWorkflowOperation - RECOMMENDED for flexible delegates");
-        Console.WriteLine("  4. WorkflowOperations Factory - Good for simple transformations");
-        Console.WriteLine("  5. Inline Lambdas - Good for prototyping and simple logic");
-        Console.WriteLine("  6. Mixed Patterns - RECOMMENDED for real-world applications");
-        Console.WriteLine();
-        Console.WriteLine("Recommendations:");
-        Console.WriteLine("• Primary Choice → Custom classes with new constructor (Pattern 1)");
-        Console.WriteLine("• Type Safety → Generic class-based operations (Pattern 2)");
-        Console.WriteLine("• Flexibility → DelegateWorkflowOperation with compensation (Pattern 3)");
-        Console.WriteLine("• Simple Logic → WorkflowOperations factory methods (Pattern 4)");
-        Console.WriteLine("• Prototyping → Inline lambdas for rapid iteration (Pattern 5)");
-        Console.WriteLine("• Complex Applications → Mix patterns based on complexity (Pattern 6)");
-        Console.WriteLine();
-        Console.WriteLine("Class-Based Benefits:");
-        Console.WriteLine("• Better testability with dependency injection");
-        Console.WriteLine("• Cleaner code organization and maintainability");
-        Console.WriteLine("• Easier debugging with dedicated operation classes");
-        Console.WriteLine("• Built-in support for compensation patterns");
-        Console.WriteLine("• Reusability across multiple workflows");
-        Console.WriteLine("• Standard development practices");
+        Console.WriteLine("\nOperation Creation Patterns Demonstrated:");
+        Console.WriteLine("  All 6 patterns successfully executed");
+        Console.WriteLine("  Recommended: Class-based operations (Pattern 1) for production apps");
     }
 }
 
-// =====================================================================
 // Custom Operation Classes for Demonstration
-// =====================================================================
 
 /// <summary>
 /// Example custom operation using direct constructor pattern
@@ -372,7 +329,7 @@ public class CustomBusinessOperation : WorkflowOperationBase
 
     public override string Name => $"CustomBusiness_{_processId}";
 
-    public override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var properties = new Dictionary<string, string>
         {
@@ -412,7 +369,7 @@ public class TypedMathOperation : WorkflowOperationBase<int, double>
 
     public override string Name => $"MathOperation_x{_multiplier}";
 
-    public override async Task<double> ForgeAsync(int inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<double> ForgeAsyncCore(int inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var properties = new Dictionary<string, string>
         {
@@ -445,7 +402,7 @@ public class PaymentOperation : WorkflowOperationBase
     public override string Name => "PaymentProcessor";
     public override bool SupportsRestore => true;
 
-    public override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var transactionId = $"PAY_{Guid.NewGuid():N}"[..10];
         var properties = new Dictionary<string, string>
@@ -491,7 +448,7 @@ public class OrderValidationSampleOperation : WorkflowOperationBase<Order, Order
 {
     public override string Name => "ValidateOrder";
 
-    public override async Task<Order> ForgeAsync(Order inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<Order> ForgeAsyncCore(Order inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var properties = new Dictionary<string, string>
         {
@@ -534,7 +491,7 @@ public class NotificationOperation : WorkflowOperationBase
     public override string Name => $"EmailNotification_{_templateName}";
     public override bool SupportsRestore => true; // Can send cancellation emails
 
-    public override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var emailId = $"EMAIL_{Guid.NewGuid():N}"[..12];
         var recipient = _parameters.GetValueOrDefault("recipient", "customer@example.com");
@@ -603,7 +560,7 @@ public class ExternalApiDataProcessor : WorkflowOperationBase<string, ApiRespons
 
     public override string Name => "ExternalApiProcessor";
 
-    public override async Task<ApiResponse> ForgeAsync(string inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<ApiResponse> ForgeAsyncCore(string inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Processing data through external API: {Endpoint}", _apiEndpoint);
 
@@ -657,7 +614,7 @@ public class ComprehensiveValidationOperation : WorkflowOperationBase<Validation
 
     public override string Name => "ComprehensiveValidation";
 
-    public override async Task<ValidationResult> ForgeAsync(ValidationRequest inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<ValidationResult> ForgeAsyncCore(ValidationRequest inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Starting comprehensive validation with {RuleCount} rules", _validationRules.Count);
 
@@ -692,9 +649,7 @@ public class ComprehensiveValidationOperation : WorkflowOperationBase<Validation
     }
 }
 
-// =====================================================================
 // Supporting Classes for Advanced Examples
-// =====================================================================
 
 public class ApiResponse
 {
@@ -720,6 +675,7 @@ public class ValidationResult
 public interface IValidationRule
 {
     string ErrorMessage { get; }
+
     Task<bool> ValidateAsync(ValidationRequest request, CancellationToken cancellationToken);
 }
 
@@ -753,9 +709,7 @@ public class StringLengthValidationRule : IValidationRule
     }
 }
 
-// =====================================================================
 // Data Models for Demonstration
-// =====================================================================
 
 public class Order
 {

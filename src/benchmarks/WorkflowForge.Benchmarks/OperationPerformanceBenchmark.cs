@@ -3,7 +3,6 @@ using BenchmarkDotNet.Engines;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
-using WorkflowForge.Configurations;
 
 namespace WorkflowForge.Benchmarks;
 
@@ -15,19 +14,17 @@ namespace WorkflowForge.Benchmarks;
 /// - Restoration/compensation performance
 /// </summary>
 [MemoryDiagnoser]
-[SimpleJob(RunStrategy.Monitoring, iterationCount: 200)]
+[SimpleJob(RunStrategy.Monitoring, iterationCount: 50)]
 [MarkdownExporter]
 [HtmlExporter]
 public class OperationPerformanceBenchmark
 {
-    private FoundryConfiguration _config = null!;
     private IWorkflowFoundry _foundry = null!;
 
     [GlobalSetup]
     public void Setup()
     {
-        _config = FoundryConfiguration.HighPerformance();
-        _foundry = WorkflowForge.CreateFoundry("BenchmarkFoundry", _config);
+        _foundry = WorkflowForge.CreateFoundry("BenchmarkFoundry");
     }
 
     [GlobalCleanup]
@@ -196,7 +193,7 @@ public class OperationPerformanceBenchmark
     [Benchmark]
     public async Task<string> ChainedOperationsExecution()
     {
-        using var foundry = WorkflowForge.CreateFoundry("ChainedBenchmark", _config);
+        using var foundry = WorkflowForge.CreateFoundry("ChainedBenchmark");
 
         foundry
             .WithOperation(new FastBenchmarkOperation())

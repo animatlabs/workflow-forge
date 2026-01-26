@@ -1,8 +1,8 @@
-using WorkflowForge.Exceptions;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Exceptions;
 using WorkflowForge.Operations;
 
 namespace WorkflowForge.Tests.Operations;
@@ -118,7 +118,7 @@ public class WorkflowOperationBaseTests
 
         public override string Name { get; }
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
 
@@ -140,7 +140,7 @@ public class WorkflowOperationBaseTests
 
         public override string Name { get; }
 
-        public override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
 

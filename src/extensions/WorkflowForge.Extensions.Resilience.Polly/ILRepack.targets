@@ -1,0 +1,25 @@
+<Project>
+  <Target Name="WorkflowForgeILRepack" AfterTargets="Build" Condition="$(Configuration.Contains('Release'))">
+    <Message Importance="high" Text="ILRepack: merging Polly dependencies" />
+    <ItemGroup>
+      <InputAssemblies Include="$(OutputPath)$(TargetName)$(TargetExt)" />
+      <InputAssemblies Include="$(OutputPath)Polly.dll" Condition="Exists('$(OutputPath)Polly.dll')" />
+      <InputAssemblies Include="$(OutputPath)Polly.Core.dll" Condition="Exists('$(OutputPath)Polly.Core.dll')" />
+    </ItemGroup>
+
+    <ILRepack
+      InputAssemblies="@(InputAssemblies)"
+      OutputFile="$(OutputPath)$(TargetName)$(TargetExt)"
+      LibraryPath="$(OutputPath)"
+      TargetKind="SameAsPrimaryAssembly"
+      Internalize="true"
+      Parallel="true"
+      DebugInfo="false" />
+  </Target>
+
+  <Target Name="ILRepackCleanup" AfterTargets="WorkflowForgeILRepack" Condition="$(Configuration.Contains('Release'))">
+    <Message Importance="high" Text="ILRepack: cleaning Polly dependency DLLs" />
+    <Delete Files="$(OutputPath)Polly.dll" Condition="Exists('$(OutputPath)Polly.dll')" />
+    <Delete Files="$(OutputPath)Polly.Core.dll" Condition="Exists('$(OutputPath)Polly.Core.dll')" />
+  </Target>
+</Project>

@@ -48,7 +48,7 @@ namespace WorkflowForge.Operations
         /// <param name="foundry">The workflow foundry providing context and services.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The input data unchanged.</returns>
-        public override async Task<object?> ForgeAsync(object? input, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? input, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -57,7 +57,13 @@ namespace WorkflowForge.Operations
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {
-                throw new WorkflowOperationException($"Action operation '{Name}' failed during execution.", ex);
+                throw new WorkflowOperationException(
+                    $"Action operation '{Name}' failed during execution.",
+                    ex,
+                    foundry.ExecutionId,
+                    foundry.CurrentWorkflow?.Id,
+                    Name,
+                    Id);
             }
         }
 
@@ -79,7 +85,12 @@ namespace WorkflowForge.Operations
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {
-                throw new WorkflowRestoreException($"Action operation '{Name}' failed during restoration.", ex);
+                throw new WorkflowRestoreException(
+                    $"Action operation '{Name}' failed during restoration.",
+                    ex,
+                    foundry.ExecutionId,
+                    foundry.CurrentWorkflow?.Id,
+                    Name);
             }
         }
     }
@@ -126,7 +137,7 @@ namespace WorkflowForge.Operations
         /// <param name="foundry">The workflow foundry providing context and services.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The input data unchanged.</returns>
-        public override async Task<TInput> ForgeAsync(TInput input, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<TInput> ForgeAsyncCore(TInput input, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             try
             {

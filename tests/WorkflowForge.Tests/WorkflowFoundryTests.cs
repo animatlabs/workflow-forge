@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Loggers;
-using WorkflowForge.Configurations;
-using WorkflowForge.Operations;
 using WorkflowForge.Exceptions;
+using WorkflowForge.Loggers;
+using WorkflowForge.Operations;
+using WorkflowForge.Options;
 using Xunit.Abstractions;
 
 namespace WorkflowForge.Tests;
@@ -49,10 +49,10 @@ public class WorkflowFoundryTests
         // Arrange
         var executionId = Guid.NewGuid();
         var properties = new ConcurrentDictionary<string, object?>();
-        var config = new FoundryConfiguration();
+        var logger = NullLogger.Instance;
 
         // Act
-        var foundry = new WorkflowFoundry(executionId, properties, config);
+        var foundry = new WorkflowFoundry(executionId, properties, logger);
 
         // Assert - Configuration would be internal, just verify foundry created
         Assert.NotNull(foundry);
@@ -143,29 +143,29 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void Configuration_ReturnsCorrectConfiguration()
+    public void Logger_ReturnsCorrectLogger()
     {
         // Arrange
-        var config = FoundryConfiguration.ForDevelopment();
-        var foundry = CreateTestFoundry(config: config);
+        var logger = NullLogger.Instance;
+        var foundry = CreateTestFoundry(logger: logger);
 
         // Act & Assert
-        Assert.Same(config, foundry.Configuration);
+        Assert.Same(logger, foundry.Logger);
     }
 
     [Fact]
-    public void Constructor_WithNullConfiguration_UsesMinimalConfiguration()
+    public void Constructor_WithNullLogger_UsesNullLogger()
     {
         // Arrange
         var executionId = Guid.NewGuid();
         var properties = new ConcurrentDictionary<string, object?>();
 
         // Act
-        var foundry = new WorkflowFoundry(executionId, properties, configuration: null);
+        var foundry = new WorkflowFoundry(executionId, properties, logger: null);
 
         // Assert
-        Assert.NotNull(foundry.Configuration);
         Assert.NotNull(foundry.Logger);
+        Assert.IsType<NullLogger>(foundry.Logger);
     }
 
     #endregion Constructor and Basic Properties Tests
@@ -474,6 +474,64 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
+    public async Task ReplaceOperations_ReplacesExistingOperations()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var firstExecuted = false;
+        var replacementExecuted = false;
+
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("First", (input, f, ct) =>
+        {
+            firstExecuted = true;
+            return Task.FromResult("first");
+        }));
+
+        var replacement = new DelegateWorkflowOperation<object, string>("Replacement", (input, f, ct) =>
+        {
+            replacementExecuted = true;
+            return Task.FromResult("replacement");
+        });
+
+        // Act
+        foundry.ReplaceOperations(new[] { replacement });
+        await foundry.ForgeAsync();
+
+        // Assert
+        Assert.False(firstExecuted);
+        Assert.True(replacementExecuted);
+    }
+
+    [Fact]
+    public async Task ForgeAsync_FreezesPipeline_DuringExecution()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var started = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var resume = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("BlockingOp", async (input, f, ct) =>
+        {
+            started.TrySetResult(true);
+            await resume.Task.ConfigureAwait(false);
+            return "done";
+        }));
+
+        // Act
+        var forgeTask = foundry.ForgeAsync();
+        await started.Task;
+
+        // Assert
+        Assert.True(foundry.IsFrozen);
+        Assert.Throws<InvalidOperationException>(() => foundry.AddOperation(new TestOperation("LateOp")));
+        Assert.Throws<InvalidOperationException>(() => foundry.AddMiddleware(new TestMiddleware()));
+
+        resume.TrySetResult(true);
+        await forgeTask;
+        Assert.False(foundry.IsFrozen);
+    }
+
+    [Fact]
     public async Task ForgeAsync_WithSingleOperation_ExecutesOperation()
     {
         // Arrange
@@ -493,6 +551,69 @@ public class WorkflowFoundryTests
 
         // Assert
         Assert.True(executed);
+    }
+
+    [Fact]
+    public async Task ForgeAsync_WhenOutputChainingDisabled_DoesNotPassResultForward()
+    {
+        // Arrange
+        var options = new WorkflowForgeOptions { EnableOutputChaining = false };
+        var foundry = CreateTestFoundry(options: options);
+        object? receivedInput = "unset";
+
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("Op1", (input, f, ct) =>
+            Task.FromResult("output")));
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("Op2", (input, f, ct) =>
+        {
+            receivedInput = input;
+            return Task.FromResult("done");
+        }));
+
+        // Act
+        await foundry.ForgeAsync();
+
+        // Assert
+        Assert.Null(receivedInput);
+    }
+
+    [Fact]
+    public async Task ForgeAsync_WithContinueAndAggregate_ThrowsAggregateException()
+    {
+        // Arrange
+        var options = new WorkflowForgeOptions { ContinueOnError = true };
+        var foundry = CreateTestFoundry(options: options);
+
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("Fail1", (input, f, ct) =>
+            Task.FromException<string>(new InvalidOperationException("fail-1"))));
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("Fail2", (input, f, ct) =>
+            Task.FromException<string>(new InvalidOperationException("fail-2"))));
+
+        // Act
+        var exception = await Assert.ThrowsAsync<AggregateException>(() => foundry.ForgeAsync());
+
+        // Assert
+        Assert.Equal(2, exception.InnerExceptions.Count);
+    }
+
+    [Fact]
+    public async Task ForgeAsync_StoresOperationOutputInProperties()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var operation = new DelegateWorkflowOperation<object, string>("ResultOp", (input, f, ct) =>
+            Task.FromResult("result"));
+
+        foundry.AddOperation(operation);
+
+        // Act
+        await foundry.ForgeAsync();
+
+        // Assert
+        var outputKey = $"Operation.{operation.Id}.Output";
+        Assert.True(foundry.Properties.TryGetValue(outputKey, out var storedOutput));
+        Assert.Equal("result", storedOutput);
+        Assert.Equal(0, foundry.Properties["Operation.LastCompletedIndex"]);
+        Assert.Equal(operation.Name, foundry.Properties["Operation.LastCompletedName"]);
     }
 
     [Fact]
@@ -692,23 +813,7 @@ public class WorkflowFoundryTests
 
     #endregion Disposal Tests
 
-    #region Configuration Tests
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void Configuration_EnableDetailedTiming_ReflectsValue(bool enableTiming)
-    {
-        // Arrange
-        var config = FoundryConfiguration.Minimal();
-        config.EnableDetailedTiming = enableTiming;
-        var foundry = CreateTestFoundry(config: config);
-
-        // Act & Assert
-        Assert.Equal(enableTiming, foundry.Configuration.EnableDetailedTiming);
-    }
-
-    #endregion Configuration Tests
 
     #region Error Handling Tests
 
@@ -735,11 +840,15 @@ public class WorkflowFoundryTests
 
     #region Helper Methods
 
-    private static WorkflowFoundry CreateTestFoundry(Guid? executionId = null, FoundryConfiguration? config = null)
+    private static WorkflowFoundry CreateTestFoundry(
+        Guid? executionId = null,
+        IWorkflowForgeLogger? logger = null,
+        IServiceProvider? serviceProvider = null,
+        WorkflowForgeOptions? options = null)
     {
         var id = executionId ?? Guid.NewGuid();
         var properties = new ConcurrentDictionary<string, object?>();
-        return new WorkflowFoundry(id, properties, config);
+        return new WorkflowFoundry(id, properties, logger, serviceProvider, options: options);
     }
 
     private static IWorkflow CreateMockWorkflow(string name, Guid? id = null)
@@ -763,11 +872,12 @@ public class WorkflowFoundryTests
 
         public override string Name { get; }
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             return Task.FromResult<object?>("TestResult");
         }
     }
+
 
     private class TestMiddleware : IWorkflowOperationMiddleware
     {
@@ -778,10 +888,10 @@ public class WorkflowFoundryTests
             _name = name;
         }
 
-        public Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData, Func<Task<object?>> next, CancellationToken cancellationToken = default)
+        public Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData, Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
         {
             // Simple pass-through middleware for testing
-            return next();
+            return next(cancellationToken);
         }
     }
 
