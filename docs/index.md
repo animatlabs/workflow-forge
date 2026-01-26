@@ -8,7 +8,7 @@ title: WorkflowForge Documentation
   <div>
     <h1>WorkflowForge Documentation</h1>
     <p>Build high-performance workflows in .NET with clear guidance, focused examples, and a zero-dependency core.</p>
-    <p>
+    <p class="wf-badges">
       <a href="https://www.nuget.org/packages/WorkflowForge/"><img src="https://img.shields.io/nuget/v/WorkflowForge.svg" alt="NuGet"></a>
       <a href="https://www.nuget.org/packages/WorkflowForge/"><img src="https://img.shields.io/nuget/dt/WorkflowForge.svg" alt="NuGet Downloads"></a>
       <a href="https://github.com/animatlabs/workflow-forge/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>

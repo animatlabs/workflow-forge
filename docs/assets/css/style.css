@@ -358,10 +358,27 @@ hr {
   margin-bottom: 2.5rem;
 }
 
-.wf-hero img {
+.wf-hero > img {
   width: 100px;
   height: 100px;
   flex-shrink: 0;
+}
+
+/* Badge styling in hero */
+.wf-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.5rem 0 1rem 0 !important;
+}
+
+.wf-badges a {
+  text-decoration: none;
+}
+
+.wf-badges img {
+  height: 20px !important;
+  width: auto !important;
 }
 
 .wf-hero h1 {
