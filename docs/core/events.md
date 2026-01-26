@@ -604,13 +604,9 @@ foundry.OperationCompleted += (s, e) => {
 
 ---
 
-## Next Steps
+## Related Documentation
 
-- **[Architecture](../architecture/overview.md)** - Understanding event system design
-- **[Operations](operations.md)** - Creating operations that fire events
-- **[Samples Guide](../getting-started/samples-guide.md)** - See events in action (Sample 11: Workflow Events)
-- **[Extensions](../extensions/index.md)** - Audit and Performance extensions use events
-
----
-
-**← Back to [Documentation Home](../index.md)**
+- [Architecture](../architecture/overview.md) - Understanding event system design
+- [Operations](operations.md) - Creating operations that fire events
+- [Samples Guide](../getting-started/samples-guide.md) - See events in action (Sample 11: Workflow Events)
+- [Extensions](../extensions/index.md) - Audit and Performance extensions use events

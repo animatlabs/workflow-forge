@@ -611,14 +611,10 @@ For complete extension documentation, see [Extensions Guide](../extensions/index
 
 ---
 
-## Next Steps
+## Related Documentation
 
-- **[API Reference](../reference/api-reference.md)** - Complete API documentation
-- **[Operations Guide](../core/operations.md)** - Creating custom operations
-- **[Event System](../core/events.md)** - Working with events
-- **[Performance](../performance/performance.md)** - Optimization techniques
-- **[Extensions](../extensions/index.md)** - Available extensions
-
----
-
-**← Back to [Documentation Home](../index.md)**
+- [API Reference](../reference/api-reference.md) - Complete API documentation
+- [Operations Guide](../core/operations.md) - Creating custom operations
+- [Event System](../core/events.md) - Working with events
+- [Performance](../performance/performance.md) - Optimization techniques
+- [Extensions](../extensions/index.md) - Available extensions

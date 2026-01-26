@@ -227,4 +227,3 @@ MIT License - see [LICENSE](../../../LICENSE) for details.
 
 ---
 
-**WorkflowForge.Extensions.Resilience** - *Build workflows with industrial strength*

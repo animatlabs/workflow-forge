@@ -238,4 +238,3 @@ catch (RecoveryException ex)
 
 ---
 
-**WorkflowForge.Extensions.Persistence.Recovery** - *Build workflows with industrial strength*

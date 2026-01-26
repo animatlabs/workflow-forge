@@ -24,7 +24,6 @@
 - [Performance Advantage Summary](#performance-advantage-summary)
 - [Architectural Differences](#architectural-differences)
 - [When to Choose WorkflowForge](#when-to-choose-workflowforge)
-- [Benchmark Methodology](#benchmark-methodology)
 
 ---
 
@@ -499,8 +498,6 @@ WorkflowForge is the **fastest .NET workflow engine** for high-performance, prog
 
 ## Related Documentation
 
-- **[Performance Benchmarks](performance.md)** - Internal WorkflowForge benchmarks
-- **[Architecture Overview](../architecture/overview.md)** - Design principles
-- **[Getting Started](../getting-started/getting-started.md)** - Quick start guide
-
-**← Back to [Documentation Home](../index.md)**
+- [Performance Overview](performance.md) - Internal WorkflowForge benchmarks
+- [Architecture Overview](../architecture/overview.md) - Design principles
+- [Getting Started](../getting-started/getting-started.md) - Quick start guide

@@ -1156,25 +1156,12 @@ public class ExtensionIntegrationTests
 }
 ```
 
-## Related Documentation
-
-- **[Getting Started](../getting-started/getting-started.md)** - Basic extension usage
-- **[Architecture](../architecture/overview.md)** - Extension architecture details
-- **[Configuration](../core/configuration.md)** - Configuration patterns
-- **[Operations Guide](../core/operations.md)** - Custom operation patterns
-- **[Events System](../core/events.md)** - Event-driven integration
-
-Refer to extension package READMEs for details:
-- Core logging integration: `src/core/WorkflowForge/README.md`
-- Serilog: `src/extensions/WorkflowForge.Extensions.Logging.Serilog/README.md`
-- Resilience base: `src/extensions/WorkflowForge.Extensions.Resilience/README.md`
-- Resilience Polly: `src/extensions/WorkflowForge.Extensions.Resilience.Polly/README.md`
-- Validation: `src/extensions/WorkflowForge.Extensions.Validation/README.md`
-- Audit: `src/extensions/WorkflowForge.Extensions.Audit/README.md`
-- Performance monitoring: `src/extensions/WorkflowForge.Extensions.Observability.Performance/README.md`
-- Health checks: `src/extensions/WorkflowForge.Extensions.Observability.HealthChecks/README.md`
-- OpenTelemetry: `src/extensions/WorkflowForge.Extensions.Observability.OpenTelemetry/README.md`
-
 ---
 
-**← Back to [Documentation Home](../index.md)**
+## Related Documentation
+
+- [Getting Started](../getting-started/getting-started.md) - Basic extension usage
+- [Architecture](../architecture/overview.md) - Extension architecture details
+- [Configuration](../core/configuration.md) - Configuration patterns
+- [Operations Guide](../core/operations.md) - Custom operation patterns
+- [Events System](../core/events.md) - Event-driven integration

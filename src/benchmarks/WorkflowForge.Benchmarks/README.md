@@ -136,4 +136,3 @@ When writing new benchmarks:
 
 ---
 
-**WorkflowForge Benchmarks** - *Build workflows with industrial strength*

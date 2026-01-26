@@ -210,4 +210,3 @@ if (state != null)
 
 ---
 
-**WorkflowForge.Extensions.Persistence** - *Build workflows with industrial strength*

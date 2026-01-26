@@ -178,4 +178,3 @@ All benchmark code is open source and auditable.
 
 ---
 
-**WorkflowForge Comparative Benchmarks** - *Build workflows with industrial strength*

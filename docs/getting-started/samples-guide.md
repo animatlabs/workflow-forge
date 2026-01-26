@@ -1156,10 +1156,8 @@ public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, Can
 
 ## Related Documentation
 
-- **[Getting Started](getting-started.md)** - Learn the basics before exploring samples
-- **[Operations Guide](../core/operations.md)** - Detailed operation documentation
-- **[Extensions](../extensions/index.md)** - Extension usage in samples
-- **[Configuration](../core/configuration.md)** - Configuration patterns in samples
-- **[Events System](../core/events.md)** - Event handling in samples
-
-**← Back to [Documentation Home](../index.md)**
+- [Getting Started](getting-started.md) - Learn the basics before exploring samples
+- [Operations Guide](../core/operations.md) - Detailed operation documentation
+- [Extensions](../extensions/index.md) - Extension usage in samples
+- [Configuration](../core/configuration.md) - Configuration patterns in samples
+- [Events System](../core/events.md) - Event handling in samples

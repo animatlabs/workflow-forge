@@ -194,4 +194,3 @@ public class AzureAuditProvider : IAuditProvider
 
 ---
 
-**WorkflowForge.Extensions.Audit** - *Build workflows with industrial strength*

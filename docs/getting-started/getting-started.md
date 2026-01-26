@@ -560,18 +560,15 @@ You've learned:
 - Data flow patterns (dictionary-based preferred)
 - Compensation/rollback (Saga pattern)
 
-**Next**: Explore the [33 samples](samples-guide.md) to see WorkflowForge in action, or dive into [architecture](../architecture/overview.md) to understand the design principles.
+**Next**: Explore the [33 samples](samples-guide.md) to see WorkflowForge in action.
 
 ---
 
 ## Related Documentation
 
-- **[Architecture Overview](../architecture/overview.md)** - Design patterns and core concepts
-- **[Operations Guide](../core/operations.md)** - All operation types and patterns
-- **[Events System](../core/events.md)** - Monitoring and observability
-- **[Extensions](../extensions/index.md)** - Available extensions
-- **[Configuration](../core/configuration.md)** - Environment-specific setup
-- **[Samples Guide](samples-guide.md)** - All 33 samples with learning path
-- **[API Reference](../reference/api-reference.md)** - Complete API documentation
-
-**← Back to [Documentation Home](../index.md)**
+- [Architecture Overview](../architecture/overview.md) - Design patterns and core concepts
+- [Operations Guide](../core/operations.md) - All operation types and patterns
+- [Events System](../core/events.md) - Monitoring and observability
+- [Extensions](../extensions/index.md) - Available extensions
+- [Configuration](../core/configuration.md) - Environment-specific setup
+- [API Reference](../reference/api-reference.md) - Complete API documentation

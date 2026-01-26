@@ -507,4 +507,3 @@ MIT License - see [LICENSE](../../../LICENSE) for details.
 
 ---
 
-**WorkflowForge Core** - *Build workflows with industrial strength*

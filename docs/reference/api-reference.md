@@ -852,14 +852,10 @@ var throttledOp = ForEachWorkflowOperation.CreateSplitInput(
 
 ---
 
-## Next Steps
+## Related Documentation
 
-- **[Architecture](../architecture/overview.md)** - Understanding the design
-- **[Operations](../core/operations.md)** - Creating operations
-- **[Events](../core/events.md)** - Event system details
-- **[Configuration](../core/configuration.md)** - Configuring workflows
-- **[Extensions](../extensions/index.md)** - Extension ecosystem
-
----
-
-**← Back to [Documentation Home](../index.md)**
+- [Architecture](../architecture/overview.md) - Understanding the design
+- [Operations](../core/operations.md) - Creating operations
+- [Events](../core/events.md) - Event system details
+- [Configuration](../core/configuration.md) - Configuring workflows
+- [Extensions](../extensions/index.md) - Extension ecosystem

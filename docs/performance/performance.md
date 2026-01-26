@@ -14,7 +14,6 @@ This document provides comprehensive performance analysis of WorkflowForge, incl
 1. [Internal Performance Benchmarks](#internal-performance-benchmarks)
 2. [Competitive Performance Summary](#competitive-performance-summary)
 3. [Performance Optimization Guide](#performance-optimization-guide)
-4. [Benchmark Methodology](#benchmark-methodology)
 
 ---
 
@@ -485,12 +484,8 @@ For detailed competitive analysis and architectural comparisons, see [competitiv
 
 ---
 
-## See Also
+## Related Documentation
 
-- **[Internal Benchmarks](internal-benchmarks.md)** - Detailed internal benchmark results
-- **[Competitive Analysis](competitive-analysis.md)** - Head-to-head comparisons
-- **[Benchmark Methodology](../../performance/methodology.md)** - How we test
+- [Internal Benchmarks](internal-benchmarks.md) - Detailed internal benchmark results
+- [Competitive Analysis](competitive-analysis.md) - Head-to-head comparisons
 
----
-
-**End of Performance Documentation**

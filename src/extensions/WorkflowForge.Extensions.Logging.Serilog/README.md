@@ -156,4 +156,3 @@ foundry.Logger.LogInformation(
 
 ---
 
-**WorkflowForge.Extensions.Logging.Serilog** - *Build workflows with industrial strength*

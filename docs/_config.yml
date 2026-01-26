@@ -5,15 +5,21 @@ baseurl: /workflow-forge
 markdown: kramdown
 permalink: pretty
 
-# Disable theme - using custom layout
-theme: null
-
 # Kramdown settings
 kramdown:
   input: GFM
   syntax_highlighter: rouge
   syntax_highlighter_opts:
     css_class: highlight
+
+# Plugins
+plugins:
+  - jekyll-relative-links
+
+# Relative links plugin config
+relative_links:
+  enabled: true
+  collections: true
 
 # Defaults
 defaults:

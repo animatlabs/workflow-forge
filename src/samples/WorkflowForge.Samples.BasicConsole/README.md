@@ -105,5 +105,3 @@ Samples use `appsettings.json` for environment-specific configuration including 
 For detailed explanations of all samples, see [docs/samples-guide.md](../../../docs/getting-started/samples-guide.md)
 
 ---
-
-**WorkflowForge Samples** - *Build workflows with industrial strength* 

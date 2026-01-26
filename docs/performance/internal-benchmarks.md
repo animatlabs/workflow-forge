@@ -209,8 +209,5 @@ These internal benchmarks validate the competitive benchmark findings:
 
 ## Related Documentation
 
-- **[Performance Overview](performance.md)** - Summary and production targets
-- **[Competitive Analysis](competitive-analysis.md)** - Head-to-head comparisons
-- **[Benchmark Methodology](../../performance/methodology.md)** - How we test
-
-**Raw Data**: Full BenchmarkDotNet reports available in `BenchmarkDotNet.Artifacts/results/`
+- [Performance Overview](performance.md) - Summary and production targets
+- [Competitive Analysis](competitive-analysis.md) - Head-to-head comparisons

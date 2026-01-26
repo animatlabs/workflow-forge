@@ -866,13 +866,9 @@ public class ResourceOperation : WorkflowOperationBase
 
 ---
 
-## Next Steps
+## Related Documentation
 
-- **[Architecture](../architecture/overview.md)** - Understanding WorkflowForge design
-- **[Event System](events.md)** - Monitoring operation execution
-- **[Samples Guide](../getting-started/samples-guide.md)** - See operations in action
-- **[API Reference](../reference/api-reference.md)** - Complete API documentation
-
----
-
-**← Back to [Documentation Home](../index.md)**
+- [Architecture](../architecture/overview.md) - Understanding WorkflowForge design
+- [Event System](../core/events.md) - Monitoring operation execution
+- [Samples Guide](../getting-started/samples-guide.md) - See operations in action
+- [API Reference](../reference/api-reference.md) - Complete API documentation

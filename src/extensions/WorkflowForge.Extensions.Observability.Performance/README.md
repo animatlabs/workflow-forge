@@ -171,4 +171,3 @@ The extension tracks:
 
 ---
 
-**WorkflowForge.Extensions.Observability.Performance** - *Build workflows with industrial strength*

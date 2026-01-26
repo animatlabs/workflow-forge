@@ -89,4 +89,3 @@ Samples should:
 
 ---
 
-**WorkflowForge Samples** - *Build workflows with industrial strength*

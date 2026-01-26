@@ -197,4 +197,3 @@ var combinedPolicy = Policy.WrapAsync(
 
 ---
 
-**WorkflowForge.Extensions.Resilience.Polly** - *Build workflows with industrial strength*

@@ -133,4 +133,3 @@ Health checks can be monitored via:
 
 ---
 
-**WorkflowForge.Extensions.Observability.HealthChecks** - *Build workflows with industrial strength*

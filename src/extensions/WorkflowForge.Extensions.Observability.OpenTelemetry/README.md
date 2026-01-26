@@ -182,4 +182,3 @@ View traces in:
 
 ---
 
-**WorkflowForge.Extensions.Observability.OpenTelemetry** - *Build workflows with industrial strength*

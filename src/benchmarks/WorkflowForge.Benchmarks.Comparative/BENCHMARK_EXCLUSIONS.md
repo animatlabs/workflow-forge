@@ -90,5 +90,4 @@ This is still acceptable for workflows that run for seconds/minutes/hours, but n
 
 ---
 
-**WorkflowForge Benchmarks** - *Build workflows with industrial strength*
 

@@ -158,4 +158,3 @@ foundry.UseValidation(
 
 ---
 
-**WorkflowForge.Extensions.Validation** - *Build workflows with industrial strength*

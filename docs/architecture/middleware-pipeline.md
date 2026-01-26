@@ -167,9 +167,10 @@ foundry.AddMiddleware(new LoggingMiddleware("INNER"));
 - **Async-friendly:** Full support for async/await throughout the chain
 - **Cancellation support:** CancellationToken threading through all layers
 
+---
+
 ## Related Documentation
 
-- [Middleware Development Guide](../middleware.md)
-- [Custom Middleware Examples](../samples-guide.md#middleware-samples)
-- [Performance Best Practices](../performance.md)
-
+- [Operations Guide](../core/operations.md) - Middleware and operation patterns
+- [Samples Guide](../getting-started/samples-guide.md) - Sample 12: Middleware
+- [Performance](../performance/performance.md) - Performance best practices

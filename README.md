@@ -1,4 +1,4 @@
-# WorkflowForge - Build workflows with industrial strength
+# WorkflowForge
 
 High-performance, dependency-free workflow orchestration library for .NET. Execute thousands of workflows per second with microsecond-level operation latency and minimal memory footprint.
 

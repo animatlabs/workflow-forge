@@ -834,15 +834,11 @@ var operation = new TimeSensitiveOperation(mockTime);
 
 ---
 
-## Next Steps
+## Related Documentation
 
-- **[Getting Started](../getting-started/getting-started.md)** - Initial setup and first workflow
-- **[Architecture](../architecture/overview.md)** - Understanding the configuration model
-- **[Operations](operations.md)** - Creating configurable operations
-- **[Events](events.md)** - Event-based configuration
-- **[Extensions](../extensions/index.md)** - All 11 packages (10 extensions + Testing) with configuration examples
-- **[Samples Guide](../getting-started/samples-guide.md)** - 33 practical examples including configuration
-
----
-
-**← Back to [Documentation Home](../index.md)**
+- [Getting Started](../getting-started/getting-started.md) - Initial setup and first workflow
+- [Architecture](../architecture/overview.md) - Understanding the configuration model
+- [Operations](operations.md) - Creating configurable operations
+- [Events](events.md) - Event-based configuration
+- [Extensions](../extensions/index.md) - All 11 packages with configuration examples
+- [Samples Guide](../getting-started/samples-guide.md) - Practical examples including configuration
