@@ -308,7 +308,7 @@ public class WorkflowIntegrationTests
     {
         public override string Name => "DataInitialization";
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             foundry.Properties["initialized"] = true;
             foundry.Properties["timestamp"] = DateTime.UtcNow;
@@ -320,7 +320,7 @@ public class WorkflowIntegrationTests
     {
         public override string Name => "DataValidation";
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (!foundry.Properties.ContainsKey("initialized"))
                 throw new InvalidOperationException("Data not initialized");
@@ -334,7 +334,7 @@ public class WorkflowIntegrationTests
     {
         public override string Name => "DataProcessing";
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (!foundry.Properties.ContainsKey("validated"))
                 throw new InvalidOperationException("Data not validated");
@@ -349,7 +349,7 @@ public class WorkflowIntegrationTests
     {
         public override string Name => "DataPersistence";
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (!foundry.Properties.ContainsKey("processed"))
                 throw new InvalidOperationException("Data not processed");
@@ -372,7 +372,7 @@ public class WorkflowIntegrationTests
 
         public override string Name { get; }
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             _log.Add($"{Name}-Execute");
             return Task.FromResult<object?>("logged");
@@ -383,7 +383,7 @@ public class WorkflowIntegrationTests
     {
         public override string Name => "DataTransform";
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             var rawData = (int[])foundry.Properties["rawData"]!;
             var transformedData = rawData.Select(x => x * 2).ToArray();
@@ -396,7 +396,7 @@ public class WorkflowIntegrationTests
     {
         public override string Name => "DataAggregation";
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             var transformedData = (int[])foundry.Properties["transformedData"]!;
             var aggregatedResult = transformedData.Sum();
@@ -409,7 +409,7 @@ public class WorkflowIntegrationTests
     {
         public override string Name => "SpecialProcessing";
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             foundry.Properties["processingType"] = "special";
             return Task.FromResult<object?>("special");
@@ -420,7 +420,7 @@ public class WorkflowIntegrationTests
     {
         public override string Name => "StandardProcessing";
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             foundry.Properties["processingType"] = "standard";
             return Task.FromResult<object?>("standard");
@@ -436,7 +436,7 @@ public class WorkflowIntegrationTests
 
         public override string Name { get; }
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             foundry.Properties[$"{Name}-executed"] = true;
             return Task.FromResult<object?>("success");
@@ -452,7 +452,7 @@ public class WorkflowIntegrationTests
 
         public override string Name { get; }
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             throw new InvalidOperationException($"Operation {Name} failed intentionally");
         }
@@ -469,7 +469,7 @@ public class WorkflowIntegrationTests
 
         public override string Name => "CounterIncrement";
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             _counter.Increment();
             return Task.FromResult<object?>("incremented");
@@ -480,7 +480,7 @@ public class WorkflowIntegrationTests
     {
         public override string Name => "PaymentProcessing";
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             // Simulate payment processing
             foundry.Properties["paymentProcessed"] = true;
@@ -493,7 +493,7 @@ public class WorkflowIntegrationTests
     {
         public override string Name => "InventoryCheck";
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             // Simulate inventory check
             foundry.Properties["inventoryAvailable"] = true;
@@ -506,7 +506,7 @@ public class WorkflowIntegrationTests
     {
         public override string Name => "Shipping";
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             // Simulate shipping scheduling
             foundry.Properties["shipped"] = true;
@@ -519,7 +519,7 @@ public class WorkflowIntegrationTests
     {
         public override string Name => "DocumentValidation";
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             var documentPath = foundry.Properties["documentPath"] as string;
             var expectedFormat = foundry.Properties["expectedFormat"] as string;
@@ -535,7 +535,7 @@ public class WorkflowIntegrationTests
     {
         public override string Name => "TextExtraction";
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             var content = foundry.Properties["documentContent"] as string ?? "Default extracted text content";
             foundry.Properties["extractedText"] = content;
@@ -548,7 +548,7 @@ public class WorkflowIntegrationTests
     {
         public override string Name => "ContentAnalysis";
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             var text = foundry.Properties["extractedText"] as string ?? "";
             var wordCount = text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;

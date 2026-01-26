@@ -28,7 +28,7 @@ WorkflowCore uses a **background worker thread model**:
 
 #### Impact on Benchmarking
 
-For Scenario 8, the benchmark framework calls the lifecycle 25 times (iterations):
+For Scenario 8, the benchmark framework calls the lifecycle 50 times (iterations):
 
 **WorkflowCore Measures**:
 - DI container creation
@@ -49,7 +49,7 @@ For Scenario 8, the benchmark framework calls the lifecycle 25 times (iterations
 
 In testing, WorkflowCore Scenario 8 showed:
 - 220µs+ per operation (vs 2-5µs for other frameworks)
-- 10+ minutes for 25 iterations (vs seconds for other scenarios)
+- 20+ minutes for 50 iterations (vs seconds for other scenarios)
 - Stuck at "OverheadJitting" phase due to thread startup costs
 
 #### This is NOT a Flaw

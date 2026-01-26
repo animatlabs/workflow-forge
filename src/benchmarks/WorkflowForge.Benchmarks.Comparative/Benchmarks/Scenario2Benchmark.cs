@@ -7,7 +7,7 @@ using WorkflowForge.Benchmarks.Comparative.Scenarios;
 namespace WorkflowForge.Benchmarks.Comparative.Benchmarks;
 
 [MemoryDiagnoser]
-[SimpleJob(warmupCount: 5, iterationCount: 25)]
+[SimpleJob(warmupCount: 5, iterationCount: 50)]
 [MarkdownExporter]
 [HtmlExporter]
 public class Scenario2Benchmark

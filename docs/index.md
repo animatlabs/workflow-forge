@@ -69,7 +69,7 @@ title: WorkflowForge Documentation
 - **[Competitive Analysis](performance/competitive-analysis.md)** - Summary only; details and artifacts inside
 
 ### Extensions & Samples
-- **[Extensions Overview](extensions/index.md)** - All 10 available extensions
+- **[Extensions Overview](extensions/index.md)** - All 11 packages (10 extensions + Testing)
 - **[Samples Guide](getting-started/samples-guide.md)** - Complete guide to 33 progressive examples
 
 ### Contributing
@@ -83,11 +83,11 @@ WorkflowForge is a **zero-dependency workflow orchestration framework** for .NET
 
 ### Key Features
 
-- **World-Class Performance**: 11-574x faster than leading alternatives
-- **Minimal Memory**: 9-581x less memory usage
+- **World-Class Performance**: 11-540x faster than leading alternatives
+- **Minimal Memory**: 9-573x less memory usage
 - **Zero Dependencies**: Core package with no external dependencies
 - **Production Ready**: Built-in compensation (saga pattern), comprehensive testing
-- **Extension Ecosystem**: 10 optional extensions with zero version conflicts
+- **Extension Ecosystem**: 11 packages (10 extensions + Testing) with zero version conflicts
 - **Developer Experience**: Fluent API, clear metaphor, 33 progressive samples
 
 ---
@@ -198,7 +198,7 @@ For explicit contracts between operations, use `IWorkflowOperation<TInput, TOutp
 ```csharp
 public class ValidateOrderOperation : WorkflowOperationBase<Order, ValidationResult>
 {
-    public override async Task<ValidationResult> ForgeAsync(
+    protected override async Task<ValidationResult> ForgeAsyncCore(
         Order input, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         // Type-safe input and output
@@ -230,10 +230,11 @@ For comprehensive event handling, see [Event System Guide](core/events.md).
 
 ## Extensions Ecosystem
 
-WorkflowForge provides **10 optional extensions** for additional capabilities:
+WorkflowForge provides **11 packages** (10 extensions + 1 testing utility) for additional capabilities:
 
-| Extension | Purpose | Package |
-|-----------|---------|---------|
+| Package | Purpose | Package Name |
+|---------|---------|--------------|
+| **Testing** | Unit testing utilities | `WorkflowForge.Testing` |
 | **Serilog Logging** | Structured logging | `WorkflowForge.Extensions.Logging.Serilog` |
 | **Resilience** | Core retry abstractions | `WorkflowForge.Extensions.Resilience` |
 | **Polly Resilience** | Circuit breakers, retries | `WorkflowForge.Extensions.Resilience.Polly` |
@@ -253,15 +254,21 @@ For detailed extension documentation, see [Extensions Guide](extensions/index.md
 
 ## Performance Highlights
 
-Based on rigorous BenchmarkDotNet testing (12 scenarios) against Workflow Core and Elsa Workflows:
+Based on rigorous BenchmarkDotNet testing (12 scenarios, 50 iterations) against Workflow Core and Elsa Workflows:
 
-| Metric | WorkflowForge | Competitors | Advantage |
-|--------|---------------|-------------|-----------|
-| **Execution Speed** | 12-312 μs | 1,367-69,284 μs | **11-574x faster** |
-| **Memory Usage** | 3.4-110 KB | 31-19,815 KB | **9-581x less** |
-| **State Machine** | 122 μs | 39,217-69,284 μs | **322-574x faster** |
+| Scenario | vs WorkflowCore | vs Elsa | Memory Advantage |
+|----------|-----------------|---------|------------------|
+| **Simple Sequential** | 26-71x faster | 48-117x faster | 26-183x less |
+| **State Machine** | 126-303x faster | 307-540x faster | 47-284x less |
+| **Conditional Branching** | 32-68x faster | 80-132x faster | 21-149x less |
+| **Concurrent Execution** | 26-109x faster | 71-264x faster | 27-158x less |
 
-**Test System**: Windows 11 (25H2), .NET 8.0.23, BenchmarkDotNet v0.15.8, 25 iterations  
+**Key Metrics**:
+- Minimal memory footprint: **3.49 KB** baseline
+- Custom operation execution: **~13 μs** median
+- State machine workflows: **303-540x faster** than competitors
+
+**Test System**: Windows 11 (25H2), .NET 8.0.23, BenchmarkDotNet v0.15.8, 50 iterations  
 **Last Updated**: January 2026
 
 For comprehensive performance analysis, see [Performance Documentation](performance/performance.md) and [Internal Benchmarks](performance/internal-benchmarks.md).

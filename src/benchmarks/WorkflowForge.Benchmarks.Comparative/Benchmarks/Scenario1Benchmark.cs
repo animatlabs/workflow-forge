@@ -11,7 +11,7 @@ namespace WorkflowForge.Benchmarks.Comparative.Benchmarks;
 /// Compares WorkflowForge vs Workflow Core vs Elsa for basic sequential execution
 /// </summary>
 [MemoryDiagnoser]
-[SimpleJob(warmupCount: 5, iterationCount: 25)]
+[SimpleJob(warmupCount: 5, iterationCount: 50)]
 [MarkdownExporter]
 [HtmlExporter]
 public class Scenario1Benchmark

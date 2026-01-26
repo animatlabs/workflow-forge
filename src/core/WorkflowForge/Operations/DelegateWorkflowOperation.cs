@@ -51,7 +51,7 @@ namespace WorkflowForge.Operations
         /// <param name="foundry">The workflow foundry providing context and services.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The output data from the operation.</returns>
-        public override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -81,7 +81,12 @@ namespace WorkflowForge.Operations
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {
-                throw new WorkflowRestoreException($"Operation '{Name}' failed during restoration.", ex);
+                throw new WorkflowRestoreException(
+                    $"Operation '{Name}' failed during restoration.",
+                    ex,
+                    foundry.ExecutionId,
+                    foundry.CurrentWorkflow?.Id,
+                    Name);
             }
         }
 
@@ -185,7 +190,7 @@ namespace WorkflowForge.Operations
         /// <param name="foundry">The workflow foundry providing context and services.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The typed output data.</returns>
-        public override async Task<TOutput> ForgeAsync(TInput input, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<TOutput> ForgeAsyncCore(TInput input, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             try
             {

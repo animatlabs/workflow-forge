@@ -115,7 +115,7 @@ public class ValidateOrderOperation : WorkflowOperationBase
     public override string Name => "ValidateOrder";
     public override bool SupportsRestore => false; // Validation doesn't need rollback
 
-    public override async Task<object?> ForgeAsync(
+    protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
         IWorkflowFoundry foundry,
         CancellationToken cancellationToken)
@@ -163,7 +163,7 @@ public class ProcessPaymentOperation : WorkflowOperationBase
     public override string Name => "ProcessPayment";
     public override bool SupportsRestore => true; // Payment can be refunded
 
-    public override async Task<object?> ForgeAsync(
+    protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
         IWorkflowFoundry foundry,
         CancellationToken cancellationToken)
@@ -224,7 +224,7 @@ public class FulfillOrderOperation : WorkflowOperationBase
     public override string Name => "FulfillOrder";
     public override bool SupportsRestore => false;
 
-    public override async Task<object?> ForgeAsync(
+    protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
         IWorkflowFoundry foundry,
         CancellationToken cancellationToken)
@@ -382,7 +382,7 @@ public class MyOperation : WorkflowOperationBase
 {
     public override bool SupportsRestore => true;
 
-    public override async Task<object?> ForgeAsync(...) 
+    protected override async Task<object?> ForgeAsyncCore(...) 
     {
         // Forward logic
     }
@@ -425,6 +425,62 @@ dotnet run
 ```
 
 [Samples Guide](samples-guide.md)
+
+### Run Operations in Parallel
+
+Use `AddParallelOperations` to execute operations concurrently:
+
+```csharp
+var workflow = WorkflowForge.CreateWorkflow("ParallelProcessing")
+    .AddParallelOperations(
+        new ValidateInventoryOperation(),
+        new CheckFraudOperation(),
+        new VerifyCustomerOperation()
+    )
+    .AddOperation(new ProcessOrderOperation())
+    .Build();
+
+// With concurrency control
+var workflow2 = WorkflowForge.CreateWorkflow("ControlledParallel")
+    .AddParallelOperations(
+        operations,
+        maxConcurrency: 4,
+        timeout: TimeSpan.FromSeconds(30),
+        name: "ParallelValidation"
+    )
+    .Build();
+```
+
+### Unit Testing Operations
+
+Use `WorkflowForge.Testing` to test operations in isolation:
+
+```csharp
+// Install testing package
+dotnet add package WorkflowForge.Testing
+```
+
+```csharp
+using WorkflowForge.Testing;
+using Xunit;
+
+public class MyOperationTests
+{
+    [Fact]
+    public async Task Operation_Should_SetProperty()
+    {
+        // Arrange
+        var foundry = new FakeWorkflowFoundry();
+        var operation = new ValidateOrderOperation();
+        foundry.Properties["Order"] = new Order { Id = "123", Amount = 99.99m };
+        
+        // Act
+        await operation.ForgeAsync(null, foundry, CancellationToken.None);
+        
+        // Assert - no exception means validation passed
+    }
+}
+```
 
 ### Add Extensions
 

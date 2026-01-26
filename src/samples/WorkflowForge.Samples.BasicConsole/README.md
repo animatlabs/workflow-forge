@@ -92,7 +92,7 @@ Samples use `appsettings.json` for environment-specific configuration including 
 - **Control Flow**: Conditionals, loops (ForEach), error handling with compensation
 - **Configuration**: IOptions<T> pattern, environment profiles, middleware
 - **Events**: SRP-compliant event system (Workflow, Operation, Compensation)
-- **Extensions**: All 10 extensions with focused dependency boundaries
+- **Extensions**: All 11 packages (10 extensions + Testing) with focused dependency boundaries
 - **Resilience**: Retry, circuit breaker, timeout policies with Polly
 - **Observability**: Logging, tracing, health checks, performance monitoring
 - **Persistence**: Workflow state checkpointing and recovery

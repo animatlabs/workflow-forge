@@ -26,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\core\WorkflowForge.Testing\WorkflowForge.Testing.csproj" />
     <ProjectReference Include="..\..\src\core\WorkflowForge\WorkflowForge.csproj" />
   </ItemGroup>
 

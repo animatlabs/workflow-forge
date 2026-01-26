@@ -213,7 +213,7 @@ var noInput = ForEachWorkflowOperation.CreateNoInput(operations);
 
 **Key Code Pattern**:
 ```csharp
-public override async Task<object?> ForgeAsync(...) {
+protected override async Task<object?> ForgeAsyncCore(...) {
     try {
         // Operation logic
     } catch (Exception ex) {
@@ -737,7 +737,7 @@ foundry.AddMiddleware(new TimingMiddleware());
 // Class-based (production-recommended)
 public class ProcessOrderOperation : WorkflowOperationBase
 {
-    public override async Task<object?> ForgeAsync(...) { ... }
+    protected override async Task<object?> ForgeAsyncCore(...) { ... }
 }
 
 // Inline async

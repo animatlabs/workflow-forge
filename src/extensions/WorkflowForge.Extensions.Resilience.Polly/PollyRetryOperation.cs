@@ -50,7 +50,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         public override bool SupportsRestore => _innerOperation.SupportsRestore;
 
         /// <inheritdoc />
-        public override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
 
@@ -69,6 +69,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                 throw new WorkflowOperationException(
                     $"Circuit breaker is open for operation '{_innerOperation.Name}'",
                     ex,
+                    foundry.ExecutionId,
+                    foundry.CurrentWorkflow?.Id,
                     _innerOperation.Name,
                     _innerOperation.Id);
             }
@@ -78,6 +80,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                 throw new WorkflowOperationException(
                     $"Operation '{_innerOperation.Name}' timed out",
                     ex,
+                    foundry.ExecutionId,
+                    foundry.CurrentWorkflow?.Id,
                     _innerOperation.Name,
                     _innerOperation.Id);
             }

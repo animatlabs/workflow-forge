@@ -329,7 +329,7 @@ public class CustomBusinessOperation : WorkflowOperationBase
 
     public override string Name => $"CustomBusiness_{_processId}";
 
-    public override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var properties = new Dictionary<string, string>
         {
@@ -369,7 +369,7 @@ public class TypedMathOperation : WorkflowOperationBase<int, double>
 
     public override string Name => $"MathOperation_x{_multiplier}";
 
-    public override async Task<double> ForgeAsync(int inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<double> ForgeAsyncCore(int inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var properties = new Dictionary<string, string>
         {
@@ -402,7 +402,7 @@ public class PaymentOperation : WorkflowOperationBase
     public override string Name => "PaymentProcessor";
     public override bool SupportsRestore => true;
 
-    public override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var transactionId = $"PAY_{Guid.NewGuid():N}"[..10];
         var properties = new Dictionary<string, string>
@@ -448,7 +448,7 @@ public class OrderValidationSampleOperation : WorkflowOperationBase<Order, Order
 {
     public override string Name => "ValidateOrder";
 
-    public override async Task<Order> ForgeAsync(Order inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<Order> ForgeAsyncCore(Order inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var properties = new Dictionary<string, string>
         {
@@ -491,7 +491,7 @@ public class NotificationOperation : WorkflowOperationBase
     public override string Name => $"EmailNotification_{_templateName}";
     public override bool SupportsRestore => true; // Can send cancellation emails
 
-    public override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var emailId = $"EMAIL_{Guid.NewGuid():N}"[..12];
         var recipient = _parameters.GetValueOrDefault("recipient", "customer@example.com");
@@ -560,7 +560,7 @@ public class ExternalApiDataProcessor : WorkflowOperationBase<string, ApiRespons
 
     public override string Name => "ExternalApiProcessor";
 
-    public override async Task<ApiResponse> ForgeAsync(string inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<ApiResponse> ForgeAsyncCore(string inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Processing data through external API: {Endpoint}", _apiEndpoint);
 
@@ -614,7 +614,7 @@ public class ComprehensiveValidationOperation : WorkflowOperationBase<Validation
 
     public override string Name => "ComprehensiveValidation";
 
-    public override async Task<ValidationResult> ForgeAsync(ValidationRequest inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<ValidationResult> ForgeAsyncCore(ValidationRequest inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Starting comprehensive validation with {RuleCount} rules", _validationRules.Count);
 

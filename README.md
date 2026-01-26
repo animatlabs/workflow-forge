@@ -10,15 +10,15 @@ High-performance, dependency-free workflow orchestration library for .NET. Execu
 
 ## Performance at a Glance
 
-**Internal Benchmarks** (.NET 8.0.23, Windows 11):
-- **Operation Execution**: 9.8-37.8μs median latency
-- **Workflow Throughput**: 12-312μs for typical operations
-- **Memory Footprint**: 3.4-110KB across scenarios
+**Internal Benchmarks** (.NET 8.0.23, Windows 11, 50 iterations):
+- **Operation Execution**: 12-45μs median latency
+- **Workflow Throughput**: 39-178μs for typical operations
+- **Memory Footprint**: 3.2-121KB across scenarios
 - **Concurrent Scaling**: Near-perfect (16x speedup for 16 workflows)
 
 **Competitive Benchmarks** (12 scenarios vs. Workflow Core, Elsa):
-- **11-574x faster** execution (State Machine: 322-574x)
-- **9-581x less** memory allocation
+- **11-540x faster** execution (State Machine: up to 540x)
+- **9-573x less** memory allocation
 - **Microsecond-scale** execution vs. millisecond-scale competitors
 
 [Full Performance Details](docs/performance/performance.md) | [Competitive Analysis](docs/performance/competitive-analysis.md)
@@ -33,16 +33,18 @@ High-performance, dependency-free workflow orchestration library for .NET. Execu
 - **Microsecond Execution**: Sub-100μs operation execution
 - **Minimal Memory**: Linear memory scaling, no memory leaks
 - **Thread-Safe**: Concurrent workflow execution via `ConcurrentDictionary`
-- **Fluent API**: Clean, readable workflow definition
+- **Fluent API**: Clean, readable workflow definition with `AddOperations()` and `AddParallelOperations()`
 - **Saga Pattern**: Built-in compensation/rollback via `RestoreAsync()`
+- **Lifecycle Hooks**: `OnBeforeExecuteAsync`/`OnAfterExecuteAsync` for setup/teardown without middleware
 - **Middleware Pipeline**: Russian Doll pattern for cross-cutting concerns
 - **Event System**: SRP-compliant lifecycle events for workflows, operations, and compensation
+- **Testing Support**: `FakeWorkflowFoundry` for unit testing operations in isolation
 
 ### Dependency Boundaries
 
 Extensions declare explicit NuGet dependencies where needed. The validation extension uses **DataAnnotations** from the BCL, so no third‑party validation library is required.
 
-### Extension Ecosystem (10 Extensions)
+### Package Ecosystem (11 Packages: 10 Extensions + Testing)
 
 **Logging**:
 - Serilog integration for structured logging
@@ -171,7 +173,7 @@ WorkflowForge excels at:
 - Control flow (conditionals, loops, error handling)
 - Configuration (options pattern, environment profiles)
 - Middleware and events
-- All 10 extensions (Serilog, Polly, OpenTelemetry, Validation, Audit, etc.)
+- All 11 packages (Serilog, Polly, OpenTelemetry, Validation, Audit, Testing, etc.)
 - Advanced patterns (comprehensive integration, operation creation patterns)
 
 [Sample Applications](src/samples/WorkflowForge.Samples.BasicConsole/README.md) | [Samples Guide](docs/getting-started/samples-guide.md)
@@ -184,7 +186,7 @@ WorkflowForge excels at:
 - [Architecture](docs/architecture/overview.md) - Design patterns and core concepts
 - [Operations](docs/core/operations.md) - Built-in and custom operations
 - [Events](docs/core/events.md) - Lifecycle event system
-- [Extensions](docs/extensions/index.md) - All 10 extensions with examples
+- [Extensions](docs/extensions/index.md) - All 11 packages (10 extensions + Testing) with examples
 - [Configuration](docs/core/configuration.md) - Environment-specific setup
 - [API Reference](docs/reference/api-reference.md) - Complete API documentation
 - [Performance](docs/performance/performance.md) - Benchmark results and optimization
@@ -221,19 +223,19 @@ WorkflowForge excels at:
 ### Competitive Performance
 
 **Sequential Workflow** (10 operations):
-- WorkflowForge: 231μs median
-- Workflow Core: 8,594μs median (37x slower)
-- Elsa: 20,898μs median (90x slower)
+- WorkflowForge: 247μs median
+- Workflow Core: 6,531μs median (26x slower)
+- Elsa: 17,617μs median (71x slower)
 
-**Concurrent Execution** (8 workflows):
-- WorkflowForge: 305μs median
-- Workflow Core: 45,532μs median (149x slower)
-- Elsa: 104,863μs median (344x slower)
+**State Machine** (25 transitions):
+- WorkflowForge: 68μs median
+- Workflow Core: 20,624μs median (303x slower)
+- Elsa: 36,695μs median (540x slower)
 
 **Creation Overhead**:
-- WorkflowForge: 6.7μs median
-- Workflow Core: 871μs median (130x slower)
-- Elsa: 2,568μs median (383x slower)
+- WorkflowForge: 13μs median
+- Workflow Core: 814μs median (63x slower)
+- Elsa: 2,107μs median (162x slower)
 
 [Competitive Benchmarks](docs/performance/competitive-analysis.md)
 

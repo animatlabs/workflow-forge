@@ -34,14 +34,14 @@
 
 ## Executive Summary
 
-WorkflowForge demonstrates **11-574x faster execution** and **9-581x less memory allocation** compared to Workflow Core and Elsa Workflows across 12 real-world scenarios.
+WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory allocation** compared to Workflow Core and Elsa Workflows across 12 real-world scenarios (50 iterations per benchmark).
 
 **Key Insights**:
-- WorkflowForge operates at **microsecond scale** (12-312μs), competitors at **millisecond scale** (1-107ms)
-- Memory allocations remain in **kilobytes** (3.4-110KB) vs. **megabytes** (0.5-19MB) for competitors
-- **State Machine** scenarios show highest advantage: **322-574x faster**
-- **Parallel Execution** maintains excellent scaling: **44-454x faster**
-- **Long Running/Event-Driven** are I/O-bound but show **51-422x memory savings**
+- WorkflowForge operates at **microsecond scale** (13-497μs), competitors at **millisecond scale** (0.8-94ms)
+- Memory allocations remain in **kilobytes** (3.5-121KB) vs. **megabytes** (0.04-19MB) for competitors
+- **State Machine** scenarios show highest advantage: **up to 540x faster** vs Elsa
+- **Concurrent Execution** shows **109-264x faster** performance
+- **Sequential Workflows** show **26-71x faster** with minimal memory
 - Consistent performance across all 12 scenario types
 
 ---
@@ -52,25 +52,25 @@ WorkflowForge demonstrates **11-574x faster execution** and **9-581x less memory
 
 **Description**: Execute operations sequentially (1, 5, 10, 25, 50 operations)
 
-#### Performance Results (Median Times)
+#### Performance Results (Median Times, 50 iterations)
 
 | Operations | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |------------|---------------|---------------|------|----------|------------|
-| 1          | 180μs         | 1,209μs       | 8,023μs | **6.7x faster** | **44.6x faster** |
-| 5          | 230μs         | 3,366μs       | 12,617μs | **14.6x faster** | **54.9x faster** |
-| 10         | 224μs         | 6,060μs       | 17,044μs | **27.1x faster** | **76.1x faster** |
-| 25         | 273μs         | 13,508μs      | 30,606μs | **49.5x faster** | **112.1x faster** |
-| 50         | 395μs         | 28,432μs      | 53,944μs | **72.0x faster** | **136.6x faster** |
+| 1          | 183μs         | 1,348μs       | 8,703μs | **7.4x faster** | **47.6x faster** |
+| 5          | 205μs         | 4,154μs       | 12,954μs | **20.3x faster** | **63.2x faster** |
+| 10         | 247μs         | 6,531μs       | 17,617μs | **26.4x faster** | **71.3x faster** |
+| 25         | 316μs         | 14,193μs      | 29,919μs | **44.9x faster** | **94.7x faster** |
+| 50         | 444μs         | 26,996μs      | 51,557μs | **60.8x faster** | **116.1x faster** |
 
 #### Memory Allocation Results
 
 | Operations | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |------------|---------------|---------------|------|----------|------------|
-| 1          | 3.69KB        | 45.27KB       | 1,242KB | **12.3x less** | **336.6x less** |
-| 5          | 8.59KB        | 217.79KB      | 2,018KB | **25.4x less** | **234.9x less** |
-| 10         | 14.75KB       | 428.27KB      | 2,989KB | **29.0x less** | **202.6x less** |
-| 25         | 39.73KB       | 1,063KB       | 5,947KB | **26.8x less** | **149.7x less** |
-| 50         | 78.73KB       | 2,123KB       | 10,907KB | **27.0x less** | **138.5x less** |
+| 1          | 4.84KB        | 45.27KB       | 1,242KB | **9.4x less** | **256.6x less** |
+| 5          | 9.37KB        | 217.19KB      | 2,023KB | **23.2x less** | **215.9x less** |
+| 10         | 16.31KB       | 429.77KB      | 2,984KB | **26.4x less** | **183.0x less** |
+| 25         | 43.49KB       | 1,063KB       | 5,950KB | **24.4x less** | **136.8x less** |
+| 50         | 85.51KB       | 2,124KB       | 10,905KB | **24.8x less** | **127.5x less** |
 
 **Key Insight**: WorkflowForge performance advantage **increases linearly with operation count**.
 
@@ -80,21 +80,21 @@ WorkflowForge demonstrates **11-574x faster execution** and **9-581x less memory
 
 **Description**: Pass data between operations (5, 10, 25 operations)
 
-#### Performance Results (Median Times)
+#### Performance Results (Median Times, 50 iterations)
 
 | Operations | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |------------|---------------|---------------|------|----------|------------|
-| 5          | 209μs         | 3,299μs       | 12,693μs | **15.8x faster** | **60.7x faster** |
-| 10         | 199μs         | 6,026μs       | 19,851μs | **30.3x faster** | **99.8x faster** |
-| 25         | 278μs         | 13,636μs      | 30,399μs | **49.1x faster** | **109.4x faster** |
+| 5          | 233μs         | 4,220μs       | 13,210μs | **18.1x faster** | **56.7x faster** |
+| 10         | 262μs         | 6,737μs       | 18,222μs | **25.7x faster** | **69.5x faster** |
+| 25         | 331μs         | 16,214μs      | 32,043μs | **49.0x faster** | **96.8x faster** |
 
 #### Memory Allocation Results
 
 | Operations | WorkflowForge | Workflow Core | Elsa |
 |------------|---------------|---------------|------|
-| 5          | 7.34KB        | 215.54KB      | 2,017KB |
-| 10         | 11.95KB       | 428.41KB      | 2,988KB |
-| 25         | 28.75KB       | 1,061KB       | 5,951KB |
+| 5          | 8.86KB        | 216.20KB      | 2,032KB |
+| 10         | 15.18KB       | 427.24KB      | 2,986KB |
+| 25         | 36.13KB       | 1,062KB       | 5,952KB |
 
 **Key Insight**: Data passing overhead is **minimal** in WorkflowForge (<1μs per operation).
 
@@ -108,9 +108,9 @@ WorkflowForge demonstrates **11-574x faster execution** and **9-581x less memory
 
 | Operations | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |------------|---------------|---------------|------|----------|------------|
-| 10         | 238μs         | 6,207μs       | 17,642μs | **26.1x faster** | **74.1x faster** |
-| 25         | 314μs         | 13,758μs      | 30,192μs | **43.8x faster** | **96.2x faster** |
-| 50         | 369μs         | 28,735μs      | 55,347μs | **77.9x faster** | **150.0x faster** |
+| 10         | 266μs         | 8,543μs       | 21,333μs | **32.1x faster** | **80.2x faster** |
+| 25         | 339μs         | 20,520μs      | 35,557μs | **60.5x faster** | **104.9x faster** |
+| 50         | 505μs         | 34,358μs      | 66,625μs | **68.0x faster** | **131.9x faster** |
 
 **Key Insight**: Conditional overhead negligible (<1μs per branch decision).
 
@@ -124,17 +124,17 @@ WorkflowForge demonstrates **11-574x faster execution** and **9-581x less memory
 
 | Items | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |-------|---------------|---------------|------|----------|------------|
-| 10    | 213μs         | 7,137μs       | 18,317μs | **33.5x faster** | **86.0x faster** |
-| 50    | 389μs         | 28,378μs      | 55,618μs | **73.0x faster** | **143.0x faster** |
-| 100   | 578μs         | 52,309μs      | 103,808μs | **90.5x faster** | **179.6x faster** |
+| 10    | 271μs         | 9,601μs       | 21,545μs | **35.4x faster** | **79.5x faster** |
+| 50    | 497μs         | 35,421μs      | 64,171μs | **71.3x faster** | **129.1x faster** |
+| 100   | 773μs         | 64,202μs      | 107,701μs | **83.1x faster** | **139.3x faster** |
 
 #### Memory Allocation Results
 
 | Items | WorkflowForge | Workflow Core | Elsa |
 |-------|---------------|---------------|------|
-| 10    | 17.46KB       | 427.54KB      | 2,988KB |
-| 50    | 81.51KB       | 2,121KB       | 10,908KB |
-| 100   | 173.53KB      | 4,241KB       | 20,859KB |
+| 10    | 19.26KB       | 428.67KB      | 2,988KB |
+| 50    | 90.35KB       | 2,123KB       | 10,905KB |
+| 100   | 175.4KB       | 4,243KB       | 20,865KB |
 
 **Key Insight**: ForEach performance advantage **increases with collection size**.
 
@@ -148,19 +148,19 @@ WorkflowForge demonstrates **11-574x faster execution** and **9-581x less memory
 
 | Concurrency | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |-------------|---------------|---------------|------|----------|------------|
-| 1           | 253μs         | 6,617μs       | 18,295μs | **26.1x faster** | **72.3x faster** |
-| 4           | 286μs         | 20,091μs      | 54,666μs | **70.2x faster** | **191.1x faster** |
-| 8           | 312μs         | 42,093μs      | 107,784μs | **135.0x faster** | **345.5x faster** |
+| 1           | 260μs         | 6,848μs       | 18,357μs | **26.3x faster** | **70.6x faster** |
+| 4           | 334μs         | 20,612μs      | 55,570μs | **61.7x faster** | **166.4x faster** |
+| 8           | 356μs         | 38,833μs      | 94,018μs | **109.1x faster** | **264.1x faster** |
 
 #### Memory Allocation Results
 
 | Concurrency | WorkflowForge | Workflow Core | Elsa |
 |-------------|---------------|---------------|------|
-| 1           | 14.27KB       | 427.64KB      | 2,985KB |
-| 4           | 56.55KB       | 1,626KB       | 9,874KB |
-| 8           | 110.2KB       | 3,233KB       | 19,145KB |
+| 1           | 15.84KB       | 428.3KB       | 2,987KB |
+| 4           | 62.55KB       | 1,628KB       | 9,903KB |
+| 8           | 120.87KB      | 3,232KB       | 19,139KB |
 
-**Key Insight**: WorkflowForge maintains **consistent per-workflow overhead** (~14KB) regardless of concurrency.
+**Key Insight**: WorkflowForge maintains **consistent per-workflow overhead** (~16KB) regardless of concurrency.
 
 ---
 
@@ -172,17 +172,17 @@ WorkflowForge demonstrates **11-574x faster execution** and **9-581x less memory
 
 | Framework | Median | P95 |
 |-----------|--------|-----|
-| WorkflowForge | 109μs | 141μs |
-| Workflow Core | 1,236μs | 1,515μs |
-| Elsa | 8,460μs | 9,347μs |
+| WorkflowForge | 111μs | 133μs |
+| Workflow Core | 1,228μs | 1,630μs |
+| Elsa | 7,150μs | 7,584μs |
 
 **Advantage**:
-- **11.3x faster** than Workflow Core
-- **77.6x faster** than Elsa
+- **11.1x faster** than Workflow Core
+- **64.4x faster** than Elsa
 
 **Memory**: WorkflowForge 5KB vs. Workflow Core 46KB vs. Elsa 1,072KB
 
-**Key Insight**: Error handling overhead is **minimal** (~109μs) in WorkflowForge.
+**Key Insight**: Error handling overhead is **minimal** (~111μs) in WorkflowForge.
 
 ---
 
@@ -194,17 +194,17 @@ WorkflowForge demonstrates **11-574x faster execution** and **9-581x less memory
 
 | Framework | Median | P95 |
 |-----------|--------|-----|
-| WorkflowForge | 12μs | 18μs |
-| Workflow Core | 871μs | 946μs |
-| Elsa | 2,313μs | 2,484μs |
+| WorkflowForge | 13μs | 16μs |
+| Workflow Core | 814μs | 859μs |
+| Elsa | 2,107μs | 2,376μs |
 
 **Advantage**:
-- **68x faster** than Workflow Core
-- **188x faster** than Elsa
+- **63x faster** than Workflow Core
+- **162x faster** than Elsa
 
 **Memory**: WorkflowForge 3.73KB vs. Workflow Core 129KB vs. Elsa 578KB
 
-**Key Insight**: WorkflowForge workflow creation is **negligible** (~12μs).
+**Key Insight**: WorkflowForge workflow creation is **negligible** (~13μs).
 
 ---
 
@@ -216,19 +216,19 @@ WorkflowForge demonstrates **11-574x faster execution** and **9-581x less memory
 
 | Framework | Median | P95 |
 |-----------|--------|-----|
-| WorkflowForge | 39μs | 54μs |
-| Elsa | 10,346μs | 11,230μs |
+| WorkflowForge | 42μs | 51μs |
+| Elsa | 9,933μs | 10,322μs |
 | Workflow Core | **EXCLUDED** | **EXCLUDED** |
 
 **Advantage**:
-- **267x faster** than Elsa
+- **236x faster** than Elsa
 - Workflow Core excluded due to architectural incompatibility (see note below)
 
-**Memory**: WorkflowForge 3.41KB vs. Elsa 1,510KB (**443x less**)
+**Memory**: WorkflowForge 3.57KB vs. Elsa 1,510KB (**423x less**)
 
-**Note**: Workflow Core was excluded from this benchmark due to an architectural design difference. Workflow Core's `WorkflowHost.Start()` method spins up background worker threads that are intended to run continuously, making rapid create-start-stop-dispose cycles (25 iterations) incompatible with its design. This is a fundamental architectural difference, not a performance issue. For more details, see the benchmark documentation.
+**Note**: Workflow Core was excluded from this benchmark due to an architectural design difference. Workflow Core's `WorkflowHost.Start()` method spins up background worker threads that are intended to run continuously, making rapid create-start-stop-dispose cycles (50 iterations) incompatible with its design. This is a fundamental architectural difference, not a performance issue. For more details, see the benchmark documentation.
 
-**Key Insight**: Complete lifecycle overhead is **trivial** (~39μs) in WorkflowForge.
+**Key Insight**: Complete lifecycle overhead is **trivial** (~42μs) in WorkflowForge.
 
 ---
 
@@ -240,19 +240,19 @@ WorkflowForge demonstrates **11-574x faster execution** and **9-581x less memory
 
 | Transitions | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |-------------|---------------|---------------|------|----------|------------|
-| 5           | 42μs          | 5,392μs       | 15,152μs | **128x faster** | **361x faster** |
-| 10          | 43μs          | 7,480μs       | 19,633μs | **174x faster** | **457x faster** |
-| 25          | 59μs          | 19,156μs      | 34,033μs | **325x faster** | **577x faster** |
+| 5           | 50μs          | 6,305μs       | 15,327μs | **126x faster** | **307x faster** |
+| 10          | 47μs          | 9,208μs       | 20,374μs | **196x faster** | **434x faster** |
+| 25          | 68μs          | 20,624μs      | 36,695μs | **303x faster** | **540x faster** |
 
 #### Memory Allocation Results
 
 | Transitions | WorkflowForge | Workflow Core | Elsa |
 |-------------|---------------|---------------|------|
-| 5           | 5.54KB        | 262KB         | 2,016KB |
-| 10          | 10.64KB       | 472KB         | 2,984KB |
-| 25          | 20.5KB        | 1,106KB       | 5,949KB |
+| 5           | 5.54KB        | 260KB         | 2,019KB |
+| 10          | 10.64KB       | 472KB         | 2,982KB |
+| 25          | 20.92KB       | 1,106KB       | 5,949KB |
 
-**Key Insight**: State machine execution shows the **highest performance advantage** (up to 577x faster).
+**Key Insight**: State machine execution shows the **highest performance advantage** (up to 540x faster).
 
 ---
 
@@ -264,20 +264,20 @@ WorkflowForge demonstrates **11-574x faster execution** and **9-581x less memory
 
 | Ops/Delay | WorkflowForge | Workflow Core | Elsa |
 |-----------|---------------|---------------|------|
-| 3 ops/1ms | 39.6ms        | 39.5ms        | 52.4ms |
-| 3 ops/5ms | 39.5ms        | 39.5ms        | 53.0ms |
-| 5 ops/1ms | 72.1ms        | 72.1ms        | 69.4ms |
-| 5 ops/5ms | 72.3ms        | 71.6ms        | 84.7ms |
+| 3 ops/1ms | 39.2ms        | 38.8ms        | 51.3ms |
+| 3 ops/5ms | 39.3ms        | 39.1ms        | 51.5ms |
+| 5 ops/1ms | 72.0ms        | 70.9ms        | 82.5ms |
+| 5 ops/5ms | 72.3ms        | 71.1ms        | 84.0ms |
 
-#### Memory Allocation Results (5 ops/5ms delay)
+#### Memory Allocation Results (5 ops/1ms delay)
 
 | Framework | Memory |
 |-----------|--------|
 | WorkflowForge | 5.25KB |
-| Workflow Core | 267KB |
-| Elsa | 2,217KB |
+| Workflow Core | 266KB |
+| Elsa | 2,221KB |
 
-**Advantage**: Similar timing (delay-bound), but **51x less memory** than WC, **422x less** than Elsa.
+**Advantage**: Similar timing (delay-bound), but **51x less memory** than WC, **423x less** than Elsa.
 
 **Key Insight**: Long-running workflows are delay-bound; advantage is in **memory efficiency**.
 
@@ -291,19 +291,19 @@ WorkflowForge demonstrates **11-574x faster execution** and **9-581x less memory
 
 | Ops/Concurrency | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |-----------------|---------------|---------------|------|----------|------------|
-| 4 ops/2         | 57μs          | 2,074μs       | 10,613μs | **36x faster** | **186x faster** |
-| 8 ops/4         | 43μs          | 2,238μs       | 13,932μs | **52x faster** | **324x faster** |
-| 16 ops/4        | 47μs          | 2,080μs       | 21,491μs | **44x faster** | **457x faster** |
+| 4 ops/2         | 62μs          | 2,359μs       | 10,830μs | **38x faster** | **175x faster** |
+| 8 ops/4         | 56μs          | 2,366μs       | 14,750μs | **42x faster** | **263x faster** |
+| 16 ops/4        | 55μs          | 2,437μs       | 20,891μs | **44x faster** | **380x faster** |
 
 #### Memory Allocation Results (16 ops/4 concurrency)
 
 | Framework | Memory |
 |-----------|--------|
-| WorkflowForge | 8KB |
-| Workflow Core | 125KB |
-| Elsa | 4,647KB |
+| WorkflowForge | 8.1KB |
+| Workflow Core | 123KB |
+| Elsa | 4,643KB |
 
-**Key Insight**: Parallel execution maintains **44-457x speed advantage** with **16-581x less memory**.
+**Key Insight**: Parallel execution maintains **38-380x speed advantage** with **15-573x less memory**.
 
 ---
 
@@ -315,10 +315,10 @@ WorkflowForge demonstrates **11-574x faster execution** and **9-581x less memory
 
 | Delay | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |-------|---------------|---------------|------|----------|------------|
-| 1ms   | 7.9ms         | 8.4ms         | 7.3ms | 1.1x     | 0.9x       |
-| 5ms   | 8.0ms         | 8.7ms         | 21.5ms | 1.1x    | **2.7x faster** |
+| 1ms   | 7.3ms         | 8.2ms         | 19.3ms | 1.1x     | **2.6x faster** |
+| 5ms   | 7.6ms         | 8.1ms         | 20.8ms | 1.1x     | **2.7x faster** |
 
-#### Memory Allocation Results (5ms delay)
+#### Memory Allocation Results
 
 | Framework | Memory |
 |-----------|--------|
@@ -338,27 +338,27 @@ WorkflowForge demonstrates **11-574x faster execution** and **9-581x less memory
 
 | # | Scenario | Speed Advantage | Memory Advantage |
 |---|----------|-----------------|------------------|
-| 1 | Sequential (10 ops) | 27-76x | 29-203x |
-| 2 | Data Passing (10 ops) | 30-100x | 36-250x |
-| 3 | Conditional (10 ops) | 26-74x | 25-177x |
-| 4 | Loop/ForEach (50 items) | 73-143x | 26-134x |
-| 5 | Concurrent (8 workflows) | 135-346x | 29-174x |
-| 6 | Error Handling | 11-78x | 9-214x |
-| 7 | Creation Overhead | 68-188x | 35-155x |
-| 8 | Complete Lifecycle | 267x | 443x |
-| 9 | State Machine (25 trans) | **322-574x** | 54-290x |
-| 10 | Long Running | ~1x (delay-bound) | **51-422x** |
-| 11 | Parallel (16 ops) | 44-454x | 16-581x |
-| 12 | Event-Driven | 1-2.7x | 11-296x |
+| 1 | Sequential (10 ops) | 26-71x | 26-183x |
+| 2 | Data Passing (10 ops) | 26-70x | 28-197x |
+| 3 | Conditional (10 ops) | 32-80x | 21-149x |
+| 4 | Loop/ForEach (50 items) | 71-129x | 24-121x |
+| 5 | Concurrent (8 workflows) | 109-264x | 27-158x |
+| 6 | Error Handling | 11-64x | 9-214x |
+| 7 | Creation Overhead | 63-162x | 35-155x |
+| 8 | Complete Lifecycle | 236x | 423x |
+| 9 | State Machine (25 trans) | **303-540x** | 53-284x |
+| 10 | Long Running | ~1x (delay-bound) | **51-423x** |
+| 11 | Parallel (16 ops) | 38-380x | 15-573x |
+| 12 | Event-Driven | 1.1-2.7x | 11-296x |
 
-**Overall Speed Range**: **11-574x faster execution** (compute-bound scenarios)  
-**Overall Memory Range**: **9-581x less memory allocation**
+**Overall Speed Range**: **11-540x faster execution** (compute-bound scenarios)  
+**Overall Memory Range**: **9-573x less memory allocation**
 
 ### Key Findings
 
-1. **State Machine** scenarios show the highest speed advantage: **322-574x faster**
-2. **Parallel Execution** maintains excellent scaling: **44-454x faster**
-3. **Long Running** and **Event-Driven** are I/O-bound, but memory savings are massive: **51-422x less**
+1. **State Machine** scenarios show the highest speed advantage: **303-540x faster**
+2. **Concurrent Execution** maintains excellent scaling: **109-264x faster**
+3. **Long Running** and **Event-Driven** are I/O-bound, but memory savings are massive: **51-423x less**
 4. **Memory efficiency** is consistently excellent across all 12 scenarios
 
 ---
@@ -434,7 +434,7 @@ WorkflowForge demonstrates **11-574x faster execution** and **9-581x less memory
 
 - **BenchmarkDotNet**: v0.15.8
 - **Runtime**: .NET 8.0.23
-- **Iterations**: 25 per benchmark
+- **Iterations**: 50 per benchmark
 - **Warmup**: 5 iterations
 - **Invocation**: 1 per iteration
 - **Unroll Factor**: 1
@@ -474,7 +474,7 @@ All results meet statistical significance criteria:
 - Standard deviation < 20% of mean (most scenarios)
 - P95 values show consistency
 - Median values used for comparison (more stable than mean)
-- 25 iterations provide statistical confidence
+- 50 iterations provide statistical confidence
 
 **Outliers**: Some scenarios show high standard deviation due to GC pauses or system activity. Median values are used to minimize impact.
 
@@ -482,7 +482,7 @@ All results meet statistical significance criteria:
 
 ## Conclusion
 
-WorkflowForge delivers **11-574x faster execution** and **9-581x less memory allocation** compared to Workflow Core and Elsa Workflows across 12 scenarios. This performance advantage stems from:
+WorkflowForge delivers **11-540x faster execution** and **9-573x less memory allocation** compared to Workflow Core and Elsa Workflows across 12 scenarios. This performance advantage stems from:
 
 1. **Architectural Simplicity**: No background threads, no persistent state, no serialization
 2. **Minimal Allocations**: Dictionary-based data flow, no reflection per operation

@@ -8,7 +8,7 @@ This document provides comprehensive performance analysis of WorkflowForge, incl
 
 **Test System**: Windows 11 (25H2), Intel 11th Gen i7-1185G7, .NET 8.0.23  
 **Benchmark Framework**: BenchmarkDotNet v0.15.8  
-**Iterations**: 25 per benchmark, 5 warmup iterations  
+**Iterations**: 50 per benchmark, 5 warmup iterations  
 **Last Updated**: January 2026
 
 ---
@@ -28,26 +28,26 @@ These benchmarks measure WorkflowForge's intrinsic performance characteristics i
 
 ### Operation Performance
 
-**Single Operation Execution Times** (Median):
+**Single Operation Execution Times** (Median, 50 iterations):
 
 | Operation Type | Median | Mean | Memory |
 |----------------|--------|------|--------|
-| Logging Operation | 9.8μs | 120.0μs | 1,912 B |
-| Custom Operation | 26.1μs | 234.3μs | 296 B |
-| Action Operation | 29.5μs | 290.8μs | 488 B |
-| Delegate Operation | 37.8μs | 289.8μs | 464 B |
+| Logging Operation | 11.85μs | 74.1μs | 1,912 B |
+| Custom Operation | 15.15μs | 127.2μs | 296 B |
+| Action Operation | 36.00μs | 173.3μs | 648 B |
+| Delegate Operation | 17.60μs | 168.8μs | 624 B |
 
 **Operation Creation Overhead** (Median):
 
 | Operation Type | Median | Memory |
 |----------------|--------|--------|
-| Custom | 2.0μs | 32 B |
-| Delegate | 1.8μs | 64 B |
-| Action | 1.8μs | 56 B |
+| Custom | 1.80μs | 32 B |
+| Delegate | 1.90μs | 64 B |
+| Action | 1.85μs | 56 B |
 
 **Key Insights**:
-- Operation execution: 9.8-37.8μs median (microsecond scale)
-- Operation creation: <2.1μs (negligible overhead)
+- Operation execution: 11.85-36.0μs median (microsecond scale)
+- Operation creation: <2.0μs (negligible overhead)
 - Custom operations are the most memory-efficient (296B)
 - Median values are more representative than means (due to GC outliers)
 
@@ -143,32 +143,32 @@ WorkflowForge vs. Workflow Core and Elsa Workflows.
 ### Performance Advantage Overview
 
 **Execution Speed**:
-- **11-574x faster** across 12 scenarios
-- Operates at **microsecond scale** (12-312μs) vs. **millisecond scale** (1-107ms)
-- **State Machine** scenarios show highest advantage: 322-574x
+- **11-540x faster** across 12 scenarios
+- Operates at **microsecond scale** (13-497μs) vs. **millisecond scale** (0.8-94ms)
+- **State Machine** scenarios show highest advantage: 303-540x
 - Advantage **increases with workload complexity**
 
 **Memory Efficiency**:
-- **9-581x less** memory allocation
-- **Kilobytes** (3.4-110KB) vs. **megabytes** (0.5-19MB) for competitors
+- **9-573x less** memory allocation
+- **Kilobytes** (3.5-121KB) vs. **megabytes** (0.04-19MB) for competitors
 - No Gen2 GC collections in typical workflows
 
 ### By Scenario (Median Values)
 
 | # | Scenario | WorkflowForge | Workflow Core | Elsa | Speed Advantage |
 |---|----------|---------------|---------------|------|-----------------|
-| 1 | Sequential (10 ops) | 224μs | 6,060μs | 17,044μs | 27-76x |
-| 2 | Data Passing (10 ops) | 199μs | 6,026μs | 19,851μs | 30-100x |
-| 3 | Conditional (10 ops) | 238μs | 6,207μs | 17,642μs | 26-74x |
-| 4 | Loop (50 items) | 389μs | 28,378μs | 55,618μs | 73-143x |
-| 5 | Concurrent (8 wf) | 312μs | 42,093μs | 107,784μs | 135-346x |
-| 6 | Error Handling | 109μs | 1,236μs | 8,460μs | 11-78x |
-| 7 | Creation Overhead | 12μs | 871μs | 2,313μs | 68-188x |
-| 8 | Complete Lifecycle | 39μs | N/A | 10,346μs | 267x |
-| 9 | State Machine (25) | 59μs | 19,156μs | 34,033μs | **322-574x** |
-| 10 | Long Running* | 72ms | 72ms | 85ms | ~1x (51-422x mem) |
-| 11 | Parallel (16 ops) | 47μs | 2,080μs | 21,491μs | 44-454x |
-| 12 | Event-Driven* | 8ms | 8.7ms | 21.5ms | 1.1-2.7x |
+| 1 | Sequential (10 ops) | 247μs | 6,531μs | 17,617μs | 26-71x |
+| 2 | Data Passing (10 ops) | 262μs | 6,737μs | 18,222μs | 26-70x |
+| 3 | Conditional (10 ops) | 266μs | 8,543μs | 21,333μs | 32-80x |
+| 4 | Loop (50 items) | 497μs | 35,421μs | 64,171μs | 71-129x |
+| 5 | Concurrent (8 wf) | 356μs | 38,833μs | 94,018μs | 109-264x |
+| 6 | Error Handling | 111μs | 1,228μs | 7,150μs | 11-64x |
+| 7 | Creation Overhead | 13μs | 814μs | 2,107μs | 63-162x |
+| 8 | Complete Lifecycle | 42μs | N/A | 9,933μs | 236x |
+| 9 | State Machine (25) | 68μs | 20,624μs | 36,695μs | **303-540x** |
+| 10 | Long Running* | 72ms | 71ms | 83ms | ~1x (51-423x mem) |
+| 11 | Parallel (16 ops) | 55μs | 2,437μs | 20,891μs | 44-380x |
+| 12 | Event-Driven* | 7.3ms | 8.2ms | 19.3ms | 1.1-2.6x |
 
 *I/O-bound scenarios; advantage is in memory efficiency.
 
@@ -176,10 +176,10 @@ WorkflowForge vs. Workflow Core and Elsa Workflows.
 
 | Scenario | WorkflowForge | Workflow Core | Elsa | Memory Advantage |
 |----------|---------------|---------------|------|------------------|
-| Concurrent (8 wf) | 110KB | 3,233KB | 19,145KB | 29-174x |
-| State Machine (25) | 20.5KB | 1,106KB | 5,949KB | 54-290x |
-| Parallel (16 ops) | 8KB | 125KB | 4,647KB | 16-581x |
-| Long Running | 5.25KB | 267KB | 2,217KB | 51-422x |
+| Concurrent (8 wf) | 121KB | 3,232KB | 19,139KB | 27-158x |
+| State Machine (25) | 20.92KB | 1,106KB | 5,949KB | 53-284x |
+| Parallel (16 ops) | 8.1KB | 122KB | 4,647KB | 15-573x |
+| Long Running | 5.25KB | 266KB | 2,221KB | 51-423x |
 
 **Full competitive analysis**: [competitive-analysis.md](competitive-analysis.md)
 
@@ -197,9 +197,9 @@ WorkflowForge vs. Workflow Core and Elsa Workflows.
 // BEST PERFORMANCE
 public class ProcessDataOperation : WorkflowOperationBase
 {
-    public override async Task<object?> ForgeAsync(
-        IWorkflowFoundry foundry,
+    protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
+        IWorkflowFoundry foundry,
         CancellationToken cancellationToken)
     {
         // Your logic here
@@ -311,7 +311,7 @@ for (int i = 0; i < 1000; i++) {
 }
 ```
 
-**Creation overhead is minimal** (6.7μs), but reuse is still best practice.
+**Creation overhead is minimal** (13μs), but reuse is still best practice.
 
 ### 7. Monitor Memory Allocations
 
@@ -330,14 +330,14 @@ for (int i = 0; i < 1000; i++) {
 **Always use async/await for I/O**:
 ```csharp
 // GOOD
-public override async Task<object?> ForgeAsync(...)
+protected override async Task<object?> ForgeAsyncCore(...)
 {
     var result = await httpClient.GetAsync(url);
     return result;
 }
 
 // BAD (blocks thread)
-public override async Task<object?> ForgeAsync(...)
+protected override async Task<object?> ForgeAsyncCore(...)
 {
     var result = httpClient.GetAsync(url).Result;  // Deadlock risk
     return result;
@@ -366,7 +366,7 @@ Console.WriteLine($"Memory: {metrics.MemoryAllocated}KB");
 - **Framework**: BenchmarkDotNet v0.15.8
 - **Runtime**: .NET 8.0.23
 - **Mode**: Median-focused (more stable than mean)
-- **Iterations**: 25 per benchmark
+- **Iterations**: 50 per benchmark
 - **Warmup**: 5 iterations
 
 **Scenarios Tested**:
@@ -397,7 +397,7 @@ Console.WriteLine($"Memory: {metrics.MemoryAllocated}KB");
 - Median values used (more stable than mean)
 - Standard deviation < 20% of mean (most scenarios)
 - P95 values provided for consistency verification
-- 25 iterations ensure statistical confidence
+- 50 iterations ensure statistical confidence
 
 ---
 
@@ -447,8 +447,8 @@ WorkflowForge maintains the following performance targets:
 ### Version 2.0.0 (Current - January 2026)
 
 - **12 scenarios tested** against Workflow Core and Elsa
-- **11-574x faster** than competitors (State Machine: 322-574x)
-- **9-581x less memory** allocation
+- **11-540x faster** than competitors (State Machine: 303-540x)
+- **9-573x less memory** allocation
 - Near-perfect concurrent scaling
 - Microsecond-level operation execution
 - Tested with BenchmarkDotNet v0.15.8 on .NET 8.0.23
@@ -465,19 +465,19 @@ WorkflowForge maintains the following performance targets:
 
 WorkflowForge delivers **exceptional performance** for high-throughput, low-latency workflow orchestration:
 
-- **Microsecond-scale execution** (12-312μs typical)
-- **Minimal memory footprint** (3.4-110KB across scenarios)
+- **Microsecond-scale execution** (13-497μs typical)
+- **Minimal memory footprint** (3.5-121KB across scenarios)
 - **Near-perfect concurrent scaling** (16x speedup for 16 workflows)
-- **11-574x faster than competitors** (State Machine: 322-574x)
-- **9-581x less memory than competitors**
+- **11-540x faster than competitors** (State Machine: 303-540x)
+- **9-573x less memory than competitors**
 
 **12 Benchmark Scenarios Tested**:
-1. Sequential, Data Passing, Conditional, Loop (26-143x faster)
-2. Concurrent Execution (135-346x faster)
-3. State Machine (**322-574x faster** - highest advantage)
-4. Parallel Execution (44-454x faster)
+1. Sequential, Data Passing, Conditional, Loop (26-129x faster)
+2. Concurrent Execution (109-264x faster)
+3. State Machine (**303-540x faster** - highest advantage)
+4. Parallel Execution (38-380x faster)
 5. Error Handling, Creation Overhead, Complete Lifecycle
-6. Long Running, Event-Driven (I/O-bound, but 51-422x less memory)
+6. Long Running, Event-Driven (I/O-bound, but 51-423x less memory)
 
 **Best suited for**:
 - High-throughput processing (>1,000 workflows/sec)

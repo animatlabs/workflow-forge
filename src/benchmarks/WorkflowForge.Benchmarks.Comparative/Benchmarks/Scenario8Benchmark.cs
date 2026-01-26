@@ -15,7 +15,7 @@ namespace WorkflowForge.Benchmarks.Comparative.Benchmarks;
 /// is optimized for long-running workflows, not rapid create/destroy cycles.
 /// </summary>
 [MemoryDiagnoser]
-[SimpleJob(warmupCount: 5, iterationCount: 25)]
+[SimpleJob(warmupCount: 5, iterationCount: 50)]
 [MarkdownExporter]
 [HtmlExporter]
 public class Scenario8Benchmark

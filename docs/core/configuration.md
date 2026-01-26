@@ -685,9 +685,10 @@ public static class ProductionConfiguration
 // Good: DI-based
 public class OrderOperation : WorkflowOperationBase
 {
-    public override async Task<object?> ForgeAsync(
+    protected override async Task<object?> ForgeAsyncCore(
+        object? inputData,
         IWorkflowFoundry foundry,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         // Get service from foundry's service provider
         var orderService = foundry.ServiceProvider
@@ -771,12 +772,14 @@ public class TimeSensitiveOperation : WorkflowOperationBase
         _timeProvider = timeProvider;
     }
     
-    public override async Task<object?> ForgeAsync(
+    protected override async Task<object?> ForgeAsyncCore(
+        object? inputData,
         IWorkflowFoundry foundry,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         var now = _timeProvider.UtcNow; // Testable!
         // ...
+        return inputData;
     }
 }
 
@@ -841,7 +844,7 @@ var operation = new TimeSensitiveOperation(mockTime);
 - **[Architecture](../architecture/overview.md)** - Understanding the configuration model
 - **[Operations](operations.md)** - Creating configurable operations
 - **[Events](events.md)** - Event-based configuration
-- **[Extensions](../extensions/index.md)** - All 10 extensions with configuration examples
+- **[Extensions](../extensions/index.md)** - All 11 packages (10 extensions + Testing) with configuration examples
 - **[Samples Guide](../getting-started/samples-guide.md)** - 33 practical examples including configuration
 
 ---

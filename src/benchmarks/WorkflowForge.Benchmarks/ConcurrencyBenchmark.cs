@@ -13,7 +13,7 @@ namespace WorkflowForge.Benchmarks;
 /// - Scalability under concurrent load
 /// </summary>
 [MemoryDiagnoser]
-[SimpleJob(RunStrategy.Monitoring, iterationCount: 25)]
+[SimpleJob(RunStrategy.Monitoring, iterationCount: 50)]
 [MarkdownExporter]
 [HtmlExporter]
 public class ConcurrencyBenchmark

@@ -8,7 +8,7 @@ This document presents WorkflowForge's internal performance benchmarks - compreh
 
 **Test System**: Windows 11 (25H2), Intel 11th Gen i7-1185G7, .NET 8.0.23  
 **Benchmark Framework**: BenchmarkDotNet v0.15.8  
-**Methodology**: 25 iterations per benchmark, 5 warmup iterations  
+**Methodology**: 50 iterations per benchmark, 5 warmup iterations  
 **Last Updated**: January 2026
 
 ---
@@ -26,14 +26,14 @@ This document presents WorkflowForge's internal performance benchmarks - compreh
 
 ## Executive Summary
 
-WorkflowForge internal benchmarks demonstrate:
+WorkflowForge internal benchmarks demonstrate (50 iterations):
 
 | Metric | Result |
 |--------|--------|
-| **Operation Execution** | 10-67μs median (excluding delays) |
-| **Operation Creation** | 1.5-1.8μs median |
-| **Workflow Throughput** | 38-190μs for custom operations |
-| **Memory Baseline** | 3.04KB minimal allocation |
+| **Operation Execution** | 12-45μs median (excluding delays) |
+| **Operation Creation** | 1.8-1.9μs median |
+| **Workflow Throughput** | 39-178μs for custom operations |
+| **Memory Baseline** | 3.2KB minimal allocation |
 | **Concurrency Scaling** | Near-linear (16x speedup for 16 workflows) |
 | **GC Pressure** | Gen0 only for typical workloads |
 

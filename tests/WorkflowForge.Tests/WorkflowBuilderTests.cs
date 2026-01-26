@@ -723,6 +723,162 @@ public class WorkflowBuilderTests
 
     #endregion Edge Cases
 
+    #region AddOperations Tests
+
+    [Fact]
+    public void AddOperations_Params_AddsAllOperations()
+    {
+        // Arrange
+        var builder = WorkflowForge.CreateWorkflow().WithName("Test");
+        var op1 = new TestOperation("Op1");
+        var op2 = new TestOperation("Op2");
+        var op3 = new TestOperation("Op3");
+
+        // Act
+        builder.AddOperations(op1, op2, op3);
+        var workflow = builder.Build();
+
+        // Assert
+        Assert.Equal(3, workflow.Operations.Count);
+        Assert.Same(op1, workflow.Operations[0]);
+        Assert.Same(op2, workflow.Operations[1]);
+        Assert.Same(op3, workflow.Operations[2]);
+    }
+
+    [Fact]
+    public void AddOperations_IEnumerable_AddsAllOperations()
+    {
+        // Arrange
+        var builder = WorkflowForge.CreateWorkflow().WithName("Test");
+        var operations = new List<IWorkflowOperation>
+        {
+            new TestOperation("Op1"),
+            new TestOperation("Op2")
+        };
+
+        // Act
+        builder.AddOperations(operations);
+        var workflow = builder.Build();
+
+        // Assert
+        Assert.Equal(2, workflow.Operations.Count);
+    }
+
+    [Fact]
+    public void AddOperations_Params_NullThrows()
+    {
+        // Arrange
+        var builder = WorkflowForge.CreateWorkflow().WithName("Test");
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => builder.AddOperations((IWorkflowOperation[])null!));
+    }
+
+    [Fact]
+    public void AddOperations_IEnumerable_NullThrows()
+    {
+        // Arrange
+        var builder = WorkflowForge.CreateWorkflow().WithName("Test");
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => builder.AddOperations((IEnumerable<IWorkflowOperation>)null!));
+    }
+
+    [Fact]
+    public void AddOperations_ReturnsSameBuilder()
+    {
+        // Arrange
+        var builder = WorkflowForge.CreateWorkflow().WithName("Test");
+
+        // Act
+        var result = builder.AddOperations(new TestOperation());
+
+        // Assert
+        Assert.Same(builder, result);
+    }
+
+    #endregion AddOperations Tests
+
+    #region AddParallelOperations Tests
+
+    [Fact]
+    public void AddParallelOperations_Params_CreatesForEachOperation()
+    {
+        // Arrange
+        var builder = WorkflowForge.CreateWorkflow().WithName("Test");
+        var op1 = new TestOperation("Op1");
+        var op2 = new TestOperation("Op2");
+
+        // Act
+        builder.AddParallelOperations(op1, op2);
+        var workflow = builder.Build();
+
+        // Assert
+        Assert.Single(workflow.Operations);
+        Assert.IsType<ForEachWorkflowOperation>(workflow.Operations[0]);
+    }
+
+    [Fact]
+    public void AddParallelOperations_IEnumerable_WithOptions()
+    {
+        // Arrange
+        var builder = WorkflowForge.CreateWorkflow().WithName("Test");
+        var operations = new List<IWorkflowOperation>
+        {
+            new TestOperation("Op1"),
+            new TestOperation("Op2")
+        };
+
+        // Act
+        builder.AddParallelOperations(
+            operations, 
+            maxConcurrency: 2, 
+            timeout: TimeSpan.FromSeconds(30), 
+            name: "ParallelGroup");
+        var workflow = builder.Build();
+
+        // Assert
+        Assert.Single(workflow.Operations);
+        var forEachOp = Assert.IsType<ForEachWorkflowOperation>(workflow.Operations[0]);
+        Assert.Equal("ParallelGroup", forEachOp.Name);
+    }
+
+    [Fact]
+    public void AddParallelOperations_Params_EmptyThrows()
+    {
+        // Arrange
+        var builder = WorkflowForge.CreateWorkflow().WithName("Test");
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => builder.AddParallelOperations());
+    }
+
+    [Fact]
+    public void AddParallelOperations_IEnumerable_EmptyThrows()
+    {
+        // Arrange
+        var builder = WorkflowForge.CreateWorkflow().WithName("Test");
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => 
+            builder.AddParallelOperations(new List<IWorkflowOperation>()));
+    }
+
+    [Fact]
+    public void AddParallelOperations_ReturnsSameBuilder()
+    {
+        // Arrange
+        var builder = WorkflowForge.CreateWorkflow().WithName("Test");
+
+        // Act
+        var result = builder.AddParallelOperations(new TestOperation());
+
+        // Assert
+        Assert.Same(builder, result);
+    }
+
+    #endregion AddParallelOperations Tests
+
     #region Helper Classes
 
     private class TestOperation : WorkflowOperationBase
@@ -734,7 +890,7 @@ public class WorkflowBuilderTests
 
         public override string Name { get; }
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             return Task.FromResult<object?>("TestResult");
         }
@@ -754,7 +910,7 @@ public class WorkflowBuilderTests
 
         public override string Name { get; }
 
-        public override Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             return Task.FromResult<object?>("TestResult");
         }

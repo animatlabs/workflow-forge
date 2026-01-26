@@ -214,7 +214,7 @@ This extension provides **optional** DI integration for users who want:
 
 ## 📄 License
 
-MIT License - Copyright © 2025 AnimatLabs
+MIT License - Copyright © 2025-2026 AnimatLabs
 
 
 

@@ -48,7 +48,7 @@ namespace WorkflowForge.Extensions.Resilience
         public override bool SupportsRestore => _operation.SupportsRestore;
 
         /// <inheritdoc />
-        public override async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
 

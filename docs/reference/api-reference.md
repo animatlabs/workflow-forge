@@ -16,6 +16,7 @@ Complete API reference for WorkflowForge core types and abstractions.
 - [Foundry Interfaces](#foundry-interfaces)
 - [Smith Interfaces](#smith-interfaces)
 - [Event Interfaces](#event-interfaces)
+- [Testing Support](#testing-support)
 - [Extension Interfaces](#extension-interfaces)
 
 ---
@@ -139,6 +140,10 @@ public sealed class WorkflowBuilder
     WorkflowBuilder AddOperation<T>() where T : class, IWorkflowOperation;
     WorkflowBuilder AddOperation(string name, Func<IWorkflowFoundry, CancellationToken, Task> action);
     WorkflowBuilder AddOperation(string name, Action<IWorkflowFoundry> action);
+    WorkflowBuilder AddOperations(params IWorkflowOperation[] operations);
+    WorkflowBuilder AddOperations(IEnumerable<IWorkflowOperation> operations);
+    WorkflowBuilder AddParallelOperations(params IWorkflowOperation[] operations);
+    WorkflowBuilder AddParallelOperations(IEnumerable<IWorkflowOperation> operations, int? maxConcurrency = null, TimeSpan? timeout = null, string? name = null);
     IWorkflow Build();
 }
 ```
@@ -146,6 +151,8 @@ public sealed class WorkflowBuilder
 **Notes**:
 - `AddOperation<T>()` resolves the operation from the provided `IServiceProvider`.
 - Inline operations are wrapped into `ActionWorkflowOperation` instances.
+- `AddOperations()` adds multiple operations to the sequential execution chain.
+- `AddParallelOperations()` wraps operations in a `ForEachWorkflowOperation` for parallel execution with shared input.
 
 ---
 
@@ -221,7 +228,7 @@ Executes compensation logic to undo operation effects.
 
 ### WorkflowOperationBase
 
-Abstract base class implementing common operation patterns.
+Abstract base class implementing common operation patterns with lifecycle hooks.
 
 ```csharp
 public abstract class WorkflowOperationBase : IWorkflowOperation
@@ -230,7 +237,21 @@ public abstract class WorkflowOperationBase : IWorkflowOperation
     public abstract string Name { get; }
     public virtual bool SupportsRestore => false;
     
-    public abstract Task<object?> ForgeAsync(
+    // Lifecycle hooks (virtual, override to customize)
+    protected virtual Task OnBeforeExecuteAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+        => Task.CompletedTask;
+    
+    protected virtual Task OnAfterExecuteAsync(object? inputData, object? outputData, IWorkflowFoundry foundry, CancellationToken ct)
+        => Task.CompletedTask;
+    
+    // Core logic (abstract, implement in derived classes)
+    protected abstract Task<object?> ForgeAsyncCore(
+        object? inputData,
+        IWorkflowFoundry foundry,
+        CancellationToken cancellationToken);
+    
+    // Public entry point (orchestrates hooks + core logic)
+    public Task<object?> ForgeAsync(
         object? inputData,
         IWorkflowFoundry foundry,
         CancellationToken cancellationToken = default);
@@ -238,12 +259,7 @@ public abstract class WorkflowOperationBase : IWorkflowOperation
     public virtual Task RestoreAsync(
         object? outputData,
         IWorkflowFoundry foundry,
-        CancellationToken cancellationToken = default)
-    {
-        if (!SupportsRestore)
-            throw new NotSupportedException($"Operation '{Name}' does not support restoration.");
-        return Task.CompletedTask;
-    }
+        CancellationToken cancellationToken = default);
     
     public virtual void Dispose() { }
 }
@@ -254,6 +270,37 @@ public abstract class WorkflowOperationBase : IWorkflowOperation
 - Default `SupportsRestore = false` (override to enable compensation)
 - `RestoreAsync` throws `NotSupportedException` if `SupportsRestore` is false
 - Override `Dispose()` if your operation holds unmanaged resources
+
+**Lifecycle Hooks** (new in v2.0):
+- `OnBeforeExecuteAsync`: Called before the operation executes (setup, validation, logging)
+- `OnAfterExecuteAsync`: Called after the operation completes successfully (cleanup, metrics)
+- Implement `ForgeAsyncCore` instead of `ForgeAsync` for your operation logic
+
+**Example with Hooks**:
+```csharp
+public class AuditedOperation : WorkflowOperationBase
+{
+    public override string Name => "AuditedOperation";
+    
+    protected override Task OnBeforeExecuteAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+    {
+        foundry.Logger.LogInformation("Starting operation with input: {Input}", inputData);
+        return Task.CompletedTask;
+    }
+    
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+    {
+        // Your operation logic here
+        return await ProcessAsync(inputData, ct);
+    }
+    
+    protected override Task OnAfterExecuteAsync(object? inputData, object? outputData, IWorkflowFoundry foundry, CancellationToken ct)
+    {
+        foundry.Logger.LogInformation("Completed operation with result: {Output}", outputData);
+        return Task.CompletedTask;
+    }
+}
+```
 
 **Recommended Base Class**: Use `WorkflowOperationBase` for most operations.
 
@@ -490,6 +537,76 @@ public sealed class WorkflowForgeOptions : WorkflowForgeOptionsBase
 
 ---
 
+## Testing Support
+
+### FakeWorkflowFoundry
+
+A lightweight fake implementation of `IWorkflowFoundry` for unit testing operations.
+
+**Package**: `WorkflowForge.Testing`
+
+```csharp
+public class FakeWorkflowFoundry : IWorkflowFoundry
+{
+    // Configurable properties
+    public Guid ExecutionId { get; set; }
+    public ConcurrentDictionary<string, object?> Properties { get; }
+    public IWorkflowForgeLogger Logger { get; set; }
+    public WorkflowForgeOptions Options { get; set; }
+    public IServiceProvider? ServiceProvider { get; set; }
+    
+    // Test assertions
+    public IReadOnlyList<IWorkflowOperation> Operations { get; }
+    public IReadOnlyList<IWorkflowOperationMiddleware> Middlewares { get; }
+    public IReadOnlyList<IWorkflowOperation> ExecutedOperations { get; }
+    
+    // Test helpers
+    public void Reset();
+    public void TrackExecution(IWorkflowOperation operation);
+}
+```
+
+**Features**:
+- Implements full `IWorkflowFoundry` interface
+- Tracks executed operations for assertions
+- Configurable logger, options, and service provider
+- `Reset()` method for reusing between tests
+
+**Example Usage**:
+```csharp
+[Fact]
+public async Task MyOperation_Should_SetProperty()
+{
+    // Arrange
+    var foundry = new FakeWorkflowFoundry();
+    var operation = new MyCustomOperation();
+    
+    // Act
+    await operation.ForgeAsync("input", foundry, CancellationToken.None);
+    
+    // Assert
+    Assert.True(foundry.Properties.ContainsKey("myKey"));
+    Assert.Equal("expectedValue", foundry.Properties["myKey"]);
+}
+
+[Fact]
+public async Task Workflow_Should_ExecuteAllOperations()
+{
+    // Arrange
+    var foundry = new FakeWorkflowFoundry();
+    foundry.AddOperation(new StepOneOperation());
+    foundry.AddOperation(new StepTwoOperation());
+    
+    // Act
+    await foundry.ForgeAsync();
+    
+    // Assert
+    Assert.Equal(2, foundry.ExecutedOperations.Count);
+}
+```
+
+---
+
 ## Extension Interfaces
 
 ### IWorkflowOperationMiddleware
@@ -610,12 +727,14 @@ public class TimeSensitiveOperation : WorkflowOperationBase
         _timeProvider = timeProvider;
     }
     
-    public override async Task<object?> ForgeAsync(
+    protected override async Task<object?> ForgeAsyncCore(
+        object? inputData,
         IWorkflowFoundry foundry,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         var now = _timeProvider.UtcNow;
         // Time-dependent logic
+        return inputData;
     }
 }
 ```

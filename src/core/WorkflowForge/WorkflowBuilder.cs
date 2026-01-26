@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
@@ -130,6 +131,88 @@ namespace WorkflowForge
                 ?? throw new InvalidOperationException($"Unable to resolve operation of type {typeof(T).Name} from service provider.");
 
             return AddOperation(operation);
+        }
+
+        /// <summary>
+        /// Adds multiple workflow operations to the execution sequence.
+        /// Operations are executed in the order they are provided.
+        /// </summary>
+        /// <param name="operations">The operations to add. Cannot be null.</param>
+        /// <returns>The current WorkflowBuilder instance for method chaining.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when operations is null.</exception>
+        public WorkflowBuilder AddOperations(params IWorkflowOperation[] operations)
+        {
+            if (operations == null)
+                throw new ArgumentNullException(nameof(operations));
+
+            foreach (var op in operations)
+                AddOperation(op);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Adds multiple workflow operations to the execution sequence.
+        /// Operations are executed in the order they are provided.
+        /// </summary>
+        /// <param name="operations">The operations to add. Cannot be null.</param>
+        /// <returns>The current WorkflowBuilder instance for method chaining.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when operations is null.</exception>
+        public WorkflowBuilder AddOperations(IEnumerable<IWorkflowOperation> operations)
+        {
+            if (operations == null)
+                throw new ArgumentNullException(nameof(operations));
+
+            foreach (var op in operations)
+                AddOperation(op);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Adds multiple operations to be executed in parallel.
+        /// All operations receive the same input data (shared input strategy).
+        /// </summary>
+        /// <param name="operations">The operations to execute in parallel. Cannot be null or empty.</param>
+        /// <returns>The current WorkflowBuilder instance for method chaining.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when operations is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when operations is empty.</exception>
+        public WorkflowBuilder AddParallelOperations(params IWorkflowOperation[] operations)
+        {
+            if (operations == null)
+                throw new ArgumentNullException(nameof(operations));
+
+            if (operations.Length == 0)
+                throw new ArgumentException("At least one operation must be provided.", nameof(operations));
+
+            return AddOperation(ForEachWorkflowOperation.CreateSharedInput(operations));
+        }
+
+        /// <summary>
+        /// Adds multiple operations to be executed in parallel with configurable concurrency.
+        /// All operations receive the same input data (shared input strategy).
+        /// </summary>
+        /// <param name="operations">The operations to execute in parallel. Cannot be null or empty.</param>
+        /// <param name="maxConcurrency">Optional maximum number of concurrent operations.</param>
+        /// <param name="timeout">Optional timeout for the entire parallel execution.</param>
+        /// <param name="name">Optional name for the parallel operation group.</param>
+        /// <returns>The current WorkflowBuilder instance for method chaining.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when operations is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when operations is empty.</exception>
+        public WorkflowBuilder AddParallelOperations(
+            IEnumerable<IWorkflowOperation> operations,
+            int? maxConcurrency = null,
+            TimeSpan? timeout = null,
+            string? name = null)
+        {
+            if (operations == null)
+                throw new ArgumentNullException(nameof(operations));
+
+            var operationsList = operations.ToList();
+            if (operationsList.Count == 0)
+                throw new ArgumentException("At least one operation must be provided.", nameof(operations));
+
+            return AddOperation(ForEachWorkflowOperation.CreateSharedInput(operationsList, timeout, maxConcurrency, name));
         }
 
         /// <summary>

@@ -228,11 +228,10 @@ workflow.AddOperation("LogCompletion", logOp);
 ```csharp
 public class CalculateTotalOperation : WorkflowOperationBase
 {
-    public override Guid Id { get; } = Guid.NewGuid();
     public override string Name => "CalculateTotal";
     public override bool SupportsRestore => false;
 
-    public override async Task<object?> ForgeAsync(
+    protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
         IWorkflowFoundry foundry,
         CancellationToken cancellationToken = default)
@@ -253,10 +252,9 @@ public class CalculateTotalOperation : WorkflowOperationBase
 ```csharp
 public class ValidateOrderOperation : WorkflowOperationBase<Order, ValidationResult>
 {
-    public override Guid Id { get; } = Guid.NewGuid();
     public override string Name => "ValidateOrder";
 
-    public override async Task<ValidationResult> ForgeAsync(
+    protected override async Task<ValidationResult> ForgeAsyncCore(
         Order input,
         IWorkflowFoundry foundry,
         CancellationToken cancellationToken = default)
@@ -281,7 +279,7 @@ public class ChargePaymentOperation : WorkflowOperationBase
     public override string Name => "ChargePayment";
     public override bool SupportsRestore => true;
 
-    public override async Task<object?> ForgeAsync(
+    protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
         IWorkflowFoundry foundry,
         CancellationToken cancellationToken)
@@ -425,18 +423,18 @@ var smith = services.BuildServiceProvider().GetRequiredService<IWorkflowSmith>()
 
 ## Performance
 
-WorkflowForge Core is optimized for production workloads (12 scenarios benchmarked):
+WorkflowForge Core is optimized for production workloads (12 scenarios benchmarked, 50 iterations):
 
-- **Execution Speed**: 11-574x faster than competitors
-- **State Machine**: 322-574x faster (highest advantage)
-- **Memory**: 9-581x less allocation than competitors
+- **Execution Speed**: 11-540x faster than competitors
+- **State Machine**: Up to 540x faster (highest advantage)
+- **Memory**: 9-573x less allocation than competitors
 - **Concurrency**: Near-perfect linear scaling (16x speedup for 16 workflows)
 
 | Scenario | WorkflowForge | Workflow Core | Elsa | Advantage |
 |----------|---------------|---------------|------|-----------|
-| Sequential (10 ops) | 224μs | 6,060μs | 17,044μs | 27-76x |
-| State Machine (25) | 59μs | 19,156μs | 34,033μs | 322-574x |
-| Parallel (16 ops) | 47μs | 2,080μs | 21,491μs | 44-454x |
+| Sequential (10 ops) | 247μs | 6,531μs | 17,617μs | 26-71x |
+| State Machine (25) | 68μs | 20,624μs | 36,695μs | 303-540x |
+| Concurrent (8 workers) | 356μs | 38,833μs | 94,018μs | 109-264x |
 
 See [Performance Documentation](../../../docs/performance/performance.md) for all 12 scenarios.
 
@@ -487,8 +485,9 @@ public class WorkflowTests
 
 ## Extensions
 
-While Core has zero dependencies, extend functionality with official extensions:
+While Core has zero dependencies, extend functionality with official packages:
 
+- **WorkflowForge.Testing** - Unit testing utilities (`FakeWorkflowFoundry`)
 - **WorkflowForge.Extensions.Logging.Serilog** - Structured logging
 - **WorkflowForge.Extensions.Resilience** - Retry strategies (zero dependencies)
 - **WorkflowForge.Extensions.Resilience.Polly** - Advanced resilience with Polly

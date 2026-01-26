@@ -127,7 +127,7 @@ public sealed class DelegateWorkflowOperation : IWorkflowOperation { }
 ### Open/Closed Principle
 
 Open for extension, closed for modification:
-- Custom operations via `WorkflowOperationBase`
+- Custom operations via `WorkflowOperationBase` with lifecycle hooks
 - Middleware pipeline for cross-cutting concerns
 - Extension packages for additional capabilities
 - No modification of core required
@@ -304,7 +304,7 @@ public class ValidateOrderOperation : WorkflowOperationBase<Order, ValidationRes
 {
     public override string Name => "ValidateOrder";
     
-    public override async Task<ValidationResult> ForgeAsync(
+    protected override async Task<ValidationResult> ForgeAsyncCore(
         Order input, 
         IWorkflowFoundry foundry, 
         CancellationToken cancellationToken)
@@ -476,7 +476,7 @@ public class CreateOrderOperation : WorkflowOperationBase
 {
     public override bool SupportsRestore => true;
     
-    public override async Task<object?> ForgeAsync(
+    protected override async Task<object?> ForgeAsyncCore(
         object? inputData, 
         IWorkflowFoundry foundry, 
         CancellationToken ct)
@@ -538,7 +538,7 @@ All operations are async-first:
 - Direct execution paths
 - No reflection in hot paths
 
-**Result**: 11-574x faster than competitors, 9-581x less memory (12 scenarios tested).
+**Result**: 11-540x faster than competitors, 9-573x less memory (12 scenarios tested).
 
 ---
 

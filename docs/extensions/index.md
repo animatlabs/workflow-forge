@@ -51,7 +51,9 @@ Microsoft/System assemblies are never embedded; those are resolved by the runtim
 ### Extension Categories
 
 ```
-WorkflowForge Extensions
+WorkflowForge Packages
+├── Testing
+│   └── FakeWorkflowFoundry (unit testing)
 ├── Logging
 │   └── Serilog Integration
 ├── Resilience
@@ -69,7 +71,76 @@ WorkflowForge Extensions
     └── OpenTelemetry Integration
 ```
 
-## Available Extensions
+## Available Packages
+
+### Testing Package
+
+#### WorkflowForge.Testing
+
+Unit testing utilities for WorkflowForge operations and workflows.
+
+**Installation:**
+```bash
+dotnet add package WorkflowForge.Testing
+```
+
+**Features:**
+- `FakeWorkflowFoundry` - Lightweight fake for unit testing operations in isolation
+- Execution tracking - Assert which operations executed
+- Property management - Test data flow between operations
+- Event verification - Subscribe to operation events in tests
+- Reset capability - Reuse foundry between tests
+
+**Quick Start:**
+```csharp
+using WorkflowForge.Testing;
+using Xunit;
+
+public class MyOperationTests
+{
+    [Fact]
+    public async Task Operation_Should_SetProperty()
+    {
+        // Arrange
+        var foundry = new FakeWorkflowFoundry();
+        var operation = new MyCustomOperation();
+        
+        // Act
+        await operation.ForgeAsync("input", foundry, CancellationToken.None);
+        
+        // Assert
+        Assert.True(foundry.Properties.ContainsKey("expectedKey"));
+    }
+    
+    [Fact]
+    public async Task Workflow_Should_ExecuteAllOperations()
+    {
+        // Arrange
+        var foundry = new FakeWorkflowFoundry();
+        foundry.AddOperation(new OpA());
+        foundry.AddOperation(new OpB());
+        
+        // Act
+        await foundry.ForgeAsync();
+        
+        // Assert
+        Assert.Equal(2, foundry.ExecutedOperations.Count);
+    }
+}
+```
+
+**API Reference:**
+| Property/Method | Description |
+|-----------------|-------------|
+| `ExecutionId` | Unique ID (auto-generated, settable) |
+| `Properties` | Thread-safe property storage |
+| `Operations` | Added operations |
+| `ExecutedOperations` | Operations executed during ForgeAsync |
+| `ForgeAsync()` | Execute all operations sequentially |
+| `Reset()` | Clear all state for test reuse |
+| `TrackExecution(op)` | Manually track operation as executed |
+
+---
 
 ### Logging Extensions
 

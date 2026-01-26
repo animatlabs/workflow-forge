@@ -1,19 +1,19 @@
-## Competitive Benchmark Summary (Median)
+## Competitive Benchmark Summary (Median, 50 iterations)
 
 | # | Scenario | WorkflowForge | Workflow Core | Elsa | Speed Advantage |
 |---|----------|---------------|---------------|------|-----------------|
-| 1 | Sequential (10 ops) | 224μs | 6,060μs | 17,044μs | 27-76x |
-| 2 | Data Passing (10 ops) | 199μs | 6,026μs | 19,851μs | 30-100x |
-| 3 | Conditional (10 ops) | 238μs | 6,207μs | 17,642μs | 26-74x |
-| 4 | Loop (50 items) | 389μs | 28,378μs | 55,618μs | 73-143x |
-| 5 | Concurrent (8 workflows) | 312μs | 42,093μs | 107,784μs | 135-346x |
-| 6 | Error Handling | 109μs | 1,236μs | 8,460μs | 11-78x |
-| 7 | Creation Overhead | 12μs | 871μs | 2,313μs | 68-188x |
-| 8 | Complete Lifecycle | 39μs | N/A | 10,346μs | 267x |
-| 9 | State Machine (25) | 59μs | 19,156μs | 34,033μs | 322-574x |
-| 10 | Long Running* | 72ms | 72ms | 85ms | Memory-focused |
-| 11 | Parallel (16 ops) | 47μs | 2,080μs | 21,491μs | 44-454x |
-| 12 | Event-Driven | 8ms | 8.7ms | 21.5ms | 1.1-2.7x |
+| 1 | Sequential (10 ops) | 247μs | 6,531μs | 17,617μs | 26-71x |
+| 2 | Data Passing (10 ops) | 262μs | 6,737μs | 18,222μs | 26-70x |
+| 3 | Conditional (10 ops) | 266μs | 8,543μs | 21,333μs | 32-80x |
+| 4 | Loop (50 items) | 497μs | 35,421μs | 64,171μs | 71-129x |
+| 5 | Concurrent (8 workers) | 356μs | 38,833μs | 94,018μs | 109-264x |
+| 6 | Error Handling | 111μs | 1,228μs | 7,150μs | 11-64x |
+| 7 | Creation Overhead | 13μs | 814μs | 2,107μs | 63-162x |
+| 8 | Complete Lifecycle | 42μs | N/A | 9,933μs | 236x |
+| 9 | State Machine (25) | 68μs | 20,624μs | 36,695μs | 303-540x |
+| 10 | Long Running* | 72ms | 71ms | 83ms | Memory-focused |
+| 11 | Parallel (16 ops) | 55μs | 2,437μs | 20,891μs | 44-380x |
+| 12 | Event-Driven | 7.3ms | 8.2ms | 19.3ms | 1.1-2.6x |
 
 *Long Running and Event-Driven are delay-bound; advantage is in memory.
 
@@ -21,22 +21,26 @@
 
 | # | Scenario | WorkflowForge | Workflow Core | Elsa | Memory Advantage |
 |---|----------|---------------|---------------|------|------------------|
-| 1 | Sequential (10 ops) | 14.75KB | 428KB | 2,989KB | 29-203x |
-| 5 | Concurrent (8) | 110KB | 3,233KB | 19,145KB | 29-174x |
+| 1 | Sequential (10 ops) | 16.31KB | 430KB | 2,984KB | 26-183x |
+| 2 | Data Passing (10 ops) | 15.18KB | 427KB | 2,986KB | 28-197x |
+| 3 | Conditional (10 ops) | 20.09KB | 427KB | 2,984KB | 21-149x |
+| 4 | Loop (50 items) | 90.35KB | 2,123KB | 10,905KB | 24-121x |
+| 5 | Concurrent (8) | 121KB | 3,232KB | 19,139KB | 27-158x |
 | 6 | Error Handling | 5KB | 46KB | 1,072KB | 9-214x |
 | 7 | Creation Overhead | 3.73KB | 129KB | 578KB | 35-155x |
-| 9 | State Machine (25) | 20.5KB | 1,106KB | 5,949KB | 54-290x |
+| 8 | Complete Lifecycle | 3.57KB | N/A | 1,510KB | 423x |
+| 9 | State Machine (25) | 20.92KB | 1,106KB | 5,949KB | 53-284x |
 | 10 | Long Running | 5.25KB | 267KB | 2,217KB | 51-422x |
-| 11 | Parallel (16 ops) | 8KB | 125KB | 4,647KB | 16-581x |
+| 11 | Parallel (16 ops) | 8.1KB | 122KB | 4,647KB | 15-573x |
 | 12 | Event-Driven | 3.49KB | 37KB | 1,032KB | 11-296x |
 
 ## Key Insights
 
-- **State Machine**: Highest advantage at **322-574x faster**
-- **Parallel Execution**: **44-454x faster** with tiny memory footprint
-- **Long Running**: Same timing (delay-bound) but **51-422x less memory**
-- **Event-Driven**: Similar timing to WC, 2.7x faster than Elsa, **11-296x less memory**
+- **Concurrent Execution**: Up to **264x faster** than Elsa with parallel workloads
+- **State Machine**: Up to **540x faster** with complex state transitions
+- **Sequential Workflows**: **26-71x faster** with minimal memory
+- **Memory Baseline**: **3.49 KB** minimal allocation footprint
 
 Notes:
-- Results captured on Windows 11 (25H2), .NET 8.0.23, Intel i7-1185G7, 25 iterations.
+- Results captured on Windows 11 (25H2), .NET 8.0.23, Intel i7-1185G7, 50 iterations.
 - BenchmarkDotNet v0.15.8, .NET SDK 10.0.102.

@@ -185,6 +185,55 @@ var splitWorkflow = WorkflowForge.CreateWorkflow()
 - Data distribution strategies
 - Result aggregation
 
+### 4b. AddParallelOperations (WorkflowBuilder Helper)
+
+A convenient fluent API for adding parallel operations directly on the workflow builder.
+
+```csharp
+// Simple parallel execution (all operations get the same input)
+var workflow = WorkflowForge.CreateWorkflow()
+    .WithName("ParallelValidation")
+    .AddParallelOperations(
+        new ValidateInventoryOperation(),
+        new CheckFraudOperation(),
+        new VerifyCustomerOperation()
+    )
+    .AddOperation(new ProcessOrderOperation())
+    .Build();
+
+// With concurrency control, timeout, and naming
+var controlledWorkflow = WorkflowForge.CreateWorkflow()
+    .WithName("ControlledParallel")
+    .AddParallelOperations(
+        operations: new[] { op1, op2, op3, op4 },
+        maxConcurrency: 2,                      // Max 2 concurrent
+        timeout: TimeSpan.FromSeconds(30),      // 30s timeout
+        name: "ParallelValidations"             // Named group
+    )
+    .Build();
+```
+
+**Method Signatures**:
+```csharp
+// Simple params overload
+WorkflowBuilder AddParallelOperations(params IWorkflowOperation[] operations)
+
+// Full control overload
+WorkflowBuilder AddParallelOperations(
+    IEnumerable<IWorkflowOperation> operations,
+    int? maxConcurrency = null,
+    TimeSpan? timeout = null,
+    string? name = null)
+```
+
+**When to Use**: Quick parallel operation setup without manually creating `ForEachWorkflowOperation`
+
+**Features**:
+- Fluent API integration
+- Uses `ForEachWorkflowOperation.CreateSharedInput` internally
+- Concurrency and timeout control
+- Named operation groups for debugging
+
 ### 5. DelayOperation
 
 Introduce async delays into workflows.
@@ -286,7 +335,7 @@ public class ValidateOrderOperation : WorkflowOperationBase<Order, ValidationRes
     public override string Name => "ValidateOrder";
     public override bool SupportsRestore => false;
     
-    public override async Task<ValidationResult> ForgeAsync(
+    protected override async Task<ValidationResult> ForgeAsyncCore(
         Order input, 
         IWorkflowFoundry foundry, 
         CancellationToken cancellationToken)
@@ -322,7 +371,7 @@ var workflow = WorkflowForge.CreateWorkflow()
 
 ### Method 1: Inherit from WorkflowOperationBase
 
-For untyped operations:
+For untyped operations, implement `ForgeAsyncCore`:
 
 ```csharp
 public class CustomOperation : WorkflowOperationBase
@@ -330,7 +379,7 @@ public class CustomOperation : WorkflowOperationBase
     public override string Name => "CustomOperation";
     public override bool SupportsRestore => true;
     
-    public override async Task<object?> ForgeAsync(
+    protected override async Task<object?> ForgeAsyncCore(
         object? inputData, 
         IWorkflowFoundry foundry, 
         CancellationToken cancellationToken)
@@ -357,9 +406,50 @@ public class CustomOperation : WorkflowOperationBase
 }
 ```
 
+### Method 1b: Using Lifecycle Hooks
+
+Add setup/teardown logic without polluting your core business logic:
+
+```csharp
+public class AuditedOperation : WorkflowOperationBase
+{
+    public override string Name => "AuditedOperation";
+    
+    protected override Task OnBeforeExecuteAsync(
+        object? inputData, 
+        IWorkflowFoundry foundry, 
+        CancellationToken ct)
+    {
+        foundry.Logger.LogInformation("Starting {Operation}", Name);
+        foundry.Properties["StartTime"] = DateTime.UtcNow;
+        return Task.CompletedTask;
+    }
+    
+    protected override async Task<object?> ForgeAsyncCore(
+        object? inputData, 
+        IWorkflowFoundry foundry, 
+        CancellationToken ct)
+    {
+        // Pure business logic
+        return await ProcessDataAsync(inputData, ct);
+    }
+    
+    protected override Task OnAfterExecuteAsync(
+        object? inputData, 
+        object? outputData, 
+        IWorkflowFoundry foundry, 
+        CancellationToken ct)
+    {
+        var duration = DateTime.UtcNow - (DateTime)foundry.Properties["StartTime"]!;
+        foundry.Logger.LogInformation("Completed {Operation} in {Duration}ms", Name, duration.TotalMilliseconds);
+        return Task.CompletedTask;
+    }
+}
+```
+
 ### Method 2: Inherit from WorkflowOperationBase<TInput, TOutput>
 
-For typed operations:
+For typed operations, implement `ForgeAsyncCore` with typed parameters:
 
 ```csharp
 public class ProcessOrderOperation : WorkflowOperationBase<Order, ProcessResult>
@@ -374,7 +464,7 @@ public class ProcessOrderOperation : WorkflowOperationBase<Order, ProcessResult>
     public override string Name => "ProcessOrder";
     public override bool SupportsRestore => true;
     
-    public override async Task<ProcessResult> ForgeAsync(
+    protected override async Task<ProcessResult> ForgeAsyncCore(
         Order input, 
         IWorkflowFoundry foundry, 
         CancellationToken cancellationToken)
@@ -622,7 +712,7 @@ public class CreateOrderOperation : WorkflowOperationBase
 {
     public override bool SupportsRestore => true;
     
-    public override async Task<object?> ForgeAsync(
+    protected override async Task<object?> ForgeAsyncCore(
         object? inputData, 
         IWorkflowFoundry foundry, 
         CancellationToken cancellationToken)
@@ -697,7 +787,7 @@ private static string _orderId; // Don't do this
 ### 3. Log Important Events
 
 ```csharp
-public override async Task<object?> ForgeAsync(...)
+protected override async Task<object?> ForgeAsyncCore(...)
 {
     foundry.Logger.LogInformation("Processing order {OrderId}", orderId);
     
@@ -744,7 +834,7 @@ public class ComplexBusinessLogic : WorkflowOperationBase<Input, Output>
 ### 6. Handle Cancellation
 
 ```csharp
-public override async Task<object?> ForgeAsync(
+protected override async Task<object?> ForgeAsyncCore(
     object? inputData, 
     IWorkflowFoundry foundry, 
     CancellationToken cancellationToken)
