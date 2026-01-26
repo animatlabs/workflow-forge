@@ -1,9 +1,5 @@
 # WorkflowForge Architecture
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
 Complete architectural overview of WorkflowForge's design principles, patterns, and implementation.
 
 ---

@@ -1,9 +1,5 @@
 # WorkflowForge Competitive Benchmark Analysis
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
 **Analysis Date**: January 2026  
 **Frameworks Tested**:
 - WorkflowForge 2.0.0
