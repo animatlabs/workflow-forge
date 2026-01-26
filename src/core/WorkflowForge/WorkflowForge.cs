@@ -44,7 +44,7 @@ namespace WorkflowForge
         ///     .WithName("ProcessOrder")
         ///     .AddOperation("ValidateOrder", async (f, ct) => ValidateOrder())
         ///     .Build();
-        ///     
+        ///
         /// // With name
         /// var builder2 = WorkflowForge.CreateWorkflow("ProcessPayment");
         /// </code>
@@ -53,7 +53,7 @@ namespace WorkflowForge
         {
             if (workflowName != null && string.IsNullOrWhiteSpace(workflowName))
                 throw new ArgumentException("Workflow name cannot be empty or whitespace.", nameof(workflowName));
-                
+
             try
             {
                 var builder = new WorkflowBuilder(serviceProvider);
@@ -61,7 +61,7 @@ namespace WorkflowForge
             }
             catch (Exception ex) when (!(ex is ArgumentException))
             {
-                var message = workflowName != null 
+                var message = workflowName != null
                     ? $"Failed to create workflow builder for '{workflowName}'. Ensure the system has sufficient resources."
                     : "Failed to create workflow builder. Ensure the system has sufficient resources.";
                 throw new WorkflowForgeException(message, ex);
@@ -81,14 +81,14 @@ namespace WorkflowForge
         /// <code>
         /// // Simple foundry
         /// var foundry1 = WorkflowForge.CreateFoundry("MyWorkflow");
-        /// 
+        ///
         /// // With logger
         /// var foundry2 = WorkflowForge.CreateFoundry("MyWorkflow", logger);
-        /// 
+        ///
         /// // With initial properties
         /// var properties = new Dictionary&lt;string, object?&gt; { ["UserId"] = "123" };
         /// var foundry3 = WorkflowForge.CreateFoundry("MyWorkflow", null, properties);
-        /// 
+        ///
         /// // With both
         /// var foundry4 = WorkflowForge.CreateFoundry("MyWorkflow", logger, properties);
         /// </code>
@@ -124,17 +124,17 @@ namespace WorkflowForge
         /// <code>
         /// // Simple smith
         /// var smith1 = WorkflowForge.CreateSmith();
-        /// 
+        ///
         /// // With logger
         /// var smith2 = WorkflowForge.CreateSmith(logger);
-        /// 
+        ///
         /// // With service provider
         /// var smith3 = WorkflowForge.CreateSmith(null, serviceProvider);
-        /// 
+        ///
         /// // With options
         /// var options = new WorkflowForgeOptions { MaxConcurrentWorkflows = 10 };
         /// var smith4 = WorkflowForge.CreateSmith(null, null, options);
-        /// 
+        ///
         /// // With all parameters
         /// var smith5 = WorkflowForge.CreateSmith(logger, serviceProvider, options);
         /// </code>

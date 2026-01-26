@@ -1,5 +1,6 @@
+using WorkflowForge.Abstractions;
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
-using WorkflowForge.Extensions;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
 
@@ -12,7 +13,7 @@ public class Scenario2_DataPassing_WorkflowForge : IWorkflowScenario
     private readonly ScenarioParameters _parameters;
 
     public string Name => "Data Passing Workflow";
-    public string Description => $"Read, modify, and write {_parameters.OperationCount} context values";
+    public string Description => $"Pass and increment data across {_parameters.OperationCount} operations";
 
     public Scenario2_DataPassing_WorkflowForge(ScenarioParameters parameters)
     {
@@ -27,35 +28,29 @@ public class Scenario2_DataPassing_WorkflowForge : IWorkflowScenario
     public async Task<ScenarioResult> ExecuteAsync()
     {
         using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry("DataPassing");
+        IWorkflowOperation? lastOperation = null;
 
-        // Initialize some data
-        foundry.Properties["initial_value"] = 0;
-
-        // Add operations that read, modify, and write data
+        // Add operations that pass output to the next operation
         for (int i = 0; i < _parameters.OperationCount; i++)
         {
             var operationIndex = i;
-            foundry.WithOperation($"DataOp_{operationIndex}", async (foundry) =>
+            var operation = new DelegateWorkflowOperation<object?, int>($"DataOp_{operationIndex}", async (input, f, ct) =>
             {
                 await Task.Yield();
-
-                // Read existing data
-                var currentValue = foundry.Properties.TryGetValue("initial_value", out var value) && value is int initialValue
-                    ? initialValue
-                    : 0;
-
-                // Modify data
-                var newValue = currentValue + 1;
-
-                // Write back
-                foundry.Properties["initial_value"] = newValue;
-                foundry.Properties[$"operation_{operationIndex}_result"] = $"Processed_{newValue}";
+                var currentValue = input is int value ? value : 0;
+                return currentValue + 1;
             });
+
+            foundry.AddOperation(operation);
+            lastOperation = operation;
         }
 
         await foundry.ForgeAsync();
 
-        var finalValue = foundry.Properties.TryGetValue("initial_value", out var finalValueObj) && finalValueObj is int finalValueCount
+        var outputKey = lastOperation != null ? $"Operation.{lastOperation.Id}.Output" : string.Empty;
+        var finalValue = lastOperation != null
+            && foundry.Properties.TryGetValue(outputKey, out var finalValueObj)
+            && finalValueObj is int finalValueCount
             ? finalValueCount
             : 0;
         var success = finalValue == _parameters.OperationCount;

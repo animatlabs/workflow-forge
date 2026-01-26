@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using WorkflowForge.Options;
 
@@ -67,10 +66,10 @@ namespace WorkflowForge.Extensions.Audit.Options
         public override IList<string> Validate()
         {
             var errors = new List<string>();
-            
+
             // No validation constraints currently needed for audit options
             // All boolean and enum values are inherently valid
-            
+
             return errors;
         }
 
@@ -117,6 +116,3 @@ namespace WorkflowForge.Extensions.Audit.Options
         Complete
     }
 }
-
-
-

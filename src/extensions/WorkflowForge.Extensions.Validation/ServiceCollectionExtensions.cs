@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using System;
 using WorkflowForge.Extensions.Validation.Options;
 
@@ -32,4 +31,3 @@ namespace WorkflowForge.Extensions.Validation
         }
     }
 }
-

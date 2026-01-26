@@ -38,7 +38,7 @@ public class ComprehensiveIntegrationSample : ISample
             using var foundry = WorkflowForge.CreateFoundry("ECommerceOrderProcessing", logger);
 
             // Enable Polly resilience patterns
-            foundry.UsePollyFromSettings(new PollyMiddlewareOptions 
+            foundry.UsePollyFromSettings(new PollyMiddlewareOptions
             {
                 Retry = { MaxRetryAttempts = 5 },
                 CircuitBreaker = { IsEnabled = true }

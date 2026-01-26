@@ -1,4 +1,3 @@
-using System.Threading;
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
 using WorkflowForge.Extensions;
 

@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using WorkflowForge.Extensions.DependencyInjection;
+using WorkflowForge.Options;
 using WorkflowForge.Extensions.Audit;
 using WorkflowForge.Extensions.Audit.Options;
 using WorkflowForge.Extensions.Validation;
@@ -135,6 +137,36 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
             Assert.False(options.Enabled);
             Assert.True(options.Retry.IsEnabled);
             Assert.Equal(5, options.Retry.MaxRetryAttempts);
+        }
+
+        [Fact]
+        public void WorkflowForgeOptionsValidator_WithInvalidOptions_ReturnsFailure()
+        {
+            var validator = new WorkflowForgeOptionsValidator();
+            var options = new WorkflowForgeOptions
+            {
+                MaxConcurrentWorkflows = -1
+            };
+
+            var result = validator.Validate(null, options);
+
+            Assert.False(result.Succeeded);
+            Assert.NotEmpty(result.Failures);
+        }
+
+        [Fact]
+        public void AddWorkflowForge_RegistersOptionsValidator()
+        {
+            var services = new ServiceCollection();
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>())
+                .Build();
+
+            services.AddWorkflowForge(config);
+            var provider = services.BuildServiceProvider();
+            var validators = provider.GetServices<IValidateOptions<WorkflowForgeOptions>>();
+
+            Assert.Contains(validators, v => v is WorkflowForgeOptionsValidator);
         }
     }
 }

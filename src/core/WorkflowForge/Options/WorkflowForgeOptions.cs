@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace WorkflowForge.Options
@@ -6,9 +5,9 @@ namespace WorkflowForge.Options
     /// <summary>
     /// Configuration options for core WorkflowForge functionality.
     /// Zero-dependency POCO for configuration binding.
-    /// Implements <see cref="ICloneable"/> for creating independent copies of configuration.
+    /// Inherits from <see cref="WorkflowForgeOptionsBase"/> for consistent options pattern.
     /// </summary>
-    public sealed class WorkflowForgeOptions : ICloneable
+    public sealed class WorkflowForgeOptions : WorkflowForgeOptionsBase
     {
         /// <summary>
         /// Default configuration section name for binding from appsettings.json.
@@ -17,15 +16,9 @@ namespace WorkflowForge.Options
         public const string DefaultSectionName = "WorkflowForge";
 
         /// <summary>
-        /// Gets the configuration section name for this instance.
-        /// Can be customized via constructor for non-standard configuration layouts.
-        /// </summary>
-        public string SectionName { get; }
-
-        /// <summary>
         /// Initializes a new instance with default section name.
         /// </summary>
-        public WorkflowForgeOptions() : this(DefaultSectionName)
+        public WorkflowForgeOptions() : base(null, DefaultSectionName)
         {
         }
 
@@ -33,9 +26,8 @@ namespace WorkflowForge.Options
         /// Initializes a new instance with custom section name.
         /// </summary>
         /// <param name="sectionName">Custom configuration section name.</param>
-        public WorkflowForgeOptions(string sectionName)
+        public WorkflowForgeOptions(string? sectionName) : base(sectionName, DefaultSectionName)
         {
-            SectionName = sectionName ?? DefaultSectionName;
         }
 
         /// <summary>
@@ -66,10 +58,16 @@ namespace WorkflowForge.Options
         public bool ThrowOnCompensationError { get; set; } = false;
 
         /// <summary>
+        /// Gets or sets whether operation output is passed as input to the next operation.
+        /// Default is true (output chaining enabled).
+        /// </summary>
+        public bool EnableOutputChaining { get; set; } = true;
+
+        /// <summary>
         /// Validates the configuration settings and returns any validation errors.
         /// </summary>
         /// <returns>A list of validation error messages, empty if valid.</returns>
-        public IList<string> Validate()
+        public override IList<string> Validate()
         {
             var errors = new List<string>();
 
@@ -84,17 +82,18 @@ namespace WorkflowForge.Options
 
         /// <summary>
         /// Creates a shallow copy of the current options instance.
-        /// Implements <see cref="ICloneable.Clone"/>.
         /// </summary>
         /// <returns>A new <see cref="WorkflowForgeOptions"/> instance with copied property values.</returns>
-        public object Clone()
+        public override object Clone()
         {
-            return new WorkflowForgeOptions
+            return new WorkflowForgeOptions(SectionName)
             {
+                Enabled = Enabled,
                 MaxConcurrentWorkflows = MaxConcurrentWorkflows,
                 ContinueOnError = ContinueOnError,
                 FailFastCompensation = FailFastCompensation,
-                ThrowOnCompensationError = ThrowOnCompensationError
+                ThrowOnCompensationError = ThrowOnCompensationError,
+                EnableOutputChaining = EnableOutputChaining
             };
         }
 

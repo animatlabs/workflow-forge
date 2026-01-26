@@ -1,9 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.Reflection;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.Validation;
 using WorkflowForge.Extensions.Validation.Options;
 using WF = WorkflowForge;
 
@@ -106,7 +104,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
         public void UseValidation_WithEnabledFalse_ShouldNotAddMiddleware()
         {
             var options = new ValidationMiddlewareOptions { Enabled = false };
-            
+
             // Create a new foundry to test with
             using var testFoundry = WF.WorkflowForge.CreateFoundry("Test");
             var initialCount = GetMiddlewareCount(testFoundry);
@@ -121,7 +119,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
         public void UseValidation_WithEnabledTrue_ShouldAddMiddleware()
         {
             var options = new ValidationMiddlewareOptions { Enabled = true };
-            
+
             // Create a new foundry to test with
             using var testFoundry = WF.WorkflowForge.CreateFoundry("Test");
             var initialCount = GetMiddlewareCount(testFoundry);

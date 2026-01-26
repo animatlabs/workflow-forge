@@ -1,11 +1,11 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Moq;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Loggers;
 using WorkflowForge.Options;
-using Xunit;
 
 namespace WorkflowForge.Tests.Orchestration
 {
@@ -83,6 +83,38 @@ namespace WorkflowForge.Tests.Orchestration
             // Assert
             Assert.Contains(exception.InnerExceptions, ex => ex is InvalidOperationException && ex.Message == "boom");
             Assert.Contains(exception.InnerExceptions, ex => ex is InvalidOperationException && ex.Message == "restore-failed");
+        }
+
+        [Fact]
+        public async Task ForgeAsync_WhenFoundryProvided_ReplacesOperations()
+        {
+            // Arrange
+            using var smith = global::WorkflowForge.WorkflowForge.CreateSmith();
+            var operation = CreateMockOperation("Op1", result: "result1");
+            var workflow = new Workflow(
+                "TestWorkflow",
+                "Test Description",
+                "1.0.0",
+                new List<IWorkflowOperation> { operation.Object },
+                new Dictionary<string, object?>());
+
+            var foundry = new Mock<IWorkflowFoundry>();
+            foundry.Setup(f => f.SetCurrentWorkflow(workflow));
+            foundry.Setup(f => f.ReplaceOperations(It.IsAny<IEnumerable<IWorkflowOperation>>()));
+            foundry.Setup(f => f.ForgeAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+            foundry.SetupGet(f => f.ExecutionId).Returns(Guid.NewGuid());
+            foundry.SetupGet(f => f.Properties).Returns(new ConcurrentDictionary<string, object?>());
+            foundry.SetupGet(f => f.Logger).Returns(NullLogger.Instance);
+            foundry.SetupGet(f => f.ServiceProvider).Returns((IServiceProvider?)null);
+            foundry.SetupGet(f => f.CurrentWorkflow).Returns(workflow);
+            foundry.SetupGet(f => f.IsFrozen).Returns(false);
+
+            // Act
+            await smith.ForgeAsync(workflow, foundry.Object);
+
+            // Assert
+            foundry.Verify(f => f.ReplaceOperations(workflow.Operations), Times.Once);
+            foundry.Verify(f => f.ForgeAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         private static Mock<IWorkflowOperation> CreateMockOperation(

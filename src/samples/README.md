@@ -1,7 +1,7 @@
 # WorkflowForge Samples
 
 <p align="center">
-  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 **Interactive examples demonstrating WorkflowForge capabilities**
@@ -12,7 +12,7 @@
 
 **Location**: `WorkflowForge.Samples.BasicConsole`
 
-Interactive console application with 24 hands-on examples covering:
+Interactive console application with 33 hands-on examples covering:
 
 - **Basic Workflows (1-4)**: Hello World, Data Passing, Multiple Outcomes, Class-Based Operations
 - **Control Flow (5-8)**: Conditionals, ForEach Loops, Error Handling, Built-in Operations
@@ -37,7 +37,7 @@ The application provides an interactive menu to run individual samples or all sa
 - Saga pattern compensation/rollback
 - Middleware pipeline (Russian Doll pattern)
 - SRP-compliant event system (Workflow, Operation, Compensation)
-- All 10 extensions with zero version conflicts (Costura.Fody)
+- All 10 extensions with zero version conflicts (ILRepack)
 - Options pattern configuration from `appsettings.json`
 - Production-grade patterns and best practices
 
@@ -45,11 +45,11 @@ The application provides an interactive menu to run individual samples or all sa
 
 **Beginners**: Start with [Basic Console Samples 1-4](WorkflowForge.Samples.BasicConsole/README.md)  
 **Intermediate**: Explore samples 5-12 for control flow and configuration  
-**Advanced**: Study samples 13-24 for extensions and production patterns  
+**Advanced**: Study samples 13-33 for extensions and production patterns  
 
 ## Documentation
 
-- **[Samples Guide](../../docs/getting-started/samples-guide.md)** - Detailed breakdown of all 24 samples
+- **[Samples Guide](../../docs/getting-started/samples-guide.md)** - Detailed breakdown of all 33 samples
 - **[Getting Started](../../docs/getting-started/getting-started.md)** - Step-by-step tutorial
 - **[Operations Guide](../../docs/core/operations.md)** - All operation types
 - **[Configuration](../../docs/core/configuration.md)** - Configuration options
@@ -74,7 +74,7 @@ dotnet run
 
 ```bash
 dotnet run
-# Enter sample number (1-24) from menu
+# Enter sample number (1-33) from menu
 ```
 
 ## Contributing Samples

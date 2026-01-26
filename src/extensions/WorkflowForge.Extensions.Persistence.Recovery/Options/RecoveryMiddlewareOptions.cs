@@ -77,17 +77,17 @@ namespace WorkflowForge.Extensions.Persistence.Recovery.Options
         public override IList<string> Validate()
         {
             var errors = new List<string>();
-            
+
             if (MaxRetryAttempts < 1 || MaxRetryAttempts > 100)
             {
                 errors.Add($"{SectionName}:MaxRetryAttempts must be between 1 and 100 (current value: {MaxRetryAttempts})");
             }
-            
+
             if (BaseDelay < TimeSpan.Zero || BaseDelay > TimeSpan.FromMinutes(10))
             {
                 errors.Add($"{SectionName}:BaseDelay must be between 0 and 10 minutes (current value: {BaseDelay.TotalSeconds}s)");
             }
-            
+
             return errors;
         }
 
@@ -109,4 +109,3 @@ namespace WorkflowForge.Extensions.Persistence.Recovery.Options
         }
     }
 }
-

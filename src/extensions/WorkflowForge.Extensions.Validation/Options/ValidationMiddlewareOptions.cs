@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using WorkflowForge.Options;
 
@@ -70,13 +69,13 @@ namespace WorkflowForge.Extensions.Validation.Options
         public override IList<string> Validate()
         {
             var errors = new List<string>();
-            
+
             // Logical validation: if ignoring failures but also throwing, that's a conflict
             if (IgnoreValidationFailures && ThrowOnValidationError)
             {
                 errors.Add($"{SectionName}: Cannot have both IgnoreValidationFailures=true and ThrowOnValidationError=true");
             }
-            
+
             return errors;
         }
 
@@ -97,6 +96,3 @@ namespace WorkflowForge.Extensions.Validation.Options
         }
     }
 }
-
-
-

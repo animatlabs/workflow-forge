@@ -1,5 +1,4 @@
 using System;
-using WorkflowForge.Options;
 using System.Collections.Generic;
 using WorkflowForge.Abstractions;
 
@@ -65,7 +64,7 @@ public class WorkflowForgeTests
     {
         // Act
         var builder = WorkflowForge.CreateWorkflow(workflowName: null);
-        
+
         // Assert - null is valid, builder created successfully
         Assert.NotNull(builder);
     }

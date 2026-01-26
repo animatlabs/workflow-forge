@@ -1,7 +1,7 @@
-using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using System;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Options;
 using WorkflowForge.Options.Middleware;
@@ -29,12 +29,12 @@ namespace WorkflowForge.Extensions.DependencyInjection
         /// <code>
         /// // With default section names
         /// services.AddWorkflowForge(configuration);
-        /// 
+        ///
         /// // With custom core section only
         /// services.AddWorkflowForge(configuration, coreSectionName: "MyApp:Workflows");
         ///
         /// // With all custom sections
-        /// services.AddWorkflowForge(configuration, 
+        /// services.AddWorkflowForge(configuration,
         ///     coreSectionName: "MyApp:Workflows",
         ///     timingSectionName: "MyApp:Workflows:Timing",
         ///     loggingSectionName: "MyApp:Workflows:Logging");
@@ -55,16 +55,16 @@ namespace WorkflowForge.Extensions.DependencyInjection
             var coreSection = coreSectionName ?? WorkflowForgeOptions.DefaultSectionName;
             services.AddOptions<WorkflowForgeOptions>()
                 .Bind(configuration.GetSection(coreSection))
-                .Configure(opts => 
+                .Configure(opts =>
                 {
                     // Store the actual section name used
                     // Note: Can't modify SectionName as it's read-only, handled via constructor
                 })
-                .Validate(opts => 
+                .Validate(opts =>
                 {
                     var errors = opts.Validate();
                     return errors.Count == 0;
-                }, 
+                },
                 "WorkflowForge configuration validation failed");
 
             // Bind and validate middleware options with configurable section names
@@ -75,16 +75,19 @@ namespace WorkflowForge.Extensions.DependencyInjection
             var loggingSection = loggingSectionName ?? LoggingMiddlewareOptions.DefaultSectionName;
             services.AddOptions<LoggingMiddlewareOptions>()
                 .Bind(configuration.GetSection(loggingSection))
-                .Validate(opts => 
+                .Validate(opts =>
                 {
                     var errors = opts.Validate();
                     return errors.Count == 0;
-                }, 
+                },
                 "Logging middleware configuration validation failed");
 
             var errorHandlingSection = errorHandlingSectionName ?? ErrorHandlingMiddlewareOptions.DefaultSectionName;
             services.AddOptions<ErrorHandlingMiddlewareOptions>()
                 .Bind(configuration.GetSection(errorHandlingSection));
+
+            // Register the options validator for startup-time validation
+            services.AddSingleton<IValidateOptions<WorkflowForgeOptions>, WorkflowForgeOptionsValidator>();
 
             return services;
         }
@@ -126,7 +129,7 @@ namespace WorkflowForge.Extensions.DependencyInjection
             {
                 coreBuilder.Configure(configureCore);
             }
-            coreBuilder                .Validate(opts => 
+            coreBuilder.Validate(opts =>
                 {
                     var errors = opts.Validate();
                     return errors.Count == 0;
@@ -149,7 +152,7 @@ namespace WorkflowForge.Extensions.DependencyInjection
             {
                 loggingBuilder.Configure(configureLogging);
             }
-            loggingBuilder                .Validate(opts => 
+            loggingBuilder.Validate(opts =>
                 {
                     var errors = opts.Validate();
                     return errors.Count == 0;
@@ -165,6 +168,9 @@ namespace WorkflowForge.Extensions.DependencyInjection
             {
                 services.AddOptions<ErrorHandlingMiddlewareOptions>();
             }
+
+            // Register the options validator for startup-time validation
+            services.AddSingleton<IValidateOptions<WorkflowForgeOptions>, WorkflowForgeOptionsValidator>();
 
             return services;
         }
@@ -182,12 +188,12 @@ namespace WorkflowForge.Extensions.DependencyInjection
         /// <example>
         /// <code>
         /// // Register logger first
-        /// services.AddSingleton&lt;IWorkflowForgeLogger&gt;(sp => 
+        /// services.AddSingleton&lt;IWorkflowForgeLogger&gt;(sp =>
         ///     SerilogExtensions.CreateWorkflowForgeLogger());
-        /// 
+        ///
         /// // Register WorkflowForge configuration
         /// services.AddWorkflowForge(configuration);
-        /// 
+        ///
         /// // Register WorkflowSmith
         /// services.AddWorkflowSmith();
         /// </code>
@@ -209,4 +215,3 @@ namespace WorkflowForge.Extensions.DependencyInjection
         }
     }
 }
-

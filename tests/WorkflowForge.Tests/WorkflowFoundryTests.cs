@@ -474,6 +474,64 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
+    public async Task ReplaceOperations_ReplacesExistingOperations()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var firstExecuted = false;
+        var replacementExecuted = false;
+
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("First", (input, f, ct) =>
+        {
+            firstExecuted = true;
+            return Task.FromResult("first");
+        }));
+
+        var replacement = new DelegateWorkflowOperation<object, string>("Replacement", (input, f, ct) =>
+        {
+            replacementExecuted = true;
+            return Task.FromResult("replacement");
+        });
+
+        // Act
+        foundry.ReplaceOperations(new[] { replacement });
+        await foundry.ForgeAsync();
+
+        // Assert
+        Assert.False(firstExecuted);
+        Assert.True(replacementExecuted);
+    }
+
+    [Fact]
+    public async Task ForgeAsync_FreezesPipeline_DuringExecution()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var started = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var resume = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("BlockingOp", async (input, f, ct) =>
+        {
+            started.TrySetResult(true);
+            await resume.Task.ConfigureAwait(false);
+            return "done";
+        }));
+
+        // Act
+        var forgeTask = foundry.ForgeAsync();
+        await started.Task;
+
+        // Assert
+        Assert.True(foundry.IsFrozen);
+        Assert.Throws<InvalidOperationException>(() => foundry.AddOperation(new TestOperation("LateOp")));
+        Assert.Throws<InvalidOperationException>(() => foundry.AddMiddleware(new TestMiddleware()));
+
+        resume.TrySetResult(true);
+        await forgeTask;
+        Assert.False(foundry.IsFrozen);
+    }
+
+    [Fact]
     public async Task ForgeAsync_WithSingleOperation_ExecutesOperation()
     {
         // Arrange
@@ -493,6 +551,29 @@ public class WorkflowFoundryTests
 
         // Assert
         Assert.True(executed);
+    }
+
+    [Fact]
+    public async Task ForgeAsync_WhenOutputChainingDisabled_DoesNotPassResultForward()
+    {
+        // Arrange
+        var options = new WorkflowForgeOptions { EnableOutputChaining = false };
+        var foundry = CreateTestFoundry(options: options);
+        object? receivedInput = "unset";
+
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("Op1", (input, f, ct) =>
+            Task.FromResult("output")));
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("Op2", (input, f, ct) =>
+        {
+            receivedInput = input;
+            return Task.FromResult("done");
+        }));
+
+        // Act
+        await foundry.ForgeAsync();
+
+        // Assert
+        Assert.Null(receivedInput);
     }
 
     [Fact]
@@ -732,10 +813,7 @@ public class WorkflowFoundryTests
 
     #endregion Disposal Tests
 
-    #region Configuration Tests
 
-
-    #endregion Configuration Tests
 
     #region Error Handling Tests
 
@@ -799,6 +877,7 @@ public class WorkflowFoundryTests
             return Task.FromResult<object?>("TestResult");
         }
     }
+
 
     private class TestMiddleware : IWorkflowOperationMiddleware
     {

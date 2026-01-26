@@ -1,3 +1,4 @@
+using System;
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
@@ -62,18 +63,22 @@ public class Program
                     Console.WriteLine("Running Scenario 8: Complete Lifecycle");
                     BenchmarkRunner.Run<Scenario8Benchmark>(CreateConfig());
                     break;
+
                 case "scenario9":
                     Console.WriteLine("Running Scenario 9: State Machine");
                     BenchmarkRunner.Run<Scenario9Benchmark>(CreateConfig());
                     break;
+
                 case "scenario10":
                     Console.WriteLine("Running Scenario 10: Long Running");
                     BenchmarkRunner.Run<Scenario10Benchmark>(CreateConfig());
                     break;
+
                 case "scenario11":
                     Console.WriteLine("Running Scenario 11: Parallel Execution");
                     BenchmarkRunner.Run<Scenario11Benchmark>(CreateConfig());
                     break;
+
                 case "scenario12":
                     Console.WriteLine("Running Scenario 12: Event-Driven");
                     BenchmarkRunner.Run<Scenario12Benchmark>(CreateConfig());

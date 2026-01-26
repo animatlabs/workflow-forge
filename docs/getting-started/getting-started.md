@@ -1,7 +1,7 @@
 # Getting Started with WorkflowForge
 
 <p align="center">
-  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Welcome to WorkflowForge! This guide will walk you through installing, configuring, and creating your first workflow in just a few minutes.
@@ -22,11 +22,11 @@ Welcome to WorkflowForge! This guide will walk you through installing, configuri
 
 **WorkflowForge 2.0.0** introduces major improvements:
 
-### Zero Version Conflicts
-Extensions now use **Costura.Fody** to embed dependencies, eliminating DLL hell. Use ANY version of Serilog, Polly, FluentValidation, or OpenTelemetry in your app without conflicts!
+### Dependency Isolation
+Extensions internalize third-party dependencies with **ILRepack** where appropriate, while keeping Microsoft/System assemblies external for runtime unification.
 
 ### New Extensions
-- **Validation**: FluentValidation bridge for comprehensive validation
+- **Validation**: DataAnnotations-based validation for comprehensive input rules
 - **Audit**: Production-ready audit logging with pluggable providers
 
 ### Breaking Changes
@@ -398,9 +398,11 @@ Configure execution behavior via options:
 ```csharp
 var options = new WorkflowForgeOptions
 {
+    Enabled = true,
     ContinueOnError = false,
     FailFastCompensation = false,
-    ThrowOnCompensationError = false
+    ThrowOnCompensationError = false,
+    EnableOutputChaining = true
 };
 
 var foundry = WorkflowForge.CreateFoundry("MyWorkflow", options: options);
@@ -410,7 +412,7 @@ var foundry = WorkflowForge.CreateFoundry("MyWorkflow", options: options);
 
 ### Explore Samples
 
-WorkflowForge includes 24 comprehensive samples covering all features:
+WorkflowForge includes 33 comprehensive samples covering all features:
 
 ```bash
 # Clone the repository
@@ -430,15 +432,13 @@ Enhance your workflows with extensions:
 
 **Structured Logging (Serilog)**:
 ```csharp
-using Serilog;
 using WorkflowForge.Extensions.Logging.Serilog;
 
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .WriteTo.File("logs/workflow.log")
-    .CreateLogger();
-
-var logger = new SerilogWorkflowForgeLogger(Log.Logger);
+var logger = SerilogLoggerFactory.CreateLogger(new SerilogLoggerOptions
+{
+    MinimumLevel = "Information",
+    EnableConsoleSink = true
+});
 var smith = WorkflowForge.CreateSmith(logger);
 ```
 
@@ -452,15 +452,12 @@ foundry.UsePolly(policy => policy
 );
 ```
 
-**Validation (FluentValidation)**:
+**Validation (DataAnnotations)**:
 ```csharp
 using WorkflowForge.Extensions.Validation;
 
-foundry.AddValidation(
-    new OrderValidator(),
-    f => f.GetPropertyOrDefault<Order>("Order"),
-    throwOnFailure: true
-);
+foundry.UseValidation(
+    f => f.GetPropertyOrDefault<Order>("Order"));
 ```
 
 [Extensions Guide](../extensions/index.md)
@@ -506,7 +503,7 @@ You've learned:
 - Data flow patterns (dictionary-based preferred)
 - Compensation/rollback (Saga pattern)
 
-**Next**: Explore the [24 samples](samples-guide.md) to see WorkflowForge in action, or dive into [architecture](../architecture/overview.md) to understand the design principles.
+**Next**: Explore the [33 samples](samples-guide.md) to see WorkflowForge in action, or dive into [architecture](../architecture/overview.md) to understand the design principles.
 
 ---
 
@@ -517,7 +514,7 @@ You've learned:
 - **[Events System](../core/events.md)** - Monitoring and observability
 - **[Extensions](../extensions/index.md)** - Available extensions
 - **[Configuration](../core/configuration.md)** - Environment-specific setup
-- **[Samples Guide](samples-guide.md)** - All 24 samples with learning path
+- **[Samples Guide](samples-guide.md)** - All 33 samples with learning path
 - **[API Reference](../reference/api-reference.md)** - Complete API documentation
 
 **← Back to [Documentation Home](../index.md)**

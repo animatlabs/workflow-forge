@@ -63,7 +63,7 @@ public class PollyResilienceSample : ISample
         using var foundry = WorkflowForge.CreateFoundry("ProductionResilience");
 
         // Apply production resilience settings (strict for reliability)
-        foundry.UsePollyFromSettings(new PollyMiddlewareOptions 
+        foundry.UsePollyFromSettings(new PollyMiddlewareOptions
         {
             Retry = { MaxRetryAttempts = 5 },
             CircuitBreaker = { IsEnabled = true }
@@ -95,7 +95,7 @@ public class PollyResilienceSample : ISample
         using var foundry = WorkflowForge.CreateFoundry("EnterpriseResilience");
 
         // Apply enterprise resilience settings (comprehensive)
-        foundry.UsePollyFromSettings(new PollyMiddlewareOptions 
+        foundry.UsePollyFromSettings(new PollyMiddlewareOptions
         {
             Retry = { MaxRetryAttempts = 7 },
             CircuitBreaker = { IsEnabled = true },

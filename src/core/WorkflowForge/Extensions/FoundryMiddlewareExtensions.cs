@@ -6,9 +6,11 @@ using WorkflowForge.Options.Middleware;
 namespace WorkflowForge.Extensions
 {
     /// <summary>
-    /// Extensions to enable core middleware components (logging, timing, error handling).
+    /// Extension methods for IWorkflowFoundry providing middleware configuration and setup.
+    /// This file focuses on middleware pipeline configuration (UseLogging, UseTiming, UseErrorHandling).
+    /// For property management and operation chaining, see <see cref="FoundryPropertyExtensions"/>.
     /// </summary>
-    public static class WorkflowFoundryExtensions
+    public static class FoundryMiddlewareExtensions
     {
         /// <summary>
         /// Adds core logging middleware using the foundry's current logger.

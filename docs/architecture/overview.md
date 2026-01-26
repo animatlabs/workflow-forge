@@ -1,7 +1,7 @@
 # WorkflowForge Architecture
 
 <p align="center">
-  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Complete architectural overview of WorkflowForge's design principles, patterns, and implementation.
@@ -144,13 +144,20 @@ Open for extension, closed for modification:
 public static class WorkflowForge
 {
     // Workflow creation
-    public static IWorkflowBuilder CreateWorkflow()
+    public static WorkflowBuilder CreateWorkflow(string? workflowName = null, IServiceProvider? serviceProvider = null)
     
     // Foundry creation
-    public static IWorkflowFoundry CreateFoundry(string workflowName, IServiceProvider? serviceProvider = null, WorkflowForgeOptions? options = null)
+    public static IWorkflowFoundry CreateFoundry(
+        string workflowName,
+        IWorkflowForgeLogger? logger = null,
+        IDictionary<string, object?>? initialProperties = null,
+        WorkflowForgeOptions? options = null)
     
     // Smith creation  
-    public static IWorkflowSmith CreateSmith()
+    public static IWorkflowSmith CreateSmith(
+        IWorkflowForgeLogger? logger = null,
+        IServiceProvider? serviceProvider = null,
+        WorkflowForgeOptions? options = null)
 }
 ```
 
@@ -161,16 +168,15 @@ public static class WorkflowForge
 The foundry provides the execution environment:
 
 ```csharp
-public interface IWorkflowFoundry : IDisposable, IOperationLifecycleEvents
+public interface IWorkflowFoundry :
+    IWorkflowExecutionContext,
+    IWorkflowMiddlewarePipeline,
+    IOperationLifecycleEvents,
+    IDisposable
 {
-    Guid ExecutionId { get; }                              // Unique execution identifier
-    IWorkflow? CurrentWorkflow { get; }                    // Current workflow
-    ConcurrentDictionary<string, object?> Properties { get; } // Thread-safe data
-    IWorkflowForgeLogger Logger { get; }                  // Logging
-    IServiceProvider? ServiceProvider { get; }             // DI container
-    
-    void SetCurrentWorkflow(IWorkflow? workflow);
-    void AddOperation(IWorkflowOperation operation);
+    Task ForgeAsync(CancellationToken ct = default);
+    void ReplaceOperations(IEnumerable<IWorkflowOperation> operations);
+    bool IsFrozen { get; }
 }
 ```
 
@@ -178,7 +184,8 @@ public interface IWorkflowFoundry : IDisposable, IOperationLifecycleEvents
 - `ConcurrentDictionary` for thread-safe property access
 - `IServiceProvider` for dependency injection integration
 - Implements `IOperationLifecycleEvents` for operation monitoring
-- Reusable across multiple workflow executions
+- Reusable across multiple workflow executions with explicit `ReplaceOperations`
+- Pipeline freezes during `ForgeAsync` to prevent mutation mid-execution
 
 ### IWorkflowSmith (Orchestration Engine)
 
@@ -195,6 +202,14 @@ public interface IWorkflowSmith : IDisposable, IWorkflowLifecycleEvents, ICompen
     
     // Advanced pattern: reusable foundry
     Task ForgeAsync(IWorkflow workflow, IWorkflowFoundry foundry, CancellationToken ct = default);
+
+    // Foundry helpers
+    IWorkflowFoundry CreateFoundry(IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null);
+    IWorkflowFoundry CreateFoundryFor(IWorkflow workflow, IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null);
+    IWorkflowFoundry CreateFoundryWithData(ConcurrentDictionary<string, object?> data, IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null);
+
+    // Workflow-level middleware
+    void AddWorkflowMiddleware(IWorkflowMiddleware middleware);
 }
 ```
 
@@ -254,19 +269,17 @@ WorkflowForge supports two data flow patterns, each with specific use cases.
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
     .WithName("OrderProcessing")
-    .AddOperation("ValidateOrder", async (input, foundry, ct) => {
+    .AddOperation("ValidateOrder", async (foundry, ct) => {
         // Store data in foundry properties (typed helpers)
         foundry.SetProperty("OrderId", orderId);
         foundry.SetProperty("Customer", customer);
         foundry.SetProperty("TotalAmount", 100.50m);
-        return input;
     })
-    .AddOperation("ProcessPayment", async (input, foundry, ct) => {
+    .AddOperation("ProcessPayment", async (foundry, ct) => {
         // Retrieve data from foundry properties
         var orderId = foundry.GetPropertyOrDefault<string>("OrderId");
         var amount = foundry.GetPropertyOrDefault<decimal>("TotalAmount");
         // Process payment...
-        return input;
     })
     .Build();
 ```
@@ -531,22 +544,17 @@ All operations are async-first:
 
 ## Extension Architecture
 
-### Costura.Fody Integration
+### Dependency Isolation with ILRepack
 
-All extensions embed their dependencies using **Costura.Fody**:
-
-```xml
-<PackageReference Include="Fody" Version="6.9.3" PrivateAssets="All" />
-<PackageReference Include="Costura.Fody" Version="6.0.0" PrivateAssets="All" />
-```
+Extensions that depend on third-party libraries use **ILRepack** to internalize those assemblies:
 
 **How it Works**:
-1. Extension references third-party libraries (Serilog, Polly, etc.)
-2. Costura.Fody embeds those DLLs as compressed resources
-3. At runtime, assemblies are loaded from resources
-4. User's application sees no third-party dependencies
+1. Extension references third-party libraries (Serilog, Polly, OpenTelemetry)
+2. ILRepack merges those DLLs into the extension assembly
+3. Public APIs expose only WorkflowForge or BCL types
+4. Microsoft/System assemblies remain external and are resolved by the runtime
 
-**Benefit**: Zero version conflicts. Users can have ANY version of Serilog, Polly, FluentValidation, or OpenTelemetry without conflicts.
+**Benefit**: Reduced dependency conflicts without embedding Microsoft/System assemblies.
 
 ### Extension Pattern
 
@@ -578,7 +586,7 @@ For complete extension documentation, see [Extensions Guide](../extensions/index
 
 ### Creational Patterns
 - **Factory Pattern**: `WorkflowForge` static factory
-- **Builder Pattern**: `IWorkflowBuilder` fluent API
+- **Builder Pattern**: `WorkflowBuilder` fluent API
 
 ### Structural Patterns
 - **Facade Pattern**: `WorkflowForge` simplifies complex subsystems

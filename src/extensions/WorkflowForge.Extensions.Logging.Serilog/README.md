@@ -1,22 +1,20 @@
 # WorkflowForge.Extensions.Logging.Serilog
 
 <p align="center">
-  <img src="../../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Structured logging extension for WorkflowForge with Serilog integration for rich, queryable logs.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Logging.Serilog.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Logging.Serilog/)
 
-## Zero Version Conflicts
+## Dependency Isolation
 
-**This extension uses Costura.Fody to embed Serilog.** This means:
+**This extension internalizes Serilog with ILRepack.** This means:
 
-- NO DLL Hell - No conflicts with your application's Serilog version
-- NO Version Conflicts - Works with ANY version of Serilog in your app
-- Clean Deployment - Professional dependency isolation
-
-**How it works**: Serilog is embedded as compressed resources at build time and loaded at runtime, completely isolated from your application.
+- Reduced dependency conflicts for Serilog
+- Public APIs stay WorkflowForge/BCL only
+- Microsoft/System assemblies remain external
 
 ## Installation
 
@@ -30,21 +28,14 @@ dotnet add package WorkflowForge.Extensions.Logging.Serilog
 
 ```csharp
 using WorkflowForge.Extensions.Logging.Serilog;
-using Serilog;
 
-// Configure Serilog logger
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
-    .WriteTo.Console()
-    .WriteTo.File("logs/workflow-.txt", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
+var logger = SerilogLoggerFactory.CreateLogger(new SerilogLoggerOptions
+{
+    MinimumLevel = "Information",
+    EnableConsoleSink = true
+});
 
-// Create foundry with Serilog
-using var foundry = WorkflowForge.CreateFoundry("MyWorkflow");
-foundry.UseSerilogLogger(Log.Logger);
-
-// Or use extension method
-var logger = foundry.CreateSerilogLogger();
+using var foundry = WorkflowForge.CreateFoundry("MyWorkflow", logger);
 ```
 
 ## Key Features
@@ -61,14 +52,13 @@ var logger = foundry.CreateSerilogLogger();
 ### Programmatic
 
 ```csharp
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
-    .WriteTo.Console()
-    .WriteTo.File("logs/workflow-.txt", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
+var logger = SerilogLoggerFactory.CreateLogger(new SerilogLoggerOptions
+{
+    MinimumLevel = "Information",
+    EnableConsoleSink = true
+});
 
-using var foundry = WorkflowForge.CreateFoundry("MyWorkflow");
-foundry.UseSerilogLogger(Log.Logger);
+using var foundry = WorkflowForge.CreateFoundry("MyWorkflow", logger);
 ```
 
 ### From appsettings.json

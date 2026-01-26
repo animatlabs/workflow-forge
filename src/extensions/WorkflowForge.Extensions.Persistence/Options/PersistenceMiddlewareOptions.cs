@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using WorkflowForge.Options;
 
@@ -77,12 +76,12 @@ namespace WorkflowForge.Extensions.Persistence.Options
         public override IList<string> Validate()
         {
             var errors = new List<string>();
-            
+
             if (MaxVersions < 0)
             {
                 errors.Add($"{SectionName}:MaxVersions must be >= 0 (current value: {MaxVersions})");
             }
-            
+
             return errors;
         }
 
@@ -104,6 +103,3 @@ namespace WorkflowForge.Extensions.Persistence.Options
         }
     }
 }
-
-
-

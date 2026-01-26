@@ -21,6 +21,8 @@ High-performance, dependency-free workflow orchestration library for .NET. Execu
 - **6-1,495x less** memory allocation
 - **Microsecond-scale** execution vs. millisecond-scale competitors
 
+**Update Note**: Benchmarks will be rerun after the current change set; values above reflect the latest completed run.
+
 [Full Performance Details](docs/performance/performance.md) | [Competitive Analysis](docs/performance/competitive-analysis.md)
 
 ---
@@ -165,7 +167,7 @@ WorkflowForge excels at:
 
 ## Examples
 
-**24 comprehensive samples** covering all features:
+**33 comprehensive samples** covering all features:
 
 - Basic workflows (Hello World, data passing, inline operations)
 - Control flow (conditionals, loops, error handling)
@@ -189,7 +191,7 @@ WorkflowForge excels at:
 - [API Reference](docs/reference/api-reference.md) - Complete API documentation
 - [Performance](docs/performance/performance.md) - Benchmark results and optimization
 - [Competitive Analysis](docs/performance/competitive-analysis.md) - vs. Workflow Core and Elsa
-- [Samples Guide](docs/getting-started/samples-guide.md) - Learning path through 24 samples
+- [Samples Guide](docs/getting-started/samples-guide.md) - Learning path through 33 samples
 
 [Full Documentation](docs/index.md)
 

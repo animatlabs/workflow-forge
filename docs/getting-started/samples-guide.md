@@ -1,10 +1,10 @@
 # WorkflowForge Samples Catalog
 
 <p align="center">
-  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
-**Total Samples**: 24  
+**Total Samples**: 33  
 **Project**: `src/samples/WorkflowForge.Samples.BasicConsole`
 
 ## Table of Contents
@@ -13,8 +13,9 @@
 - [Category 1: Basic (Samples 1-4)](#category-1-basic-samples-1-4)
 - [Category 2: Control Flow (Samples 5-8)](#category-2-control-flow-samples-5-8)
 - [Category 3: Configuration & Middleware (Samples 9-12)](#category-3-configuration--middleware-samples-9-12)
-- [Category 4: Extensions (Samples 13-18, 21-24)](#category-4-extensions-samples-13-18-21-24)
+- [Category 4: Extensions (Samples 13-18, 21-25)](#category-4-extensions-samples-13-18-21-25)
 - [Category 5: Advanced (Samples 19-20)](#category-5-advanced-samples-19-20)
+- [Category 6: Onboarding & Best Practices (Samples 26-33)](#category-6-onboarding--best-practices-samples-26-33)
 - [Key Patterns Across All Samples](#key-patterns-across-all-samples)
 - [Sample Execution Order (Recommended)](#sample-execution-order-recommended)
 - [Sample Coverage Matrix](#sample-coverage-matrix)
@@ -25,7 +26,7 @@
 
 **Beginner** → Samples 1-4  
 **Intermediate** → Samples 5-12  
-**Advanced** → Samples 13-24
+**Advanced** → Samples 13-33
 
 ---
 
@@ -102,27 +103,45 @@ if (approved) {
 
 ---
 
-### Sample 4: InlineOperationsSample.cs
-**Purpose**: Compare inline vs. class-based operations  
+### Sample 4: ClassBasedOperationsSample.cs
+**Purpose**: Demonstrate class-based operations as the preferred pattern  
 **Demonstrates**:
-- Inline async operations (`AddOperation(name, Func<...>)`)
-- Inline sync operations (`AddOperation(name, Action<...>)`)
-- Class-based operations (recommended for production)
-- When to use each pattern
+- Class-based operations implementing `IWorkflowOperation`
+- Output chaining between operations
+- Property-based state management
+- Production-ready operation structure
 
 **Key Code Pattern**:
 ```csharp
-// Inline async
-.AddOperation("InlineAsync", async (foundry, ct) => { ... })
+public sealed class ValidateOrderOperation : IWorkflowOperation
+{
+    public Guid Id { get; } = Guid.NewGuid();
+    public string Name => "ValidateOrder";
+    public bool SupportsRestore => false;
 
-// Inline sync
-.AddOperation("InlineSync", (foundry) => { ... })
+    public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+    {
+        var userName = foundry.Properties["user_name"]?.ToString();
+        var orderTotal = (decimal)foundry.Properties["order_total"]!;
+        
+        foundry.SetProperty("order_valid", orderTotal > 0 && !string.IsNullOrEmpty(userName));
+        return Task.FromResult(inputData);
+    }
 
-// Class-based (production-recommended)
-.AddOperation(new CustomOperation())
+    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken ct)
+        => Task.CompletedTask;
+    
+    public void Dispose() { }
+}
+
+// Usage
+foundry
+    .WithOperation(new ValidateOrderOperation())
+    .WithOperation(new CalculateShippingOperation())
+    .WithOperation(new ProcessPaymentOperation());
 ```
 
-**Data Flow**: Dictionary-based  
+**Data Flow**: Dictionary-based via `foundry.Properties`  
 **Complexity**: Simple  
 **Recommendation**: Use class-based operations for production scenarios
 
@@ -272,16 +291,20 @@ var config = serviceProvider.GetRequiredService<IOptions<WorkflowForgeOptions>>(
 ```csharp
 var productionOptions = new WorkflowForgeOptions
 {
+    Enabled = true,
     ContinueOnError = false,
     FailFastCompensation = false,
-    ThrowOnCompensationError = true
+    ThrowOnCompensationError = true,
+    EnableOutputChaining = true
 };
 
 var highThroughputOptions = new WorkflowForgeOptions
 {
+    Enabled = true,
     ContinueOnError = true,
     FailFastCompensation = false,
-    ThrowOnCompensationError = false
+    ThrowOnCompensationError = false,
+    EnableOutputChaining = true
 };
 
 var productionFoundry = WorkflowForge.CreateFoundry("Workflow", options: productionOptions);
@@ -361,7 +384,7 @@ foundry.AddMiddleware(new TimingMiddleware());
 
 ---
 
-## Category 4: Extensions (Samples 13-18, 21-24)
+## Category 4: Extensions (Samples 13-18, 21-25)
 
 ### Sample 13: SerilogIntegrationSample.cs
 **Purpose**: Structured logging with Serilog  
@@ -373,22 +396,20 @@ foundry.AddMiddleware(new TimingMiddleware());
 
 **Key Code Pattern**:
 ```csharp
-using Serilog;
+using WorkflowForge.Extensions.Logging.Serilog;
 
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
-    .WriteTo.Console()
-    .WriteTo.File("logs/workflow.log")
-    .CreateLogger();
-
-var serilogLogger = new SerilogWorkflowForgeLogger(Log.Logger);
-var smith = WorkflowForge.CreateSmith(serilogLogger);
+var logger = SerilogLoggerFactory.CreateLogger(new SerilogLoggerOptions
+{
+    MinimumLevel = "Information",
+    EnableConsoleSink = true
+});
+var smith = WorkflowForge.CreateSmith(logger);
 ```
 
 **Data Flow**: Dictionary-based  
 **Complexity**: Intermediate  
 **Extension**: WorkflowForge.Extensions.Logging.Serilog  
-**Dependency Isolation**: Costura.Fody embedded
+**Dependency Isolation**: ILRepack internalized (Serilog only)
 
 ---
 
@@ -414,7 +435,7 @@ foundry.UsePolly(policy => policy
 **Data Flow**: Dictionary-based  
 **Complexity**: Intermediate  
 **Extension**: WorkflowForge.Extensions.Resilience.Polly  
-**Dependency Isolation**: Costura.Fody embedded
+**Dependency Isolation**: ILRepack internalized (Polly only)
 
 ---
 
@@ -439,7 +460,7 @@ foundry.EnableOpenTelemetry();
 **Data Flow**: Dictionary-based  
 **Complexity**: Advanced  
 **Extension**: WorkflowForge.Extensions.Observability.OpenTelemetry  
-**Dependency Isolation**: Costura.Fody embedded
+**Dependency Isolation**: ILRepack internalized (OpenTelemetry only)
 
 ---
 
@@ -462,7 +483,7 @@ app.MapHealthChecks("/health");
 **Data Flow**: Dictionary-based  
 **Complexity**: Intermediate  
 **Extension**: WorkflowForge.Extensions.Observability.HealthChecks  
-**Dependency Isolation**: Costura.Fody embedded
+**Dependency Isolation**: External dependencies (Microsoft/System runtime unification)
 
 ---
 
@@ -561,36 +582,35 @@ foundry.UseRecovery(recoveryProvider);
 ---
 
 ### Sample 23: ValidationSample.cs
-**Purpose**: FluentValidation integration  
+**Purpose**: DataAnnotations validation  
 **Demonstrates**:
 - Validation extension usage
-- FluentValidation bridge
+- DataAnnotations validation
 - Middleware-based validation
 - Manual validation
 - Custom validators
 
 **Key Code Pattern**:
 ```csharp
-public class OrderValidator : AbstractValidator<Order>
+using System.ComponentModel.DataAnnotations;
+
+public class Order
 {
-    public OrderValidator()
-    {
-        RuleFor(x => x.CustomerId).NotEmpty();
-        RuleFor(x => x.Amount).GreaterThan(0);
-    }
+    [Required]
+    public string CustomerId { get; set; } = string.Empty;
+
+    [Range(0.01, double.MaxValue)]
+    public decimal Amount { get; set; }
 }
 
-foundry.AddValidation(
-    new OrderValidator(),
-    f => f.GetPropertyOrDefault<Order>("Order"),
-    throwOnFailure: true
-);
+foundry.UseValidation(
+    f => f.GetPropertyOrDefault<Order>("Order"));
 ```
 
 **Data Flow**: Dictionary-based  
 **Complexity**: Intermediate  
 **Extension**: WorkflowForge.Extensions.Validation  
-**Dependency Isolation**: Costura.Fody embedded
+**Dependency Isolation**: No third-party dependencies
 
 ---
 
@@ -621,6 +641,44 @@ var entries = auditProvider.Entries;
 **Complexity**: Intermediate  
 **Extension**: WorkflowForge.Extensions.Audit  
 **Dependency Isolation**: None (pure WorkflowForge)
+
+---
+
+### Sample 25: ConfigurationSample.cs
+**Purpose**: Configuration-driven workflow setup using appsettings.json  
+**Demonstrates**:
+- Loading configuration from appsettings.json
+- Enabling/disabling extensions via configuration
+- Using IOptions pattern for type-safe configuration
+- Configuration validation on startup
+
+**Key Code Pattern**:
+```csharp
+// Setup DI with configuration
+var services = new ServiceCollection();
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json")
+    .Build();
+
+// Register extension configurations
+services.AddAuditConfiguration(configuration);
+services.AddValidationConfiguration(configuration);
+services.AddPersistenceConfiguration(configuration);
+services.AddRecoveryConfiguration(configuration);
+services.AddWorkflowForgePolly(configuration);
+
+// Check if extension is enabled before use
+var auditOptions = serviceProvider.GetRequiredService<IOptions<AuditOptions>>();
+if (auditOptions.Value.Enabled)
+{
+    foundry.EnableAudit(auditProvider);
+}
+```
+
+**Data Flow**: Dictionary-based  
+**Complexity**: Advanced  
+**Extensions**: All (configuration-driven)  
+**Pattern**: Options pattern + feature toggles
 
 ---
 
@@ -691,14 +749,324 @@ public class ProcessOperation : IWorkflowOperation<Order, OrderResult>
 
 ---
 
+## Category 6: Onboarding & Best Practices (Samples 26-33)
+
+### Sample 26: DependencyInjectionSample.cs
+**Purpose**: Configure WorkflowForge with dependency injection  
+**Demonstrates**:
+- Configuring WorkflowForge via DI container
+- Registering `IWorkflowSmith` in services
+- Resolving workflows from DI
+- Using `AddWorkflowForge()` and `AddWorkflowSmith()`
+
+**Key Code Pattern**:
+```csharp
+var services = new ServiceCollection();
+services.AddSingleton<IConfiguration>(configuration);
+services.AddSingleton<IWorkflowForgeLogger>(_ => new ConsoleLogger("WF-DI"));
+
+services.AddWorkflowForge(configuration);
+services.AddWorkflowSmith();
+
+services.AddSingleton<IOrderIdGenerator, OrderIdGenerator>();
+
+using var provider = services.BuildServiceProvider();
+var smith = provider.GetRequiredService<IWorkflowSmith>();
+
+var workflow = WorkflowForge.CreateWorkflow("DiConfiguredWorkflow")
+    .AddOperation(new GenerateOrderIdOperation())
+    .Build();
+
+await smith.ForgeAsync(workflow);
+```
+
+**Data Flow**: Dictionary-based  
+**Complexity**: Intermediate  
+**Extension**: WorkflowForge.Extensions.DependencyInjection  
+**Pattern**: Dependency Injection + Options pattern
+
+---
+
+### Sample 27: WorkflowMiddlewareSample.cs
+**Purpose**: Workflow-level middleware vs operation middleware  
+**Demonstrates**:
+- `IWorkflowMiddleware` interface
+- Adding workflow middleware to smith
+- Timing and audit at workflow level
+- Difference between workflow and operation middleware
+
+**Key Code Pattern**:
+```csharp
+public sealed class WorkflowTimingMiddleware : IWorkflowMiddleware
+{
+    public async Task ExecuteAsync(
+        IWorkflow workflow, 
+        IWorkflowFoundry foundry, 
+        Func<Task> next, 
+        CancellationToken cancellationToken)
+    {
+        var start = DateTimeOffset.UtcNow;
+        foundry.Logger.LogInformation($"[WorkflowTiming] Starting {workflow.Name}");
+        
+        await next().ConfigureAwait(false);
+        
+        var duration = DateTimeOffset.UtcNow - start;
+        foundry.Logger.LogInformation($"[WorkflowTiming] Completed in {duration.TotalMilliseconds:F0}ms");
+    }
+}
+
+var smith = WorkflowForge.CreateSmith(logger);
+smith.AddWorkflowMiddleware(new WorkflowTimingMiddleware());
+smith.AddWorkflowMiddleware(new WorkflowAuditMiddleware());
+
+await smith.ForgeAsync(workflow);
+```
+
+**Data Flow**: Dictionary-based  
+**Complexity**: Intermediate  
+**Pattern**: Workflow-level middleware pipeline
+
+---
+
+### Sample 28: CancellationAndTimeoutSample.cs
+**Purpose**: Cancellation tokens and operation timeouts  
+**Demonstrates**:
+- Using `CancellationToken` in operations
+- `OperationTimeoutMiddleware` usage
+- Handling `TimeoutException` and `OperationCanceledException`
+- Graceful shutdown patterns
+
+**Key Code Pattern**:
+```csharp
+// Timeout via middleware
+using var foundry = WorkflowForge.CreateFoundry("TimeoutDemo");
+foundry.AddMiddleware(new OperationTimeoutMiddleware(TimeSpan.FromMilliseconds(100), foundry.Logger));
+foundry.WithOperation(new SlowOperation("SlowOp", 300));
+
+try
+{
+    await foundry.ForgeAsync();
+}
+catch (TimeoutException ex)
+{
+    Console.WriteLine($"Timeout triggered: {ex.Message}");
+}
+
+// Cancellation via token
+using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+try
+{
+    await foundry.ForgeAsync(cts.Token);
+}
+catch (OperationCanceledException)
+{
+    Console.WriteLine("Operation cancelled.");
+}
+```
+
+**Data Flow**: Dictionary-based  
+**Complexity**: Intermediate  
+**Pattern**: Timeout + cancellation handling
+
+---
+
+### Sample 29: ContinueOnErrorSample.cs
+**Purpose**: ContinueOnError behavior and aggregate exception handling  
+**Demonstrates**:
+- `WorkflowForgeOptions.ContinueOnError = true`
+- Workflow continues after operation failure
+- `AggregateException` at end of workflow
+- Use case for batch processing
+
+**Key Code Pattern**:
+```csharp
+var options = new WorkflowForgeOptions { ContinueOnError = true };
+using var foundry = WorkflowForge.CreateFoundry("ContinueOnErrorDemo", options: options);
+
+foundry
+    .WithOperation(new SuccessOperation("First"))
+    .WithOperation(new FailingOperation("FailurePoint"))
+    .WithOperation(new SuccessOperation("Final"));
+
+try
+{
+    await foundry.ForgeAsync();
+}
+catch (AggregateException ex)
+{
+    Console.WriteLine($"AggregateException with {ex.InnerExceptions.Count} error(s).");
+}
+
+// Final operation still executed despite earlier failure
+Console.WriteLine($"Final operation ran: {foundry.GetPropertyOrDefault("final.ran", false)}");
+```
+
+**Data Flow**: Dictionary-based  
+**Complexity**: Intermediate  
+**Pattern**: Error aggregation
+
+---
+
+### Sample 30: CompensationBehaviorSample.cs
+**Purpose**: Compensation behaviors and error handling strategies  
+**Demonstrates**:
+- `FailFastCompensation` option
+- `ThrowOnCompensationError` option
+- Compensation success vs failure scenarios
+- `RestoreAsync()` implementation
+
+**Key Code Pattern**:
+```csharp
+var options = new WorkflowForgeOptions
+{
+    FailFastCompensation = true,
+    ThrowOnCompensationError = true
+};
+
+using var foundry = WorkflowForge.CreateFoundry("CompensationDemo", options: options);
+
+var workflow = WorkflowForge.CreateWorkflow("CompensationWorkflow")
+    .AddOperation(new CompensatableOperation("StepA"))
+    .AddOperation(new CompensatableOperation("StepB"))
+    .AddOperation(new FailingOperation("FailurePoint"))
+    .Build();
+
+try
+{
+    await smith.ForgeAsync(workflow, foundry);
+}
+catch (AggregateException ex)
+{
+    Console.WriteLine($"Compensation errors: {ex.InnerExceptions.Count}");
+}
+```
+
+**Data Flow**: Dictionary-based  
+**Complexity**: Intermediate  
+**Pattern**: Saga compensation
+
+---
+
+### Sample 31: FoundryReuseSample.cs
+**Purpose**: Reusing a foundry across multiple workflows  
+**Demonstrates**:
+- Creating foundry via `smith.CreateFoundry()`
+- Running multiple workflows with same foundry
+- Property persistence across executions
+- Foundry lifecycle management
+
+**Key Code Pattern**:
+```csharp
+var smith = WorkflowForge.CreateSmith();
+using var foundry = smith.CreateFoundry();
+
+var workflowA = WorkflowForge.CreateWorkflow("ReuseA")
+    .AddOperation(new RecordRunOperation("FirstWorkflow"))
+    .Build();
+
+var workflowB = WorkflowForge.CreateWorkflow("ReuseB")
+    .AddOperation(new RecordRunOperation("SecondWorkflow"))
+    .Build();
+
+await smith.ForgeAsync(workflowA, foundry);
+await smith.ForgeAsync(workflowB, foundry);
+
+// Properties persist across workflow executions
+var runs = foundry.GetPropertyOrDefault<List<string>>("runs") ?? new();
+Console.WriteLine($"Runs: {string.Join(", ", runs)}"); // Output: FirstWorkflow, SecondWorkflow
+```
+
+**Data Flow**: Dictionary-based  
+**Complexity**: Intermediate  
+**Pattern**: Foundry reuse
+
+---
+
+### Sample 32: OutputChainingSample.cs
+**Purpose**: Operation output becoming the next operation's input  
+**Demonstrates**:
+- Return values from `ForgeAsync()` flow to next operation
+- `EnableOutputChaining` option behavior
+- Type-safe data flow between operations
+- Chained transformations
+
+**Key Code Pattern**:
+```csharp
+using var foundry = WorkflowForge.CreateFoundry("OutputChainingDemo");
+
+foundry
+    .WithOperation(new SeedNumberOperation())      // Returns: 7
+    .WithOperation(new MultiplyOperation(3))       // Receives: 7, Returns: 21
+    .WithOperation(new FormatResultOperation());   // Receives: 21, Returns: "Result: 21"
+
+await foundry.ForgeAsync();
+
+// Each operation receives the previous operation's output as inputData
+public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+{
+    var value = inputData is int number ? number : 0;
+    var result = value * _multiplier;
+    Console.WriteLine($"Multiplied {value} by {_multiplier} = {result}");
+    return Task.FromResult<object?>(result);
+}
+```
+
+**Data Flow**: Output chaining + Dictionary-based  
+**Complexity**: Intermediate  
+**Pattern**: Pipeline transformation
+
+---
+
+### Sample 33: ServiceProviderResolutionSample.cs
+**Purpose**: Resolving services inside operations via foundry.ServiceProvider  
+**Demonstrates**:
+- Accessing `foundry.ServiceProvider` in operations
+- Resolving registered services at runtime
+- DI-aware operation design
+- Service abstraction patterns
+
+**Key Code Pattern**:
+```csharp
+var services = new ServiceCollection();
+services.AddSingleton<IWorkflowForgeLogger>(_ => new ConsoleLogger("WF-Services"));
+services.AddSingleton<IPriceCalculator, PriceCalculator>();
+using var provider = services.BuildServiceProvider();
+
+var smith = WorkflowForge.CreateSmith(
+    provider.GetRequiredService<IWorkflowForgeLogger>(), 
+    provider);
+
+var workflow = WorkflowForge.CreateWorkflow("ServiceProviderDemo")
+    .AddOperation(new CalculateTotalOperation())
+    .Build();
+
+await smith.ForgeAsync(workflow);
+
+// Inside the operation
+public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+{
+    var calculator = foundry.ServiceProvider?.GetRequiredService<IPriceCalculator>()
+        ?? throw new InvalidOperationException("IPriceCalculator not registered.");
+    
+    var total = calculator.CalculateTotal(subtotal: 120m, taxRate: 0.08m);
+    return Task.FromResult<object?>(total);
+}
+```
+
+**Data Flow**: Dictionary-based  
+**Complexity**: Intermediate  
+**Pattern**: Service Locator via DI container
+
+---
+
 ## Key Patterns Across All Samples
 
-1. **Data Flow**: Dictionary-based via `foundry.Properties` (24/24 samples)
+1. **Data Flow**: Dictionary-based via `foundry.Properties` (33/33 samples)
 2. **Type Safety**: Generic `IWorkflowOperation<TInput, TOutput>` mentioned but rarely used
 3. **Production Focus**: Class-based operations recommended over inline
-4. **Extension Usage**: 10/24 samples demonstrate extensions
-5. **Error Handling**: Explicit compensation in 1 sample, implicit in all via framework
-6. **Configuration**: 2 samples dedicated to configuration patterns
+4. **Extension Usage**: 13/33 samples demonstrate extensions
+5. **Error Handling**: Explicit compensation in 2 samples, implicit in all via framework
+6. **Configuration**: 3 samples dedicated to configuration patterns
 7. **Events**: 1 sample dedicated to event system, events used in others
 8. **Middleware**: 1 sample dedicated, middleware used in many extensions
 
@@ -709,7 +1077,7 @@ public class ProcessOperation : IWorkflowOperation<Order, OrderResult>
 **For New Users** (Learning Path):
 1. HelloWorldSample (1)
 2. DataPassingSample (2)
-3. InlineOperationsSample (4)
+3. ClassBasedOperationsSample (4)
 4. MultipleOutcomesSample (3)
 5. ConditionalWorkflowSample (5)
 6. ForEachLoopSample (6)
@@ -719,18 +1087,27 @@ public class ProcessOperation : IWorkflowOperation<Order, OrderResult>
 10. ConfigurationProfilesSample (10)
 11. WorkflowEventsSample (11)
 12. MiddlewareSample (12)
-13. SerilogIntegrationSample (13)
-14. PerformanceMonitoringSample (17)
-15. ValidationSample (23)
-16. AuditSample (24)
-17. PollyResilienceSample (14)
-18. PersistenceSample (18)
-19. RecoveryOnlySample (21)
-20. ResilienceRecoverySample (22)
-21. HealthChecksSample (16)
-22. OpenTelemetryObservabilitySample (15)
-23. OperationCreationPatternsSample (20)
-24. ComprehensiveIntegrationSample (19)
+13. DependencyInjectionSample (26)
+14. OutputChainingSample (32)
+15. ServiceProviderResolutionSample (33)
+16. SerilogIntegrationSample (13)
+17. PerformanceMonitoringSample (17)
+18. ValidationSample (23)
+19. AuditSample (24)
+20. ConfigurationSample (25)
+21. PollyResilienceSample (14)
+22. CancellationAndTimeoutSample (28)
+23. ContinueOnErrorSample (29)
+24. CompensationBehaviorSample (30)
+25. FoundryReuseSample (31)
+26. WorkflowMiddlewareSample (27)
+27. PersistenceSample (18)
+28. RecoveryOnlySample (21)
+29. ResilienceRecoverySample (22)
+30. HealthChecksSample (16)
+31. OpenTelemetryObservabilitySample (15)
+32. OperationCreationPatternsSample (20)
+33. ComprehensiveIntegrationSample (19)
 
 ---
 
@@ -740,15 +1117,16 @@ public class ProcessOperation : IWorkflowOperation<Order, OrderResult>
 |---------|-----------|
 | Basic workflow creation | 1 |
 | Data passing (dictionary) | 2, 3, ALL |
-| Inline operations | 4, 20 |
 | Class-based operations | 4, 20, ALL |
+| Operation patterns | 20 |
 | Conditional branching | 3, 5, 8 |
 | ForEach loops | 6, 8 |
-| Error handling | 7 |
+| Error handling | 7, 29, 30 |
 | Built-in operations | 8 |
-| Configuration | 9, 10 |
+| Configuration | 9, 10, 25 |
 | Events | 11 |
-| Middleware | 12 |
+| Middleware (operation) | 12 |
+| Middleware (workflow) | 27 |
 | Logging (Serilog) | 13 |
 | Resilience (Polly) | 14, 22 |
 | OpenTelemetry | 15 |
@@ -758,8 +1136,15 @@ public class ProcessOperation : IWorkflowOperation<Order, OrderResult>
 | Recovery | 21, 22 |
 | Validation | 23 |
 | Audit | 24 |
+| Configuration-driven extensions | 25 |
+| Dependency injection | 26 |
+| Cancellation + timeout | 28 |
+| ContinueOnError | 29 |
+| Compensation behaviors | 30 |
+| Foundry reuse | 31 |
+| Output chaining | 32 |
+| Service provider resolution | 33 |
 | Comprehensive integration | 19 |
-| Operation patterns | 20 |
 
 ---
 

@@ -1,8 +1,6 @@
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
-using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
 
 namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;

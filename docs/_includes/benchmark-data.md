@@ -1,5 +1,7 @@
 ## Competitive Benchmark Summary (Median)
 
+**Update Note**: Benchmarks will be refreshed after the upcoming rerun. Figures below reflect the last completed run.
+
 | Scenario | WorkflowForge | Workflow Core | Elsa |
 |----------|---------------|---------------|------|
 | Sequential (10 ops) | 231us | 8,594us | 20,898us |

@@ -38,7 +38,6 @@ public class SerilogIntegrationSample : ISample
             .WithOperation(new AuditLoggingOperation());
 
         await foundry.ForgeAsync();
-
     }
 }
 

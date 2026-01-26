@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using WorkflowForge.Extensions.Validation.Options;
 
 namespace WorkflowForge.Extensions.Validation.Tests.Options
@@ -83,4 +81,3 @@ namespace WorkflowForge.Extensions.Validation.Tests.Options
         }
     }
 }
-

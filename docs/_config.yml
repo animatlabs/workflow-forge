@@ -3,6 +3,7 @@ description: High-performance workflow orchestration for .NET
 theme: minima
 markdown: kramdown
 permalink: pretty
+logo: https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png
 relative_links:
   enabled: true
   collections: false

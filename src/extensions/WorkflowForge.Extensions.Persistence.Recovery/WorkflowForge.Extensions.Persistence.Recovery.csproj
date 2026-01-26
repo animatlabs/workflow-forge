@@ -26,8 +26,7 @@
     <PackageVersion>2.0.0</PackageVersion>
     <PackageReleaseNotes>
 Major release v2.0.0:
-- ZERO VERSION CONFLICTS: Dependencies embedded via Costura.Fody (where applicable)
-- Users can use ANY version of third-party libraries
+- Dependency isolation: Microsoft/System assemblies resolved by runtime
 - ISystemTimeProvider integrated for testability
 - Enhanced documentation and samples
 - Enterprise-ready for production workflows

@@ -1,4 +1,3 @@
-using System.Threading;
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
 using WorkflowForge.Extensions;
 
@@ -41,8 +40,8 @@ public class Scenario12_EventDriven_WorkflowForge : IWorkflowScenario
 
         foundry.WithOperation("HandleEvent", foundry =>
         {
-                var received = foundry.Properties.TryGetValue("event_received", out var receivedValue) && receivedValue is bool receivedFlag && receivedFlag;
-                if (received)
+            var received = foundry.Properties.TryGetValue("event_received", out var receivedValue) && receivedValue is bool receivedFlag && receivedFlag;
+            if (received)
             {
                 foundry.Properties["handled"] = true;
             }

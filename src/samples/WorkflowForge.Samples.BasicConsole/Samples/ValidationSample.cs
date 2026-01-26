@@ -1,9 +1,9 @@
+using System.ComponentModel.DataAnnotations;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Validation;
 using WorkflowForge.Extensions.Validation.Options;
 using WF = WorkflowForge;
-using System.ComponentModel.DataAnnotations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 

@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Exceptions;
-using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Resilience.Polly.Options;
 using WorkflowForge.Operations;
 
@@ -358,6 +357,5 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         {
             return PollyRetryOperation.WithComprehensivePolicy(operation, settings, logger);
         }
-
     }
 }

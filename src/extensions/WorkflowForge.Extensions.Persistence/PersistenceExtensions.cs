@@ -19,7 +19,7 @@ namespace WorkflowForge.Extensions.Persistence
         /// <returns>The same <see cref="IWorkflowFoundry"/> for fluent chaining.</returns>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="foundry"/> or <paramref name="provider"/> is null.</exception>
         public static IWorkflowFoundry UsePersistence(
-            this IWorkflowFoundry foundry, 
+            this IWorkflowFoundry foundry,
             IWorkflowPersistenceProvider provider,
             PersistenceOptions? options = null)
         {
@@ -37,6 +37,5 @@ namespace WorkflowForge.Extensions.Persistence
             foundry.AddMiddleware(new PersistenceMiddleware(provider, options));
             return foundry;
         }
-
     }
 }

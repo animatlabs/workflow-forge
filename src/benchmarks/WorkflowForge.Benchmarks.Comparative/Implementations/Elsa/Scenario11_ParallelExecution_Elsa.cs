@@ -1,8 +1,7 @@
-using System.Collections.Concurrent;
 using Elsa.Extensions;
 using Elsa.Workflows;
-using Elsa.Workflows.Activities;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Concurrent;
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
 
 namespace WorkflowForge.Benchmarks.Comparative.Implementations.Elsa;

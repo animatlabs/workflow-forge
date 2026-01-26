@@ -1,22 +1,20 @@
 # WorkflowForge.Extensions.Resilience.Polly
 
 <p align="center">
-  <img src="../../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Advanced resilience extension for WorkflowForge with Polly integration for retry, circuit breaker, timeout, and rate limiting policies.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Resilience.Polly.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Resilience.Polly/)
 
-## Zero Version Conflicts
+## Dependency Isolation
 
-**This extension uses Costura.Fody to embed Polly.** This means:
+**This extension internalizes Polly with ILRepack.** This means:
 
-- NO DLL Hell - No conflicts with your application's Polly version
-- NO Version Conflicts - Works with ANY version of Polly in your app
-- Clean Deployment - Professional dependency isolation
-
-**How it works**: Polly is embedded as compressed resources at build time and loaded at runtime, completely isolated from your application.
+- Reduced dependency conflicts for Polly
+- Public APIs stay WorkflowForge/BCL only
+- Microsoft/System assemblies remain external
 
 ## Installation
 

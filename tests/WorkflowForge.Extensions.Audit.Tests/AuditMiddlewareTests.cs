@@ -98,8 +98,8 @@ namespace WorkflowForge.Extensions.Audit.Tests
         public async Task ExecuteAsync_WithoutMetadata_ShouldHaveEmptyMetadata()
         {
             _foundry.Properties["CustomProperty"] = "CustomValue";
-            var options = new AuditMiddlewareOptions 
-            { 
+            var options = new AuditMiddlewareOptions
+            {
                 DetailLevel = AuditDetailLevel.Standard,
                 IncludeTimestamps = false,
                 IncludeUserContext = false

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace WorkflowForge.Abstractions
 {
@@ -32,6 +33,15 @@ namespace WorkflowForge.Abstractions
         /// <exception cref="ArgumentNullException">Thrown when middleware is null.</exception>
         /// <exception cref="ObjectDisposedException">Thrown when the foundry has been disposed.</exception>
         void AddMiddleware(IWorkflowOperationMiddleware middleware);
+
+        /// <summary>
+        /// Adds multiple middleware components to the execution pipeline.
+        /// Middleware wraps operations in a Russian Doll pattern (reverse order execution).
+        /// First middleware added = outermost layer of the pipeline.
+        /// </summary>
+        /// <param name="middlewares">The middleware components to add.</param>
+        /// <exception cref="ArgumentNullException">Thrown when middlewares is null.</exception>
+        /// <exception cref="ObjectDisposedException">Thrown when the foundry has been disposed.</exception>
+        void AddMiddlewares(IEnumerable<IWorkflowOperationMiddleware> middlewares);
     }
 }
-

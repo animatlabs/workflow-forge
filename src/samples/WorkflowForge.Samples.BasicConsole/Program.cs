@@ -216,7 +216,7 @@ public static class Program
                     else
                     {
                         Console.WriteLine($"Invalid choice: {input}");
-                    Console.WriteLine("Please enter a number (1-33), A for all, B for basic, or Q to quit.");
+                        Console.WriteLine("Please enter a number (1-33), A for all, B for basic, or Q to quit.");
                     }
                     break;
             }

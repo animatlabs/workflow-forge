@@ -27,10 +27,10 @@ public class Scenario9_StateMachine_WorkflowForge : IWorkflowScenario
             var transitionIndex = i;
             foundry.WithOperation($"Transition_{transitionIndex}", foundry =>
             {
-                    var currentState = foundry.Properties.TryGetValue("state", out var stateValue) && stateValue is int state
-                        ? state
-                        : 0;
-                    foundry.Properties["state"] = currentState + 1;
+                var currentState = foundry.Properties.TryGetValue("state", out var stateValue) && stateValue is int state
+                    ? state
+                    : 0;
+                foundry.Properties["state"] = currentState + 1;
                 foundry.Properties["last_transition"] = transitionIndex;
                 return Task.CompletedTask;
             });

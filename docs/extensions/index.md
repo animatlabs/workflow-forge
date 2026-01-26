@@ -1,7 +1,7 @@
 # WorkflowForge Extension System
 
 <p align="center">
-  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 WorkflowForge follows an extension-first architecture where the core library provides minimal functionality, and rich features are delivered through a comprehensive extension ecosystem.
@@ -23,27 +23,26 @@ WorkflowForge follows an extension-first architecture where the core library pro
 
 ---
 
-## Dependency-Free Core and Zero Version Conflicts
+## Dependency-Free Core and Dependency Isolation
 
-WorkflowForge core is zero-dependency. Extensions use Costura.Fody to embed third-party dependencies as compressed resources. This ensures:
+WorkflowForge core is zero-dependency. Extensions isolate third-party libraries where it makes sense, while keeping Microsoft/System dependencies external to avoid runtime conflicts.
 
-- No DLL conflicts with your application dependencies
-- Your app can use any version of Serilog, Polly, FluentValidation, or OpenTelemetry
-- Clean deployment (fewer files) due to embedded dependencies
-- Industry-standard isolation using Fody/Costura
+- **Internalized with ILRepack**: Serilog, Polly, OpenTelemetry
+- **Always external**: Microsoft/System assemblies (runtime unification)
+- **Validation**: DataAnnotations (no third-party dependency)
 
 ### How It Works
 
-Extensions with third-party dependencies (Validation, Logging.Serilog, Resilience.Polly, Resilience, OpenTelemetry, Performance) embed their dependencies at build time. At runtime, Costura automatically resolves these from embedded resources, isolated from your application's dependency graph.
+Extensions that depend on non-BCL packages use ILRepack to internalize those libraries into the extension assembly. This keeps the public API clean (only WorkflowForge or BCL types) while avoiding version conflicts.
 
-**Example**: Your app uses FluentValidation 12.x, our Validation extension uses 11.9.0 - both coexist perfectly with zero conflicts!
+Microsoft/System assemblies are never embedded; those are resolved by the runtime using the application's dependency graph.
 
 ## Extension Architecture
 
 ### Core Principles
 
 1. **Dependency-Free Core** - The core library has zero dependencies
-2. **Zero Conflict Extensions** - Embedded dependencies prevent version conflicts
+2. **Isolated Extensions** - Third-party dependencies are internalized where appropriate
 3. **Optional Extensions** - Add only what you need
 4. **Composable Features** - Extensions work together seamlessly
 5. **Configuration-Driven** - Extensions are configured, not hard-coded
@@ -61,7 +60,7 @@ WorkflowForge Extensions
 ├── Persistence (BYO storage)
 │   └── Recovery Extensions
 ├── Validation
-│   └── FluentValidation Integration
+│   └── DataAnnotations Integration
 ├── Audit
 │   └── Compliance & Operational Monitoring
 └── Observability
@@ -92,26 +91,21 @@ dotnet add package WorkflowForge.Extensions.Logging.Serilog
 
 **Usage:**
 ```csharp
-using Serilog;
 using WorkflowForge.Extensions.Logging.Serilog;
 
-// Configure Serilog
-Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
-    .WriteTo.Console()
-    .WriteTo.File("logs/workflow-.txt", rollingInterval: RollingInterval.Day)
-    .Enrich.WithProperty("Application", "WorkflowApp")
-    .CreateLogger();
+var logger = SerilogLoggerFactory.CreateLogger(new SerilogLoggerOptions
+{
+    MinimumLevel = "Information",
+    EnableConsoleSink = true
+});
 
-// Create foundry with options and attach Serilog middleware
 var options = new WorkflowForgeOptions
 {
     ContinueOnError = false,
     FailFastCompensation = false,
     ThrowOnCompensationError = true
 };
-var foundry = WorkflowForge.CreateFoundry("ProcessOrder", options: options);
-foundry.UseSerilog(Log.Logger);
+var foundry = WorkflowForge.CreateFoundry("ProcessOrder", logger, options: options);
 ```
 
 **Configuration:**
@@ -180,10 +174,7 @@ using WorkflowForge.Extensions.Resilience.Polly;
 
 var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
 
-// Development-friendly preset
-foundry.UsePollyDevelopmentResilience();
-
-// Or custom policies
+// Custom policies
 foundry
     .UsePollyRetry(maxRetryAttempts: 5, baseDelay: TimeSpan.FromSeconds(1))
     .UsePollyCircuitBreaker(failureThreshold: 3, durationOfBreak: TimeSpan.FromMinutes(1))
@@ -325,7 +316,8 @@ var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
 foundry.EnablePerformanceMonitoring();
 
 // Execute workflow
-await smith.ForgeAsync(workflow, order, foundry);
+foundry.SetProperty("Order", order);
+await smith.ForgeAsync(workflow, foundry);
 
 // Analyze performance
 var stats = foundry.GetPerformanceStatistics();
@@ -550,7 +542,8 @@ using var activity = foundry.StartActivity("ProcessOrder")
     .SetTag("customer.id", order.CustomerId);
 
 // Execute with tracing
-var result = await smith.ForgeAsync(workflow, order, foundry);
+foundry.SetProperty("Order", order);
+await smith.ForgeAsync(workflow, foundry);
 
 // Add custom events
 foundry.AddEvent("PaymentProcessed", new { 
@@ -563,37 +556,8 @@ foundry.AddEvent("PaymentProcessed", new {
 
 ### Environment-Specific Configuration
 
-```csharp
-public static class FoundryExtensions
-{
-    public static IWorkflowFoundry ForDevelopment(this IWorkflowFoundry foundry)
-    {
-        return foundry
-            .UseSerilog(CreateDevelopmentLogger())
-            .UsePollyDevelopmentResilience()
-            .EnablePerformanceMonitoring()
-            .EnableHealthChecks();
-    }
-
-    public static IWorkflowFoundry ForOptimized(this IWorkflowFoundry foundry)
-    {
-        return foundry
-            .UseSerilog(CreateOptimizedLogger())
-            .UsePollyResilience()
-            .EnableOpenTelemetry("OptimizedService", "1.0.0");
-    }
-
-    public static IWorkflowFoundry ForAdvanced(this IWorkflowFoundry foundry)
-    {
-        return foundry
-            .UseSerilog(CreateAdvancedLogger())
-            .UsePollyAdvancedResilience()
-            .EnablePerformanceMonitoring()
-            .EnableHealthChecks()
-            .EnableOpenTelemetry("AdvancedService", "1.0.0");
-    }
-}
-```
+Prefer explicit configuration per environment using `appsettings.{Environment}.json` or programmatic options.
+This keeps extension behavior predictable and avoids preset helper methods that hide configuration details.
 
 ### Configuration-Driven Setup
 
@@ -633,16 +597,15 @@ var foundry = WorkflowForge.CreateFoundry("ProcessOrder")
 
 #### WorkflowForge.Extensions.Validation
 
-Input validation and business rule enforcement using FluentValidation integration.
+Input validation and business rule enforcement using DataAnnotations.
 
 **Installation:**
 ```bash
 dotnet add package WorkflowForge.Extensions.Validation
-dotnet add package FluentValidation
 ```
 
 **Features:**
-- FluentValidation integration
+- DataAnnotations validation
 - Automatic middleware-based validation
 - Manual validation support
 - Comprehensive error reporting
@@ -651,31 +614,27 @@ dotnet add package FluentValidation
 
 **Usage:**
 ```csharp
-using FluentValidation;
+using System.ComponentModel.DataAnnotations;
 using WorkflowForge.Extensions.Validation;
 
-// Define validator
-public class OrderValidator : AbstractValidator<Order>
+// Define model with DataAnnotations
+public class Order
 {
-    public OrderValidator()
-    {
-        RuleFor(x => x.CustomerId)
-            .NotEmpty().WithMessage("Customer ID is required");
-        RuleFor(x => x.Amount)
-            .GreaterThan(0).WithMessage("Amount must be positive");
-    }
+    [Required]
+    public string CustomerId { get; set; } = string.Empty;
+
+    [Range(0.01, double.MaxValue)]
+    public decimal Amount { get; set; }
 }
 
-// Automatic validation via middleware
+// Automatic validation via middleware (DataAnnotations)
 var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
-foundry.AddValidation(
-    new OrderValidator(),
-    f => f.GetPropertyOrDefault<Order>("Order"),
-    throwOnFailure: true);
+foundry.UseValidation(
+    f => f.GetPropertyOrDefault<Order>("Order"));
 
 // Manual validation
 var order = new Order { CustomerId = "CUST-123", Amount = 99.99m };
-var result = await foundry.ValidateAsync(new OrderValidator(), order);
+var result = await foundry.ValidateAsync(order);
 if (!result.IsValid)
 {
     foreach (var error in result.Errors)
@@ -1103,19 +1062,28 @@ public class ExtensionIntegrationTests
 
         var workflow = WorkflowForge.CreateWorkflow()
             .WithName("TestWorkflow")
-            .AddOperation("TestOp", async (input, foundry, ct) =>
-            {
-                var extension = foundry.GetService<ICustomExtension>();
-                return await extension.ProcessAsync((string)input!);
-            })
+            .AddOperation(new ActionWorkflowOperation(
+                "TestOp",
+                async (input, foundry, ct) =>
+                {
+                    var extension = foundry.ServiceProvider
+                        ?.GetRequiredService<ICustomExtension>()
+                        ?? throw new InvalidOperationException("Service provider is required.");
+                    var value = foundry.GetPropertyOrDefault<string>("Input");
+                    var result = await extension.ProcessAsync(value);
+                    foundry.SetProperty("Result", result);
+                }
+            ))
             .Build();
 
         var smith = WorkflowForge.CreateSmith();
 
         // Act
-        var result = await smith.ForgeAsync(workflow, "test", foundry);
+        foundry.SetProperty("Input", "test");
+        await smith.ForgeAsync(workflow, foundry);
 
         // Assert
+        var result = foundry.GetPropertyOrDefault<string>("Result");
         Assert.NotNull(result);
     }
 }

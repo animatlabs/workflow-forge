@@ -71,4 +71,3 @@ namespace WorkflowForge.Abstractions
         void SetCurrentWorkflow(IWorkflow? workflow);
     }
 }
-

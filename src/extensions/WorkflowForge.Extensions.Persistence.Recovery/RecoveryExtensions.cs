@@ -91,6 +91,5 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
 
             if (lastEx != null) throw lastEx;
         }
-
     }
 }

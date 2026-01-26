@@ -27,6 +27,7 @@ namespace WorkflowForge
         private readonly ISystemTimeProvider _timeProvider;
         private readonly SemaphoreSlim? _concurrencyLimiter;
         private readonly List<IWorkflowMiddleware> _workflowMiddlewares = new();
+        private readonly object _workflowMiddlewareLock = new();
         private volatile bool _disposed;
 
         // ==================================================================================
@@ -182,14 +183,7 @@ namespace WorkflowForge
                 try
                 {
                     // Route execution through foundry pipeline so operation middlewares are applied
-                    if (foundry is WorkflowFoundry workflowFoundry)
-                    {
-                        workflowFoundry.SetOperations(workflow.Operations);
-                    }
-                    else
-                    {
-                        foundry.WithOperations(workflow.Operations);
-                    }
+                    foundry.ReplaceOperations(workflow.Operations);
                     await foundry.ForgeAsync(cancellationToken).ConfigureAwait(false);
 
                     // Log workflow completion
@@ -253,10 +247,17 @@ namespace WorkflowForge
                 }
             };
 
-            // Wrap with workflow middlewares (Russian Doll pattern - reverse order)
-            for (int i = _workflowMiddlewares.Count - 1; i >= 0; i--)
+            // Snapshot workflow middlewares under lock for thread safety
+            IWorkflowMiddleware[] middlewareSnapshot;
+            lock (_workflowMiddlewareLock)
             {
-                var middleware = _workflowMiddlewares[i];
+                middlewareSnapshot = _workflowMiddlewares.ToArray();
+            }
+
+            // Wrap with workflow middlewares (Russian Doll pattern - reverse order)
+            for (int i = middlewareSnapshot.Length - 1; i >= 0; i--)
+            {
+                var middleware = middlewareSnapshot[i];
                 var currentNext = workflowExecution;
                 workflowExecution = () => middleware.ExecuteAsync(workflow, foundry, currentNext, cancellationToken);
             }
@@ -498,7 +499,10 @@ namespace WorkflowForge
         {
             ThrowIfDisposed();
             if (middleware == null) throw new ArgumentNullException(nameof(middleware));
-            _workflowMiddlewares.Add(middleware);
+            lock (_workflowMiddlewareLock)
+            {
+                _workflowMiddlewares.Add(middleware);
+            }
         }
 
         /// <summary>

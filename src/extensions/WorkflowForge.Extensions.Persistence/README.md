@@ -1,21 +1,17 @@
 # WorkflowForge.Extensions.Persistence
 
 <p align="center">
-  <img src="../../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Workflow state persistence extension for WorkflowForge with in-memory and SQLite providers for checkpointing and recovery.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Persistence.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Persistence/)
 
-## Zero Dependencies (InMemory) / Zero Conflicts (SQLite)
+## Dependencies
 
 **InMemory Provider**: ZERO external dependencies - Pure WorkflowForge  
-**SQLite Provider**: Uses Costura.Fody to embed Microsoft.Data.Sqlite
-
-- NO DLL Hell - Embedded dependencies don't conflict
-- NO Version Conflicts - Your app can use any SQLite version
-- Clean Deployment - Professional dependency isolation
+**SQLite Provider**: Uses Microsoft.Data.Sqlite as an external dependency (runtime unification)
 
 ## Installation
 

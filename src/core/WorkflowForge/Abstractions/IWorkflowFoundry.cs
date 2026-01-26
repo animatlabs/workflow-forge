@@ -1,5 +1,7 @@
 using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace WorkflowForge.Abstractions
 {
@@ -37,6 +39,10 @@ namespace WorkflowForge.Abstractions
     /// or batch operations. Properties persist across workflow executions within the same foundry instance.
     /// Dispose the foundry when done to release resources.
     /// </para>
+    /// <para>
+    /// The foundry pipeline is frozen during execution. Operations and middleware
+    /// cannot be added or removed while <see cref="ForgeAsync"/> is running.
+    /// </para>
     /// </summary>
     /// <remarks>
     /// The foundry is the execution environment where operations are performed.
@@ -50,7 +56,7 @@ namespace WorkflowForge.Abstractions
     /// <item><description><see cref="IWorkflowExecutionContext"/>: Provides access to execution state, properties, and services</description></item>
     /// <item><description><see cref="IWorkflowMiddlewarePipeline"/>: Provides methods for building the execution pipeline</description></item>
     /// <item><description><see cref="IOperationLifecycleEvents"/>: Provides event subscriptions for operation lifecycle</description></item>
-    /// <item><description><see cref="IDisposable"/>: Provides resource cleanup</description></item>
+    /// <item><description><see cref="IDisposable"/>: Provides synchronous resource cleanup</description></item>
     /// </list>
     /// </para>
     /// <para>
@@ -60,10 +66,21 @@ namespace WorkflowForge.Abstractions
     /// </remarks>
     public interface IWorkflowFoundry : IWorkflowExecutionContext, IWorkflowMiddlewarePipeline, IDisposable, IOperationLifecycleEvents
     {
-        // All members are defined in the composed interfaces:
-        // - IWorkflowExecutionContext: ExecutionId, CurrentWorkflow, Properties, Logger, ServiceProvider, SetCurrentWorkflow
-        // - IWorkflowMiddlewarePipeline: AddOperation, AddMiddleware
-        // - IOperationLifecycleEvents: Event subscriptions
-        // - IDisposable: Dispose method
+        /// <summary>
+        /// Executes all operations in the foundry.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        Task ForgeAsync(CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Replaces the current operations with a new sequence.
+        /// </summary>
+        /// <param name="operations">The operations to set.</param>
+        void ReplaceOperations(IEnumerable<IWorkflowOperation> operations);
+
+        /// <summary>
+        /// Gets whether the foundry pipeline is frozen for execution.
+        /// </summary>
+        bool IsFrozen { get; }
     }
 }

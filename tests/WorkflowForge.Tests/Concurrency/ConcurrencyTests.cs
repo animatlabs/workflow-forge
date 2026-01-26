@@ -56,11 +56,11 @@ public class ConcurrencyTests
         var tasks = new List<Task>();
         foreach (var foundry in foundries)
         {
-            var foundryTasks = operations.Take(10).Select(async operation =>
+            foundry.ReplaceOperations(operations.Take(10));
+            tasks.Add(Task.Run(async () =>
             {
                 try
                 {
-                    foundry.AddOperation(operation);
                     await foundry.ForgeAsync();
                 }
                 catch (Exception ex)
@@ -70,8 +70,7 @@ public class ConcurrencyTests
                         exceptions.Add(ex);
                     }
                 }
-            });
-            tasks.AddRange(foundryTasks);
+            }));
         }
 
         await Task.WhenAll(tasks);

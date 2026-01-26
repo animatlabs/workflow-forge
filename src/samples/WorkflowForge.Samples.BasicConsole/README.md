@@ -1,7 +1,7 @@
 # WorkflowForge Basic Console Samples
 
 <p align="center">
-  <img src="../../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Interactive examples demonstrating the core features and capabilities of WorkflowForge 2.0.
@@ -13,13 +13,13 @@ cd src/samples/WorkflowForge.Samples.BasicConsole
 dotnet run
 ```
 
-## Available Samples (24 Total)
+## Available Samples (33 Total)
 
 ### Basic Workflows (1-4)
 - **1. Hello World** - Simple workflow demonstration
 - **2. Data Passing** - Pass data between operations via foundry properties
 - **3. Multiple Outcomes** - Workflows with different results
-- **4. Inline Operations** - Quick operations with lambdas
+- **4. Class-Based Operations** - Preferred class-based operations pattern
 
 ### Control Flow (5-8)
 - **5. Conditional Workflows** - If/else logic using ConditionalWorkflowOperation
@@ -33,7 +33,7 @@ dotnet run
 - **11. Workflow Events** - SRP event system (Lifecycle, Operation, Compensation)
 - **12. Middleware** - Cross-cutting concerns with operation middleware
 
-### Extensions (13-18, 21-24)
+### Extensions (13-18, 21-25)
 - **13. Serilog Logging** - Structured logging with Serilog (zero conflicts)
 - **14. Polly Resilience** - Retry, circuit breaker, timeout policies (zero conflicts)
 - **15. OpenTelemetry** - Distributed tracing with Jaeger (zero conflicts)
@@ -44,6 +44,17 @@ dotnet run
 - **22. Resilience + Recovery** - Combined Polly resilience and recovery
 - **23. Validation** - DataAnnotations-based validation
 - **24. Audit** - Compliance audit logging with pluggable providers
+- **25. Configuration-Driven** - Enable/disable extensions via appsettings.json
+
+### Onboarding & Best Practices (26-33)
+- **26. Dependency Injection** - Configure via DI and run with IWorkflowSmith
+- **27. Workflow Middleware** - Workflow-level middleware behavior
+- **28. Cancellation + Timeout** - Cancellation tokens and timeout middleware
+- **29. Continue On Error** - Aggregate errors and continue execution
+- **30. Compensation Behaviors** - Compensation success vs failures
+- **31. Foundry Reuse** - Reuse foundry across workflows
+- **32. Output Chaining** - Operation output to next input
+- **33. Service Provider Access** - Resolve services inside operations
 
 ### Advanced (19-20)
 - **19. Comprehensive Integration** - Full production workflow with all extensions
@@ -53,7 +64,7 @@ dotnet run
 
 The console application provides an easy-to-use menu system:
 
-- **1-24**: Run specific samples by number
+- **1-33**: Run specific samples by number
 - **A**: Run ALL samples sequentially
 - **B**: Run Basic samples only (1-4)
 - **Q**: Quit the application
@@ -72,7 +83,7 @@ Samples use `appsettings.json` for environment-specific configuration including 
 
 **Beginners**: Start with samples 1-4 (Basic Workflows)  
 **Intermediate**: Try samples 5-12 (Control Flow & Configuration)  
-**Advanced Users**: Explore samples 13-18, 21-24 (Extensions)  
+**Advanced Users**: Explore samples 13-33 (Extensions, Onboarding & Best Practices)  
 **Production**: Study samples 19-20 (Comprehensive Integration & Patterns)
 
 ## Features Demonstrated

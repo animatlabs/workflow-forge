@@ -46,4 +46,3 @@ namespace WorkflowForge.Options
         public abstract object Clone();
     }
 }
-

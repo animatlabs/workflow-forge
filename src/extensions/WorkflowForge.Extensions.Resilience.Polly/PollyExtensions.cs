@@ -158,6 +158,5 @@ namespace WorkflowForge.Extensions.Resilience.Polly
 
             return foundry;
         }
-
     }
 }

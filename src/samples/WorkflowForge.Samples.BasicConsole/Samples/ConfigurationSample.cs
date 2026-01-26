@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using WorkflowForge;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.Audit;
 using WorkflowForge.Extensions.Audit.Options;
@@ -13,7 +12,6 @@ using WorkflowForge.Extensions.Resilience.Polly;
 using WorkflowForge.Extensions.Resilience.Polly.Options;
 using WorkflowForge.Extensions.Validation;
 using WorkflowForge.Extensions.Validation.Options;
-using WorkflowForge.Options;
 using WF = WorkflowForge;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
@@ -134,7 +132,7 @@ public class ConfigurationSample : ISample
             .Build();
 
         var smith = WF.WorkflowForge.CreateSmith();
-        
+
         if (recoveryOptions.Enabled)
         {
             await smith.ForgeWithRecoveryAsync(

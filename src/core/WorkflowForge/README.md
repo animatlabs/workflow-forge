@@ -1,7 +1,7 @@
 # WorkflowForge Core
 
 <p align="center">
-  <img src="../../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 **Zero-dependency workflow orchestration framework for .NET**
@@ -21,6 +21,7 @@ WorkflowForge Core is the foundational workflow orchestration library providing 
 - **Middleware Pipeline**: Extensible Russian Doll pattern for cross-cutting concerns
 - **Dictionary-Based Data Flow**: Thread-safe `ConcurrentDictionary` for shared context
 - **Type-Safe Operations**: Optional `IWorkflowOperation<TInput, TOutput>` for explicit data contracts
+- **Configurable Output Chaining**: Pass operation output to next input via `WorkflowForgeOptions.EnableOutputChaining`
 - **Event System**: SRP-compliant lifecycle events (Workflow, Operation, Compensation)
 - **Builder Pattern**: Fluent API for workflow construction
 - **.NET Standard 2.0**: Compatible with .NET Framework 4.6.1+, .NET Core 2.0+, .NET 5+
@@ -39,6 +40,7 @@ dotnet add package WorkflowForge
 
 ```csharp
 using WorkflowForge;
+using WorkflowForge.Extensions;
 
 // Create workflow
 var workflow = WorkflowForge.CreateWorkflow("OrderProcessing")
@@ -65,13 +67,13 @@ var shipmentId = foundry.GetPropertyOrDefault<string>("ShipmentId");
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow("QuickDemo")
-    .WithOperation("Step1", async (foundry) =>
+    .AddOperation("Step1", async (foundry, ct) =>
     {
         foundry.Logger.LogInformation("Executing Step 1");
         foundry.SetProperty("Result", "Success");
         await Task.CompletedTask;
     })
-    .WithOperation("Step2", async (foundry) =>
+    .AddOperation("Step2", async (foundry, ct) =>
     {
         var result = foundry.GetPropertyOrDefault<string>("Result");
         foundry.Logger.LogInformation("Step 2 received: {Result}", result);
@@ -79,7 +81,9 @@ var workflow = WorkflowForge.CreateWorkflow("QuickDemo")
     })
     .Build();
 
-await foundry.ForgeAsync();
+using var smith = WorkflowForge.CreateSmith();
+using var foundry = WorkflowForge.CreateFoundry("QuickDemo");
+await smith.ForgeAsync(workflow, foundry);
 ```
 
 ## Architecture
@@ -100,31 +104,34 @@ WorkflowForge uses an industrial manufacturing metaphor:
 #### IWorkflowFoundry - Execution Context
 
 ```csharp
-public interface IWorkflowFoundry : IDisposable, 
-    IWorkflowLifecycleEvents, 
-    IOperationLifecycleEvents, 
-    ICompensationLifecycleEvents
+public interface IWorkflowFoundry :
+    IWorkflowExecutionContext,
+    IWorkflowMiddlewarePipeline,
+    IOperationLifecycleEvents,
+    IDisposable
 {
-    Guid ExecutionId { get; }
-    IWorkflow? CurrentWorkflow { get; }
-    ConcurrentDictionary<string, object?> Properties { get; }
-    IWorkflowForgeLogger Logger { get; }
-    IServiceProvider? ServiceProvider { get; }
-    
-    void AddMiddleware(IWorkflowOperationMiddleware middleware);
-    T? GetPropertyOrDefault<T>(string key, T? defaultValue = default);
-    void SetProperty(string key, object? value);
+    Task ForgeAsync(CancellationToken cancellationToken = default);
+    void ReplaceOperations(IEnumerable<IWorkflowOperation> operations);
+    bool IsFrozen { get; }
 }
 ```
 
 #### IWorkflowSmith - Orchestration Engine
 
 ```csharp
-public interface IWorkflowSmith : IDisposable, 
-    IWorkflowLifecycleEvents
+public interface IWorkflowSmith : IDisposable,
+    IWorkflowLifecycleEvents,
+    ICompensationLifecycleEvents
 {
+    Task ForgeAsync(IWorkflow workflow, CancellationToken cancellationToken = default);
+    Task ForgeAsync(IWorkflow workflow, ConcurrentDictionary<string, object?> data, CancellationToken cancellationToken = default);
     Task ForgeAsync(IWorkflow workflow, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
-    Task ForgeAsync(IWorkflow workflow, string executionName, CancellationToken cancellationToken = default);
+
+    IWorkflowFoundry CreateFoundry(IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null);
+    IWorkflowFoundry CreateFoundryFor(IWorkflow workflow, IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null);
+    IWorkflowFoundry CreateFoundryWithData(ConcurrentDictionary<string, object?> data, IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null);
+
+    void AddWorkflowMiddleware(IWorkflowMiddleware middleware);
 }
 ```
 
@@ -148,11 +155,12 @@ public interface IWorkflowOperation : IDisposable
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow("DelegateExample")
-    .AddOperation("Process", async (input, foundry, ct) => 
+    .AddOperation("Process", async (foundry, ct) => 
     {
+        var input = foundry.GetPropertyOrDefault<string>("Input");
         foundry.Logger.LogInformation("Processing: {Input}", input);
         await Task.Delay(100, ct);
-        return $"Processed: {input}";
+        foundry.SetProperty("Output", $"Processed: {input}");
     })
     .Build();
 ```
@@ -161,7 +169,7 @@ var workflow = WorkflowForge.CreateWorkflow("DelegateExample")
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow("ActionExample")
-    .WithOperation("LogStep", async (foundry) =>
+    .AddOperation("LogStep", async (foundry, ct) =>
     {
         foundry.Logger.LogInformation("Executing step");
         foundry.SetProperty("Timestamp", DateTime.UtcNow);
@@ -316,16 +324,17 @@ public class TimingMiddleware : IWorkflowOperationMiddleware
     }
     
     public async Task<object?> ExecuteAsync(
-        Func<Task<object?>> next,
         IWorkflowOperation operation,
         IWorkflowFoundry foundry,
+        object? inputData,
+        Func<CancellationToken, Task<object?>> next,
         CancellationToken cancellationToken)
     {
         var sw = Stopwatch.StartNew();
         
         try
         {
-            return await next();
+            return await next(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -372,17 +381,22 @@ foundry.OperationRestoreStarted += (s, e) =>
 
 ## Configuration
 
+`WorkflowForgeOptions` inherits from `WorkflowForgeOptionsBase`, providing `Enabled`, `SectionName`, `Validate()`, and `Clone()` for consistent options behavior.
+
 ### Programmatic Configuration
 
 ```csharp
-var config = new FoundryConfiguration
+var options = new WorkflowForgeOptions
 {
-    MaxRetryAttempts = 3,
-    EnableDetailedTiming = true,
-    ThrowOnOperationFailure = false
+    Enabled = true,
+    MaxConcurrentWorkflows = 10,
+    ContinueOnError = false,
+    FailFastCompensation = false,
+    ThrowOnCompensationError = true,
+    EnableOutputChaining = true
 };
 
-var foundry = WorkflowForge.CreateFoundry("MyWorkflow", config);
+var foundry = WorkflowForge.CreateFoundry("MyWorkflow", options: options);
 ```
 
 ### Options Pattern (appsettings.json)
@@ -390,18 +404,19 @@ var foundry = WorkflowForge.CreateFoundry("MyWorkflow", config);
 ```json
 {
   "WorkflowForge": {
-    "AutoRestore": true,
-    "MaxConcurrentOperations": 4
+    "Enabled": true,
+    "MaxConcurrentWorkflows": 10,
+    "ContinueOnError": false,
+    "FailFastCompensation": false,
+    "ThrowOnCompensationError": true,
+    "EnableOutputChaining": true
   }
 }
 ```
 
 ```csharp
-services.Configure<WorkflowForgeConfiguration>(
-    configuration.GetSection(WorkflowForgeConfiguration.SectionName));
-
-var options = serviceProvider.GetRequiredService<IOptions<WorkflowForgeConfiguration>>();
-var settings = options.Value;
+services.AddWorkflowForge(configuration);
+var smith = services.BuildServiceProvider().GetRequiredService<IWorkflowSmith>();
 ```
 
 ## Performance
@@ -412,6 +427,8 @@ WorkflowForge Core is optimized for production workloads:
 - **Workflow Creation**: 12-22 μs
 - **Memory**: 296-1912 bytes per operation execution
 - **Concurrency**: 8x faster than sequential execution with parallel workflows
+
+**Update Note**: Benchmarks will be rerun after the current change set; values above reflect the latest completed run.
 
 See [Performance Documentation](../../../docs/performance/performance.md) for detailed benchmarks.
 
@@ -429,7 +446,7 @@ public class WorkflowTests
     public async Task Should_Execute_Operations_In_Order()
     {
         // Arrange
-        var execution Order = new List<string>();
+        var executionOrder = new List<string>();
         
         var workflow = WorkflowForge.CreateWorkflow("Test")
             .WithOperation("Step1", async (foundry) => executionOrder.Add("Step1"))
@@ -438,9 +455,10 @@ public class WorkflowTests
             .Build();
         
         using var foundry = WorkflowForge.CreateFoundry("Test");
+        using var smith = WorkflowForge.CreateSmith();
         
         // Act
-        await foundry.ForgeAsync();
+        await smith.ForgeAsync(workflow, foundry);
         
         // Assert
         Assert.Equal(new[] { "Step1", "Step2", "Step3" }, executionOrder);
@@ -456,7 +474,7 @@ public class WorkflowTests
 - **[Events System](../../../docs/core/events.md)** - Lifecycle events and monitoring
 - **[Configuration](../../../docs/core/configuration.md)** - All configuration options
 - **[Extensions](../../../docs/extensions/index.md)** - Available extensions
-- **[Samples](../../samples/WorkflowForge.Samples.BasicConsole/README.md)** - 24 hands-on examples
+- **[Samples](../../samples/WorkflowForge.Samples.BasicConsole/README.md)** - 33 hands-on examples
 - **[API Reference](../../../docs/reference/api-reference.md)** - Complete API documentation
 
 ## Extensions
@@ -474,7 +492,7 @@ While Core has zero dependencies, extend functionality with official extensions:
 - **WorkflowForge.Extensions.Observability.HealthChecks** - Health check integration
 - **WorkflowForge.Extensions.Observability.OpenTelemetry** - Distributed tracing
 
-**All extensions use Costura.Fody for zero version conflicts** - your app can use any version of Serilog, Polly, etc.
+**Dependency isolation**: Extensions internalize third-party libraries with ILRepack where appropriate, while keeping Microsoft/System assemblies external.
 
 ## License
 

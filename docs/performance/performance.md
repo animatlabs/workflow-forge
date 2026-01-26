@@ -1,10 +1,12 @@
 # WorkflowForge Performance Benchmarks
 
 <p align="center">
-  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 This document provides comprehensive performance analysis of WorkflowForge, including both internal performance characteristics and competitive comparisons.
+
+**Update Note**: Benchmarks will be rerun after the current round of changes; values below reflect the most recent completed run.
 
 **Test System**: Windows 11, Intel 11th Gen i7-1185G7, .NET 8.0.21  
 **Benchmark Framework**: BenchmarkDotNet v0.13.12  

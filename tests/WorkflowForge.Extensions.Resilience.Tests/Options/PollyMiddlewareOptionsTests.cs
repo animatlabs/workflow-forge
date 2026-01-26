@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using WorkflowForge.Extensions.Resilience.Polly.Options;
 
 namespace WorkflowForge.Extensions.Resilience.Tests.Options
@@ -52,4 +50,3 @@ namespace WorkflowForge.Extensions.Resilience.Tests.Options
         }
     }
 }
-

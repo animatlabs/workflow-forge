@@ -1,7 +1,7 @@
 # WorkflowForge API Reference
 
 <p align="center">
-  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Complete API reference for WorkflowForge core types and abstractions.
@@ -34,14 +34,15 @@ public static class WorkflowForge
 
 **CreateWorkflow**
 ```csharp
-public static IWorkflowBuilder CreateWorkflow(string name = "Workflow")
+public static WorkflowBuilder CreateWorkflow(string? workflowName = null, IServiceProvider? serviceProvider = null)
 ```
 Creates a new workflow builder for fluent workflow construction.
 
 **Parameters**:
-- `name`: Optional workflow name (default: "Workflow")
+- `workflowName`: Optional workflow name (null lets you call `WithName` later)
+- `serviceProvider`: Optional DI container for operation resolution
 
-**Returns**: `IWorkflowBuilder` for fluent configuration
+**Returns**: `WorkflowBuilder` for fluent configuration
 
 **Example**:
 ```csharp
@@ -55,29 +56,34 @@ var workflow = WorkflowForge.CreateWorkflow("OrderProcessing")
 **CreateFoundry**
 ```csharp
 public static IWorkflowFoundry CreateFoundry(
-    string name,
-    IServiceProvider? serviceProvider = null,
+    string workflowName,
+    IWorkflowForgeLogger? logger = null,
+    IDictionary<string, object?>? initialProperties = null,
     WorkflowForgeOptions? options = null)
 ```
 Creates a new foundry (execution context) for workflow operations.
 
 **Parameters**:
-- `name`: Foundry name for identification
-- `serviceProvider`: Optional DI container for operation dependencies
+- `workflowName`: Foundry name for identification
+- `logger`: Optional logger for the foundry
+- `initialProperties`: Optional initial properties for the foundry
 - `options`: Optional execution options for the foundry
 
 **Returns**: `IWorkflowFoundry` execution context
 
 **Example**:
 ```csharp
-using var foundry = WorkflowForge.CreateFoundry("MyFoundry", serviceProvider, options);
+using var foundry = WorkflowForge.CreateFoundry("MyFoundry", logger, initialProperties, options);
 ```
 
 ---
 
 **CreateSmith**
 ```csharp
-public static IWorkflowSmith CreateSmith()
+public static IWorkflowSmith CreateSmith(
+    IWorkflowForgeLogger? logger = null,
+    IServiceProvider? serviceProvider = null,
+    WorkflowForgeOptions? options = null)
 ```
 Creates a new smith (workflow executor).
 
@@ -102,68 +108,44 @@ public interface IWorkflow
 {
     Guid Id { get; }
     string Name { get; }
+    string? Description { get; }
+    string Version { get; }
     IReadOnlyList<IWorkflowOperation> Operations { get; }
+    bool SupportsRestore { get; }
 }
 ```
 
 **Properties**:
 - `Id`: Unique identifier for the workflow
 - `Name`: Human-readable workflow name
+- `Description`: Optional description for documentation
+- `Version`: Workflow version string
 - `Operations`: Ordered collection of operations to execute
+- `SupportsRestore`: Whether any operation supports compensation
 
 ---
 
-### IWorkflowBuilder
+### WorkflowBuilder
 
 Fluent builder for constructing workflows.
 
 ```csharp
-public interface IWorkflowBuilder
+public sealed class WorkflowBuilder
 {
-    IWorkflowBuilder AddOperation(IWorkflowOperation operation);
-    IWorkflowBuilder AddOperation(string name, Func<object?, IWorkflowFoundry, CancellationToken, Task<object?>> operation);
+    WorkflowBuilder WithName(string name);
+    WorkflowBuilder WithDescription(string? description);
+    WorkflowBuilder WithVersion(string version);
+    WorkflowBuilder AddOperation(IWorkflowOperation operation);
+    WorkflowBuilder AddOperation<T>() where T : class, IWorkflowOperation;
+    WorkflowBuilder AddOperation(string name, Func<IWorkflowFoundry, CancellationToken, Task> action);
+    WorkflowBuilder AddOperation(string name, Action<IWorkflowFoundry> action);
     IWorkflow Build();
 }
 ```
 
-**Methods**:
-
-**AddOperation (class-based)**
-```csharp
-IWorkflowBuilder AddOperation(IWorkflowOperation operation)
-```
-Adds a class-based operation to the workflow.
-
-**Parameters**:
-- `operation`: Operation instance implementing `IWorkflowOperation`
-
-**Returns**: Builder for chaining
-
----
-
-**AddOperation (inline)**
-```csharp
-IWorkflowBuilder AddOperation(
-    string name,
-    Func<object?, IWorkflowFoundry, CancellationToken, Task<object?>> operation)
-```
-Adds an inline operation to the workflow.
-
-**Parameters**:
-- `name`: Operation name
-- `operation`: Async delegate for operation logic
-
-**Returns**: Builder for chaining
-
----
-
-**Build**
-```csharp
-IWorkflow Build()
-```
-Constructs the immutable workflow from builder configuration.
-
-**Returns**: Immutable `IWorkflow` instance
+**Notes**:
+- `AddOperation<T>()` resolves the operation from the provided `IServiceProvider`.
+- Inline operations are wrapped into `ActionWorkflowOperation` instances.
 
 ---
 
@@ -283,6 +265,11 @@ public interface IWorkflowOperation<TInput, TOutput> : IWorkflowOperation
         TInput input,
         IWorkflowFoundry foundry,
         CancellationToken cancellationToken = default);
+
+    Task RestoreAsync(
+        TOutput output,
+        IWorkflowFoundry foundry,
+        CancellationToken cancellationToken = default);
 }
 ```
 
@@ -299,104 +286,44 @@ public interface IWorkflowOperation<TInput, TOutput> : IWorkflowOperation
 Execution context providing services, state, and logging to operations.
 
 ```csharp
-public interface IWorkflowFoundry : IOperationLifecycleEvents, IDisposable
+public interface IWorkflowFoundry :
+    IWorkflowExecutionContext,
+    IWorkflowMiddlewarePipeline,
+    IOperationLifecycleEvents,
+    IDisposable
 {
-    Guid ExecutionId { get; }
-    string Name { get; }
-    IServiceProvider ServiceProvider { get; }
-    IWorkflowForgeLogger Logger { get; }
-    ConcurrentDictionary<string, object?> Properties { get; }
-    
-    void SetProperty(string key, object? value);
-    T? GetPropertyOrDefault<T>(string key, T? defaultValue = default);
-    bool TryGetProperty<T>(string key, out T? value);
-    
-    void AddMiddleware(IWorkflowOperationMiddleware middleware);
+    Task ForgeAsync(CancellationToken cancellationToken = default);
+    void ReplaceOperations(IEnumerable<IWorkflowOperation> operations);
+    bool IsFrozen { get; }
 }
 ```
 
 **Properties**:
 - `ExecutionId`: Unique identifier for this foundry execution
-- `Name`: Foundry name
+- `CurrentWorkflow`: Workflow being executed (or null)
 - `ServiceProvider`: DI container for resolving operation dependencies
 - `Logger`: Logging abstraction
+- `Options`: Execution options for the foundry
 - `Properties`: Thread-safe dictionary for workflow data
+- `IsFrozen`: True while `ForgeAsync` is executing (pipeline is immutable)
 
-**Methods**:
-
-**SetProperty**
-```csharp
-void SetProperty(string key, object? value)
-```
-Stores a value in foundry properties (thread-safe).
-
-**Parameters**:
-- `key`: Property key
-- `value`: Property value
-
-**Example**:
-```csharp
-foundry.SetProperty("OrderId", 12345);
-foundry.SetProperty("Customer", new Customer { /*...*/ });
-```
+**Notes**:
+- Property helpers like `SetProperty`, `GetPropertyOrDefault`, and `TryGetProperty` are extension methods.
+- Operations and middleware cannot be added/removed while `ForgeAsync` is running.
 
 ---
 
-**GetPropertyOrDefault**
+### IWorkflowMiddlewarePipeline
+
+Pipeline builder for operations and middleware.
+
 ```csharp
-T? GetPropertyOrDefault<T>(string key, T? defaultValue = default)
-```
-Retrieves a property value with type safety and default fallback.
-
-**Parameters**:
-- `key`: Property key
-- `defaultValue`: Value to return if key not found
-
-**Returns**: Property value or default
-
-**Example**:
-```csharp
-var orderId = foundry.GetPropertyOrDefault<int>("OrderId");
-var total = foundry.GetPropertyOrDefault<decimal>("Total", 0m);
-```
-
----
-
-**TryGetProperty**
-```csharp
-bool TryGetProperty<T>(string key, out T? value)
-```
-Attempts to retrieve a property value.
-
-**Parameters**:
-- `key`: Property key
-- `value`: Out parameter for the retrieved value
-
-**Returns**: True if property exists and is of type T
-
-**Example**:
-```csharp
-if (foundry.TryGetProperty<string>("TransactionId", out var txnId))
+public interface IWorkflowMiddlewarePipeline
 {
-    // Use txnId
+    void AddOperation(IWorkflowOperation operation);
+    void AddMiddleware(IWorkflowOperationMiddleware middleware);
+    void AddMiddlewares(IEnumerable<IWorkflowOperationMiddleware> middlewares);
 }
-```
-
----
-
-**AddMiddleware**
-```csharp
-void AddMiddleware(IWorkflowOperationMiddleware middleware)
-```
-Adds middleware to the operation execution pipeline.
-
-**Parameters**:
-- `middleware`: Middleware implementation
-
-**Example**:
-```csharp
-foundry.AddMiddleware(new TimingMiddleware(logger));
-foundry.AddMiddleware(new ValidationMiddleware<Order>(validator, ...));
 ```
 
 ---
@@ -408,45 +335,32 @@ foundry.AddMiddleware(new ValidationMiddleware<Order>(validator, ...));
 Workflow executor responsible for orchestrating operation execution.
 
 ```csharp
-public interface IWorkflowSmith : 
-    IWorkflowLifecycleEvents, 
-    ICompensationLifecycleEvents, 
+public interface IWorkflowSmith :
+    IWorkflowLifecycleEvents,
+    ICompensationLifecycleEvents,
     IDisposable
 {
-    Task ForgeAsync(
-        IWorkflow workflow,
-        IWorkflowFoundry? foundry = null,
-        CancellationToken cancellationToken = default);
+    Task ForgeAsync(IWorkflow workflow, CancellationToken cancellationToken = default);
+    Task ForgeAsync(IWorkflow workflow, ConcurrentDictionary<string, object?> data, CancellationToken cancellationToken = default);
+    Task ForgeAsync(IWorkflow workflow, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
+    IWorkflowFoundry CreateFoundry(IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null);
+    IWorkflowFoundry CreateFoundryFor(IWorkflow workflow, IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null);
+    IWorkflowFoundry CreateFoundryWithData(ConcurrentDictionary<string, object?> data, IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null);
+    void AddWorkflowMiddleware(IWorkflowMiddleware middleware);
 }
 ```
 
 **Methods**:
-
-**ForgeAsync**
-```csharp
-Task ForgeAsync(
-    IWorkflow workflow,
-    IWorkflowFoundry? foundry = null,
-    CancellationToken cancellationToken = default)
-```
-Executes a workflow with the provided foundry.
-
-**Parameters**:
-- `workflow`: Workflow to execute
-- `foundry`: Optional execution context (created if null)
-- `cancellationToken`: Cancellation token
-
-**Behavior**:
-1. Fires `WorkflowStarted` event
-2. Executes operations in sequence
-3. Fires `WorkflowCompleted` on success
-4. Fires `WorkflowFailed` and triggers compensation on failure
-5. If `ContinueOnError` is enabled, throws `AggregateException` after execution
+- `ForgeAsync(...)`: Executes a workflow using one of the three patterns (smith-managed, data dictionary, or reusable foundry).
+- `CreateFoundry(...)`: Creates a reusable foundry with optional logger/service provider.
+- `CreateFoundryFor(...)`: Creates a foundry pre-associated with a workflow.
+- `CreateFoundryWithData(...)`: Creates a foundry with an initial data dictionary.
+- `AddWorkflowMiddleware(...)`: Adds workflow-level middleware around the entire execution.
 
 **Example**:
 ```csharp
 using var smith = WorkflowForge.CreateSmith();
-using var foundry = WorkflowForge.CreateFoundry("MyWorkflow");
+using var foundry = smith.CreateFoundryFor(workflow);
 
 await smith.ForgeAsync(workflow, foundry);
 ```
@@ -552,14 +466,22 @@ smith.OperationRestoreStarted += (s, e) =>
 ## Core Options
 
 ```csharp
-public sealed class WorkflowForgeOptions
+public sealed class WorkflowForgeOptions : WorkflowForgeOptionsBase
 {
+    public bool Enabled { get; set; } = true;
+    public string SectionName { get; }
     public int MaxConcurrentWorkflows { get; set; } = 0;
     public bool ContinueOnError { get; set; } = false;
     public bool FailFastCompensation { get; set; } = false;
     public bool ThrowOnCompensationError { get; set; } = false;
+    public bool EnableOutputChaining { get; set; } = true;
+    public override IList<string> Validate();
+    public override object Clone();
 }
 ```
+
+**Notes**:
+- `WorkflowForgeOptions` inherits from `WorkflowForgeOptionsBase` for consistent `Enabled`, `SectionName`, `Validate()`, and `Clone()` behavior.
 
 ---
 

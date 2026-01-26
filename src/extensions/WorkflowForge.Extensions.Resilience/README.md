@@ -1,7 +1,7 @@
 # WorkflowForge.Extensions.Resilience
 
 <p align="center">
-  <img src="../../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Base resilience patterns extension for WorkflowForge with fundamental retry logic and resilience strategies.
@@ -208,7 +208,7 @@ public interface IWorkflowResilienceStrategy
 - You want to leverage Polly's ecosystem
 - You need complex policy combinations
 
-Both extensions use Costura.Fody for zero version conflicts where applicable.
+Resilience.Polly internalizes Polly with ILRepack; this extension has no third-party dependencies.
 
 ## Documentation
 

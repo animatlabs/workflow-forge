@@ -124,6 +124,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
     }
 
     // Keep nested settings classes in same file for consistency with original
+
     #region Nested Settings Classes
 
     /// <summary>
@@ -234,8 +235,5 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
         };
     }
 
-    #endregion
+    #endregion Nested Settings Classes
 }
-
-
-

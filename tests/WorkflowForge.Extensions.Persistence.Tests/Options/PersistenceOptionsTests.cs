@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-using WorkflowForge.Extensions.Persistence;
 using Xunit;
 
 namespace WorkflowForge.Extensions.Persistence.Tests.Options
@@ -69,4 +66,3 @@ namespace WorkflowForge.Extensions.Persistence.Tests.Options
         }
     }
 }
-

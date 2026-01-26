@@ -1,22 +1,20 @@
 # WorkflowForge.Extensions.Observability.OpenTelemetry
 
 <p align="center">
-  <img src="../../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Distributed tracing extension for WorkflowForge with OpenTelemetry integration for comprehensive observability.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Observability.OpenTelemetry.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Observability.OpenTelemetry/)
 
-## Zero Version Conflicts
+## Dependency Isolation
 
-**This extension uses Costura.Fody to embed OpenTelemetry.** This means:
+**This extension internalizes OpenTelemetry with ILRepack.** This means:
 
-- NO DLL Hell - No conflicts with your application's OpenTelemetry version
-- NO Version Conflicts - Works with ANY version of OpenTelemetry in your app
-- Clean Deployment - Professional dependency isolation
-
-**How it works**: OpenTelemetry is embedded as compressed resources at build time and loaded at runtime, completely isolated from your application.
+- Reduced dependency conflicts for OpenTelemetry
+- Public APIs stay WorkflowForge/BCL only
+- Microsoft/System assemblies remain external
 
 ## Installation
 

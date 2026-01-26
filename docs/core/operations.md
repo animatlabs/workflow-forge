@@ -1,7 +1,7 @@
 # WorkflowForge Operations Guide
 
 <p align="center">
-  <img src="../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Complete guide to creating and using operations in WorkflowForge.
@@ -58,15 +58,18 @@ Lambda-based operations for quick, inline logic.
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
     .WithName("ProcessOrder")
-    .AddOperation("ValidateOrder", async (input, foundry, ct) => {
-        var order = (Order)input;
-        foundry.Logger.LogInformation("Validating order {OrderId}", order.Id);
-        
-        if (order.Amount <= 0)
-            throw new InvalidOperationException("Invalid order amount");
+    .AddOperation(new DelegateWorkflowOperation(
+        "ValidateOrder",
+        async (input, foundry, ct) => {
+            var order = (Order)input;
+            foundry.Logger.LogInformation("Validating order {OrderId}", order.Id);
             
-        return order;
-    })
+            if (order.Amount <= 0)
+                throw new InvalidOperationException("Invalid order amount");
+                
+            return order;
+        }
+    ))
     .Build();
 ```
 
@@ -84,11 +87,14 @@ Side-effect operations that don't return values.
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
     .WithName("Notifications")
-    .AddOperation("SendEmail", async (input, foundry, ct) => {
-        var email = foundry.Properties["CustomerEmail"] as string;
-        await _emailService.SendAsync(email, "Order Confirmed");
-        foundry.Logger.LogInformation("Email sent to {Email}", email);
-    })
+    .AddOperation(new ActionWorkflowOperation(
+        "SendEmail",
+        async (input, foundry, ct) => {
+            var email = foundry.Properties["CustomerEmail"] as string;
+            await _emailService.SendAsync(email, "Order Confirmed");
+            foundry.Logger.LogInformation("Email sent to {Email}", email);
+        }
+    ))
     .Build();
 ```
 
@@ -180,16 +186,22 @@ Introduce async delays into workflows.
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
     .WithName("PollingWorkflow")
-    .AddOperation("CheckStatus", async (input, foundry, ct) => {
-        var status = await _service.GetStatusAsync();
-        foundry.Properties["Status"] = status;
-        return status;
-    })
+    .AddOperation(new DelegateWorkflowOperation(
+        "CheckStatus",
+        async (input, foundry, ct) => {
+            var status = await _service.GetStatusAsync();
+            foundry.Properties["Status"] = status;
+            return status;
+        }
+    ))
     .AddOperation(new DelayOperation("WaitBeforeRetry", TimeSpan.FromSeconds(5)))
-    .AddOperation("RetryCheck", async (input, foundry, ct) => {
-        // Retry logic
-        return input;
-    })
+    .AddOperation(new DelegateWorkflowOperation(
+        "RetryCheck",
+        async (input, foundry, ct) => {
+            // Retry logic
+            return input;
+        }
+    ))
     .Build();
 ```
 
@@ -213,10 +225,13 @@ var workflow = WorkflowForge.CreateWorkflow()
         "Workflow started for order {OrderId}",
         foundry => new object[] { foundry.Properties["OrderId"] }
     ))
-    .AddOperation("ProcessOrder", async (input, foundry, ct) => {
-        // Processing logic
-        return input;
-    })
+    .AddOperation(new DelegateWorkflowOperation(
+        "ProcessOrder",
+        async (input, foundry, ct) => {
+            // Processing logic
+            return input;
+        }
+    ))
     .AddOperation(new LoggingOperation(
         "LogCompletion",
         WorkflowForgeLogLevel.Information,
@@ -372,22 +387,31 @@ Each operation transforms data and passes it to the next.
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
     .WithName("DataPipeline")
-    .AddOperation("LoadData", async (input, foundry, ct) => {
-        var data = await _repository.LoadAsync();
-        foundry.Properties["RawData"] = data;
-        return data;
-    })
-    .AddOperation("TransformData", async (input, foundry, ct) => {
-        var raw = foundry.Properties["RawData"] as RawData;
-        var transformed = Transform(raw);
-        foundry.Properties["TransformedData"] = transformed;
-        return transformed;
-    })
-    .AddOperation("SaveData", async (input, foundry, ct) => {
-        var data = foundry.Properties["TransformedData"] as TransformedData;
-        await _repository.SaveAsync(data);
-        return data;
-    })
+    .AddOperation(new DelegateWorkflowOperation(
+        "LoadData",
+        async (input, foundry, ct) => {
+            var data = await _repository.LoadAsync();
+            foundry.Properties["RawData"] = data;
+            return data;
+        }
+    ))
+    .AddOperation(new DelegateWorkflowOperation(
+        "TransformData",
+        async (input, foundry, ct) => {
+            var raw = foundry.Properties["RawData"] as RawData;
+            var transformed = Transform(raw);
+            foundry.Properties["TransformedData"] = transformed;
+            return transformed;
+        }
+    ))
+    .AddOperation(new DelegateWorkflowOperation(
+        "SaveData",
+        async (input, foundry, ct) => {
+            var data = foundry.Properties["TransformedData"] as TransformedData;
+            await _repository.SaveAsync(data);
+            return data;
+        }
+    ))
     .Build();
 ```
 
@@ -398,28 +422,37 @@ Collect results from multiple operations.
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
     .WithName("Aggregation")
-    .AddOperation("FetchUserData", async (input, foundry, ct) => {
-        var user = await _userService.GetAsync(userId);
-        foundry.Properties["User"] = user;
-        return input;
-    })
-    .AddOperation("FetchOrderData", async (input, foundry, ct) => {
-        var orders = await _orderService.GetForUserAsync(userId);
-        foundry.Properties["Orders"] = orders;
-        return input;
-    })
-    .AddOperation("AggregateResults", async (input, foundry, ct) => {
-        var user = foundry.Properties["User"] as User;
-        var orders = foundry.Properties["Orders"] as List<Order>;
-        
-        var result = new AggregatedData {
-            User = user,
-            Orders = orders,
-            TotalSpent = orders.Sum(o => o.Amount)
-        };
-        
-        return result;
-    })
+    .AddOperation(new DelegateWorkflowOperation(
+        "FetchUserData",
+        async (input, foundry, ct) => {
+            var user = await _userService.GetAsync(userId);
+            foundry.Properties["User"] = user;
+            return input;
+        }
+    ))
+    .AddOperation(new DelegateWorkflowOperation(
+        "FetchOrderData",
+        async (input, foundry, ct) => {
+            var orders = await _orderService.GetForUserAsync(userId);
+            foundry.Properties["Orders"] = orders;
+            return input;
+        }
+    ))
+    .AddOperation(new DelegateWorkflowOperation(
+        "AggregateResults",
+        async (input, foundry, ct) => {
+            var user = foundry.Properties["User"] as User;
+            var orders = foundry.Properties["Orders"] as List<Order>;
+            
+            var result = new AggregatedData {
+                User = user,
+                Orders = orders,
+                TotalSpent = orders.Sum(o => o.Amount)
+            };
+            
+            return result;
+        }
+    ))
     .Build();
 ```
 
@@ -430,11 +463,14 @@ Route workflow based on runtime conditions.
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
     .WithName("ConditionalRouting")
-    .AddOperation("ClassifyRequest", async (input, foundry, ct) => {
-        var request = input as Request;
-        foundry.Properties["RequestType"] = request.Type;
-        return input;
-    })
+    .AddOperation(new DelegateWorkflowOperation(
+        "ClassifyRequest",
+        async (input, foundry, ct) => {
+            var request = input as Request;
+            foundry.Properties["RequestType"] = request.Type;
+            return input;
+        }
+    ))
     .AddOperation(new ConditionalWorkflowOperation(
         "RouteByType",
         (input, foundry, ct) => {
@@ -469,11 +505,14 @@ var workflow = WorkflowForge.CreateWorkflow()
         ),
         parallel: true  // Parallel execution
     ))
-    .AddOperation("JoinResults", async (input, foundry, ct) => {
-        var results = foundry.Properties["ProcessInParallel_Results"] as List<Result>;
-        var aggregated = Aggregate(results);
-        return aggregated;
-    })
+    .AddOperation(new DelegateWorkflowOperation(
+        "JoinResults",
+        async (input, foundry, ct) => {
+            var results = foundry.Properties["ProcessInParallel_Results"] as List<Result>;
+            var aggregated = Aggregate(results);
+            return aggregated;
+        }
+    ))
     .Build();
 ```
 
@@ -526,6 +565,21 @@ var result2 = await operation2.ForgeAsync(result1, foundry, ct); // Takes Order,
 - Use for operations with stable contracts
 - Document expected input/output types
 - Consider immutable types for safety
+
+### Output Chaining Behavior
+
+By default, the foundry passes each operation's output as the next operation's input.
+This enables explicit chaining without additional plumbing.
+
+You can disable chaining when operations should always receive `null` input:
+
+```csharp
+var options = new WorkflowForgeOptions
+{
+    EnableOutputChaining = false
+};
+var foundry = WorkflowForge.CreateFoundry("NoChaining", options: options);
+```
 
 ---
 
@@ -594,7 +648,7 @@ Each operation should do one thing well:
 .AddOperation("ProcessPayment", ProcessPaymentAsync)
 
 // Bad: God operation
-.AddOperation("ProcessEverything", async (input, foundry, ct) => {
+.AddOperation("ProcessEverything", async (foundry, ct) => {
     // Validation, inventory, payment all mixed together
 })
 ```
@@ -650,8 +704,11 @@ public class ComplexBusinessLogic : WorkflowOperationBase<Input, Output>
     // Clear contracts
 }
 
-// Okay: Simple inline logic
-.AddOperation("SimpleTransform", async (input, foundry, ct) => Transform(input))
+// Okay: Simple delegate operation
+.AddOperation(new DelegateWorkflowOperation(
+    "SimpleTransform",
+    async (input, foundry, ct) => Transform(input)
+))
 ```
 
 ### 6. Handle Cancellation

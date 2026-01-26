@@ -1,7 +1,7 @@
 # WorkflowForge.Extensions.Observability.Performance
 
 <p align="center">
-  <img src="../../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 Performance monitoring extension for WorkflowForge with operation timing and metrics collection.

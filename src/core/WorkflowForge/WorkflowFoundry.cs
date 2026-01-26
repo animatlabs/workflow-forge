@@ -21,10 +21,13 @@ namespace WorkflowForge
         private readonly List<IWorkflowOperation> _operations = new();
         private readonly List<IWorkflowOperationMiddleware> _middlewares = new();
         private readonly object _middlewareLock = new();
+        private readonly object _executionLock = new();
         private readonly ISystemTimeProvider _timeProvider;
         private readonly WorkflowForgeOptions _options;
         private volatile bool _disposed;
         private IWorkflow? _currentWorkflow;
+        private int _executionState;
+        private volatile bool _isFrozen;
 
         public event EventHandler<OperationStartedEventArgs>? OperationStarted;
 
@@ -49,6 +52,9 @@ namespace WorkflowForge
 
         /// <inheritdoc />
         public IServiceProvider? ServiceProvider { get; }
+
+        /// <inheritdoc />
+        public bool IsFrozen => _isFrozen;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WorkflowFoundry"/> class with explicit logger and service provider.
@@ -96,6 +102,7 @@ namespace WorkflowForge
         {
             if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
             if (operation == null) throw new ArgumentNullException(nameof(operation));
+            ThrowIfFrozen();
 
             lock (_operations)
             {
@@ -109,10 +116,11 @@ namespace WorkflowForge
         /// <param name="operations">The operations to set.</param>
         /// <exception cref="ArgumentNullException">Thrown when operations is null.</exception>
         /// <exception cref="ObjectDisposedException">Thrown when the foundry has been disposed.</exception>
-        internal void SetOperations(IEnumerable<IWorkflowOperation> operations)
+        public void ReplaceOperations(IEnumerable<IWorkflowOperation> operations)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
             if (operations == null) throw new ArgumentNullException(nameof(operations));
+            ThrowIfFrozen();
 
             lock (_operations)
             {
@@ -131,6 +139,7 @@ namespace WorkflowForge
         {
             if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
             if (middleware == null) throw new ArgumentNullException(nameof(middleware));
+            ThrowIfFrozen();
 
             lock (_middlewareLock)
             {
@@ -148,6 +157,7 @@ namespace WorkflowForge
         {
             if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
             if (middlewares == null) throw new ArgumentNullException(nameof(middlewares));
+            ThrowIfFrozen();
 
             lock (_middlewareLock)
             {
@@ -164,6 +174,7 @@ namespace WorkflowForge
         public bool RemoveMiddleware(IWorkflowOperationMiddleware middleware)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
+            ThrowIfFrozen();
             lock (_middlewareLock)
             {
                 return _middlewares.Remove(middleware);
@@ -196,84 +207,101 @@ namespace WorkflowForge
         public async Task ForgeAsync(CancellationToken cancellationToken = default)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
-
-            IWorkflowOperation[] operationsSnapshot;
-            lock (_operations)
+            if (Interlocked.Exchange(ref _executionState, 1) == 1)
             {
-                operationsSnapshot = _operations.ToArray();
+                throw new InvalidOperationException("Foundry is already executing.");
             }
 
-            var shouldAggregate = Options.ContinueOnError;
-            var errors = shouldAggregate
-                ? new List<Exception>()
-                : null;
+            _isFrozen = true;
 
-            object? inputData = null;
-
-            for (int i = 0; i < operationsSnapshot.Length; i++)
+            try
             {
-                var operation = operationsSnapshot[i];
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var operationStartTime = _timeProvider.UtcNow;
-
-                try
+                IWorkflowOperation[] operationsSnapshot;
+                lock (_operations)
                 {
-                    // FIRE: OperationStarted event
-                    OperationStarted?.Invoke(this, new OperationStartedEventArgs(operation, this, null));
-
-                    var result = await ExecuteOperationWithMiddleware(operation, inputData, cancellationToken).ConfigureAwait(false);
-                    inputData = result;
-
-                    Properties[$"Operation.{operation.Id}.Output"] = result;
-                    Properties["Operation.LastCompletedIndex"] = i;
-                    Properties["Operation.LastCompletedName"] = operation.Name;
-                    Properties["Operation.LastCompletedId"] = operation.Id;
-
-                    var operationDuration = _timeProvider.UtcNow - operationStartTime;
-
-                    // FIRE: OperationCompleted event
-                    OperationCompleted?.Invoke(this, new OperationCompletedEventArgs(
-                        operation,
-                        this,
-                        null,
-                        result,
-                        TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
+                    operationsSnapshot = _operations.ToArray();
                 }
-                catch (Exception ex)
+
+                var shouldAggregate = Options.ContinueOnError;
+                var errors = shouldAggregate
+                    ? new List<Exception>()
+                    : null;
+
+                object? inputData = null;
+
+                for (int i = 0; i < operationsSnapshot.Length; i++)
                 {
-                    Properties["Operation.LastFailedIndex"] = i;
-                    Properties["Operation.LastFailedName"] = operation.Name;
-                    Properties["Operation.LastFailedId"] = operation.Id;
+                    var operation = operationsSnapshot[i];
+                    cancellationToken.ThrowIfCancellationRequested();
 
-                    var operationDuration = _timeProvider.UtcNow - operationStartTime;
+                    var operationStartTime = _timeProvider.UtcNow;
 
-                    // FIRE: OperationFailed event
-                    OperationFailed?.Invoke(this, new OperationFailedEventArgs(
-                        operation,
-                        this,
-                        null,
-                        ex,
-                        TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
-
-                    if (ex is OperationCanceledException)
+                    try
                     {
+                        // FIRE: OperationStarted event
+                        OperationStarted?.Invoke(this, new OperationStartedEventArgs(operation, this, null));
+
+                        var result = await ExecuteOperationWithMiddleware(operation, inputData, cancellationToken).ConfigureAwait(false);
+                        if (Options.EnableOutputChaining)
+                        {
+                            inputData = result;
+                        }
+
+                        Properties[$"Operation.{operation.Id}.Output"] = result;
+                        Properties["Operation.LastCompletedIndex"] = i;
+                        Properties["Operation.LastCompletedName"] = operation.Name;
+                        Properties["Operation.LastCompletedId"] = operation.Id;
+
+                        var operationDuration = _timeProvider.UtcNow - operationStartTime;
+
+                        // FIRE: OperationCompleted event
+                        OperationCompleted?.Invoke(this, new OperationCompletedEventArgs(
+                            operation,
+                            this,
+                            null,
+                            result,
+                            TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
+                    }
+                    catch (Exception ex)
+                    {
+                        Properties["Operation.LastFailedIndex"] = i;
+                        Properties["Operation.LastFailedName"] = operation.Name;
+                        Properties["Operation.LastFailedId"] = operation.Id;
+
+                        var operationDuration = _timeProvider.UtcNow - operationStartTime;
+
+                        // FIRE: OperationFailed event
+                        OperationFailed?.Invoke(this, new OperationFailedEventArgs(
+                            operation,
+                            this,
+                            null,
+                            ex,
+                            TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
+
+                        if (ex is OperationCanceledException)
+                        {
+                            throw;
+                        }
+
+                        if (errors != null)
+                        {
+                            errors.Add(ex);
+                            continue;
+                        }
+
                         throw;
                     }
+                }
 
-                    if (errors != null)
-                    {
-                        errors.Add(ex);
-                        continue;
-                    }
-
-                    throw;
+                if (errors != null && errors.Count > 0)
+                {
+                    throw new AggregateException("One or more operations failed during execution.", errors);
                 }
             }
-
-            if (errors != null && errors.Count > 0)
+            finally
             {
-                throw new AggregateException("One or more operations failed during execution.", errors);
+                _isFrozen = false;
+                Interlocked.Exchange(ref _executionState, 0);
             }
         }
 
@@ -344,6 +372,14 @@ namespace WorkflowForge
             // Dispose properties
             Properties.Clear();
             GC.SuppressFinalize(this);
+        }
+
+        private void ThrowIfFrozen()
+        {
+            if (_isFrozen)
+            {
+                throw new InvalidOperationException("Foundry pipeline is frozen during execution.");
+            }
         }
 
     }

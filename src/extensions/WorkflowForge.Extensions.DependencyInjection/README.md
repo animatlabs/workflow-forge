@@ -45,10 +45,11 @@ public void ConfigureServices(IServiceCollection services)
 ```json
 {
   "WorkflowForge": {
-    "MaxConcurrentOperations": 0,
     "MaxConcurrentWorkflows": 2,
-    "OperationTimeout": "00:00:30",
-    "WorkflowTimeout": "00:05:00",
+    "ContinueOnError": false,
+    "FailFastCompensation": false,
+    "ThrowOnCompensationError": false,
+    "EnableOutputChaining": true,
     "Middleware": {
       "Timing": {
         "Enabled": true,
@@ -103,9 +104,9 @@ If you don't use appsettings.json, you can configure options manually:
 services.AddWorkflowForge(
     core =>
     {
-        core.MaxConcurrentOperations = 4;
         core.MaxConcurrentWorkflows = 2;
-        core.OperationTimeout = TimeSpan.FromSeconds(30);
+        core.ContinueOnError = false;
+        core.EnableOutputChaining = true;
     },
     timing => timing.Enabled = false,
     logging => logging.MinimumLevel = "Warning",
@@ -117,7 +118,8 @@ services.AddWorkflowForge(
 
 ## ✅ Automatic Validation
 
-This extension **validates configuration on startup** using the `Validate()` methods from options classes:
+This extension **validates configuration on startup** using the `Validate()` methods from options classes
+and registers `IValidateOptions<WorkflowForgeOptions>` for startup-time checks:
 
 ```csharp
 // This will throw on startup if configuration is invalid
@@ -126,8 +128,12 @@ services.AddWorkflowForge(configuration);
 // Invalid configuration example:
 {
   "WorkflowForge": {
-    "MaxConcurrentOperations": -5,  // ❌ Throws: Must be between 0 and 10000
-    "OperationTimeout": "-00:00:05"  // ❌ Throws: Cannot be negative
+    "MaxConcurrentWorkflows": -5,  // ❌ Throws: Must be between 0 and 10000
+    "Middleware": {
+      "Logging": {
+        "MinimumLevel": "Verbose"  // ❌ Throws: Must be Trace/Debug/Information/Warning/Error/Critical
+      }
+    }
   }
 }
 ```

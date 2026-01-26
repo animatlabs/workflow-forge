@@ -1,10 +1,12 @@
 # WorkflowForge Comparative Benchmarks
 
 <p align="center">
-  <img src="../../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 **Head-to-head performance comparison: WorkflowForge vs Workflow Core vs Elsa Workflows**
+
+**Update Note**: Comparative benchmarks will be rerun after the current change set; numbers below reflect the last completed run.
 
 ## Overview
 

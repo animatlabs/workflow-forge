@@ -77,7 +77,7 @@ namespace WorkflowForge.Extensions.Validation
             }
 
             var errorMessages = string.Join("; ", validationResult.Errors.Select(e => e.ToString()));
-            
+
             if (_options.LogValidationErrors)
             {
                 _logger.LogError($"Validation failed for operation '{operation.Name}': {errorMessages}");

@@ -1,8 +1,35 @@
-# WorkflowForge Documentation
+---
+layout: default
+title: WorkflowForge Documentation
+---
 
-<p align="center">
-  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
+<div class="wf-hero">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge logo">
+  <div>
+    <span class="wf-badge">Enterprise-grade workflows</span>
+    <h1>WorkflowForge Documentation</h1>
+    <p>Build high-performance workflows in .NET with clear guidance, focused examples, and a zero-dependency core.</p>
+    <div class="wf-hero-actions">
+      <a href="{{ "/getting-started/getting-started/" | relative_url }}">Get started</a>
+      <a class="secondary" href="{{ "/reference/api-reference/" | relative_url }}">API reference</a>
+    </div>
+  </div>
+</div>
+
+<div class="wf-card-grid">
+  <div class="wf-card">
+    <h3>Core Concepts</h3>
+    <p>Understand foundries, smiths, operations, and lifecycle events.</p>
+  </div>
+  <div class="wf-card">
+    <h3>Performance First</h3>
+    <p>Benchmark-backed results with microsecond execution and minimal memory.</p>
+  </div>
+  <div class="wf-card">
+    <h3>Extensions Ready</h3>
+    <p>Logging, resilience, persistence, and observability without conflicts.</p>
+  </div>
+</div>
 
 **Welcome to the complete WorkflowForge documentation** - Your guide to building high-performance workflows in .NET.
 
@@ -28,7 +55,7 @@
 ### Getting Started
 - **[Getting Started Guide](getting-started/getting-started.md)** - Step-by-step tutorial for new users
 - **[Quick Start (Root README)](../README.md)** - Installation and first workflow
-- **[Interactive Samples](getting-started/samples-guide.md)** - 24 hands-on examples
+- **[Interactive Samples](getting-started/samples-guide.md)** - 33 hands-on examples
 
 ### Core Concepts
 - **[Architecture Overview](architecture/overview.md)** - Design principles, metaphor, and patterns
@@ -43,7 +70,7 @@
 
 ### Extensions & Samples
 - **[Extensions Overview](extensions/index.md)** - All 10 available extensions
-- **[Samples Guide](getting-started/samples-guide.md)** - Complete guide to 24 progressive examples
+- **[Samples Guide](getting-started/samples-guide.md)** - Complete guide to 33 progressive examples
 
 ### Contributing
 - **[Contributing Guidelines](../CONTRIBUTING.md)** - How to contribute to WorkflowForge
@@ -61,7 +88,7 @@ WorkflowForge is a **zero-dependency workflow orchestration framework** for .NET
 - **Zero Dependencies**: Core package with no external dependencies
 - **Production Ready**: Built-in compensation (saga pattern), comprehensive testing
 - **Extension Ecosystem**: 10 optional extensions with zero version conflicts
-- **Developer Experience**: Fluent API, clear metaphor, 24 progressive samples
+- **Developer Experience**: Fluent API, clear metaphor, 33 progressive samples
 
 ---
 
@@ -97,13 +124,21 @@ public interface IWorkflow : IDisposable
 ### IWorkflowFoundry
 Execution environment providing context, logging, and services.
 ```csharp
-public interface IWorkflowFoundry : IDisposable, IOperationLifecycleEvents
+public interface IWorkflowFoundry :
+    IWorkflowExecutionContext,
+    IWorkflowMiddlewarePipeline,
+    IOperationLifecycleEvents,
+    IDisposable
 {
     Guid ExecutionId { get; }
     IWorkflow? CurrentWorkflow { get; }
     ConcurrentDictionary<string, object?> Properties { get; }
     IWorkflowForgeLogger Logger { get; }
+    WorkflowForgeOptions Options { get; }
     IServiceProvider? ServiceProvider { get; }
+    Task ForgeAsync(CancellationToken cancellationToken = default);
+    void ReplaceOperations(IEnumerable<IWorkflowOperation> operations);
+    bool IsFrozen { get; }
 }
 ```
 
@@ -117,6 +152,8 @@ public interface IWorkflowSmith : IDisposable, IWorkflowLifecycleEvents, ICompen
     Task ForgeAsync(IWorkflow workflow, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
 }
 ```
+
+Smiths also provide `CreateFoundry*` helpers and `AddWorkflowMiddleware` for workflow-level middleware.
 
 ### IWorkflowOperation
 Individual executable operation within a workflow.
@@ -144,16 +181,14 @@ WorkflowForge supports two data flow patterns:
 **Recommended for most workflows**. All data stored in `foundry.Properties` (thread-safe `ConcurrentDictionary`).
 
 ```csharp
-workflow.AddOperation("StoreData", async (input, foundry, ct) => {
+workflow.AddOperation("StoreData", async (foundry, ct) => {
     foundry.SetProperty("OrderId", orderId);
     foundry.SetProperty("Customer", customer);
-    return input;
 });
 
-workflow.AddOperation("RetrieveData", async (input, foundry, ct) => {
+workflow.AddOperation("RetrieveData", async (foundry, ct) => {
     var orderId = foundry.GetPropertyOrDefault<string>("OrderId");
     var customer = foundry.GetPropertyOrDefault<string>("Customer");
-    return input;
 });
 ```
 
@@ -202,7 +237,7 @@ WorkflowForge provides **10 optional extensions** for additional capabilities:
 | **Serilog Logging** | Structured logging | `WorkflowForge.Extensions.Logging.Serilog` |
 | **Resilience** | Core retry abstractions | `WorkflowForge.Extensions.Resilience` |
 | **Polly Resilience** | Circuit breakers, retries | `WorkflowForge.Extensions.Resilience.Polly` |
-| **Validation** | Input validation, FluentValidation | `WorkflowForge.Extensions.Validation` |
+| **Validation** | Input validation, DataAnnotations | `WorkflowForge.Extensions.Validation` |
 | **Audit Logging** | Compliance & audit trails | `WorkflowForge.Extensions.Audit` |
 | **Persistence** | Workflow state storage | `WorkflowForge.Extensions.Persistence` |
 | **Persistence Recovery** | Resume interrupted workflows | `WorkflowForge.Extensions.Persistence.Recovery` |
@@ -210,7 +245,7 @@ WorkflowForge provides **10 optional extensions** for additional capabilities:
 | **Health Checks** | Application health | `WorkflowForge.Extensions.Observability.HealthChecks` |
 | **OpenTelemetry** | Distributed tracing | `WorkflowForge.Extensions.Observability.OpenTelemetry` |
 
-**Zero Version Conflicts**: All extensions use Costura.Fody to embed dependencies. Your application can use ANY version of Serilog, Polly, FluentValidation, or OpenTelemetry without conflicts.
+**Dependency Isolation**: Extensions internalize Serilog/Polly/OpenTelemetry with ILRepack while keeping Microsoft/System external.
 
 For detailed extension documentation, see [Extensions Guide](extensions/index.md).
 
@@ -225,6 +260,8 @@ Based on rigorous BenchmarkDotNet testing against WorkflowCore 3.17 and Elsa Wor
 | **Execution Speed** | 6.9-306 μs | 882-106,115 μs | **13-378x faster** |
 | **Memory Usage** | 1.73-87.93 KB | 44.51-19,104.55 KB | **6-1,495x less** |
 | **Creation Overhead** | 6.9 μs | 882-2,605 μs | **128-378x faster** |
+
+**Update Note**: Performance numbers will be refreshed after the upcoming benchmark rerun.
 
 **Test System**: Windows 11, .NET 8.0.21, 25 iterations per benchmark
 
@@ -261,7 +298,7 @@ Detailed breakdowns are in `CODE_REVIEW_SUMMARY.md` and `COMPREHENSIVE_CODE_REVI
 [Root README](../README.md) - Install and run your first workflow in 5 minutes.
 
 ### 2. Run Interactive Samples
-[Samples Guide](getting-started/samples-guide.md) - 24 progressive examples from "Hello World" to production patterns.
+[Samples Guide](getting-started/samples-guide.md) - 33 progressive examples from "Hello World" to production patterns.
 
 ```bash
 cd src/samples/WorkflowForge.Samples.BasicConsole
@@ -321,7 +358,7 @@ Built-in compensation for rollback scenarios.
 - [Events](core/events.md) - Event system
 - [Configuration](core/configuration.md) - Settings
 - [Extensions](extensions/index.md) - Extensions overview
-- [Samples Guide](getting-started/samples-guide.md) - 24 examples
+- [Samples Guide](getting-started/samples-guide.md) - 33 examples
 
 ### Performance & Analysis
 - [Performance](performance/performance.md) - Benchmark data

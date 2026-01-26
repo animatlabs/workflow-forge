@@ -1,10 +1,12 @@
 # WorkflowForge Internal Benchmarks
 
 <p align="center">
-  <img src="../../../icon.png" alt="WorkflowForge" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
 </p>
 
 **Internal performance benchmarks for WorkflowForge core**
+
+**Update Note**: Benchmark numbers will be refreshed after the upcoming rerun; current figures reflect the last completed run.
 
 ## Overview
 
