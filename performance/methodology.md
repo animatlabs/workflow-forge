@@ -2,7 +2,7 @@
 
 This document defines how we run comparative benchmarks and keep results fair across WorkflowForge, WorkflowCore, and Elsa.
 
-**Update Note**: Methodology remains stable, but benchmark outputs will be refreshed after the upcoming rerun.
+**Last Updated**: January 2026
 
 ## Goals
 
@@ -14,7 +14,8 @@ This document defines how we run comparative benchmarks and keep results fair ac
 
 - Build: `Release`
 - Target: `net8.0`
-- Tooling: `BenchmarkDotNet`
+- Runtime: `.NET 8.0.23`
+- Tooling: `BenchmarkDotNet v0.15.8`
 - Diagnostics: `MemoryDiagnoser` + Markdown/HTML exporters
 - Iterations: 5 warmups, 25 measurements (per scenario)
 - Config: Optimizations validator disabled (BenchmarkDotNet config)

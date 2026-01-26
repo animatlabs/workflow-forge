@@ -538,7 +538,7 @@ All operations are async-first:
 - Direct execution paths
 - No reflection in hot paths
 
-**Result**: 13-378x faster than competitors, 6-1,495x less memory.
+**Result**: 11-574x faster than competitors, 9-581x less memory (12 scenarios tested).
 
 ---
 

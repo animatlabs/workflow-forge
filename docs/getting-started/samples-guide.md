@@ -181,21 +181,21 @@ var conditional = new ConditionalWorkflowOperation(
 
 **Key Code Pattern**:
 ```csharp
-// Sequential
-var sequential = ForEachWorkflowOperation.CreateSequential(
-    items,
-    itemOperation
+// Shared input - all operations receive the same input data
+var sharedInput = ForEachWorkflowOperation.CreateSharedInput(
+    new[] { op1, op2, op3 },
+    maxConcurrency: 4,
+    name: "ProcessAllItems"
 );
 
-// Parallel
-var parallel = ForEachWorkflowOperation.CreateParallel(
-    items,
-    itemOperation,
-    maxDegreeOfParallelism: 4
+// Split input - input collection is distributed among operations
+var splitInput = ForEachWorkflowOperation.CreateSplitInput(
+    new[] { op1, op2, op3 },
+    maxConcurrency: 2
 );
 
-// Shared input (all operations get same input)
-var shared = ForEachWorkflowOperation.CreateSharedInput(operations);
+// No input - operations receive null input
+var noInput = ForEachWorkflowOperation.CreateNoInput(operations);
 ```
 
 **Data Flow**: Dictionary-based + collection iteration  
@@ -248,7 +248,7 @@ public override async Task RestoreAsync(...) {
 .AddOperation(new LoggingOperation("Message", WorkflowForgeLogLevel.Information))
 .AddOperation(new DelayOperation(TimeSpan.FromSeconds(1)))
 .AddOperation(new ConditionalWorkflowOperation(...))
-.AddOperation(ForEachWorkflowOperation.CreateSequential(...))
+.AddOperation(ForEachWorkflowOperation.CreateSharedInput(operations))
 ```
 
 **Data Flow**: Dictionary-based  
@@ -424,12 +424,17 @@ var smith = WorkflowForge.CreateSmith(logger);
 
 **Key Code Pattern**:
 ```csharp
-foundry.UsePolly(policy => policy
-    .RetryAsync(3)
-    .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30))
-    .TimeoutAsync(TimeSpan.FromSeconds(10))
-    .FallbackAsync(fallbackAction)
-);
+// Comprehensive policy with retry, circuit breaker, and timeout
+foundry.UsePollyComprehensive(
+    maxRetryAttempts: 3,
+    circuitBreakerThreshold: 5,
+    circuitBreakerDuration: TimeSpan.FromSeconds(30),
+    timeoutDuration: TimeSpan.FromSeconds(10));
+
+// Or use individual policies
+foundry.UsePollyRetry(maxRetryAttempts: 3);
+foundry.UsePollyCircuitBreaker(failureThreshold: 5, durationOfBreak: TimeSpan.FromSeconds(30));
+foundry.UsePollyTimeout(TimeSpan.FromSeconds(10));
 ```
 
 **Data Flow**: Dictionary-based  
@@ -568,8 +573,13 @@ await smith.ResumeAsync(workflowId);
 
 **Key Code Pattern**:
 ```csharp
-foundry.UsePolly(policy => policy.RetryAsync(3));
-foundry.UseRecovery(recoveryProvider);
+// Add resilience middleware to foundry
+foundry.UsePollyRetry(maxRetryAttempts: 3);
+
+// Execute with recovery support
+await smith.ForgeWithRecoveryAsync(
+    workflow, foundry, persistenceProvider,
+    foundryKey, workflowKey);
 
 // Workflow benefits from both retry and recovery
 ```
@@ -695,8 +705,8 @@ if (auditOptions.Value.Enabled)
 **Key Code Pattern**:
 ```csharp
 foundry.EnablePerformanceMonitoring();
-foundry.UsePolly(policy => policy.RetryAsync(3));
-foundry.AddValidation(validator, extractor);
+foundry.UsePollyRetry(maxRetryAttempts: 3);
+foundry.UseValidation<OrderDto>(f => f.GetPropertyOrDefault<OrderDto>("Order"));
 foundry.EnableAudit(auditProvider);
 foundry.UsePersistence(persistenceProvider);
 foundry.AddMiddleware(new TimingMiddleware());

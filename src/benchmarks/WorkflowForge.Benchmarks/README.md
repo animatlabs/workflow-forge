@@ -6,7 +6,8 @@
 
 **Internal performance benchmarks for WorkflowForge core**
 
-**Update Note**: Benchmark numbers will be refreshed after the upcoming rerun; current figures reflect the last completed run.
+**Last Updated**: January 2026  
+**Published Results**: [Internal Benchmarks Documentation](../../../docs/performance/internal-benchmarks.md)
 
 ## Overview
 
@@ -110,10 +111,10 @@ Results are saved to `BenchmarkDotNet.Artifacts/results/` in multiple formats:
 
 ## Test System
 
-- **OS**: Windows 11
+- **OS**: Windows 11 (25H2)
 - **CPU**: Intel 11th Gen i7-1185G7
-- **.NET**: 8.0.21
-- **BenchmarkDotNet**: v0.13.12
+- **.NET**: 8.0.23
+- **BenchmarkDotNet**: v0.15.8
 
 ## Documentation
 

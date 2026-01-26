@@ -83,8 +83,8 @@ WorkflowForge is a **zero-dependency workflow orchestration framework** for .NET
 
 ### Key Features
 
-- **World-Class Performance**: 13-378x faster than leading alternatives
-- **Minimal Memory**: 6-1,495x less memory usage
+- **World-Class Performance**: 11-574x faster than leading alternatives
+- **Minimal Memory**: 9-581x less memory usage
 - **Zero Dependencies**: Core package with no external dependencies
 - **Production Ready**: Built-in compensation (saga pattern), comprehensive testing
 - **Extension Ecosystem**: 10 optional extensions with zero version conflicts
@@ -222,7 +222,7 @@ Workflow-level events: `WorkflowStarted`, `WorkflowCompleted`, `WorkflowFailed`
 Operation-level events: `OperationStarted`, `OperationCompleted`, `OperationFailed`
 
 ### ICompensationLifecycleEvents
-Compensation events: `CompensationStarted`, `CompensationCompleted`, `CompensationFailed`
+Compensation events: `CompensationTriggered`, `CompensationCompleted`, `OperationRestoreStarted`, `OperationRestoreCompleted`, `OperationRestoreFailed`
 
 For comprehensive event handling, see [Event System Guide](core/events.md).
 
@@ -253,19 +253,18 @@ For detailed extension documentation, see [Extensions Guide](extensions/index.md
 
 ## Performance Highlights
 
-Based on rigorous BenchmarkDotNet testing against WorkflowCore 3.17 and Elsa Workflows 3.5.1:
+Based on rigorous BenchmarkDotNet testing (12 scenarios) against Workflow Core and Elsa Workflows:
 
 | Metric | WorkflowForge | Competitors | Advantage |
 |--------|---------------|-------------|-----------|
-| **Execution Speed** | 6.9-306 μs | 882-106,115 μs | **13-378x faster** |
-| **Memory Usage** | 1.73-87.93 KB | 44.51-19,104.55 KB | **6-1,495x less** |
-| **Creation Overhead** | 6.9 μs | 882-2,605 μs | **128-378x faster** |
+| **Execution Speed** | 12-312 μs | 1,367-69,284 μs | **11-574x faster** |
+| **Memory Usage** | 3.4-110 KB | 31-19,815 KB | **9-581x less** |
+| **State Machine** | 122 μs | 39,217-69,284 μs | **322-574x faster** |
 
-**Update Note**: Performance numbers will be refreshed after the upcoming benchmark rerun.
+**Test System**: Windows 11 (25H2), .NET 8.0.23, BenchmarkDotNet v0.15.8, 25 iterations  
+**Last Updated**: January 2026
 
-**Test System**: Windows 11, .NET 8.0.21, 25 iterations per benchmark
-
-For comprehensive performance analysis, see [Performance Documentation](performance/performance.md).
+For comprehensive performance analysis, see [Performance Documentation](performance/performance.md) and [Internal Benchmarks](performance/internal-benchmarks.md).
 
 ---
 

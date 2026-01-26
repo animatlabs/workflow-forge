@@ -6,7 +6,7 @@
 
 **Head-to-head performance comparison: WorkflowForge vs Workflow Core vs Elsa Workflows**
 
-**Update Note**: Comparative benchmarks will be rerun after the current change set; numbers below reflect the last completed run.
+**Last Updated**: January 2026
 
 ## Overview
 
@@ -15,8 +15,8 @@ This project contains fair, apple-to-apple performance benchmarks comparing Work
 ## Frameworks Tested
 
 - **WorkflowForge 2.0.0** - Zero-dependency, microsecond-scale orchestration
-- **Workflow Core 3.17.0** - Popular persistence-first workflow engine
-- **Elsa Workflows 3.5.1** - Modern workflow engine with designer support
+- **Workflow Core** - Popular persistence-first workflow engine
+- **Elsa Workflows** - Modern workflow engine with designer support
 
 ## Benchmark Scenarios
 
@@ -62,7 +62,7 @@ dotnet run --project WorkflowForge.Benchmarks.csproj --configuration Release
 dotnet run --project WorkflowForge.Benchmarks.Comparative.csproj --configuration Release
 ```
 
-This runs all 8 scenarios and saves results to `BenchmarkDotNet.Artifacts/`.
+This runs all 12 scenarios and saves results to `BenchmarkDotNet.Artifacts/`.
 
 ### Run Specific Scenario
 
@@ -86,8 +86,8 @@ Benchmark results are saved to:
 
 ### Performance Advantage
 
-- **13-378x faster execution** across all scenarios
-- **6-405x less memory allocation**
+- **11-574x faster execution** across 12 scenarios
+- **9-581x less memory allocation**
 - **Consistent microsecond-scale performance** vs millisecond-scale competitors
 
 ### Why WorkflowForge is Faster
@@ -155,10 +155,10 @@ See [BENCHMARK_EXCLUSIONS.md](BENCHMARK_EXCLUSIONS.md) for technical details on 
 
 ## Test System
 
-- **OS**: Windows 11
+- **OS**: Windows 11 (25H2)
 - **CPU**: Intel 11th Gen i7-1185G7
-- **.NET**: 8.0.21
-- **BenchmarkDotNet**: v0.13.12
+- **.NET**: 8.0.23
+- **BenchmarkDotNet**: v0.15.8
 - **Iterations**: 25 per benchmark, 5 warmup
 
 ## Documentation

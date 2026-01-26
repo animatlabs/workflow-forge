@@ -226,18 +226,22 @@ Abstract base class implementing common operation patterns.
 ```csharp
 public abstract class WorkflowOperationBase : IWorkflowOperation
 {
-    public Guid Id { get; }
+    public virtual Guid Id { get; } = Guid.NewGuid();
     public abstract string Name { get; }
     public virtual bool SupportsRestore => false;
     
     public abstract Task<object?> ForgeAsync(
+        object? inputData,
         IWorkflowFoundry foundry,
         CancellationToken cancellationToken = default);
     
     public virtual Task RestoreAsync(
+        object? outputData,
         IWorkflowFoundry foundry,
         CancellationToken cancellationToken = default)
     {
+        if (!SupportsRestore)
+            throw new NotSupportedException($"Operation '{Name}' does not support restoration.");
         return Task.CompletedTask;
     }
     
@@ -245,10 +249,11 @@ public abstract class WorkflowOperationBase : IWorkflowOperation
 }
 ```
 
-**Key Differences from IWorkflowOperation**:
-- `ForgeAsync` doesn't have `inputData` parameter (encourages foundry properties)
-- `RestoreAsync` doesn't have `outputData` parameter (encourages foundry properties)
-- Base class handles IWorkflowOperation bridge
+**Features**:
+- Auto-generates unique `Id` for each operation instance
+- Default `SupportsRestore = false` (override to enable compensation)
+- `RestoreAsync` throws `NotSupportedException` if `SupportsRestore` is false
+- Override `Dispose()` if your operation holds unmanaged resources
 
 **Recommended Base Class**: Use `WorkflowOperationBase` for most operations.
 
@@ -685,24 +690,49 @@ var conditionalOp = new ConditionalWorkflowOperation(
 
 ### ForEachWorkflowOperation
 
-Processes collections in parallel or sequential mode.
+Executes multiple operations concurrently with configurable data distribution.
 
 ```csharp
-public static class ForEachWorkflowOperation
+public sealed class ForEachWorkflowOperation : WorkflowOperationBase
 {
-    public static IWorkflowOperation Create(
-        IWorkflowOperation operation,
-        bool parallel = true);
+    // Factory methods
+    public static ForEachWorkflowOperation CreateSharedInput(
+        IEnumerable<IWorkflowOperation> operations,
+        TimeSpan? timeout = null,
+        int? maxConcurrency = null,
+        string? name = null);
+    
+    public static ForEachWorkflowOperation CreateSplitInput(
+        IEnumerable<IWorkflowOperation> operations,
+        TimeSpan? timeout = null,
+        int? maxConcurrency = null,
+        string? name = null);
+    
+    public static ForEachWorkflowOperation CreateNoInput(
+        IEnumerable<IWorkflowOperation> operations,
+        TimeSpan? timeout = null,
+        int? maxConcurrency = null,
+        string? name = null);
 }
 ```
 
+**Data Strategies**:
+- `CreateSharedInput`: All operations receive the same input data
+- `CreateSplitInput`: Input collection is split and distributed among operations
+- `CreateNoInput`: Operations receive null input
+
 **Example**:
 ```csharp
-foundry.SetProperty("items", new[] { "A", "B", "C" });
+// Execute multiple operations in parallel with shared input
+var forEachOp = ForEachWorkflowOperation.CreateSharedInput(
+    new IWorkflowOperation[] { new ProcessA(), new ProcessB(), new ProcessC() },
+    maxConcurrency: 4,
+    name: "ProcessAll");
 
-var forEachOp = ForEachWorkflowOperation.Create(
-    new ProcessItemOperation(),
-    parallel: true);
+// Throttled execution with 2 concurrent operations max
+var throttledOp = ForEachWorkflowOperation.CreateSplitInput(
+    operations,
+    maxConcurrency: 2);
 ```
 
 ---

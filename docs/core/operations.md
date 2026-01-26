@@ -146,38 +146,44 @@ var workflow = WorkflowForge.CreateWorkflow()
 
 ### 4. ForEachWorkflowOperation
 
-Process collections sequentially or in parallel.
+Execute multiple operations concurrently with configurable data distribution.
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
     .WithName("ProcessOrderItems")
-    .AddOperation(new ForEachWorkflowOperation<OrderItem>(
-        name: "ProcessItems",
-        itemsSource: (input, foundry, ct) => {
-            var items = foundry.Properties["OrderItems"] as IEnumerable<OrderItem>;
-            return Task.FromResult(items);
+    .AddOperation(ForEachWorkflowOperation.CreateSharedInput(
+        new IWorkflowOperation[] {
+            new ValidateInventoryOperation(),
+            new ReserveInventoryOperation(),
+            new NotifyWarehouseOperation()
         },
-        itemOperation: new DelegateWorkflowOperation<OrderItem, OrderItem>(
-            "ProcessSingleItem",
-            async (item, foundry, ct) => {
-                foundry.Logger.LogInformation("Processing item {ItemId}", item.Id);
-                await _inventoryService.ReserveAsync(item.ProductId, item.Quantity);
-                item.Reserved = true;
-                return item;
-            }
-        ),
-        parallel: false  // Set to true for parallel execution
+        maxConcurrency: 2,  // Throttle to 2 concurrent operations
+        name: "ProcessItems"
+    ))
+    .Build();
+
+// Or split input collection among operations
+var splitWorkflow = WorkflowForge.CreateWorkflow()
+    .WithName("DistributedProcessing")
+    .AddOperation(ForEachWorkflowOperation.CreateSplitInput(
+        itemOperations,
+        maxConcurrency: 4
     ))
     .Build();
 ```
 
-**When to Use**: Collection processing, batch operations, aggregations
+**Factory Methods**:
+- `CreateSharedInput`: All operations receive the same input data
+- `CreateSplitInput`: Input collection is split and distributed among operations
+- `CreateNoInput`: Operations receive null input
+
+**When to Use**: Parallel processing, batch operations, concurrent tasks
 
 **Features**:
-- Sequential or parallel execution
-- Individual item processing
-- Results aggregation
-- Progress tracking
+- Configurable concurrency (`maxConcurrency`)
+- Timeout support
+- Data distribution strategies
+- Result aggregation
 
 ### 5. DelayOperation
 
@@ -194,7 +200,7 @@ var workflow = WorkflowForge.CreateWorkflow()
             return status;
         }
     ))
-    .AddOperation(new DelayOperation("WaitBeforeRetry", TimeSpan.FromSeconds(5)))
+    .AddOperation(new DelayOperation(TimeSpan.FromSeconds(5), "WaitBeforeRetry"))
     .AddOperation(new DelegateWorkflowOperation(
         "RetryCheck",
         async (input, foundry, ct) => {
@@ -220,10 +226,9 @@ Structured logging at specific workflow points.
 var workflow = WorkflowForge.CreateWorkflow()
     .WithName("AuditedWorkflow")
     .AddOperation(new LoggingOperation(
-        "LogStart",
+        "Workflow started for order processing",
         WorkflowForgeLogLevel.Information,
-        "Workflow started for order {OrderId}",
-        foundry => new object[] { foundry.Properties["OrderId"] }
+        "LogStart" // optional name
     ))
     .AddOperation(new DelegateWorkflowOperation(
         "ProcessOrder",
@@ -232,13 +237,30 @@ var workflow = WorkflowForge.CreateWorkflow()
             return input;
         }
     ))
-    .AddOperation(new LoggingOperation(
-        "LogCompletion",
-        WorkflowForgeLogLevel.Information,
-        "Workflow completed successfully"
-    ))
+    .AddOperation(new LoggingOperation("Workflow completed successfully"))
+    .Build();
+
+// Alternative: Use static factory methods for cleaner code
+var workflow2 = WorkflowForge.CreateWorkflow()
+    .WithName("AuditedWorkflow")
+    .AddOperation(LoggingOperation.Info("Starting order processing"))
+    .AddOperation(new DelegateWorkflowOperation("ProcessOrder", async (input, foundry, ct) => input))
+    .AddOperation(LoggingOperation.Info("Workflow completed"))
     .Build();
 ```
+
+**Constructor**:
+```csharp
+LoggingOperation(string message, WorkflowForgeLogLevel logLevel = Information, string? name = null)
+```
+
+**Static Factory Methods**:
+- `LoggingOperation.Trace(message)`
+- `LoggingOperation.Debug(message)`
+- `LoggingOperation.Info(message)`
+- `LoggingOperation.Warning(message)`
+- `LoggingOperation.Error(message)`
+- `LoggingOperation.Critical(message)`
 
 **When to Use**: Audit points, debugging, progress tracking
 
@@ -494,21 +516,29 @@ var workflow = WorkflowForge.CreateWorkflow()
 Process items in parallel then join results.
 
 ```csharp
+// Create multiple processing operations
+var itemOperations = items.Select(item => 
+    new DelegateWorkflowOperation(
+        $"Process_{item.Id}",
+        async (input, foundry, ct) => {
+            var result = await ProcessAsync(item);
+            foundry.Properties[$"Result_{item.Id}"] = result;
+            return result;
+        }
+    )).Cast<IWorkflowOperation>().ToArray();
+
 var workflow = WorkflowForge.CreateWorkflow()
     .WithName("ParallelProcessing")
-    .AddOperation(new ForEachWorkflowOperation<Item>(
-        "ProcessInParallel",
-        (input, foundry, ct) => Task.FromResult(items),
-        new DelegateWorkflowOperation<Item, Result>(
-            "ProcessItem",
-            async (item, foundry, ct) => await ProcessAsync(item)
-        ),
-        parallel: true  // Parallel execution
+    .AddOperation(ForEachWorkflowOperation.CreateNoInput(
+        itemOperations,
+        maxConcurrency: Environment.ProcessorCount,
+        name: "ProcessInParallel"
     ))
     .AddOperation(new DelegateWorkflowOperation(
         "JoinResults",
         async (input, foundry, ct) => {
-            var results = foundry.Properties["ProcessInParallel_Results"] as List<Result>;
+            var results = items.Select(item => 
+                foundry.GetPropertyOrDefault<Result>($"Result_{item.Id}")).ToList();
             var aggregated = Aggregate(results);
             return aggregated;
         }

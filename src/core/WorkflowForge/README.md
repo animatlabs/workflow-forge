@@ -193,14 +193,18 @@ workflow.AddOperation("ProcessByTier", conditionalOp);
 ### 4. ForEachWorkflowOperation
 
 ```csharp
-var items = new[] { "item1", "item2", "item3" };
-var forEachOp = ForEachWorkflowOperation.Create(
-    items: items,
-    operation: new ProcessItemOperation(),
-    parallelExecution: true  // Process items concurrently
+// Execute multiple operations concurrently (shared input to all)
+var forEachOp = ForEachWorkflowOperation.CreateSharedInput(
+    new[] { new ProcessItemOperation(), new ValidateOperation() },
+    maxConcurrency: 4,
+    name: "ProcessItems"
 );
 
-workflow.AddOperation("ProcessItems", forEachOp);
+// Or split input collection among operations
+var splitOp = ForEachWorkflowOperation.CreateSplitInput(
+    itemOperations,
+    maxConcurrency: 2
+);
 ```
 
 ### 5. DelayOperation
@@ -421,16 +425,20 @@ var smith = services.BuildServiceProvider().GetRequiredService<IWorkflowSmith>()
 
 ## Performance
 
-WorkflowForge Core is optimized for production workloads:
+WorkflowForge Core is optimized for production workloads (12 scenarios benchmarked):
 
-- **Operation Execution**: 12-290 μs (depending on operation type)
-- **Workflow Creation**: 12-22 μs
-- **Memory**: 296-1912 bytes per operation execution
-- **Concurrency**: 8x faster than sequential execution with parallel workflows
+- **Execution Speed**: 11-574x faster than competitors
+- **State Machine**: 322-574x faster (highest advantage)
+- **Memory**: 9-581x less allocation than competitors
+- **Concurrency**: Near-perfect linear scaling (16x speedup for 16 workflows)
 
-**Update Note**: Benchmarks will be rerun after the current change set; values above reflect the latest completed run.
+| Scenario | WorkflowForge | Workflow Core | Elsa | Advantage |
+|----------|---------------|---------------|------|-----------|
+| Sequential (10 ops) | 224μs | 6,060μs | 17,044μs | 27-76x |
+| State Machine (25) | 59μs | 19,156μs | 34,033μs | 322-574x |
+| Parallel (16 ops) | 47μs | 2,080μs | 21,491μs | 44-454x |
 
-See [Performance Documentation](../../../docs/performance/performance.md) for detailed benchmarks.
+See [Performance Documentation](../../../docs/performance/performance.md) for all 12 scenarios.
 
 ## Testing
 

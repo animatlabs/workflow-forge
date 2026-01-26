@@ -10,18 +10,16 @@ High-performance, dependency-free workflow orchestration library for .NET. Execu
 
 ## Performance at a Glance
 
-**Internal Benchmarks** (.NET 8.0, Windows 11):
+**Internal Benchmarks** (.NET 8.0.23, Windows 11):
 - **Operation Execution**: 9.8-37.8μs median latency
-- **Workflow Throughput**: 50-200μs for 1-50 operations
-- **Memory Footprint**: 2.65KB baseline, linear scaling
+- **Workflow Throughput**: 12-312μs for typical operations
+- **Memory Footprint**: 3.4-110KB across scenarios
 - **Concurrent Scaling**: Near-perfect (16x speedup for 16 workflows)
 
-**Competitive Benchmarks** (vs. Workflow Core 3.17, Elsa 3.5.1):
-- **13-378x faster** execution across 8 real-world scenarios
-- **6-1,495x less** memory allocation
+**Competitive Benchmarks** (12 scenarios vs. Workflow Core, Elsa):
+- **11-574x faster** execution (State Machine: 322-574x)
+- **9-581x less** memory allocation
 - **Microsecond-scale** execution vs. millisecond-scale competitors
-
-**Update Note**: Benchmarks will be rerun after the current change set; values above reflect the latest completed run.
 
 [Full Performance Details](docs/performance/performance.md) | [Competitive Analysis](docs/performance/competitive-analysis.md)
 

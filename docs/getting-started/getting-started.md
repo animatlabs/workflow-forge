@@ -194,7 +194,7 @@ public class ProcessPaymentOperation : WorkflowOperationBase
     }
 
     public override async Task RestoreAsync(
-        object? inputData,
+        object? outputData,
         IWorkflowFoundry foundry,
         CancellationToken cancellationToken)
     {
@@ -276,9 +276,9 @@ var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
     .Build();
 
 // Create a foundry with the order data
-var foundry = WorkflowForge.CreateFoundryWithData(
+var foundry = WorkflowForge.CreateFoundry(
     "ProcessOrder",
-    new Dictionary<string, object?> { ["Order"] = order }
+    initialProperties: new Dictionary<string, object?> { ["Order"] = order }
 );
 
 // Create a smith (orchestrator) with console logger
@@ -446,10 +446,15 @@ var smith = WorkflowForge.CreateSmith(logger);
 ```csharp
 using WorkflowForge.Extensions.Resilience.Polly;
 
-foundry.UsePolly(policy => policy
-    .RetryAsync(3)
-    .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30))
-);
+// Comprehensive policy with retry, circuit breaker, and timeout
+foundry.UsePollyComprehensive(
+    maxRetryAttempts: 3,
+    circuitBreakerThreshold: 5,
+    circuitBreakerDuration: TimeSpan.FromSeconds(30));
+
+// Or use individual policies
+foundry.UsePollyRetry(maxRetryAttempts: 3);
+foundry.UsePollyCircuitBreaker(failureThreshold: 5, durationOfBreak: TimeSpan.FromSeconds(30));
 ```
 
 **Validation (DataAnnotations)**:
@@ -484,7 +489,7 @@ foundry.UseValidation(
 **Solution**: Use `foundry.SetProperty()` to store and `foundry.GetPropertyOrDefault()` to retrieve data.
 
 **Issue**: Compensation not running
-**Solution**: Set `SupportsRestore = true` and configure `AutoRestore = true` in foundry configuration.
+**Solution**: Set `SupportsRestore = true` on your operation. Compensation runs automatically when a workflow fails and operations with `SupportsRestore = true` have been executed.
 
 ### Getting Help
 

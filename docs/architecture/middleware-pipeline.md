@@ -54,16 +54,13 @@ Add middleware in order of desired outer-to-inner wrapping:
 
 ```csharp
 // Step 1: Observability - measures total execution time
-foundry.UsePerformanceMonitoring();
+foundry.EnablePerformanceMonitoring();
 
-// Step 2: Error handling - catches and logs all errors
-foundry.UseErrorHandling();
+// Step 2: Resilience - retries failed operations
+foundry.UsePollyRetry(maxRetryAttempts: 3);
 
-// Step 3: Resilience - retries failed operations
-foundry.UsePollyRetry();
-
-// Step 4: Business logic - validates and audits
-foundry.UseValidation(validator, extractor);
+// Step 3: Business logic - validates and audits
+foundry.UseValidation<OrderDto>(f => f.GetPropertyOrDefault<OrderDto>("Order"));
 foundry.UseAudit(auditProvider);
 ```
 
