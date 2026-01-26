@@ -1,9 +1,9 @@
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Engines;
 using System.Collections.Concurrent;
 using System.Text;
-using WorkflowForge.Configurations;
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Engines;
 using WorkflowForge.Extensions;
+using WorkflowForge.Configurations;
 
 namespace WorkflowForge.Benchmarks;
 
@@ -15,7 +15,7 @@ namespace WorkflowForge.Benchmarks;
 /// - Memory-optimized configurations
 /// </summary>
 [MemoryDiagnoser]
-[SimpleJob(RunStrategy.Monitoring, iterationCount: 25)]
+[SimpleJob(RunStrategy.Monitoring, iterationCount: 50)]
 [MarkdownExporter]
 [HtmlExporter]
 public class MemoryAllocationBenchmark

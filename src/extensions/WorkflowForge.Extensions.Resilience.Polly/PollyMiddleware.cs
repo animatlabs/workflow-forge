@@ -1,12 +1,14 @@
-using Polly;
-using Polly.CircuitBreaker;
-using Polly.Retry;
-using Polly.Timeout;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Polly;
+using Polly.CircuitBreaker;
+using Polly.Retry;
+using Polly.Timeout;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Loggers;
+using WorkflowForge.Constants;
 
 namespace WorkflowForge.Extensions.Resilience.Polly
 {

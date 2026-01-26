@@ -1,53 +1,16 @@
 # WorkflowForge Extension System
 
-<p align="center">
-  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
 WorkflowForge follows an extension-first architecture where the core library provides minimal functionality, and rich features are delivered through a comprehensive extension ecosystem.
-
-## Table of Contents
-
-- [Dependency-Free Core and Zero Version Conflicts](#dependency-free-core-and-zero-version-conflicts)
-- [Extension Architecture](#extension-architecture)
-- [Available Extensions](#available-extensions)
-  - [Logging Extensions](#logging-extensions)
-  - [Resilience Extensions](#resilience-extensions)
-  - [Observability Extensions](#observability-extensions)
-  - [Persistence Extensions](#persistence-extensions)
-  - [Validation Extension](#validation-extension)
-  - [Audit Extension](#audit-extension)
-- [Extension Configuration Patterns](#extension-configuration-patterns)
-- [Creating Custom Extensions](#creating-custom-extensions)
-- [Extension Best Practices](#extension-best-practices)
-
----
-
-## Dependency-Free Core and Zero Version Conflicts
-
-WorkflowForge core is zero-dependency. Extensions use Costura.Fody to embed third-party dependencies as compressed resources. This ensures:
-
-- No DLL conflicts with your application dependencies
-- Your app can use any version of Serilog, Polly, FluentValidation, or OpenTelemetry
-- Clean deployment (fewer files) due to embedded dependencies
-- Industry-standard isolation using Fody/Costura
-
-### How It Works
-
-Extensions with third-party dependencies (Validation, Logging.Serilog, Resilience.Polly, Resilience, OpenTelemetry, Performance) embed their dependencies at build time. At runtime, Costura automatically resolves these from embedded resources, isolated from your application's dependency graph.
-
-**Example**: Your app uses FluentValidation 12.x, our Validation extension uses 11.9.0 - both coexist perfectly with zero conflicts!
 
 ## Extension Architecture
 
 ### Core Principles
 
 1. **Dependency-Free Core** - The core library has zero dependencies
-2. **Zero Conflict Extensions** - Embedded dependencies prevent version conflicts
-3. **Optional Extensions** - Add only what you need
-4. **Composable Features** - Extensions work together seamlessly
-5. **Configuration-Driven** - Extensions are configured, not hard-coded
-6. **Production-Ready** - Professional features for production use
+2. **Optional Extensions** - Add only what you need
+3. **Composable Features** - Extensions work together seamlessly
+4. **Configuration-Driven** - Extensions are configured, not hard-coded
+5. **Enterprise-Ready** - Professional features for production use
 
 ### Extension Categories
 
@@ -59,11 +22,6 @@ WorkflowForge Extensions
 │   ├── Basic Patterns
 │   └── Polly Integration
 ├── Persistence (BYO storage)
-│   └── Recovery Extensions
-├── Validation
-│   └── FluentValidation Integration
-├── Audit
-│   └── Compliance & Operational Monitoring
 └── Observability
     ├── Performance Monitoring
     ├── Health Checks
@@ -208,90 +166,6 @@ foundry
   }
 }
 ```
-
-### Persistence Extensions
-
-#### WorkflowForge.Extensions.Persistence
-
-Core workflow state persistence abstraction with bring-your-own-storage pattern.
-
-**Installation:**
-```bash
-dotnet add package WorkflowForge.Extensions.Persistence
-```
-
-**Features:**
-- Abstract persistence layer
-- State snapshot and restoration
-- Pluggable storage providers
-- Metadata management
-- Operation state tracking
-
-**Usage:**
-```csharp
-using WorkflowForge.Extensions.Persistence;
-
-// Implement custom storage provider
-public class MyStorageProvider : IWorkflowStateStore
-{
-    public async Task SaveStateAsync(WorkflowState state, CancellationToken ct)
-    {
-        // Save to your database, file system, etc.
-    }
-    
-    public async Task<WorkflowState?> LoadStateAsync(string workflowId, CancellationToken ct)
-    {
-        // Load from your storage
-    }
-}
-
-// Use in workflow
-var stateStore = new MyStorageProvider();
-var foundry = WorkflowForge.CreateFoundry("PersistentWorkflow");
-foundry.AddStateStore(stateStore);
-```
-
-#### WorkflowForge.Extensions.Persistence.Recovery
-
-Resume interrupted workflows from saved state.
-
-**Installation:**
-```bash
-dotnet add package WorkflowForge.Extensions.Persistence.Recovery
-```
-
-**Features:**
-- Automatic workflow resumption
-- Skip completed operations
-- State validation and integrity checks
-- Recovery point management
-- Failure recovery strategies
-
-**Usage:**
-```csharp
-using WorkflowForge.Extensions.Persistence;
-using WorkflowForge.Extensions.Persistence.Recovery;
-
-var stateStore = new MyStorageProvider();
-var recoveryService = new WorkflowRecoveryService(stateStore);
-
-// Attempt to recover workflow
-var state = await recoveryService.LoadWorkflowStateAsync("workflow-123");
-if (state != null && state.CanRecover)
-{
-    var foundry = WorkflowForge.CreateFoundry("RecoveredWorkflow");
-    foundry.AddStateStore(stateStore);
-    foundry.EnableRecovery(state);
-    
-    // Resume from last checkpoint
-    await smith.ForgeAsync(workflow, foundry);
-}
-```
-
-**See Also:**
-- Sample 18: Persistence (BYO Storage)
-- Sample 21: Recovery Only
-- Sample 22: Recovery + Resilience
 
 ### Observability Extensions
 
@@ -623,226 +497,6 @@ var foundry = WorkflowForge.CreateFoundry("ProcessOrder")
     .ConfigureFromSection(foundryConfig);
 ```
 
-### Validation Extension
-
-#### WorkflowForge.Extensions.Validation
-
-Input validation and business rule enforcement using FluentValidation integration.
-
-**Installation:**
-```bash
-dotnet add package WorkflowForge.Extensions.Validation
-dotnet add package FluentValidation
-```
-
-**Features:**
-- FluentValidation integration
-- Automatic middleware-based validation
-- Manual validation support
-- Comprehensive error reporting
-- Property-level error details
-- Validation result caching
-
-**Usage:**
-```csharp
-using FluentValidation;
-using WorkflowForge.Extensions.Validation;
-
-// Define validator
-public class OrderValidator : AbstractValidator<Order>
-{
-    public OrderValidator()
-    {
-        RuleFor(x => x.CustomerId)
-            .NotEmpty().WithMessage("Customer ID is required");
-        RuleFor(x => x.Amount)
-            .GreaterThan(0).WithMessage("Amount must be positive");
-    }
-}
-
-// Automatic validation via middleware
-var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
-foundry.AddValidation(
-    new OrderValidator(),
-    f => f.GetPropertyOrDefault<Order>("Order"),
-    throwOnFailure: true);
-
-// Manual validation
-var order = new Order { CustomerId = "CUST-123", Amount = 99.99m };
-var result = await foundry.ValidateAsync(new OrderValidator(), order);
-if (!result.IsValid)
-{
-    foreach (var error in result.Errors)
-    {
-        Console.WriteLine($"{error.PropertyName}: {error.ErrorMessage}");
-    }
-}
-```
-
-**Middleware Integration:**
-```csharp
-// Validation happens automatically before operation execution
-var workflow = WorkflowForge.CreateWorkflow()
-    .WithName("ValidatedWorkflow")
-    .AddOperation(new ProcessOrderOperation())
-    .Build();
-
-// Validation errors are stored in foundry properties
-var status = foundry.GetPropertyOrDefault<string>("Validation.ProcessOrder.Status");
-var errors = foundry.GetPropertyOrDefault<IReadOnlyList<ValidationError>>(
-    "Validation.ProcessOrder.Errors");
-```
-
-**Configuration:**
-```json
-{
-  "WorkflowForge": {
-    "Validation": {
-      "ThrowOnFailure": true,
-      "CacheResults": false,
-      "DetailedErrors": true
-    }
-  }
-}
-```
-
-**See Also:**
-- Sample: `src/samples/WorkflowForge.Samples.BasicConsole/Samples/ValidationSample.cs`
-- Tests: `tests/WorkflowForge.Extensions.Validation.Tests/`
-- README: `src/extensions/WorkflowForge.Extensions.Validation/README.md`
-
----
-
-### Audit Extension
-
-#### WorkflowForge.Extensions.Audit
-
-Comprehensive audit logging for compliance and operational monitoring.
-
-**Installation:**
-```bash
-dotnet add package WorkflowForge.Extensions.Audit
-```
-
-**Features:**
-- Automatic operation auditing
-- Pluggable storage providers (bring your own)
-- In-memory provider for testing
-- Immutable audit entries
-- Performance timing capture
-- Metadata enrichment
-- User context tracking
-
-**Usage:**
-```csharp
-using WorkflowForge.Extensions.Audit;
-
-// Create audit provider (in-memory for demo)
-var auditProvider = new InMemoryAuditProvider();
-
-// Enable audit logging
-var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
-foundry.EnableAudit(
-    auditProvider,
-    initiatedBy: "admin@company.com",
-    includeMetadata: true);
-
-// Workflow operations are automatically audited
-var workflow = WorkflowForge.CreateWorkflow()
-    .WithName("ProcessOrder")
-    .AddOperation(new ValidateOrderOperation())
-    .AddOperation(new ProcessPaymentOperation())
-    .Build();
-
-using var smith = WorkflowForge.CreateSmith();
-await smith.ForgeAsync(workflow, foundry);
-
-// Query audit entries
-foreach (var entry in auditProvider.Entries)
-{
-    Console.WriteLine($"[{entry.Timestamp:HH:mm:ss.fff}] {entry.EventType} - " +
-                     $"{entry.OperationName}: {entry.Status} ({entry.DurationMs}ms)");
-}
-
-// Custom audit entries
-await foundry.WriteCustomAuditAsync(
-    auditProvider,
-    "ManualApproval",
-    AuditEventType.Custom,
-    "Approved",
-    initiatedBy: "manager@company.com");
-```
-
-**Custom Audit Provider:**
-```csharp
-public class DatabaseAuditProvider : IAuditProvider
-{
-    private readonly DbContext _context;
-
-    public async Task WriteAuditEntryAsync(AuditEntry entry)
-    {
-        _context.AuditLog.Add(entry);
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task FlushAsync()
-    {
-        await _context.SaveChangesAsync();
-    }
-}
-
-// Use custom provider
-var auditProvider = new DatabaseAuditProvider(dbContext);
-foundry.EnableAudit(auditProvider);
-```
-
-**Audit Entry Structure:**
-```csharp
-public class AuditEntry
-{
-    public Guid Id { get; init; }
-    public DateTimeOffset Timestamp { get; init; }
-    public string WorkflowName { get; init; }
-    public string OperationName { get; init; }
-    public AuditEventType EventType { get; init; }
-    public string Status { get; init; }
-    public long? DurationMs { get; init; }
-    public string InitiatedBy { get; init; }
-    public IReadOnlyDictionary<string, string> Metadata { get; init; }
-}
-```
-
-**Event Types:**
-```csharp
-public enum AuditEventType
-{
-    OperationStarted,
-    OperationCompleted,
-    OperationFailed,
-    Custom
-}
-```
-
-**Configuration:**
-```json
-{
-  "WorkflowForge": {
-    "Audit": {
-      "Enabled": true,
-      "IncludeMetadata": true,
-      "DefaultInitiatedBy": "system"
-    }
-  }
-}
-```
-
-**See Also:**
-- Sample: `src/samples/WorkflowForge.Samples.BasicConsole/Samples/AuditSample.cs`
-- Tests: `tests/WorkflowForge.Extensions.Audit.Tests/`
-- README: `src/extensions/WorkflowForge.Extensions.Audit/README.md`
-
----
-
 ## Creating Custom Extensions
 
 ### Extension Development Pattern
@@ -1120,20 +774,15 @@ public class ExtensionIntegrationTests
 - **[Getting Started](getting-started.md)** - Basic extension usage
 - **[Architecture](architecture.md)** - Extension architecture details
 - **[Configuration](configuration.md)** - Configuration patterns
-- **[Operations Guide](operations.md)** - Custom operation patterns
-- **[Events System](events.md)** - Event-driven integration
-
 Refer to extension package READMEs for details:
 - Core logging integration: `src/core/WorkflowForge/README.md`
 - Serilog: `src/extensions/WorkflowForge.Extensions.Logging.Serilog/README.md`
 - Resilience base: `src/extensions/WorkflowForge.Extensions.Resilience/README.md`
 - Resilience Polly: `src/extensions/WorkflowForge.Extensions.Resilience.Polly/README.md`
-- Validation: `src/extensions/WorkflowForge.Extensions.Validation/README.md`
-- Audit: `src/extensions/WorkflowForge.Extensions.Audit/README.md`
 - Performance monitoring: `src/extensions/WorkflowForge.Extensions.Observability.Performance/README.md`
 - Health checks: `src/extensions/WorkflowForge.Extensions.Observability.HealthChecks/README.md`
 - OpenTelemetry: `src/extensions/WorkflowForge.Extensions.Observability.OpenTelemetry/README.md`
 
 ---
 
-**← Back to [Documentation Home](README.md)** 
+**WorkflowForge Extensions** - *Enhance your workflows with professional capabilities* 

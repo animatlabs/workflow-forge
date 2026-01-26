@@ -1,22 +1,6 @@
 # WorkflowForge.Extensions.Observability.HealthChecks
 
-<p align="center">
-  <img src="../../../icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
-Health check integration extension for WorkflowForge compatible with Microsoft.Extensions.Diagnostics.HealthChecks.
-
-[![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Observability.HealthChecks.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Observability.HealthChecks/)
-
-## Zero Dependencies - Zero Conflicts
-
-**This extension has ZERO external dependencies.** This means:
-
-- NO DLL Hell - No third-party dependencies to conflict with
-- NO Version Conflicts - Works with any versions of your application dependencies
-- Clean Deployment - Pure WorkflowForge extension
-
-**Interface-only**: Implements `IHealthCheck` interface without requiring the full Microsoft package.
+Comprehensive health monitoring extension for WorkflowForge applications with built-in and custom health checks.
 
 ## Installation
 
@@ -24,113 +8,89 @@ Health check integration extension for WorkflowForge compatible with Microsoft.E
 dotnet add package WorkflowForge.Extensions.Observability.HealthChecks
 ```
 
-**Requires**: .NET Standard 2.0 or later
-
 ## Quick Start
 
 ```csharp
 using WorkflowForge.Extensions.Observability.HealthChecks;
 
-// Configure health checks
-var healthCheck = new WorkflowHealthCheck(
-    timeProvider: new SystemTimeProvider(),
-    unhealthyThresholdSeconds: 30);
+// Create foundry and create a health check service
+using var foundry = WorkflowForge.CreateFoundry("MyWorkflow");
+var healthService = foundry.CreateHealthCheckService(TimeSpan.FromSeconds(30));
 
-// Register workflow execution
-smith.WorkflowStarted += (s, e) => healthCheck.RecordWorkflowExecution();
-smith.WorkflowCompleted += (s, e) => healthCheck.RecordWorkflowExecution();
+// Execute health checks
+var results = await healthService.CheckHealthAsync();
 
-// Check health
-var healthStatus = await healthCheck.CheckHealthAsync(new HealthCheckContext());
-
-if (healthStatus.Status == HealthStatus.Unhealthy)
+Console.WriteLine($"Overall Status: {healthService.OverallStatus}");
+foreach (var (name, result) in results)
 {
-    logger.LogWarning("WorkflowForge health check failed: {Description}", 
-        healthStatus.Description);
+    Console.WriteLine($"{name}: {result.Status} - {result.Description}");
 }
 ```
 
 ## Key Features
 
-- **ASP.NET Core Integration**: Compatible with health check middleware
-- **Workflow Monitoring**: Track workflow execution health
-- **Threshold-Based**: Configurable unhealthy thresholds
-- **Time Provider Integration**: `ISystemTimeProvider` for testability
-- **No Dependencies**: Interface-only implementation
+- **Built-in Health Checks**: Memory, garbage collection, thread pool monitoring
+- **Custom Health Checks**: Easy interface for application-specific checks  
+- **Periodic Monitoring**: Optional background health check execution
+- **Foundry Integration**: Seamless foundry health monitoring
+- **Detailed Reporting**: Rich health check results with performance data
 
-## ASP.NET Core Integration
+## Built-in Health Checks
 
+### System Health Monitoring
 ```csharp
-// Startup.cs or Program.cs
-services.AddSingleton<ISystemTimeProvider, SystemTimeProvider>();
-services.AddSingleton<WorkflowHealthCheck>();
+// Automatically included when using CreateHealthCheckService():
+// - Memory Health Check (working set, managed memory)
+// - Garbage Collector Health Check (GC performance)
+// - Thread Pool Health Check (thread availability)
 
-services.AddHealthChecks()
-    .AddCheck<WorkflowHealthCheck>("workflow_health");
-
-app.MapHealthChecks("/health");
+var overallStatus = await foundry.CheckFoundryHealthAsync(healthService);
 ```
 
-## Configuration
+## Custom Health Checks
 
 ```csharp
-var healthCheck = new WorkflowHealthCheck(
-    timeProvider: serviceProvider.GetRequiredService<ISystemTimeProvider>(),
-    unhealthyThresholdSeconds: 30);
-
-// Subscribe to events
-smith.WorkflowStarted += (s, e) => healthCheck.RecordWorkflowExecution();
-smith.WorkflowCompleted += (s, e) => healthCheck.RecordWorkflowExecution();
-```
-
-See [Configuration Guide](../../../docs/configuration.md#health-checks-extension) for complete options.
-
-## Health Status Logic
-
-- **Healthy**: Workflow executed within threshold (< 30 seconds by default)
-- **Unhealthy**: No workflow execution within threshold
-- **Degraded**: Not currently used
-
-## Custom Health Check
-
-```csharp
-public class CustomWorkflowHealthCheck : IHealthCheck
+public class DatabaseHealthCheck : IHealthCheck
 {
-    private readonly IWorkflowSmith _smith;
-    private DateTime _lastExecution;
-    
-    public async Task<HealthCheckResult> CheckHealthAsync(
-        HealthCheckContext context,
-        CancellationToken cancellationToken = default)
+    public string Name => "Database";
+    public string Description => "Checks database connectivity";
+
+    public async Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default)
     {
-        var timeSinceLastExecution = DateTime.UtcNow - _lastExecution;
-        
-        if (timeSinceLastExecution > TimeSpan.FromMinutes(5))
+        try
         {
-            return HealthCheckResult.Unhealthy(
-                $"No workflow execution in {timeSinceLastExecution.TotalMinutes:F1} minutes");
+            await _connection.OpenAsync(cancellationToken);
+            return HealthCheckResult.Healthy("Database connection successful");
         }
-        
-        return HealthCheckResult.Healthy("Workflows executing normally");
+        catch (Exception ex)
+        {
+            return HealthCheckResult.Unhealthy("Database connection failed", ex);
+        }
     }
 }
+
+// Register custom health check
+healthService.RegisterHealthCheck(new DatabaseHealthCheck(dbConnection));
 ```
 
-## Monitoring Dashboard
+## Periodic Monitoring
 
-Health checks can be monitored via:
-- ASP.NET Core `/health` endpoint
-- Application Insights
-- Prometheus metrics
-- Custom monitoring solutions
+```csharp
+// Enable automatic health monitoring every 30 seconds
+var healthService = foundry.CreateHealthCheckService(TimeSpan.FromSeconds(30));
 
-## Documentation
+// Access latest results anytime
+var lastResults = healthService.LastResults;
+var currentStatus = healthService.OverallStatus;
+```
 
-- **[Getting Started](../../../docs/getting-started.md)**
-- **[Configuration Guide](../../../docs/configuration.md#health-checks-extension)**
-- **[Extensions Overview](../../../docs/extensions.md)**
-- **[Sample 16: Health Checks](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
+## Examples & Documentation
+
+- **[Complete Examples](../../samples/WorkflowForge.Samples.BasicConsole/README.md#16-health-checks)** - Interactive health monitoring samples
+- **[Core Documentation](../../core/WorkflowForge/README.md)** - Core concepts
+- **[Performance Extension](../WorkflowForge.Extensions.Observability.Performance/README.md)** - Performance monitoring
+- **[Main README](../../../README.md)** - Framework overview
 
 ---
 
-**WorkflowForge.Extensions.Observability.HealthChecks** - *Build workflows with industrial strength*
+*Keep your workflows healthy* 

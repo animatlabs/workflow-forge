@@ -1,556 +1,310 @@
-# WorkflowForge API Reference
+# API Reference
 
-<p align="center">
-  <img src="../icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
+Complete API reference for WorkflowForge workflow orchestration framework.
 
-Complete API reference for WorkflowForge core types and abstractions.
+## Core Interfaces
 
----
+### IWorkflowForge
 
-## Table of Contents
-
-- [Core Factory](#core-factory)
-- [Workflow Interfaces](#workflow-interfaces)
-- [Operation Interfaces](#operation-interfaces)
-- [Foundry Interfaces](#foundry-interfaces)
-- [Smith Interfaces](#smith-interfaces)
-- [Event Interfaces](#event-interfaces)
-- [Extension Interfaces](#extension-interfaces)
-
----
-
-## Core Factory
-
-### WorkflowForge
-
-The main entry point for creating workflows and components.
+Main factory interface for creating workflows and components.
 
 ```csharp
 public static class WorkflowForge
-```
-
-#### Methods
-
-**CreateWorkflow**
-```csharp
-public static IWorkflowBuilder CreateWorkflow(string name = "Workflow")
-```
-Creates a new workflow builder for fluent workflow construction.
-
-**Parameters**:
-- `name`: Optional workflow name (default: "Workflow")
-
-**Returns**: `IWorkflowBuilder` for fluent configuration
-
-**Example**:
-```csharp
-var workflow = WorkflowForge.CreateWorkflow("OrderProcessing")
-    .AddOperation(new ValidateOperation())
-    .Build();
-```
-
----
-
-**CreateFoundry**
-```csharp
-public static IWorkflowFoundry CreateFoundry(
-    string name,
-    IServiceProvider? serviceProvider = null)
-```
-Creates a new foundry (execution context) for workflow operations.
-
-**Parameters**:
-- `name`: Foundry name for identification
-- `serviceProvider`: Optional DI container for operation dependencies
-
-**Returns**: `IWorkflowFoundry` execution context
-
-**Example**:
-```csharp
-using var foundry = WorkflowForge.CreateFoundry("MyFoundry", serviceProvider);
-```
-
----
-
-**CreateSmith**
-```csharp
-public static IWorkflowSmith CreateSmith()
-```
-Creates a new smith (workflow executor).
-
-**Returns**: `IWorkflowSmith` workflow executor
-
-**Example**:
-```csharp
-using var smith = WorkflowForge.CreateSmith();
-await smith.ForgeAsync(workflow, foundry);
-```
-
----
-
-## Workflow Interfaces
-
-### IWorkflow
-
-Represents an immutable workflow definition.
-
-```csharp
-public interface IWorkflow
 {
-    Guid Id { get; }
-    string Name { get; }
-    IReadOnlyList<IWorkflowOperation> Operations { get; }
+    // Workflow creation
+    public static IWorkflowBuilder CreateWorkflow();
+    public static IWorkflowBuilder CreateWorkflow(string name);
+    
+    // Foundry creation  
+    public static IWorkflowFoundry CreateFoundry(string foundryName);
+    public static IWorkflowFoundry CreateFoundry(string foundryName, FoundryConfiguration configuration);
+    
+    // Smith creation
+    public static IWorkflowSmith CreateSmith();
 }
 ```
-
-**Properties**:
-- `Id`: Unique identifier for the workflow
-- `Name`: Human-readable workflow name
-- `Operations`: Ordered collection of operations to execute
-
----
-
-### IWorkflowBuilder
-
-Fluent builder for constructing workflows.
-
-```csharp
-public interface IWorkflowBuilder
-{
-    IWorkflowBuilder AddOperation(IWorkflowOperation operation);
-    IWorkflowBuilder AddOperation(string name, Func<object?, IWorkflowFoundry, CancellationToken, Task<object?>> operation);
-    IWorkflow Build();
-}
-```
-
-**Methods**:
-
-**AddOperation (class-based)**
-```csharp
-IWorkflowBuilder AddOperation(IWorkflowOperation operation)
-```
-Adds a class-based operation to the workflow.
-
-**Parameters**:
-- `operation`: Operation instance implementing `IWorkflowOperation`
-
-**Returns**: Builder for chaining
-
----
-
-**AddOperation (inline)**
-```csharp
-IWorkflowBuilder AddOperation(
-    string name,
-    Func<object?, IWorkflowFoundry, CancellationToken, Task<object?>> operation)
-```
-Adds an inline operation to the workflow.
-
-**Parameters**:
-- `name`: Operation name
-- `operation`: Async delegate for operation logic
-
-**Returns**: Builder for chaining
-
----
-
-**Build**
-```csharp
-IWorkflow Build()
-```
-Constructs the immutable workflow from builder configuration.
-
-**Returns**: Immutable `IWorkflow` instance
-
----
-
-## Operation Interfaces
-
-### IWorkflowOperation
-
-Base interface for all workflow operations.
-
-```csharp
-public interface IWorkflowOperation : IDisposable
-{
-    Guid Id { get; }
-    string Name { get; }
-    bool SupportsRestore { get; }
-    
-    Task<object?> ForgeAsync(
-        object? inputData,
-        IWorkflowFoundry foundry,
-        CancellationToken cancellationToken = default);
-    
-    Task RestoreAsync(
-        object? outputData,
-        IWorkflowFoundry foundry,
-        CancellationToken cancellationToken = default);
-}
-```
-
-**Properties**:
-- `Id`: Unique identifier for the operation instance
-- `Name`: Human-readable operation name
-- `SupportsRestore`: Whether operation implements compensation logic
-
-**Methods**:
-
-**ForgeAsync**
-```csharp
-Task<object?> ForgeAsync(
-    object? inputData,
-    IWorkflowFoundry foundry,
-    CancellationToken cancellationToken = default)
-```
-Executes the operation's main logic.
-
-**Parameters**:
-- `inputData`: Optional input data (prefer foundry properties)
-- `foundry`: Execution context providing services, logging, and properties
-- `cancellationToken`: Cancellation token
-
-**Returns**: Operation result (optional)
-
-**Best Practice**: Read from and write to `foundry.Properties` instead of using `inputData`/return values.
-
----
-
-**RestoreAsync**
-```csharp
-Task RestoreAsync(
-    object? outputData,
-    IWorkflowFoundry foundry,
-    CancellationToken cancellationToken = default)
-```
-Executes compensation logic to undo operation effects.
-
-**Parameters**:
-- `outputData`: Output from original `ForgeAsync` call
-- `foundry`: Execution context
-- `cancellationToken`: Cancellation token
-
-**Usage**: Called automatically by WorkflowSmith if workflow fails and `SupportsRestore` is true.
-
----
-
-### WorkflowOperationBase
-
-Abstract base class implementing common operation patterns.
-
-```csharp
-public abstract class WorkflowOperationBase : IWorkflowOperation
-{
-    public Guid Id { get; }
-    public abstract string Name { get; }
-    public virtual bool SupportsRestore => false;
-    
-    public abstract Task<object?> ForgeAsync(
-        IWorkflowFoundry foundry,
-        CancellationToken cancellationToken = default);
-    
-    public virtual Task RestoreAsync(
-        IWorkflowFoundry foundry,
-        CancellationToken cancellationToken = default)
-    {
-        return Task.CompletedTask;
-    }
-    
-    public virtual void Dispose() { }
-}
-```
-
-**Key Differences from IWorkflowOperation**:
-- `ForgeAsync` doesn't have `inputData` parameter (encourages foundry properties)
-- `RestoreAsync` doesn't have `outputData` parameter (encourages foundry properties)
-- Base class handles IWorkflowOperation bridge
-
-**Recommended Base Class**: Use `WorkflowOperationBase` for most operations.
-
----
-
-### IWorkflowOperation<TInput, TOutput>
-
-Generic interface for type-safe operations (advanced use case).
-
-```csharp
-public interface IWorkflowOperation<TInput, TOutput> : IWorkflowOperation
-{
-    Task<TOutput> ForgeAsync(
-        TInput input,
-        IWorkflowFoundry foundry,
-        CancellationToken cancellationToken = default);
-}
-```
-
-**Use Case**: When you need strongly-typed input/output contracts.
-
-**Note**: Most operations should use `WorkflowOperationBase` with foundry properties instead.
-
----
-
-## Foundry Interfaces
 
 ### IWorkflowFoundry
 
-Execution context providing services, state, and logging to operations.
+Execution environment interface providing context and shared resources.
 
 ```csharp
-public interface IWorkflowFoundry : IOperationLifecycleEvents, IDisposable
+public interface IWorkflowFoundry : IDisposable
 {
+    // Core properties
     Guid ExecutionId { get; }
-    string Name { get; }
-    IServiceProvider ServiceProvider { get; }
-    IWorkflowForgeLogger Logger { get; }
+    IWorkflow? CurrentWorkflow { get; }
+
+    // Shared data and services
     ConcurrentDictionary<string, object?> Properties { get; }
-    
-    void SetProperty(string key, object? value);
-    T? GetPropertyOrDefault<T>(string key, T? defaultValue = default);
-    bool TryGetProperty<T>(string key, out T? value);
-    
+    IWorkflowForgeLogger Logger { get; }
+    IServiceProvider? ServiceProvider { get; }
+
+    // Workflow management
+    void SetCurrentWorkflow(IWorkflow? workflow);
+    void AddOperation(IWorkflowOperation operation);
     void AddMiddleware(IWorkflowOperationMiddleware middleware);
 }
 ```
 
-**Properties**:
-- `ExecutionId`: Unique identifier for this foundry execution
-- `Name`: Foundry name
-- `ServiceProvider`: DI container for resolving operation dependencies
-- `Logger`: Logging abstraction
-- `Properties`: Thread-safe dictionary for workflow data
-
-**Methods**:
-
-**SetProperty**
-```csharp
-void SetProperty(string key, object? value)
-```
-Stores a value in foundry properties (thread-safe).
-
-**Parameters**:
-- `key`: Property key
-- `value`: Property value
-
-**Example**:
-```csharp
-foundry.SetProperty("OrderId", 12345);
-foundry.SetProperty("Customer", new Customer { /*...*/ });
-```
-
----
-
-**GetPropertyOrDefault**
-```csharp
-T? GetPropertyOrDefault<T>(string key, T? defaultValue = default)
-```
-Retrieves a property value with type safety and default fallback.
-
-**Parameters**:
-- `key`: Property key
-- `defaultValue`: Value to return if key not found
-
-**Returns**: Property value or default
-
-**Example**:
-```csharp
-var orderId = foundry.GetPropertyOrDefault<int>("OrderId");
-var total = foundry.GetPropertyOrDefault<decimal>("Total", 0m);
-```
-
----
-
-**TryGetProperty**
-```csharp
-bool TryGetProperty<T>(string key, out T? value)
-```
-Attempts to retrieve a property value.
-
-**Parameters**:
-- `key`: Property key
-- `value`: Out parameter for the retrieved value
-
-**Returns**: True if property exists and is of type T
-
-**Example**:
-```csharp
-if (foundry.TryGetProperty<string>("TransactionId", out var txnId))
-{
-    // Use txnId
-}
-```
-
----
-
-**AddMiddleware**
-```csharp
-void AddMiddleware(IWorkflowOperationMiddleware middleware)
-```
-Adds middleware to the operation execution pipeline.
-
-**Parameters**:
-- `middleware`: Middleware implementation
-
-**Example**:
-```csharp
-foundry.AddMiddleware(new TimingMiddleware(logger));
-foundry.AddMiddleware(new ValidationMiddleware<Order>(validator, ...));
-```
-
----
-
-## Smith Interfaces
-
 ### IWorkflowSmith
 
-Workflow executor responsible for orchestrating operation execution.
+Orchestration engine interface for executing workflows.
 
 ```csharp
-public interface IWorkflowSmith : 
-    IWorkflowLifecycleEvents, 
-    ICompensationLifecycleEvents, 
-    IDisposable
+public interface IWorkflowSmith : IDisposable
 {
-    Task ForgeAsync(
-        IWorkflow workflow,
-        IWorkflowFoundry? foundry = null,
-        CancellationToken cancellationToken = default);
+    // Primary execution methods
+    Task ForgeAsync(IWorkflow workflow, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
+    Task ForgeAsync(IWorkflow workflow, ConcurrentDictionary<string, object?> data, CancellationToken cancellationToken = default);
+    
+    // Utility overloads (typed result)
+    Task<T?> ForgeAsync<T>(IWorkflow workflow, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
+    Task<T?> ForgeAsync<T>(IWorkflow workflow, ConcurrentDictionary<string, object?> data, CancellationToken cancellationToken = default);
 }
 ```
 
-**Methods**:
+### IWorkflow
 
-**ForgeAsync**
-```csharp
-Task ForgeAsync(
-    IWorkflow workflow,
-    IWorkflowFoundry? foundry = null,
-    CancellationToken cancellationToken = default)
-```
-Executes a workflow with the provided foundry.
-
-**Parameters**:
-- `workflow`: Workflow to execute
-- `foundry`: Optional execution context (created if null)
-- `cancellationToken`: Cancellation token
-
-**Behavior**:
-1. Fires `WorkflowStarted` event
-2. Executes operations in sequence
-3. Fires `WorkflowCompleted` on success
-4. Fires `WorkflowFailed` and triggers compensation on failure
-
-**Example**:
-```csharp
-using var smith = WorkflowForge.CreateSmith();
-using var foundry = WorkflowForge.CreateFoundry("MyWorkflow");
-
-await smith.ForgeAsync(workflow, foundry);
-```
-
----
-
-## Event Interfaces
-
-### IWorkflowLifecycleEvents
-
-Workflow-level lifecycle events.
+Workflow definition interface containing operations and metadata.
 
 ```csharp
-public interface IWorkflowLifecycleEvents
+public interface IWorkflow : IDisposable
 {
-    event EventHandler<WorkflowStartedEventArgs>? WorkflowStarted;
-    event EventHandler<WorkflowCompletedEventArgs>? WorkflowCompleted;
-    event EventHandler<WorkflowFailedEventArgs>? WorkflowFailed;
+    // Identity and metadata
+    Guid Id { get; }
+    string Name { get; }
+    string? Version { get; }
+    string? Description { get; }
+    
+    // Operations and configuration
+    IReadOnlyList<IWorkflowOperation> Operations { get; }
+    TimeSpan? Timeout { get; }
+    
+    // Execution tracking
+    DateTime CreatedAt { get; }
+    WorkflowStatus Status { get; }
 }
 ```
 
-**Implemented By**: `IWorkflowSmith`
+### IWorkflowOperation
 
-**Events**:
-- `WorkflowStarted`: Fired before first operation executes
-- `WorkflowCompleted`: Fired after all operations complete successfully
-- `WorkflowFailed`: Fired when workflow execution fails
-
-**Example**:
-```csharp
-smith.WorkflowStarted += (s, e) => 
-    Console.WriteLine($"Started: {e.WorkflowName}");
-smith.WorkflowCompleted += (s, e) => 
-    Console.WriteLine($"Completed in {e.Duration.TotalMilliseconds}ms");
-```
-
----
-
-### IOperationLifecycleEvents
-
-Operation-level lifecycle events.
+Individual task interface for workflow operations.
 
 ```csharp
-public interface IOperationLifecycleEvents
+public interface IWorkflowOperation : IDisposable
 {
-    event EventHandler<OperationStartedEventArgs>? OperationStarted;
-    event EventHandler<OperationCompletedEventArgs>? OperationCompleted;
-    event EventHandler<OperationFailedEventArgs>? OperationFailed;
+    // Identity
+    Guid Id { get; }
+    string Name { get; }
+    
+    // Capabilities
+    bool SupportsRestore { get; }
+    
+    // Execution methods
+    Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken);
+    Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken);
 }
 ```
 
-**Implemented By**: `IWorkflowFoundry`
+## Workflow Builder
 
-**Events**:
-- `OperationStarted`: Fired before each operation executes
-- `OperationCompleted`: Fired after operation completes successfully
-- `OperationFailed`: Fired when operation execution fails
+### WorkflowBuilder
 
-**Example**:
-```csharp
-foundry.OperationStarted += (s, e) => 
-    Console.WriteLine($"Operation {e.OperationName} started");
-foundry.OperationCompleted += (s, e) => 
-    Console.WriteLine($"Operation {e.OperationName} completed");
-```
-
----
-
-### ICompensationLifecycleEvents
-
-Compensation (saga pattern) lifecycle events.
+Fluent builder for constructing workflows.
 
 ```csharp
-public interface ICompensationLifecycleEvents
+public sealed class WorkflowBuilder
 {
-    event EventHandler<CompensationTriggeredEventArgs>? CompensationTriggered;
-    event EventHandler<CompensationCompletedEventArgs>? CompensationCompleted;
-    event EventHandler<OperationRestoreStartedEventArgs>? OperationRestoreStarted;
-    event EventHandler<OperationRestoreCompletedEventArgs>? OperationRestoreCompleted;
-    event EventHandler<OperationRestoreFailedEventArgs>? OperationRestoreFailed;
+    // Metadata configuration
+    public WorkflowBuilder WithName(string name);
+    public WorkflowBuilder WithVersion(string version);
+    public WorkflowBuilder WithDescription(string? description);
+
+    // Operation addition
+    public WorkflowBuilder AddOperation(IWorkflowOperation operation);
+    public WorkflowBuilder AddOperation<T>() where T : class, IWorkflowOperation;
+    public WorkflowBuilder AddOperation(string name, Func<IWorkflowFoundry, CancellationToken, Task> action);
+    public WorkflowBuilder AddOperation(string name, Action<IWorkflowFoundry> action);
+
+    // Build workflow
+    public IWorkflow Build();
+
+    // Helpers
+    public static IWorkflow Sequential(params IWorkflowOperation[] operations);
+    public static IWorkflow Parallel(params IWorkflowOperation[] operations);
 }
 ```
 
-**Implemented By**: `IWorkflowSmith`
+## Built-in Operations
 
-**Events**:
-- `CompensationTriggered`: Fired when workflow failure triggers compensation
-- `CompensationCompleted`: Fired after all compensations complete
-- `OperationRestoreStarted`: Fired before each operation's `RestoreAsync`
-- `OperationRestoreCompleted`: Fired after successful restoration
-- `OperationRestoreFailed`: Fired when restoration fails
+### DelegateWorkflowOperation
 
-**Example**:
+Execute delegate functions as operations.
+
 ```csharp
-smith.CompensationTriggered += (s, e) => 
-    Console.WriteLine($"Compensating {e.OperationsToCompensate} operations");
-smith.OperationRestoreStarted += (s, e) => 
-    Console.WriteLine($"Rolling back {e.OperationName}");
+public class DelegateWorkflowOperation : IWorkflowOperation
+{
+    public DelegateWorkflowOperation(string name, Func<object?, IWorkflowFoundry, CancellationToken, Task<object?>> asyncFunc);
+    public DelegateWorkflowOperation(string name, Func<object?, IWorkflowFoundry, CancellationToken, object?> func);
+}
 ```
 
----
+### ConditionalWorkflowOperation
 
-## Extension Interfaces
+Execute operations based on conditions.
+
+```csharp
+public sealed class ConditionalWorkflowOperation : IWorkflowOperation
+{
+    public static ConditionalWorkflowOperation Create(
+        Func<IWorkflowFoundry, bool> condition,
+        IWorkflowOperation trueOperation,
+        IWorkflowOperation? falseOperation = null,
+        string? name = null);
+
+    public static ConditionalWorkflowOperation CreateDataAware(
+        Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>> condition,
+        IWorkflowOperation trueOperation,
+        IWorkflowOperation? falseOperation = null,
+        string? name = null);
+
+    public static ConditionalWorkflowOperation CreateTyped<T>(
+        Func<T, IWorkflowFoundry, CancellationToken, Task<bool>> condition,
+        IWorkflowOperation trueOperation,
+        IWorkflowOperation? falseOperation = null,
+        string? name = null);
+}
+```
+
+### ForEachWorkflowOperation
+
+Execute a set of operations with shared, split, or no input, with optional throttling.
+
+```csharp
+public sealed class ForEachWorkflowOperation : IWorkflowOperation
+{
+    public static ForEachWorkflowOperation CreateSharedInput(
+        IEnumerable<IWorkflowOperation> operations,
+        TimeSpan? timeout = null,
+        int? maxConcurrency = null,
+        string? name = null);
+
+    public static ForEachWorkflowOperation CreateSplitInput(
+        IEnumerable<IWorkflowOperation> operations,
+        TimeSpan? timeout = null,
+        int? maxConcurrency = null,
+        string? name = null);
+
+    public static ForEachWorkflowOperation CreateNoInput(
+        IEnumerable<IWorkflowOperation> operations,
+        TimeSpan? timeout = null,
+        int? maxConcurrency = null,
+        string? name = null);
+
+    public static ForEachWorkflowOperation Create(params IWorkflowOperation[] operations);
+    public static ForEachWorkflowOperation CreateWithThrottling(
+        IEnumerable<IWorkflowOperation> operations,
+        int maxConcurrency,
+        TimeSpan? timeout = null);
+}
+```
+
+### ActionWorkflowOperation
+
+Execute actions without return values.
+
+```csharp
+public class ActionWorkflowOperation : IWorkflowOperation
+{
+    public ActionWorkflowOperation(string name, Action<object?, IWorkflowFoundry, CancellationToken> action);
+    public ActionWorkflowOperation(string name, Func<object?, IWorkflowFoundry, CancellationToken, Task> asyncAction);
+}
+```
+
+## Configuration
+
+### FoundryConfiguration
+
+Configuration class for foundry behavior.
+
+```csharp
+public sealed class FoundryConfiguration
+{
+    // Presets
+    public static FoundryConfiguration Default();
+    public static FoundryConfiguration Minimal();
+    public static FoundryConfiguration HighPerformance();
+    public static FoundryConfiguration ForHighPerformance();
+    public static FoundryConfiguration Development();
+    public static FoundryConfiguration ForDevelopment();
+    public static FoundryConfiguration ForProduction();
+
+    // Properties
+    public TimeSpan DefaultTimeout { get; set; }
+    public IWorkflowForgeLogger? Logger { get; set; }
+    public IServiceProvider? ServiceProvider { get; set; }
+    public int MaxRetryAttempts { get; set; }
+    public bool EnableParallelExecution { get; set; }
+    public int MaxDegreeOfParallelism { get; set; }
+    public bool EnableDetailedTiming { get; set; }
+    public bool AutoDisposeOperations { get; set; }
+}
+```
+
+## Logging
+
+### IWorkflowForgeLogger
+
+Logging interface for structured workflow logging.
+
+```csharp
+public interface IWorkflowForgeLogger
+{
+    // Basic logging methods
+    void LogTrace(string message, params object[] args);
+    void LogDebug(string message, params object[] args);
+    void LogInformation(string message, params object[] args);
+    void LogWarning(string message, params object[] args);
+    void LogError(string message, params object[] args);
+    void LogCritical(string message, params object[] args);
+    
+    // Structured logging with properties
+    void LogTrace(IDictionary<string, string> properties, string message, params object[] args);
+    void LogDebug(IDictionary<string, string> properties, string message, params object[] args);
+    void LogInformation(IDictionary<string, string> properties, string message, params object[] args);
+    void LogWarning(IDictionary<string, string> properties, string message, params object[] args);
+    void LogError(IDictionary<string, string> properties, string message, params object[] args);
+    void LogCritical(IDictionary<string, string> properties, string message, params object[] args);
+    
+    // Exception logging
+    void LogWarning(IDictionary<string, string> properties, Exception exception, string message, params object[] args);
+    void LogError(IDictionary<string, string> properties, Exception exception, string message, params object[] args);
+    void LogCritical(IDictionary<string, string> properties, Exception exception, string message, params object[] args);
+    
+    // Scope management
+    IDisposable BeginScope<TState>(TState state);
+}
+```
+
+### Built-in Loggers
+
+```csharp
+// Console logger for development
+public class ConsoleLogger : IWorkflowForgeLogger
+
+// Null logger for testing
+public class NullLogger : IWorkflowForgeLogger
+{
+    public static readonly IWorkflowForgeLogger Instance;
+}
+```
+
+## Middleware
 
 ### IWorkflowOperationMiddleware
 
-Middleware for operation execution pipeline.
+Middleware interface for cross-cutting concerns in operation execution.
 
 ```csharp
 public interface IWorkflowOperationMiddleware
@@ -558,244 +312,153 @@ public interface IWorkflowOperationMiddleware
     Task<object?> ExecuteAsync(
         IWorkflowOperation operation,
         IWorkflowFoundry foundry,
+        object? inputData,
         Func<Task<object?>> next,
         CancellationToken cancellationToken);
 }
 ```
 
-**Methods**:
+## Enumerations
 
-**ExecuteAsync**
+### WorkflowStatus
+
 ```csharp
-Task<object?> ExecuteAsync(
-    IWorkflowOperation operation,
+public enum WorkflowStatus
+{
+    Created,
+    Running,
+    Completed,
+    Failed,
+    Cancelled,
+    Compensating,
+    Compensated
+}
+```
+
+### LogLevel
+
+```csharp
+public enum LogLevel
+{
+    Trace = 0,
+    Debug = 1,
+    Information = 2,
+    Warning = 3,
+    Error = 4,
+    Critical = 5,
+    None = 6
+}
+```
+
+## Exceptions
+
+### WorkflowForgeException
+
+Base exception for WorkflowForge-specific errors.
+
+```csharp
+public class WorkflowForgeException : Exception
+{
+    public WorkflowForgeException();
+    public WorkflowForgeException(string message);
+    public WorkflowForgeException(string message, Exception innerException);
+}
+```
+
+### OperationExecutionException
+
+Exception thrown during operation execution.
+
+```csharp
+public class OperationExecutionException : WorkflowForgeException
+{
+    public IWorkflowOperation Operation { get; }
+    public object? InputData { get; }
+}
+```
+
+### CompensationException
+
+Exception thrown during compensation/restore operations.
+
+```csharp
+public class CompensationException : WorkflowForgeException
+{
+    public IReadOnlyList<IWorkflowOperation> FailedOperations { get; }
+}
+```
+
+## Extension Points
+
+### Extension Configuration
+
+Methods for configuring extensions.
+
+```csharp
+// Serilog logging (configuration-based)
+public static FoundryConfiguration UseSerilog(this FoundryConfiguration config);
+public static FoundryConfiguration UseSerilog(this FoundryConfiguration config, ILogger logger);
+
+// Resilience (Polly) on foundry
+public static IWorkflowFoundry UsePollyRetry(this IWorkflowFoundry foundry, int maxRetryAttempts = 3, TimeSpan? baseDelay = null, TimeSpan? maxDelay = null);
+public static IWorkflowFoundry UsePollyCircuitBreaker(this IWorkflowFoundry foundry, int failureThreshold = 5, TimeSpan? durationOfBreak = null);
+public static IWorkflowFoundry UsePollyTimeout(this IWorkflowFoundry foundry, TimeSpan timeout);
+public static IWorkflowFoundry UsePollyComprehensive(this IWorkflowFoundry foundry, int maxRetryAttempts = 3, TimeSpan? baseDelay = null, int circuitBreakerThreshold = 5, TimeSpan? circuitBreakerDuration = null, TimeSpan? timeoutDuration = null);
+public static IWorkflowFoundry UsePollyFromSettings(this IWorkflowFoundry foundry, PollySettings settings);
+public static IWorkflowFoundry UsePollyEnterpriseResilience(this IWorkflowFoundry foundry);
+public static IWorkflowFoundry UsePollyDevelopmentResilience(this IWorkflowFoundry foundry);
+public static IWorkflowFoundry UsePollyProductionResilience(this IWorkflowFoundry foundry);
+public static IWorkflowFoundry UsePollyMinimalResilience(this IWorkflowFoundry foundry);
+
+// Performance monitoring on foundry
+public static bool EnablePerformanceMonitoring(this IWorkflowFoundry foundry);
+public static IFoundryPerformanceStatistics? GetPerformanceStatistics(this IWorkflowFoundry foundry);
+
+// Health checks on foundry
+public static HealthCheckService CreateHealthCheckService(this IWorkflowFoundry foundry, TimeSpan? checkInterval = null);
+public static Task<HealthStatus> CheckFoundryHealthAsync(this IWorkflowFoundry foundry, HealthCheckService service, CancellationToken cancellationToken = default);
+
+// OpenTelemetry on foundry
+public static bool EnableOpenTelemetry(this IWorkflowFoundry foundry, WorkflowForgeOpenTelemetryOptions? options = null);
+public static bool DisableOpenTelemetry(this IWorkflowFoundry foundry);
+
+// Persistence (BYO storage) on foundry
+public static IWorkflowFoundry UsePersistence(this IWorkflowFoundry foundry, IWorkflowPersistenceProvider provider);
+public static IWorkflowFoundry UsePersistence(this IWorkflowFoundry foundry, IWorkflowPersistenceProvider provider, PersistenceOptions options);
+
+// Recovery (resume + retry)
+public static Task ForgeWithRecoveryAsync(this IWorkflowSmith smith,
+    IWorkflow workflow,
     IWorkflowFoundry foundry,
-    Func<Task<object?>> next,
-    CancellationToken cancellationToken)
-```
-Executes middleware logic in the operation pipeline.
+    IWorkflowPersistenceProvider provider,
+    Guid foundryKey,
+    Guid workflowKey,
+    RecoveryPolicy? policy = null,
+    CancellationToken cancellationToken = default);
 
-**Parameters**:
-- `operation`: Operation being executed
-- `foundry`: Execution context
-- `next`: Delegate to call next middleware/operation
-- `cancellationToken`: Cancellation token
-
-**Returns**: Operation result
-
-**Example**:
-```csharp
-public class TimingMiddleware : IWorkflowOperationMiddleware
+// Recovery coordinator and catalog (multi-resume)
+public interface IRecoveryCatalog
 {
-    public async Task<object?> ExecuteAsync(
-        IWorkflowOperation operation,
-        IWorkflowFoundry foundry,
-        Func<Task<object?>> next,
-        CancellationToken cancellationToken)
-    {
-        var sw = Stopwatch.StartNew();
-        try
-        {
-            return await next();
-        }
-        finally
-        {
-            sw.Stop();
-            _logger.LogInformation("Operation {Op} took {Ms}ms", 
-                operation.Name, sw.ElapsedMilliseconds);
-        }
-    }
+    Task<IReadOnlyList<WorkflowExecutionSnapshot>> ListPendingAsync(CancellationToken cancellationToken = default);
+}
+
+public interface IRecoveryCoordinator
+{
+    Task ResumeAsync(
+        Func<IWorkflowFoundry> foundryFactory,
+        Func<IWorkflow> workflowFactory,
+        Guid foundryKey,
+        Guid workflowKey,
+        CancellationToken cancellationToken = default);
+
+    Task<int> ResumeAllAsync(
+        Func<IWorkflowFoundry> foundryFactory,
+        Func<IWorkflow> workflowFactory,
+        IRecoveryCatalog catalog,
+        CancellationToken cancellationToken = default);
 }
 ```
 
 ---
 
-### IWorkflowForgeLogger
-
-Logging abstraction for framework and operations.
-
-```csharp
-public interface IWorkflowForgeLogger
-{
-    void LogTrace(string message, params object[] args);
-    void LogDebug(string message, params object[] args);
-    void LogInformation(string message, params object[] args);
-    void LogWarning(string message, params object[] args);
-    void LogError(Exception? exception, string message, params object[] args);
-    void LogCritical(Exception? exception, string message, params object[] args);
-}
-```
-
-**Methods**: Standard logging levels (Trace, Debug, Information, Warning, Error, Critical)
-
-**Implementations**:
-- `ConsoleLogger`: Default implementation (console output)
-- `NullLogger`: No-op logger
-- `SerilogAdapter`: Bridges to Serilog (Extension)
-
----
-
-### ISystemTimeProvider
-
-Time abstraction for testability.
-
-```csharp
-public interface ISystemTimeProvider
-{
-    DateTimeOffset UtcNow { get; }
-}
-```
-
-**Purpose**: Enables time mocking in tests
-
-**Implementations**:
-- `SystemTimeProvider`: Returns `DateTimeOffset.UtcNow`
-- Mock implementations for testing
-
-**Example**:
-```csharp
-public class TimeSensitiveOperation : WorkflowOperationBase
-{
-    private readonly ISystemTimeProvider _timeProvider;
-    
-    public TimeSensitiveOperation(ISystemTimeProvider timeProvider)
-    {
-        _timeProvider = timeProvider;
-    }
-    
-    public override async Task<object?> ForgeAsync(
-        IWorkflowFoundry foundry,
-        CancellationToken cancellationToken = default)
-    {
-        var now = _timeProvider.UtcNow;
-        // Time-dependent logic
-    }
-}
-```
-
----
-
-### IWorkflowSettings
-
-Configuration settings for workflow execution (defined but not fully wired in 2.0).
-
-```csharp
-public interface IWorkflowSettings
-{
-    bool AutoRestore { get; }
-    bool ContinueOnRestorationFailure { get; }
-    int MaxConcurrentFlows { get; }
-    int RestorationRetryAttempts { get; }
-    TimeSpan OperationTimeout { get; }
-    TimeSpan FlowTimeout { get; }
-    bool EnableMetrics { get; }
-    bool EnableTracing { get; }
-    string MinimumLogLevel { get; }
-}
-```
-
-**Status**: Interface defined, full integration planned for 2.1
-
----
-
-## Built-In Operations
-
-### DelayOperation
-
-Introduces a delay in workflow execution.
-
-```csharp
-public class DelayOperation : WorkflowOperationBase
-{
-    public DelayOperation(TimeSpan delay);
-}
-```
-
-**Example**:
-```csharp
-var workflow = WorkflowForge.CreateWorkflow("DelayedWorkflow")
-    .AddOperation(new DelayOperation(TimeSpan.FromSeconds(2)))
-    .Build();
-```
-
----
-
-### LoggingOperation
-
-Logs a message during workflow execution.
-
-```csharp
-public class LoggingOperation : WorkflowOperationBase
-{
-    public LoggingOperation(IWorkflowForgeLogger logger, string message);
-}
-```
-
-**Example**:
-```csharp
-var workflow = WorkflowForge.CreateWorkflow("LoggingWorkflow")
-    .AddOperation(new LoggingOperation(logger, "Starting workflow"))
-    .Build();
-```
-
----
-
-### ConditionalWorkflowOperation
-
-Executes different operations based on a predicate.
-
-```csharp
-public class ConditionalWorkflowOperation : WorkflowOperationBase
-{
-    public ConditionalWorkflowOperation(
-        Func<IWorkflowFoundry, bool> predicate,
-        IWorkflowOperation trueOperation,
-        IWorkflowOperation falseOperation);
-}
-```
-
-**Example**:
-```csharp
-var conditionalOp = new ConditionalWorkflowOperation(
-    predicate: f => f.GetPropertyOrDefault<decimal>("Amount") > 100,
-    trueOperation: new HighValueOperation(),
-    falseOperation: new StandardOperation());
-```
-
----
-
-### ForEachWorkflowOperation
-
-Processes collections in parallel or sequential mode.
-
-```csharp
-public static class ForEachWorkflowOperation
-{
-    public static IWorkflowOperation Create(
-        IWorkflowOperation operation,
-        bool parallel = true);
-}
-```
-
-**Example**:
-```csharp
-foundry.SetProperty("items", new[] { "A", "B", "C" });
-
-var forEachOp = ForEachWorkflowOperation.Create(
-    new ProcessItemOperation(),
-    parallel: true);
-```
-
----
-
-## Next Steps
-
-- **[Architecture](architecture.md)** - Understanding the design
-- **[Operations](operations.md)** - Creating operations
-- **[Events](events.md)** - Event system details
-- **[Configuration](configuration.md)** - Configuring workflows
-- **[Extensions](extensions.md)** - Extension ecosystem
-
----
-
-[Back to Documentation Hub](README.md)
+*Complete API reference for WorkflowForge* 

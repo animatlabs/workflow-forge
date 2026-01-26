@@ -1,5 +1,5 @@
-using Polly;
 using System;
+using Polly;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.Resilience.Polly.Configurations;
 
@@ -221,5 +221,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             var settings = PollySettings.Minimal();
             return foundry.UsePollyFromSettings(settings);
         }
+
     }
 }

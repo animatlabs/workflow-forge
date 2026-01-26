@@ -251,8 +251,7 @@ public class OrderValidationOperation : IWorkflowOperation
         foundry.Logger.LogInformation("Order validation restoration completed for order {OrderId}", orderId);
     }
 
-    public void Dispose()
-    { }
+    public void Dispose() { }
 }
 
 /// <summary>
@@ -330,8 +329,7 @@ public class PaymentProcessingOperation : IWorkflowOperation
         foundry.Logger.LogInformation("Payment restoration completed for payment ID {PaymentId}", paymentData?.PaymentId ?? "unknown");
     }
 
-    public void Dispose()
-    { }
+    public void Dispose() { }
 }
 
 /// <summary>
@@ -387,8 +385,7 @@ public class InventoryCheckOperation : IWorkflowOperation
         throw new NotSupportedException("Inventory check does not support restoration");
     }
 
-    public void Dispose()
-    { }
+    public void Dispose() { }
 }
 
 /// <summary>
@@ -452,6 +449,5 @@ public class OrderCompletionOperation : IWorkflowOperation
         throw new NotSupportedException("Order completion does not support restoration");
     }
 
-    public void Dispose()
-    { }
+    public void Dispose() { }
 }

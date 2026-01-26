@@ -12,25 +12,18 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Configurations
     {
         /// <summary>Gets or sets whether Polly resilience is enabled.</summary>
         public bool IsEnabled { get; set; } = true;
-
         /// <summary>Gets or sets the retry configuration.</summary>
         public PollyRetrySettings Retry { get; set; } = new();
-
         /// <summary>Gets or sets the circuit breaker configuration.</summary>
         public PollyCircuitBreakerSettings CircuitBreaker { get; set; } = new();
-
         /// <summary>Gets or sets the timeout configuration.</summary>
         public PollyTimeoutSettings Timeout { get; set; } = new();
-
         /// <summary>Gets or sets the rate limiter configuration.</summary>
         public PollyRateLimiterSettings RateLimiter { get; set; } = new();
-
         /// <summary>Gets or sets whether to enable comprehensive policies by default.</summary>
         public bool EnableComprehensivePolicies { get; set; } = false;
-
         /// <summary>Gets or sets the default tags to apply to all Polly metrics.</summary>
         public Dictionary<string, string> DefaultTags { get; set; } = new();
-
         /// <summary>Gets or sets whether to enable detailed Polly logging.</summary>
         public bool EnableDetailedLogging { get; set; } = true;
 

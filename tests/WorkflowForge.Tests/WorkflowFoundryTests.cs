@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Configurations;
-using WorkflowForge.Exceptions;
 using WorkflowForge.Loggers;
+using WorkflowForge.Configurations;
 using WorkflowForge.Operations;
+using WorkflowForge.Exceptions;
 using Xunit.Abstractions;
 
 namespace WorkflowForge.Tests;

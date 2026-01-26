@@ -1,5 +1,5 @@
-using System;
 using WorkflowForge.Configurations;
+using System;
 using WorkflowForge.Loggers;
 
 namespace WorkflowForge.Tests;

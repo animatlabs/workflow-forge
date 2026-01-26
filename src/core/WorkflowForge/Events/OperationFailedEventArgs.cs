@@ -5,7 +5,6 @@ namespace WorkflowForge.Events
 {
     /// <summary>
     /// Event arguments for operation failed events.
-    /// Fired when an operation fails with an exception.
     /// </summary>
     public class OperationFailedEventArgs : BaseWorkflowForgeEventArgs
     {
@@ -15,14 +14,9 @@ namespace WorkflowForge.Events
         public IWorkflowOperation Operation { get; }
 
         /// <summary>
-        /// Gets the input data for the operation.
+        /// Gets the exception that caused the failure.
         /// </summary>
-        public object? InputData { get; }
-
-        /// <summary>
-        /// Gets the exception that occurred during operation execution.
-        /// </summary>
-        public Exception? Exception { get; }
+        public Exception Exception { get; }
 
         /// <summary>
         /// Gets the execution duration before failure.
@@ -34,20 +28,13 @@ namespace WorkflowForge.Events
         /// </summary>
         /// <param name="operation">The operation that failed.</param>
         /// <param name="foundry">The workflow foundry.</param>
-        /// <param name="inputData">The input data for the operation.</param>
-        /// <param name="exception">The exception that occurred.</param>
+        /// <param name="exception">The exception that caused the failure.</param>
         /// <param name="duration">The execution duration before failure.</param>
-        public OperationFailedEventArgs(
-            IWorkflowOperation operation,
-            IWorkflowFoundry foundry,
-            object? inputData,
-            Exception? exception,
-            TimeSpan duration)
+        public OperationFailedEventArgs(IWorkflowOperation operation, IWorkflowFoundry foundry, Exception exception, TimeSpan duration)
             : base(foundry)
         {
             Operation = operation ?? throw new ArgumentNullException(nameof(operation));
-            InputData = inputData;
-            Exception = exception;
+            Exception = exception ?? throw new ArgumentNullException(nameof(exception));
             Duration = duration;
         }
     }

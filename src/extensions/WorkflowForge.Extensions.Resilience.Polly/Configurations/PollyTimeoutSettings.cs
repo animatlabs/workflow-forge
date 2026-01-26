@@ -30,3 +30,5 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Configurations
         public static PollyTimeoutSettings ForEnterprise() => new() { IsEnabled = true, TimeoutDuration = TimeSpan.FromSeconds(30) };
     }
 }
+
+

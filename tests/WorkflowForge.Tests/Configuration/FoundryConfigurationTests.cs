@@ -1,8 +1,8 @@
+using WorkflowForge.Configurations;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Configurations;
 
 namespace WorkflowForge.Tests.Configuration
 {

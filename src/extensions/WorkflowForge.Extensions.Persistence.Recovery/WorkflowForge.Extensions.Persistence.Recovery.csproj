@@ -22,15 +22,13 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>2.0.0</Version>
-    <PackageVersion>2.0.0</PackageVersion>
+    <Version>1.0.0</Version>
+    <PackageVersion>1.0.0</PackageVersion>
     <PackageReleaseNotes>
-Major release v2.0.0:
-- ZERO VERSION CONFLICTS: Dependencies embedded via Costura.Fody (where applicable)
-- Users can use ANY version of third-party libraries
-- ISystemTimeProvider integrated for testability
-- Enhanced documentation and samples
-- Enterprise-ready for production workflows
+Initial release v1.0.0:
+- Recovery orchestration for persisted workflows (resume + retry)
+- Coordinator and catalog abstractions
+- Documentation and samples included
     </PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
@@ -41,5 +39,4 @@ Major release v2.0.0:
     <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="../../../icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-
 </Project>

@@ -1,5 +1,5 @@
-using WorkflowForge.Abstractions;
 using WorkflowForge.Configurations;
+using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
 
@@ -48,7 +48,7 @@ public class MultipleOutcomesSample : ISample
                         // Soft decline - offer alternatives
                         new OfferAlternativesOperation(),
                         // Hard decline - final rejection
-                        new LoggingOperation("Hard decline - no alternatives available")
+                        new LoggingOperation("🚫 Hard decline - no alternatives available")
                     )
                 }, name: "RejectedPath")))
             .WithOperation(new ConditionalWorkflowOperation(
@@ -131,8 +131,7 @@ public class CreditCheckOperation : IWorkflowOperation
         return Task.CompletedTask;
     }
 
-    public void Dispose()
-    { }
+    public void Dispose() { }
 }
 
 public class LoanProcessingOperation : IWorkflowOperation
@@ -206,8 +205,7 @@ public class LoanProcessingOperation : IWorkflowOperation
         return Task.CompletedTask;
     }
 
-    public void Dispose()
-    { }
+    public void Dispose() { }
 }
 
 public class GenerateLoanDocumentsOperation : IWorkflowOperation
@@ -242,8 +240,7 @@ public class GenerateLoanDocumentsOperation : IWorkflowOperation
         return Task.CompletedTask;
     }
 
-    public void Dispose()
-    { }
+    public void Dispose() { }
 }
 
 public class OfferAlternativesOperation : IWorkflowOperation
@@ -287,8 +284,7 @@ public class OfferAlternativesOperation : IWorkflowOperation
         return Task.CompletedTask;
     }
 
-    public void Dispose()
-    { }
+    public void Dispose() { }
 }
 
 public class NotifyApplicantOperation : IWorkflowOperation
@@ -327,6 +323,5 @@ public class NotifyApplicantOperation : IWorkflowOperation
         return Task.CompletedTask;
     }
 
-    public void Dispose()
-    { }
+    public void Dispose() { }
 }

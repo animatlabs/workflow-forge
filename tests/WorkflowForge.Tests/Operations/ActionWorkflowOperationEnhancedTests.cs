@@ -1,9 +1,9 @@
+using WorkflowForge.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Exceptions;
 using WorkflowForge.Operations;
 
 namespace WorkflowForge.Tests.Operations
@@ -207,9 +207,7 @@ namespace WorkflowForge.Tests.Operations
 
             // Assert
             var actualDuration = endTime - startTime;
-            // Allow 5ms tolerance for timing variations
-            var minExpected = delay - TimeSpan.FromMilliseconds(5);
-            Assert.True(actualDuration >= minExpected, $"Expected at least {minExpected}, but was {actualDuration}");
+            Assert.True(actualDuration >= delay, $"Expected at least {delay}, but was {actualDuration}");
         }
 
         [Fact]

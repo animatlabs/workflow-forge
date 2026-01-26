@@ -1,22 +1,6 @@
 # WorkflowForge.Extensions.Observability.OpenTelemetry
 
-<p align="center">
-  <img src="../../../icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
-Distributed tracing extension for WorkflowForge with OpenTelemetry integration for comprehensive observability.
-
-[![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Observability.OpenTelemetry.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Observability.OpenTelemetry/)
-
-## Zero Version Conflicts
-
-**This extension uses Costura.Fody to embed OpenTelemetry.** This means:
-
-- NO DLL Hell - No conflicts with your application's OpenTelemetry version
-- NO Version Conflicts - Works with ANY version of OpenTelemetry in your app
-- Clean Deployment - Professional dependency isolation
-
-**How it works**: OpenTelemetry is embedded as compressed resources at build time and loaded at runtime, completely isolated from your application.
+Advanced distributed tracing and observability extension for WorkflowForge using OpenTelemetry standards.
 
 ## Installation
 
@@ -24,164 +8,111 @@ Distributed tracing extension for WorkflowForge with OpenTelemetry integration f
 dotnet add package WorkflowForge.Extensions.Observability.OpenTelemetry
 ```
 
-**Requires**: .NET Standard 2.0 or later
-
 ## Quick Start
 
 ```csharp
 using WorkflowForge.Extensions.Observability.OpenTelemetry;
-using OpenTelemetry;
-using OpenTelemetry.Trace;
 
-// Configure OpenTelemetry
-var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddSource("WorkflowForge")
-    .AddConsoleExporter()
-    .AddJaegerExporter(options =>
-    {
-        options.AgentHost = "localhost";
-        options.AgentPort = 6831;
-    })
-    .Build();
+// Enable OpenTelemetry in foundry
+var foundryConfig = FoundryConfiguration.ForProduction()
+    .EnableOpenTelemetry("MyWorkflowService", "1.0.0");
 
-// Create foundry with tracing
-using var foundry = WorkflowForge.CreateFoundry("TracedWorkflow");
-var tracer = tracerProvider.GetTracer("WorkflowForge");
+var foundry = WorkflowForge.CreateFoundry("OrderProcessing", foundryConfig);
 
-// Operations will create spans
-await smith.ForgeAsync(workflow, foundry);
+// Configure OpenTelemetry SDK in startup
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .AddSource("MyWorkflowService") // Match your service name
+        .AddJaegerExporter()
+        .AddConsoleExporter())
+    .WithMetrics(metrics => metrics
+        .AddMeter("MyWorkflowService") // Match your service name
+        .AddPrometheusExporter());
 ```
 
 ## Key Features
 
-- **Distributed Tracing**: Track workflows across services
-- **Automatic Spans**: Operation-level span creation
-- **Context Propagation**: W3C Trace Context support
-- **Multiple Exporters**: Jaeger, Zipkin, Console, OTLP
-- **Rich Metadata**: Operation names, durations, results
-- **Full OpenTelemetry API**: Access entire ecosystem
+- **Distributed Tracing**: Full distributed tracing using OpenTelemetry Activity API
+- **Metrics Collection**: Comprehensive metrics using System.Diagnostics.Metrics
+- **Foundry Integration**: Deep integration with WorkflowForge foundries and operations
+- **Standard Protocols**: OTLP, Jaeger, Zipkin, Prometheus compatibility
+- **High Performance**: Built on .NET's native observability APIs
 
-## Configuration
-
-### Programmatic
+## Distributed Tracing in Operations
 
 ```csharp
-var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddSource("WorkflowForge")
-    .AddConsoleExporter()
-    .AddJaegerExporter(options =>
+public class OrderProcessingOperation : IWorkflowOperation
+{
+    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        options.AgentHost = "localhost";
-        options.AgentPort = 6831;
-    })
-    .Build();
-
-using var foundry = WorkflowForge.CreateFoundry("TracedWorkflow");
-var tracer = tracerProvider.GetTracer("WorkflowForge");
-
-await smith.ForgeAsync(workflow, foundry);
-```
-
-See [Configuration Guide](../../../docs/configuration.md#opentelemetry-extension) for complete options.
-
-## Exporters
-
-### Jaeger
-
-```csharp
-.AddJaegerExporter(options =>
-{
-    options.AgentHost = "localhost";
-    options.AgentPort = 6831;
-})
-```
-
-### Zipkin
-
-```csharp
-.AddZipkinExporter(options =>
-{
-    options.Endpoint = new Uri("http://localhost:9411/api/v2/spans");
-})
-```
-
-### OTLP (OpenTelemetry Protocol)
-
-```csharp
-.AddOtlpExporter(options =>
-{
-    options.Endpoint = new Uri("http://localhost:4317");
-})
-```
-
-### Console (Development)
-
-```csharp
-.AddConsoleExporter()
-```
-
-## Span Structure
-
-WorkflowForge creates the following span hierarchy:
-
-```
-Workflow: OrderProcessing
-  ├─ Operation: ValidateOrder (12µs)
-  ├─ Operation: ChargePayment (145µs)
-  ├─ Operation: ReserveInventory (87µs)
-  └─ Operation: CreateShipment (234µs)
-```
-
-Each span includes:
-- Operation name
-- Duration
-- Success/failure status
-- Custom tags (workflow properties)
-- Error details (if failed)
-
-## Custom Spans
-
-```csharp
-using var span = tracer.StartActiveSpan("CustomOperation");
-span.SetAttribute("order.id", orderId);
-span.SetAttribute("customer.id", customerId);
-
-try
-{
-    // ... operation logic ...
-    span.SetStatus(Status.Ok);
-}
-catch (Exception ex)
-{
-    span.SetStatus(Status.Error);
-    span.RecordException(ex);
-    throw;
+        // Start distributed tracing with context
+        using var activity = foundry.StartActivity("ProcessOrder", ActivityKind.Server);
+        
+        var order = (Order)inputData!;
+        
+        // Add rich trace context
+        activity?.SetTag("order.id", order.Id);
+        activity?.SetTag("order.amount", order.Amount);
+        activity?.SetTag("customer.id", order.CustomerId);
+        
+        try
+        {
+            var result = await ProcessOrderInternalAsync(order, cancellationToken);
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            throw;
+        }
+    }
 }
 ```
 
-## Context Propagation
+## Built-in Metrics
 
-WorkflowForge automatically propagates trace context across:
-- Operations within a workflow
-- Nested workflows
-- HTTP calls (with propagation headers)
-- Message queues (with context metadata)
+```csharp
+// Automatically collected operation metrics:
+// - workflowforge.operations.total (counter)
+// - workflowforge.operations.duration (histogram)
+// - workflowforge.operations.errors.total (counter)
+// - workflowforge.operations.active (updowncounter)
 
-## Visualization
+// System metrics:
+// - workflowforge.process.memory.usage (gauge)
+// - workflowforge.process.gc.collections.total (counter)
+// - workflowforge.foundries.active (gauge)
+```
 
-View traces in:
-- **Jaeger UI**: http://localhost:16686
-- **Zipkin UI**: http://localhost:9411
-- **Application Insights**: Azure Portal
-- **Grafana Tempo**: Grafana dashboard
+## Environment Configurations
 
-## Documentation
+```csharp
+// Development - verbose tracing
+var devConfig = FoundryConfiguration.ForDevelopment()
+    .EnableOpenTelemetry("MyService", "1.0.0", options =>
+    {
+        options.SampleRate = 1.0; // Trace everything
+        options.EnableDetailedLogging = true;
+    });
 
-- **[Getting Started](../../../docs/getting-started.md)**
-- **[Configuration Guide](../../../docs/configuration.md#opentelemetry-extension)**
-- **[Extensions Overview](../../../docs/extensions.md)**
-- **[Sample 15: OpenTelemetry](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
+// Production - optimized performance
+var prodConfig = FoundryConfiguration.ForProduction()
+    .EnableOpenTelemetry("MyService", "1.0.0", options =>
+    {
+        options.SampleRate = 0.1; // Sample 10%
+        options.EnableSystemMetrics = false;
+    });
+```
+
+## Examples & Documentation
+
+- **[Complete Examples](../../samples/WorkflowForge.Samples.BasicConsole/README.md#15-opentelemetry)** - Interactive OpenTelemetry samples
+- **[Core Documentation](../../core/WorkflowForge/README.md)** - Core concepts
+- **[Performance Extension](../WorkflowForge.Extensions.Observability.Performance/README.md)** - Performance monitoring
+- **[Main README](../../../README.md)** - Framework overview
+- **[OpenTelemetry Documentation](https://opentelemetry.io/docs/)** - OpenTelemetry official docs
 
 ---
 
-**WorkflowForge.Extensions.Observability.OpenTelemetry** - *Build workflows with industrial strength*
+*Professional distributed observability for workflows* 

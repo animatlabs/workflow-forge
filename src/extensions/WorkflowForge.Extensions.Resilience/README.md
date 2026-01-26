@@ -8,16 +8,6 @@ Base resilience patterns extension for WorkflowForge with fundamental retry logi
 dotnet add package WorkflowForge.Extensions.Resilience
 ```
 
-## Zero Version Conflicts
-
-**This extension uses Costura.Fody to embed System.Threading.Tasks.Extensions.** This means:
-
-- **NO DLL Hell** - No conflicts with your application's System libraries  
-- **NO Conflicts** - Works seamlessly with any .NET version  
-- **Clean Deployment** - Professional-grade dependency isolation
-
-**How it works**: Dependencies are embedded as compressed resources at build time and loaded automatically at runtime, completely isolated from your application.
-
 ## Quick Start
 
 ```csharp

@@ -15,7 +15,6 @@ namespace WorkflowForge.Operations
     public sealed class ForEachWorkflowOperation : WorkflowOperationBase
     {
         private readonly List<IWorkflowOperation> _operations;
-        private readonly ISystemTimeProvider _timeProvider;
         private readonly TimeSpan? _timeout;
         private readonly ForEachDataStrategy _dataStrategy;
         private readonly int? _maxConcurrency;
@@ -30,7 +29,6 @@ namespace WorkflowForge.Operations
         /// <param name="maxConcurrency">Optional maximum number of concurrent operations (throttling).</param>
         /// <param name="name">Optional name for the operation.</param>
         /// <param name="id">Optional operation ID. If null, a new GUID is generated.</param>
-        /// <param name="timeProvider">The time provider to use for timestamps.</param>
         /// <exception cref="ArgumentNullException">Thrown when operations is null.</exception>
         /// <exception cref="ArgumentException">Thrown when operations is empty or maxConcurrency is invalid.</exception>
         public ForEachWorkflowOperation(
@@ -39,8 +37,7 @@ namespace WorkflowForge.Operations
             ForEachDataStrategy dataStrategy = ForEachDataStrategy.SharedInput,
             int? maxConcurrency = null,
             string? name = null,
-            Guid? id = null,
-            ISystemTimeProvider? timeProvider = null)
+            Guid? id = null)
         {
             if (operations == null) throw new ArgumentNullException(nameof(operations));
 
@@ -50,8 +47,6 @@ namespace WorkflowForge.Operations
 
             if (maxConcurrency.HasValue && maxConcurrency.Value <= 0)
                 throw new ArgumentException("Max concurrency must be greater than zero.", nameof(maxConcurrency));
-
-            _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
 
             _timeout = timeout;
             _dataStrategy = dataStrategy;
@@ -254,7 +249,7 @@ namespace WorkflowForge.Operations
             {
                 Results = results,
                 TotalResults = results.Length,
-                Timestamp = _timeProvider.UtcNow
+                Timestamp = DateTimeOffset.UtcNow
             };
         }
 

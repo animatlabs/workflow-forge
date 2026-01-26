@@ -38,12 +38,11 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
-Major release v2.0.0:
-- ZERO VERSION CONFLICTS: Dependencies embedded via Costura.Fody (where applicable)
-- Users can use ANY version of third-party libraries
-- ISystemTimeProvider integrated for testability
-- Enhanced documentation and samples
-- Enterprise-ready for production workflows
+Initial release v1.0.0 of WorkflowForge Serilog Extension:
+- Professional structured logging with Serilog
+- Rich context and correlation support
+- Enterprise-ready log formatting and enrichment
+- Seamless integration with WorkflowForge core
     </PackageReleaseNotes>
   </PropertyGroup>
 
@@ -55,13 +54,6 @@ Major release v2.0.0:
   <ItemGroup>
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.2" />
-    <PackageReference Include="Fody" Version="6.9.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Costura.Fody" Version="6.0.0">
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 
@@ -69,4 +61,4 @@ Major release v2.0.0:
     <ProjectReference Include="..\..\core\WorkflowForge\WorkflowForge.csproj" />
   </ItemGroup>
 
-</Project>
+</Project> 

@@ -12,7 +12,7 @@ namespace WorkflowForge.Abstractions
     ///
     /// Supports both simple pattern (smith manages foundry internally) and advanced pattern (reusable foundry).
     /// </summary>
-    public interface IWorkflowSmith : IDisposable, IWorkflowLifecycleEvents, ICompensationLifecycleEvents
+    public interface IWorkflowSmith : IDisposable
     {
         /// <summary>
         /// Forges a workflow asynchronously with automatic foundry management.

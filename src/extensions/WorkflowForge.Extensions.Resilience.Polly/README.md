@@ -8,18 +8,6 @@ Advanced resilience extension for WorkflowForge using the battle-tested Polly li
 dotnet add package WorkflowForge.Extensions.Resilience.Polly
 ```
 
-## Zero Version Conflicts
-
-**This extension uses Costura.Fody to embed Polly.** This means:
-
-- **NO DLL Hell** - Use ANY version of Polly in your project  
-- **NO Conflicts** - Your app's Polly version won't clash with this extension  
-- **Clean Deployment** - Professional-grade dependency isolation
-
-**Example**: Your app uses Polly 8.6.x, this extension uses 8.6.4 - both coexist perfectly with zero conflicts!
-
-**How it works**: Polly is embedded as a compressed resource at build time and loaded automatically at runtime, completely isolated from your application's dependencies.
-
 ## Quick Start
 
 ```csharp
