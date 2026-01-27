@@ -21,9 +21,15 @@
   - [Scenario 6: Error Handling](#scenario-6-error-handling)
   - [Scenario 7: Creation Overhead](#scenario-7-creation-overhead)
   - [Scenario 8: Complete Lifecycle](#scenario-8-complete-lifecycle)
+  - [Scenario 9: State Machine](#scenario-9-state-machine)
+  - [Scenario 10: Long Running](#scenario-10-long-running)
+  - [Scenario 11: Parallel Execution](#scenario-11-parallel-execution)
+  - [Scenario 12: Event-Driven](#scenario-12-event-driven)
 - [Performance Advantage Summary](#performance-advantage-summary)
 - [Architectural Differences](#architectural-differences)
-- [When to Choose WorkflowForge](#when-to-choose-workflowforge)
+- [Benchmark Methodology](#benchmark-methodology)
+- [Statistical Significance](#statistical-significance)
+- [Conclusion](#conclusion)
 
 ---
 

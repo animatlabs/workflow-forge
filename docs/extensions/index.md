@@ -6,7 +6,9 @@ WorkflowForge follows an extension-first architecture where the core library pro
 
 - [Dependency-Free Core and Zero Version Conflicts](#dependency-free-core-and-zero-version-conflicts)
 - [Extension Architecture](#extension-architecture)
-- [Available Extensions](#available-extensions)
+- [Available Packages](#available-packages)
+  - [Testing Package](#testing-package)
+  - [DependencyInjection Extension](#dependencyinjection-extension)
   - [Logging Extensions](#logging-extensions)
   - [Resilience Extensions](#resilience-extensions)
   - [Observability Extensions](#observability-extensions)
@@ -16,6 +18,7 @@ WorkflowForge follows an extension-first architecture where the core library pro
 - [Extension Configuration Patterns](#extension-configuration-patterns)
 - [Creating Custom Extensions](#creating-custom-extensions)
 - [Extension Best Practices](#extension-best-practices)
+- [Extension Testing](#extension-testing)
 
 ---
 
@@ -135,6 +138,79 @@ public class MyOperationTests
 | `ForgeAsync()` | Execute all operations sequentially |
 | `Reset()` | Clear all state for test reuse |
 | `TrackExecution(op)` | Manually track operation as executed |
+
+---
+
+### DependencyInjection Extension
+
+#### WorkflowForge.Extensions.DependencyInjection
+
+Microsoft.Extensions.DependencyInjection integration for ASP.NET Core and hosted applications.
+
+**Installation:**
+```bash
+dotnet add package WorkflowForge.Extensions.DependencyInjection
+```
+
+**Features:**
+- `IServiceCollection` extension methods for registration
+- IOptions pattern support with automatic validation
+- Seamless integration with ASP.NET Core DI container
+- Scoped and singleton lifetime management
+
+**Usage:**
+```csharp
+using WorkflowForge.Extensions.DependencyInjection;
+
+// In Program.cs or Startup.cs
+services.AddWorkflowForge(options =>
+{
+    options.ContinueOnError = false;
+    options.FailFastCompensation = false;
+    options.ThrowOnCompensationError = true;
+});
+
+// Inject IWorkflowSmith in your services
+public class OrderService
+{
+    private readonly IWorkflowSmith _smith;
+
+    public OrderService(IWorkflowSmith smith)
+    {
+        _smith = smith;
+    }
+
+    public async Task ProcessOrderAsync(Order order)
+    {
+        var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
+        foundry.SetProperty("Order", order);
+
+        var workflow = WorkflowForge.CreateWorkflow()
+            .WithName("OrderWorkflow")
+            .AddOperation(new ValidateOrderOperation())
+            .AddOperation(new ProcessPaymentOperation())
+            .Build();
+
+        await _smith.ForgeAsync(workflow, foundry);
+    }
+}
+```
+
+**Configuration via appsettings.json:**
+```json
+{
+  "WorkflowForge": {
+    "ContinueOnError": false,
+    "FailFastCompensation": false,
+    "ThrowOnCompensationError": true
+  }
+}
+```
+
+```csharp
+// Bind from configuration
+services.AddWorkflowForge(configuration.GetSection("WorkflowForge"));
+```
 
 ---
 

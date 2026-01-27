@@ -37,7 +37,7 @@ The application provides an interactive menu to run individual samples or all sa
 - Saga pattern compensation/rollback
 - Middleware pipeline (Russian Doll pattern)
 - SRP-compliant event system (Workflow, Operation, Compensation)
-- All 11 packages (10 extensions + Testing) with zero version conflicts
+- All 13 packages (11 extensions + Testing) with zero version conflicts
 - Options pattern configuration from `appsettings.json`
 - Production-grade patterns and best practices
 

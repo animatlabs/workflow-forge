@@ -47,7 +47,7 @@ WorkflowForge is a **zero-dependency workflow orchestration framework** for .NET
 - **Minimal Memory**: 9-573x less memory usage
 - **Zero Dependencies**: Core package with no external dependencies
 - **Production Ready**: Built-in compensation (saga pattern), comprehensive testing
-- **Extension Ecosystem**: 11 packages (10 extensions + Testing) with zero version conflicts
+- **Extension Ecosystem**: 13 packages (11 extensions + Testing) with zero version conflicts
 - **Developer Experience**: Fluent API, clear metaphor, 33 progressive samples
 
 ---
@@ -149,11 +149,12 @@ public interface IWorkflowOperation : IDisposable
 
 ## Extensions Ecosystem
 
-WorkflowForge provides **11 packages** (10 extensions + 1 testing utility):
+WorkflowForge provides **13 packages** (1 core + 11 extensions + 1 testing utility):
 
 | Package | Purpose |
 |---------|---------|
 | **Testing** | Unit testing utilities with `FakeWorkflowFoundry` |
+| **DependencyInjection** | Microsoft.Extensions.DependencyInjection integration |
 | **Serilog Logging** | Structured logging integration |
 | **Resilience** | Core retry abstractions |
 | **Polly Resilience** | Circuit breakers, retries, timeout policies |

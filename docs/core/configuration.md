@@ -840,5 +840,5 @@ var operation = new TimeSensitiveOperation(mockTime);
 - [Architecture](../architecture/overview.md) - Understanding the configuration model
 - [Operations](operations.md) - Creating configurable operations
 - [Events](events.md) - Event-based configuration
-- [Extensions](../extensions/index.md) - All 11 packages with configuration examples
+- [Extensions](../extensions/index.md) - All 13 packages with configuration examples
 - [Samples Guide](../getting-started/samples-guide.md) - Practical examples including configuration

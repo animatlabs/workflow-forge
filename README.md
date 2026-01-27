@@ -49,7 +49,7 @@ High-performance, dependency-free workflow orchestration library for .NET. Execu
 
 Extensions declare explicit NuGet dependencies where needed. The validation extension uses **DataAnnotations** from the BCL, so no third‑party validation library is required.
 
-### Package Ecosystem (11 Packages: 10 Extensions + Testing)
+### Package Ecosystem (13 Packages: 1 Core + 11 Extensions + Testing)
 
 **Logging**:
 - Serilog integration for structured logging
@@ -178,7 +178,7 @@ WorkflowForge excels at:
 - Control flow (conditionals, loops, error handling)
 - Configuration (options pattern, environment profiles)
 - Middleware and events
-- All 11 packages (Serilog, Polly, OpenTelemetry, Validation, Audit, Testing, etc.)
+- All 13 packages (Serilog, Polly, OpenTelemetry, Validation, Audit, Testing, etc.)
 - Advanced patterns (comprehensive integration, operation creation patterns)
 
 [Sample Applications](src/samples/WorkflowForge.Samples.BasicConsole/README.md) | [Samples Guide](docs/getting-started/samples-guide.md)
@@ -191,7 +191,7 @@ WorkflowForge excels at:
 - [Architecture](docs/architecture/overview.md) - Design patterns and core concepts
 - [Operations](docs/core/operations.md) - Built-in and custom operations
 - [Events](docs/core/events.md) - Lifecycle event system
-- [Extensions](docs/extensions/index.md) - All 11 packages (10 extensions + Testing) with examples
+- [Extensions](docs/extensions/index.md) - All 13 packages (11 extensions + Testing) with examples
 - [Configuration](docs/core/configuration.md) - Environment-specific setup
 - [API Reference](docs/reference/api-reference.md) - Complete API documentation
 - [Performance](docs/performance/performance.md) - Benchmark results and optimization
