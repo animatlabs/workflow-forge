@@ -2,6 +2,10 @@ title: WorkflowForge
 description: High-performance workflow orchestration for .NET
 url: https://animatlabs.github.io
 baseurl: /workflow-forge
+
+# Google Analytics (same property as animatlabs.com blog)
+google_analytics: G-KKSHQVHDHY
+
 markdown: kramdown
 permalink: pretty
 

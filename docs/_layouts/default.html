@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+  
 </head>
 <body>
   <header class="site-header">
@@ -71,7 +72,7 @@
         {{ content }}
       </article>
       <footer class="page-footer">
-        <p>WorkflowForge is MIT licensed. <a href="https://github.com/animatlabs/workflow-forge">View on GitHub</a></p>
+        <p>WorkflowForge is MIT licensed. <a href="https://github.com/animatlabs/workflow-forge">View on GitHub</a> | <a href="https://animatlabs.com/privacy/">Privacy Policy</a></p>
       </footer>
     </main>
   </div>
@@ -81,5 +82,184 @@
       document.querySelector('.sidebar').classList.toggle('open');
     });
   </script>
+
+  {% if site.google_analytics %}
+  <!-- Cookie Consent + Google Analytics (only loads after user accepts) -->
+  <script>
+  (function() {
+    var CONSENT_KEY = 'analytics_consent';
+    var TRACKING_ID = '{{ site.google_analytics }}';
+    
+    function getConsent() {
+      return localStorage.getItem(CONSENT_KEY);
+    }
+    
+    function loadAnalytics() {
+      if (document.getElementById('gtag-script')) return;
+      
+      var script = document.createElement('script');
+      script.id = 'gtag-script';
+      script.async = true;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=' + TRACKING_ID;
+      document.head.appendChild(script);
+      
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', TRACKING_ID, { 'anonymize_ip': true });
+      window.gtag = gtag;
+    }
+    
+    function removeAnalytics() {
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        if (cookie.indexOf('_ga') === 0 || cookie.indexOf('_gid') === 0) {
+          var name = cookie.split('=')[0];
+          document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.' + location.hostname;
+          document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        }
+      }
+    }
+    
+    function showConsentBanner() {
+      if (document.getElementById('cookie-consent')) return;
+      
+      var banner = document.createElement('div');
+      banner.id = 'cookie-consent';
+      banner.innerHTML = 
+        '<div class="consent-content">' +
+          '<p>We use cookies to analyze site traffic and improve your experience. ' +
+             '<a href="https://animatlabs.com/privacy/" style="color:#fff;text-decoration:underline;">Privacy Policy</a></p>' +
+          '<div class="consent-buttons">' +
+            '<button id="consent-accept" class="consent-btn accept">Accept</button>' +
+            '<button id="consent-reject" class="consent-btn reject">Reject</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(banner);
+      
+      document.getElementById('consent-accept').addEventListener('click', function() {
+        localStorage.setItem(CONSENT_KEY, 'accepted');
+        banner.remove();
+        loadAnalytics();
+      });
+      
+      document.getElementById('consent-reject').addEventListener('click', function() {
+        localStorage.setItem(CONSENT_KEY, 'rejected');
+        banner.remove();
+        removeAnalytics();
+      });
+    }
+    
+    function init() {
+      var consent = getConsent();
+      if (consent === 'accepted') {
+        loadAnalytics();
+      } else if (consent === 'rejected') {
+        // Respect rejection
+      } else {
+        showConsentBanner();
+      }
+    }
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+    
+    window.resetAnalyticsConsent = function() {
+      localStorage.removeItem(CONSENT_KEY);
+      removeAnalytics();
+      location.reload();
+    };
+  })();
+  </script>
+  
+  <style>
+  #cookie-consent {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: #fff;
+    padding: 1rem 1.5rem;
+    z-index: 99999;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  
+  .consent-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  
+  .consent-content p {
+    margin: 0;
+    flex: 1;
+    min-width: 280px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  
+  .consent-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-shrink: 0;
+  }
+  
+  .consent-btn {
+    padding: 0.6rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  
+  .consent-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+  
+  .consent-btn.accept {
+    background: var(--wf-primary);
+    color: #fff;
+  }
+  
+  .consent-btn.reject {
+    background: transparent;
+    color: #fff;
+    border: 2px solid rgba(255,255,255,0.4);
+  }
+  
+  .consent-btn.reject:hover {
+    border-color: rgba(255,255,255,0.8);
+  }
+  
+  @media (max-width: 600px) {
+    .consent-content {
+      flex-direction: column;
+      text-align: center;
+    }
+    .consent-buttons {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+  </style>
+  {% endif %}
 </body>
 </html>
