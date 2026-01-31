@@ -133,7 +133,28 @@ These benchmarks measure WorkflowForge's intrinsic performance characteristics i
 
 ## Competitive Performance Summary
 
-WorkflowForge vs. Workflow Core and Elsa Workflows.
+WorkflowForge vs. Workflow Core and Elsa Workflows across **12 scenarios** with **50 iterations** each.
+
+{% if site.url %}
+<div class="perf-stats">
+  <div class="perf-stat">
+    <div class="perf-stat-value">540x</div>
+    <div class="perf-stat-label">Faster (State Machine)</div>
+  </div>
+  <div class="perf-stat">
+    <div class="perf-stat-value">573x</div>
+    <div class="perf-stat-label">Less Memory</div>
+  </div>
+  <div class="perf-stat">
+    <div class="perf-stat-value">12</div>
+    <div class="perf-stat-label">Scenarios Tested</div>
+  </div>
+  <div class="perf-stat">
+    <div class="perf-stat-value">50</div>
+    <div class="perf-stat-label">Iterations Each</div>
+  </div>
+</div>
+{% endif %}
 
 ### Performance Advantage Overview
 
@@ -147,6 +168,126 @@ WorkflowForge vs. Workflow Core and Elsa Workflows.
 - **9-573x less** memory allocation
 - **Kilobytes** (3.5-121KB) vs. **megabytes** (0.04-19MB) for competitors
 - No Gen2 GC collections in typical workflows
+
+### Visual Comparison
+
+| Scenario | WorkflowForge | Workflow Core | Elsa | Advantage |
+|----------|---------------|---------------|------|-----------|
+| State Machine (25) | 68 μs | 20,624 μs | 36,695 μs | 303-540x |
+| Concurrent Memory (8 wf) | 121 KB | 3,232 KB | 19,139 KB | 27-158x |
+
+{% if site.url %}
+<div class="perf-chart">
+  <div class="perf-chart-title">State Machine (25 Transitions) - Highest Advantage Scenario</div>
+  <div class="perf-compare">
+    <div class="perf-compare-row">
+      <div class="perf-compare-label">WorkflowForge</div>
+      <div class="perf-compare-bar">
+        <div class="perf-compare-fill wf" style="width: 5%;">68μs</div>
+      </div>
+      <div class="perf-compare-value">68 μs</div>
+    </div>
+    <div class="perf-compare-row">
+      <div class="perf-compare-label">Workflow Core</div>
+      <div class="perf-compare-bar">
+        <div class="perf-compare-fill wc" style="width: 56%;">20.6ms</div>
+      </div>
+      <div class="perf-compare-value">20,624 μs</div>
+    </div>
+    <div class="perf-compare-row">
+      <div class="perf-compare-label">Elsa</div>
+      <div class="perf-compare-bar">
+        <div class="perf-compare-fill elsa" style="width: 100%;">36.7ms</div>
+      </div>
+      <div class="perf-compare-value">36,695 μs</div>
+    </div>
+  </div>
+</div>
+
+<div class="perf-chart">
+  <div class="perf-chart-title">Concurrent Execution (8 Workflows) - Memory Allocation</div>
+  <div class="perf-compare">
+    <div class="perf-compare-row">
+      <div class="perf-compare-label">WorkflowForge</div>
+      <div class="perf-compare-bar">
+        <div class="perf-compare-fill memory" style="width: 5%;">121KB</div>
+      </div>
+      <div class="perf-compare-value">121 KB</div>
+    </div>
+    <div class="perf-compare-row">
+      <div class="perf-compare-label">Workflow Core</div>
+      <div class="perf-compare-bar">
+        <div class="perf-compare-fill wc" style="width: 17%;">3.2MB</div>
+      </div>
+      <div class="perf-compare-value">3,232 KB</div>
+    </div>
+    <div class="perf-compare-row">
+      <div class="perf-compare-label">Elsa</div>
+      <div class="perf-compare-bar">
+        <div class="perf-compare-fill elsa" style="width: 100%;">19MB</div>
+      </div>
+      <div class="perf-compare-value">19,139 KB</div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+### Scaling Performance
+
+Performance advantage **increases with workload**. See the [full competitive analysis](competitive-analysis.md) for detailed scaling charts.
+
+| Scale | WorkflowForge | Elsa | Advantage |
+|-------|---------------|------|-----------|
+| 1 Operation | 183 μs | 8,703 μs | 47.6x |
+| 50 Operations | 444 μs | 51,557 μs | 116.1x |
+
+{% if site.url %}
+<div class="perf-scale-chart">
+  <div class="perf-scale-title">Sequential Workflow - Performance Scales with Operations</div>
+  <div class="perf-scale-subtitle">Advantage grows from 47x to 116x as operations increase</div>
+  
+  <div class="perf-scale-group">
+    <div class="perf-scale-label">1 Operation</div>
+    <div class="perf-scale-bars">
+      <div class="perf-scale-row">
+        <div class="perf-scale-name">WorkflowForge</div>
+        <div class="perf-scale-bar"><div class="perf-scale-fill wf" style="width: 5%;">183μs</div></div>
+        <div class="perf-scale-value">183 μs</div>
+        <div class="perf-scale-advantage"></div>
+      </div>
+      <div class="perf-scale-row">
+        <div class="perf-scale-name">Elsa</div>
+        <div class="perf-scale-bar"><div class="perf-scale-fill elsa" style="width: 17%;">8.7ms</div></div>
+        <div class="perf-scale-value">8,703 μs</div>
+        <div class="perf-scale-advantage">47.6x</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="perf-scale-group">
+    <div class="perf-scale-label">50 Operations</div>
+    <div class="perf-scale-bars">
+      <div class="perf-scale-row">
+        <div class="perf-scale-name">WorkflowForge</div>
+        <div class="perf-scale-bar"><div class="perf-scale-fill wf" style="width: 0.9%;">444μs</div></div>
+        <div class="perf-scale-value">444 μs</div>
+        <div class="perf-scale-advantage"></div>
+      </div>
+      <div class="perf-scale-row">
+        <div class="perf-scale-name">Elsa</div>
+        <div class="perf-scale-bar"><div class="perf-scale-fill elsa" style="width: 100%;">51.6ms</div></div>
+        <div class="perf-scale-value">51,557 μs</div>
+        <div class="perf-scale-advantage">116.1x</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="perf-legend">
+    <div class="perf-legend-item"><div class="perf-legend-color wf"></div>WorkflowForge</div>
+    <div class="perf-legend-item"><div class="perf-legend-color elsa"></div>Elsa Workflows</div>
+  </div>
+</div>
+{% endif %}
 
 ### By Scenario (Median Values)
 

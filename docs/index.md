@@ -174,6 +174,29 @@ WorkflowForge provides **13 packages** (1 core + 11 extensions + 1 testing utili
 
 Based on BenchmarkDotNet testing (12 scenarios, 50 iterations) against Workflow Core and Elsa Workflows:
 
+{% if site.url %}
+<div class="perf-stats">
+  <div class="perf-stat">
+    <div class="perf-stat-value">540x</div>
+    <div class="perf-stat-label">Faster (State Machine)</div>
+  </div>
+  <div class="perf-stat">
+    <div class="perf-stat-value">573x</div>
+    <div class="perf-stat-label">Less Memory</div>
+  </div>
+  <div class="perf-stat">
+    <div class="perf-stat-value">13μs</div>
+    <div class="perf-stat-label">Min Execution</div>
+  </div>
+  <div class="perf-stat">
+    <div class="perf-stat-value">3.5KB</div>
+    <div class="perf-stat-label">Min Memory</div>
+  </div>
+</div>
+{% endif %}
+
+### Benchmark Comparison
+
 | Scenario | vs WorkflowCore | vs Elsa | Memory Advantage |
 |----------|-----------------|---------|------------------|
 | **Simple Sequential** | 26-71x faster | 48-117x faster | 26-183x less |
@@ -181,10 +204,34 @@ Based on BenchmarkDotNet testing (12 scenarios, 50 iterations) against Workflow 
 | **Conditional Branching** | 32-68x faster | 80-132x faster | 21-149x less |
 | **Concurrent Execution** | 26-109x faster | 71-264x faster | 27-158x less |
 
-**Key Metrics**:
-- Minimal memory footprint: **3.49 KB** baseline
-- Custom operation execution: **~13 μs** median
-- State machine workflows: **303-540x faster** than competitors
+{% if site.url %}
+<div class="perf-chart">
+  <div class="perf-chart-title">State Machine Execution (25 Transitions)</div>
+  <div class="perf-compare">
+    <div class="perf-compare-row">
+      <div class="perf-compare-label">WorkflowForge</div>
+      <div class="perf-compare-bar">
+        <div class="perf-compare-fill wf" style="width: 5%;">68μs</div>
+      </div>
+      <div class="perf-compare-value">68 μs</div>
+    </div>
+    <div class="perf-compare-row">
+      <div class="perf-compare-label">Workflow Core</div>
+      <div class="perf-compare-bar">
+        <div class="perf-compare-fill wc" style="width: 56%;">20.6ms</div>
+      </div>
+      <div class="perf-compare-value">20,624 μs</div>
+    </div>
+    <div class="perf-compare-row">
+      <div class="perf-compare-label">Elsa</div>
+      <div class="perf-compare-bar">
+        <div class="perf-compare-fill elsa" style="width: 100%;">36.7ms</div>
+      </div>
+      <div class="perf-compare-value">36,695 μs</div>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 **Test System**: Windows 11 (25H2), .NET 8.0.23, BenchmarkDotNet v0.15.8, 50 iterations
 

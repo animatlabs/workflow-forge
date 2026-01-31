@@ -393,3 +393,10 @@ MigrationBackup/
 
 # JetBrains Rider
 *.sln.iml
+
+# Jekyll (GitHub Pages documentation)
+docs/_site/
+docs/.sass-cache/
+docs/.jekyll-cache/
+docs/.jekyll-metadata
+docs/Gemfile.lock
