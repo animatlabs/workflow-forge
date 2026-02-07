@@ -8,9 +8,21 @@ WorkflowForge is an open-source .NET library for building high-performance workf
 
 - Author: Animesh Agarwal
 - Site: https://animatlabs.com/workflow-forge
+- Primary Blog: https://animatlabs.com
 - GitHub: https://github.com/animatlabs/workflow-forge
 - NuGet: https://www.nuget.org/packages/WorkflowForge/
 - License: MIT
+
+## Site Structure
+
+This documentation is part of the AnimatLabs ecosystem:
+- **Main Site**: https://animatlabs.com (blog, articles, tutorials)
+- **WorkflowForge Docs**: https://animatlabs.com/workflow-forge (this documentation)
+- **Root llms.txt**: https://animatlabs.com/llms.txt (site-wide context)
+
+## AI/LLM Usage
+
+This documentation is allowed for AI/LLM indexing and training. Content can be used to help developers understand WorkflowForge architecture, APIs, and implementation patterns.
 
 ## Key Features
 
