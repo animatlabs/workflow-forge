@@ -1,3 +1,8 @@
+---
+title: Samples Catalog
+description: 33 progressive samples covering basic workflows, compensation, parallel execution, and real-world patterns in WorkflowForge.
+---
+
 # WorkflowForge Samples Catalog
 
 **Total Samples**: 33  

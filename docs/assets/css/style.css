@@ -32,6 +32,91 @@
   --wf-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
 }
 
+/* ========== Dark Mode ========== */
+html.dark-mode {
+  --wf-primary: #3b82f6;
+  --wf-primary-dark: #2563eb;
+  --wf-primary-light: #60a5fa;
+  --wf-accent: #38bdf8;
+  --wf-success: #34d399;
+  --wf-warning: #fbbf24;
+  --wf-error: #f87171;
+
+  --wf-bg: #0f172a;
+  --wf-bg-alt: #1e293b;
+  --wf-text: #e2e8f0;
+  --wf-text-secondary: #94a3b8;
+  --wf-text-muted: #64748b;
+  --wf-border: #334155;
+  --wf-border-light: #1e293b;
+
+  --wf-code-bg: #0f172a;
+  --wf-code-text: #e2e8f0;
+
+  --wf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --wf-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --wf-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+}
+
+html.dark-mode img {
+  opacity: 0.9;
+}
+
+html.dark-mode .wf-hero {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+html.dark-mode .wf-badge {
+  background: #1e3a5f;
+  color: var(--wf-primary-light);
+}
+
+html.dark-mode .site-header {
+  background: var(--wf-bg-alt);
+  border-bottom-color: var(--wf-border);
+}
+
+html.dark-mode .sidebar {
+  background: var(--wf-bg-alt);
+  border-right-color: var(--wf-border);
+}
+
+html.dark-mode th {
+  background: #1e293b;
+}
+
+html.dark-mode tr:hover td {
+  background: #1e293b;
+}
+
+html.dark-mode :not(pre) > code {
+  background: #334155;
+  color: var(--wf-primary-light);
+}
+
+/* Dark mode toggle button */
+.dark-mode-toggle {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  color: var(--wf-text-secondary);
+  display: flex;
+  align-items: center;
+  border-radius: var(--wf-radius);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.dark-mode-toggle:hover {
+  color: var(--wf-primary);
+  background: var(--wf-border-light);
+}
+
+.dark-mode-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
 /* ========== Reset & Base ========== */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -1014,5 +1099,177 @@ hr {
   
   .perf-scale-advantage {
     display: none;
+  }
+}
+
+/* ========== Vertical Stacked Bar Charts ========== */
+.perf-vchart {
+  background: var(--wf-bg-alt);
+  border: 1px solid var(--wf-border);
+  border-radius: var(--wf-radius-lg);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.perf-vchart-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--wf-text);
+  margin-bottom: 0.25rem;
+}
+
+.perf-vchart-subtitle {
+  font-size: 0.8rem;
+  color: var(--wf-text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.perf-vchart-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  min-height: 220px;
+  border-bottom: 2px solid var(--wf-border);
+  padding: 0 0.5rem;
+  position: relative;
+}
+
+.perf-vchart-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 0.25rem;
+  min-width: 0;
+}
+
+.perf-vchart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  width: 100%;
+  justify-content: center;
+  height: 200px;
+}
+
+.perf-vchart-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  height: 100%;
+  max-width: 36px;
+  min-width: 14px;
+}
+
+.perf-vchart-fill {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  min-height: 6px;
+  position: relative;
+  transition: height 0.3s ease;
+}
+
+.perf-vchart-fill.wf {
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
+}
+
+.perf-vchart-fill.wc {
+  background: linear-gradient(180deg, #f59e0b, #d97706);
+}
+
+.perf-vchart-fill.elsa {
+  background: linear-gradient(180deg, #ef4444, #dc2626);
+}
+
+.perf-vchart-fill.memory {
+  background: linear-gradient(180deg, #10b981, #059669);
+}
+
+.perf-vchart-val {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--wf-text-secondary);
+  white-space: nowrap;
+  margin-bottom: 2px;
+  text-align: center;
+}
+
+.perf-vchart-group-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--wf-text-secondary);
+  text-align: center;
+  margin-top: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.perf-vchart-divider {
+  width: 1px;
+  background: var(--wf-border-light);
+  align-self: stretch;
+  margin: 0 2px;
+}
+
+.perf-vchart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.perf-vchart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--wf-text-secondary);
+}
+
+.perf-vchart-legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.perf-vchart-legend-color.wf {
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
+}
+
+.perf-vchart-legend-color.wc {
+  background: linear-gradient(180deg, #f59e0b, #d97706);
+}
+
+.perf-vchart-legend-color.elsa {
+  background: linear-gradient(180deg, #ef4444, #dc2626);
+}
+
+.perf-vchart-legend-color.memory {
+  background: linear-gradient(180deg, #10b981, #059669);
+}
+
+/* Responsive vertical charts */
+@media (max-width: 600px) {
+  .perf-vchart-bars {
+    height: 150px;
+    gap: 2px;
+  }
+
+  .perf-vchart-val {
+    font-size: 0.5rem;
+  }
+
+  .perf-vchart-group-label {
+    font-size: 0.6rem;
+  }
+
+  .perf-vchart-bar {
+    max-width: 24px;
+    min-width: 10px;
   }
 }

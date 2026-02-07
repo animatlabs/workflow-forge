@@ -1,3 +1,8 @@
+---
+title: Middleware Pipeline
+description: How WorkflowForge implements the Russian Doll middleware pattern for extensible operation execution.
+---
+
 # Middleware Pipeline Architecture
 
 ## Overview

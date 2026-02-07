@@ -1,3 +1,8 @@
+---
+title: Event System
+description: Workflow monitoring and observability through WorkflowForge's event system for lifecycle tracking and diagnostics.
+---
+
 # WorkflowForge Event System
 
 Comprehensive guide to the WorkflowForge event system for workflow monitoring and observability.

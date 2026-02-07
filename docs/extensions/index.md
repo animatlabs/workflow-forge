@@ -1,3 +1,8 @@
+---
+title: Extension System
+description: 13 NuGet packages for logging, resilience, observability, persistence, validation, and testing with zero version conflicts.
+---
+
 # WorkflowForge Extension System
 
 WorkflowForge follows an extension-first architecture where the core library provides minimal functionality, and rich features are delivered through a comprehensive extension ecosystem.

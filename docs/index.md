@@ -1,6 +1,7 @@
 ---
 layout: default
 title: WorkflowForge Documentation
+description: Build high-performance workflows in .NET with zero dependencies, microsecond execution, and a comprehensive extension ecosystem.
 ---
 
 <div class="wf-hero">
@@ -205,30 +206,23 @@ Based on BenchmarkDotNet testing (12 scenarios, 50 iterations) against Workflow 
 | **Concurrent Execution** | 26-109x faster | 71-264x faster | 27-158x less |
 
 {% if site.url %}
-<div class="perf-chart">
-  <div class="perf-chart-title">State Machine Execution (25 Transitions)</div>
-  <div class="perf-compare">
-    <div class="perf-compare-row">
-      <div class="perf-compare-label">WorkflowForge</div>
-      <div class="perf-compare-bar">
-        <div class="perf-compare-fill wf" style="width: 5%;">68μs</div>
+<div class="perf-vchart">
+  <div class="perf-vchart-title">State Machine Execution (25 Transitions)</div>
+  <div class="perf-vchart-subtitle">Up to 540x faster than alternatives</div>
+  <div class="perf-vchart-container">
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">68μs</div><div class="perf-vchart-fill wf" style="height: 40%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">20.6ms</div><div class="perf-vchart-fill wc" style="height: 95%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">36.7ms</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
       </div>
-      <div class="perf-compare-value">68 μs</div>
+      <div class="perf-vchart-group-label">Execution Time</div>
     </div>
-    <div class="perf-compare-row">
-      <div class="perf-compare-label">Workflow Core</div>
-      <div class="perf-compare-bar">
-        <div class="perf-compare-fill wc" style="width: 56%;">20.6ms</div>
-      </div>
-      <div class="perf-compare-value">20,624 μs</div>
-    </div>
-    <div class="perf-compare-row">
-      <div class="perf-compare-label">Elsa</div>
-      <div class="perf-compare-bar">
-        <div class="perf-compare-fill elsa" style="width: 100%;">36.7ms</div>
-      </div>
-      <div class="perf-compare-value">36,695 μs</div>
-    </div>
+  </div>
+  <div class="perf-vchart-legend">
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wf"></div>WorkflowForge</div>
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wc"></div>Workflow Core</div>
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color elsa"></div>Elsa Workflows</div>
   </div>
 </div>
 {% endif %}

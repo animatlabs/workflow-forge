@@ -1,3 +1,8 @@
+---
+title: Performance Benchmarks
+description: Comprehensive performance analysis showing 11-540x faster execution and 9-573x less memory than competitors across 12 scenarios.
+---
+
 # WorkflowForge Performance Benchmarks
 
 This document provides comprehensive performance analysis of WorkflowForge, including both internal performance characteristics and competitive comparisons.
@@ -177,57 +182,33 @@ WorkflowForge vs. Workflow Core and Elsa Workflows across **12 scenarios** with 
 | Concurrent Memory (8 wf) | 121 KB | 3,232 KB | 19,139 KB | 27-158x |
 
 {% if site.url %}
-<div class="perf-chart">
-  <div class="perf-chart-title">State Machine (25 Transitions) - Highest Advantage Scenario</div>
-  <div class="perf-compare">
-    <div class="perf-compare-row">
-      <div class="perf-compare-label">WorkflowForge</div>
-      <div class="perf-compare-bar">
-        <div class="perf-compare-fill wf" style="width: 5%;">68μs</div>
+<!-- Combined competitive summary: Execution Time + Memory (log scale) -->
+<div class="perf-vchart">
+  <div class="perf-vchart-title">Competitive Summary - Speed and Memory</div>
+  <div class="perf-vchart-subtitle">WorkflowForge dominates across both execution time and memory allocation</div>
+  <div class="perf-vchart-container">
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">68μs</div><div class="perf-vchart-fill wf" style="height: 40%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">20.6ms</div><div class="perf-vchart-fill wc" style="height: 95%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">36.7ms</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
       </div>
-      <div class="perf-compare-value">68 μs</div>
+      <div class="perf-vchart-group-label">State Machine (time)</div>
     </div>
-    <div class="perf-compare-row">
-      <div class="perf-compare-label">Workflow Core</div>
-      <div class="perf-compare-bar">
-        <div class="perf-compare-fill wc" style="width: 56%;">20.6ms</div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">121KB</div><div class="perf-vchart-fill wf" style="height: 49%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">3.2MB</div><div class="perf-vchart-fill wc" style="height: 82%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">19MB</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
       </div>
-      <div class="perf-compare-value">20,624 μs</div>
-    </div>
-    <div class="perf-compare-row">
-      <div class="perf-compare-label">Elsa</div>
-      <div class="perf-compare-bar">
-        <div class="perf-compare-fill elsa" style="width: 100%;">36.7ms</div>
-      </div>
-      <div class="perf-compare-value">36,695 μs</div>
+      <div class="perf-vchart-group-label">Concurrent (memory)</div>
     </div>
   </div>
-</div>
-
-<div class="perf-chart">
-  <div class="perf-chart-title">Concurrent Execution (8 Workflows) - Memory Allocation</div>
-  <div class="perf-compare">
-    <div class="perf-compare-row">
-      <div class="perf-compare-label">WorkflowForge</div>
-      <div class="perf-compare-bar">
-        <div class="perf-compare-fill memory" style="width: 5%;">121KB</div>
-      </div>
-      <div class="perf-compare-value">121 KB</div>
-    </div>
-    <div class="perf-compare-row">
-      <div class="perf-compare-label">Workflow Core</div>
-      <div class="perf-compare-bar">
-        <div class="perf-compare-fill wc" style="width: 17%;">3.2MB</div>
-      </div>
-      <div class="perf-compare-value">3,232 KB</div>
-    </div>
-    <div class="perf-compare-row">
-      <div class="perf-compare-label">Elsa</div>
-      <div class="perf-compare-bar">
-        <div class="perf-compare-fill elsa" style="width: 100%;">19MB</div>
-      </div>
-      <div class="perf-compare-value">19,139 KB</div>
-    </div>
+  <div class="perf-vchart-legend">
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wf"></div>WorkflowForge</div>
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wc"></div>Workflow Core</div>
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color elsa"></div>Elsa Workflows</div>
   </div>
 </div>
 {% endif %}
@@ -242,49 +223,60 @@ Performance advantage **increases with workload**. See the [full competitive ana
 | 50 Operations | 444 μs | 51,557 μs | 116.1x |
 
 {% if site.url %}
-<div class="perf-scale-chart">
-  <div class="perf-scale-title">Sequential Workflow - Performance Scales with Operations</div>
-  <div class="perf-scale-subtitle">Advantage grows from 47x to 116x as operations increase</div>
-  
-  <div class="perf-scale-group">
-    <div class="perf-scale-label">1 Operation</div>
-    <div class="perf-scale-bars">
-      <div class="perf-scale-row">
-        <div class="perf-scale-name">WorkflowForge</div>
-        <div class="perf-scale-bar"><div class="perf-scale-fill wf" style="width: 5%;">183μs</div></div>
-        <div class="perf-scale-value">183 μs</div>
-        <div class="perf-scale-advantage"></div>
+<!-- Sequential scaling + Concurrency scaling (log scale) -->
+<div class="perf-vchart">
+  <div class="perf-vchart-title">Scaling Performance - Operations and Concurrency</div>
+  <div class="perf-vchart-subtitle">WorkflowForge advantage grows as workload increases</div>
+  <div class="perf-vchart-container">
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">183μs</div><div class="perf-vchart-fill wf" style="height: 45%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">1.3ms</div><div class="perf-vchart-fill wc" style="height: 63%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">8.7ms</div><div class="perf-vchart-fill elsa" style="height: 79%;"></div></div>
       </div>
-      <div class="perf-scale-row">
-        <div class="perf-scale-name">Elsa</div>
-        <div class="perf-scale-bar"><div class="perf-scale-fill elsa" style="width: 17%;">8.7ms</div></div>
-        <div class="perf-scale-value">8,703 μs</div>
-        <div class="perf-scale-advantage">47.6x</div>
+      <div class="perf-vchart-group-label">Seq 1 op</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">247μs</div><div class="perf-vchart-fill wf" style="height: 48%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">6.5ms</div><div class="perf-vchart-fill wc" style="height: 77%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">17.6ms</div><div class="perf-vchart-fill elsa" style="height: 85%;"></div></div>
       </div>
+      <div class="perf-vchart-group-label">Seq 10 ops</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">444μs</div><div class="perf-vchart-fill wf" style="height: 53%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">27ms</div><div class="perf-vchart-fill wc" style="height: 89%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">51.6ms</div><div class="perf-vchart-fill elsa" style="height: 95%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Seq 50 ops</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">260μs</div><div class="perf-vchart-fill wf" style="height: 48%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">6.8ms</div><div class="perf-vchart-fill wc" style="height: 77%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">18.4ms</div><div class="perf-vchart-fill elsa" style="height: 86%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Conc 1 wf</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">356μs</div><div class="perf-vchart-fill wf" style="height: 51%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">38.8ms</div><div class="perf-vchart-fill wc" style="height: 92%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">94ms</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Conc 8 wf</div>
     </div>
   </div>
-  
-  <div class="perf-scale-group">
-    <div class="perf-scale-label">50 Operations</div>
-    <div class="perf-scale-bars">
-      <div class="perf-scale-row">
-        <div class="perf-scale-name">WorkflowForge</div>
-        <div class="perf-scale-bar"><div class="perf-scale-fill wf" style="width: 0.9%;">444μs</div></div>
-        <div class="perf-scale-value">444 μs</div>
-        <div class="perf-scale-advantage"></div>
-      </div>
-      <div class="perf-scale-row">
-        <div class="perf-scale-name">Elsa</div>
-        <div class="perf-scale-bar"><div class="perf-scale-fill elsa" style="width: 100%;">51.6ms</div></div>
-        <div class="perf-scale-value">51,557 μs</div>
-        <div class="perf-scale-advantage">116.1x</div>
-      </div>
-    </div>
-  </div>
-  
-  <div class="perf-legend">
-    <div class="perf-legend-item"><div class="perf-legend-color wf"></div>WorkflowForge</div>
-    <div class="perf-legend-item"><div class="perf-legend-color elsa"></div>Elsa Workflows</div>
+  <div class="perf-vchart-legend">
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wf"></div>WorkflowForge</div>
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wc"></div>Workflow Core</div>
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color elsa"></div>Elsa Workflows</div>
   </div>
 </div>
 {% endif %}

@@ -1,3 +1,8 @@
+---
+title: Architecture Overview
+description: Design principles, patterns, and implementation details behind WorkflowForge's high-performance workflow orchestration.
+---
+
 # WorkflowForge Architecture
 
 Complete architectural overview of WorkflowForge's design principles, patterns, and implementation.

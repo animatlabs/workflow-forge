@@ -1,0 +1,59 @@
+# WorkflowForge
+
+> High-performance, zero-dependency workflow orchestration framework for .NET with microsecond-level execution and minimal memory footprint. Uses an industrial metaphor (Forge, Foundry, Smith, Operations) for building workflows.
+
+## About
+
+WorkflowForge is an open-source .NET library for building high-performance workflows with a clean, fluent API. It provides built-in compensation (saga pattern), lifecycle hooks, and a comprehensive extension ecosystem with zero version conflicts.
+
+- Author: Animesh Agarwal
+- Site: https://animatlabs.com/workflow-forge
+- GitHub: https://github.com/animatlabs/workflow-forge
+- NuGet: https://www.nuget.org/packages/WorkflowForge/
+- License: MIT
+
+## Key Features
+
+- Zero-dependency core library
+- 11-540x faster than alternatives (Workflow Core, Elsa Workflows)
+- 9-573x less memory allocation
+- Fluent builder API with operation lifecycle hooks
+- Built-in saga pattern (compensation/rollback)
+- 13 NuGet packages (1 core + 11 extensions + testing)
+- ILRepack dependency internalization for extensions
+
+## Key Pages
+
+- Documentation: https://animatlabs.com/workflow-forge
+- Getting Started: https://animatlabs.com/workflow-forge/getting-started/getting-started/
+- API Reference: https://animatlabs.com/workflow-forge/reference/api-reference/
+- Architecture: https://animatlabs.com/workflow-forge/architecture/overview/
+- Operations: https://animatlabs.com/workflow-forge/core/operations/
+- Extensions: https://animatlabs.com/workflow-forge/extensions/
+- Performance Benchmarks: https://animatlabs.com/workflow-forge/performance/performance/
+- Competitive Analysis: https://animatlabs.com/workflow-forge/performance/competitive-analysis/
+
+## Extension Packages
+
+- WorkflowForge (core)
+- WorkflowForge.Testing
+- WorkflowForge.Extensions.DependencyInjection
+- WorkflowForge.Extensions.Logging.Serilog
+- WorkflowForge.Extensions.Resilience
+- WorkflowForge.Extensions.Resilience.Polly
+- WorkflowForge.Extensions.Observability.Performance
+- WorkflowForge.Extensions.Observability.HealthChecks
+- WorkflowForge.Extensions.Observability.OpenTelemetry
+- WorkflowForge.Extensions.Persistence
+- WorkflowForge.Extensions.Persistence.Recovery
+- WorkflowForge.Extensions.Validation
+- WorkflowForge.Extensions.Audit
+
+## Topics
+
+- .NET workflow orchestration
+- High-performance C# libraries
+- Saga pattern / compensation
+- Fluent builder API design
+- Zero-dependency architecture
+- BenchmarkDotNet performance testing

@@ -1,3 +1,8 @@
+---
+title: Configuration Guide
+description: Complete configuration reference for WorkflowForge workflows including error handling, compensation, and environment-specific settings.
+---
+
 # WorkflowForge Configuration
 
 Complete configuration guide for WorkflowForge workflows across all environments.

@@ -1,7 +1,19 @@
 title: WorkflowForge
 description: High-performance workflow orchestration for .NET
-url: https://animatlabs.github.io
+url: https://animatlabs.com
 baseurl: /workflow-forge
+
+# SEO
+author: Animesh Agarwal
+lang: en
+logo: https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png
+og_image: https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png
+
+# Social
+social:
+  name: AnimatLabs
+  links:
+    - https://github.com/animatlabs/workflow-forge
 
 # Google Analytics (same property as animatlabs.com blog)
 google_analytics: G-KKSHQVHDHY
@@ -19,6 +31,8 @@ kramdown:
 # Plugins
 plugins:
   - jekyll-relative-links
+  - jekyll-seo-tag
+  - jekyll-sitemap
 
 # Relative links plugin config
 relative_links:

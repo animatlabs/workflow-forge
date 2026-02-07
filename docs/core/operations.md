@@ -1,3 +1,8 @@
+---
+title: Operations Guide
+description: Complete guide to creating workflow operations including class-based, delegate, inline, and parallel operations in WorkflowForge.
+---
+
 # WorkflowForge Operations Guide
 
 Complete guide to creating and using operations in WorkflowForge.

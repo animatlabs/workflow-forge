@@ -1,3 +1,8 @@
+---
+title: API Reference
+description: Complete API reference for WorkflowForge core types, interfaces, builders, and extension points.
+---
+
 # WorkflowForge API Reference
 
 Complete API reference for WorkflowForge core types and abstractions.

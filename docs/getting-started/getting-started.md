@@ -1,3 +1,8 @@
+---
+title: Getting Started with WorkflowForge
+description: Install, configure, and create your first high-performance .NET workflow in minutes with WorkflowForge.
+---
+
 # Getting Started with WorkflowForge
 
 Welcome to WorkflowForge! This guide will walk you through installing, configuring, and creating your first workflow in just a few minutes.

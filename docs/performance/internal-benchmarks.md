@@ -1,3 +1,8 @@
+---
+title: Internal Benchmarks
+description: Internal performance benchmarks validating WorkflowForge's microsecond execution, minimal allocations, and linear scaling characteristics.
+---
+
 # WorkflowForge Internal Benchmarks
 
 This document presents WorkflowForge's internal performance benchmarks - comprehensive self-testing that validates the framework's performance characteristics independently of competitor comparisons.
@@ -65,6 +70,87 @@ Tests individual operation types for execution time and memory allocation.
 | ActionOperationCreation | 1.8μs | 56 B |
 | CustomOperationCreation | 1.8μs | 32 B |
 
+{% if site.url %}
+<div class="perf-vchart">
+  <div class="perf-vchart-title">Operation Execution Times (Median, Lower is Better)</div>
+  <div class="perf-vchart-subtitle">All CPU-bound operations execute in under 70 microseconds</div>
+  <div class="perf-vchart-container">
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">10.3μs</div><div class="perf-vchart-fill wf" style="height: 15%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Logging</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">22.5μs</div><div class="perf-vchart-fill wf" style="height: 33%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Cond False</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">27.3μs</div><div class="perf-vchart-fill wf" style="height: 41%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Delegate</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">27.5μs</div><div class="perf-vchart-fill wf" style="height: 41%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Custom</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">34.3μs</div><div class="perf-vchart-fill wf" style="height: 51%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Action</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">38.4μs</div><div class="perf-vchart-fill wf" style="height: 57%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">ForEach S</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">53.2μs</div><div class="perf-vchart-fill wf" style="height: 79%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Cond True</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">56.7μs</div><div class="perf-vchart-fill wf" style="height: 84%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Chained</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">59.4μs</div><div class="perf-vchart-fill wf" style="height: 88%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Data</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">67.4μs</div><div class="perf-vchart-fill wf" style="height: 100%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">ForEach L</div>
+    </div>
+  </div>
+  <div class="perf-vchart-legend">
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wf"></div>WorkflowForge (CPU-bound ops only)</div>
+  </div>
+</div>
+{% endif %}
+
 **Key Findings**:
 - Custom operations are the most memory-efficient (296 B)
 - Logging operations are fastest (10.3μs)
@@ -89,6 +175,52 @@ Tests complete workflow execution patterns with varying operation counts.
 
 *Delegate operations include 15ms delay per operation for testing purposes.
 
+{% if site.url %}
+<div class="perf-vchart">
+  <div class="perf-vchart-title">Custom Operation Throughput Scaling (1-50 Operations)</div>
+  <div class="perf-vchart-subtitle">Sub-200μs execution even at 50 operations with linear memory growth</div>
+  <div class="perf-vchart-container">
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">38μs</div><div class="perf-vchart-fill wf" style="height: 20%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">1 op</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">64μs</div><div class="perf-vchart-fill wf" style="height: 34%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">5 ops</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">87μs</div><div class="perf-vchart-fill wf" style="height: 46%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">10 ops</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">120μs</div><div class="perf-vchart-fill wf" style="height: 63%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">25 ops</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">190μs</div><div class="perf-vchart-fill wf" style="height: 100%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">50 ops</div>
+    </div>
+  </div>
+  <div class="perf-vchart-legend">
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wf"></div>Custom Operation Execution (median)</div>
+  </div>
+</div>
+{% endif %}
+
 ### Workflow Patterns (10 Operations, Median Times)
 
 | Pattern | Median | Memory |
@@ -102,6 +234,38 @@ Tests complete workflow execution patterns with varying operation counts.
 | LoggingOperationsWorkflow | 158,484μs* | 39.45 KB |
 
 *Includes built-in delays for realistic simulation.
+
+{% if site.url %}
+<div class="perf-vchart">
+  <div class="perf-vchart-title">Workflow Pattern Comparison (10 Operations, CPU-bound only)</div>
+  <div class="perf-vchart-subtitle">ForEach loop is the fastest pattern; memory scales with complexity</div>
+  <div class="perf-vchart-container">
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">57.6μs</div><div class="perf-vchart-fill wf" style="height: 60%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">ForEach</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">87.2μs</div><div class="perf-vchart-fill wf" style="height: 90%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Sequential</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">96.6μs</div><div class="perf-vchart-fill wf" style="height: 100%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">High Perf</div>
+    </div>
+  </div>
+  <div class="perf-vchart-legend">
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wf"></div>WorkflowForge (CPU-bound patterns)</div>
+  </div>
+</div>
+{% endif %}
 
 **Key Findings**:
 - ForEach loops are highly optimized (57.6μs for 10 items)
@@ -137,6 +301,75 @@ Tests memory allocation patterns and GC behavior.
 | 100 | 3.04 KB | 159.5 KB | 4,961.85 KB |
 | 500 | 3.04 KB | 776.02 KB | 4,951.25 KB |
 
+{% if site.url %}
+<div class="perf-vchart">
+  <div class="perf-vchart-title">Memory Allocation Patterns (50 Allocations)</div>
+  <div class="perf-vchart-subtitle">Minimal workflow stays at 3KB; large objects trigger GC</div>
+  <div class="perf-vchart-container">
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">3KB</div><div class="perf-vchart-fill wf" style="height: 13%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Minimal</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">67KB</div><div class="perf-vchart-fill wf" style="height: 49%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">StringBuilder</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">74KB</div><div class="perf-vchart-fill wf" style="height: 51%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Collection</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">80KB</div><div class="perf-vchart-fill wf" style="height: 52%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Small Obj</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">87KB</div><div class="perf-vchart-fill wf" style="height: 53%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">String</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">92KB</div><div class="perf-vchart-fill wf" style="height: 53%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Pooling</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">1.5MB</div><div class="perf-vchart-fill wc" style="height: 86%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Pressure</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">4.9MB</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">Large Obj</div>
+    </div>
+  </div>
+  <div class="perf-vchart-legend">
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wf"></div>Typical (no GC pressure)</div>
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wc"></div>Elevated (Gen0)</div>
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color elsa"></div>High (Gen0/1/2)</div>
+  </div>
+</div>
+{% endif %}
+
 **Key Findings**:
 - Minimal allocation baseline is constant at 3.04 KB
 - No GC pressure for typical workflows (Gen0 only)
@@ -170,6 +403,58 @@ Tests concurrent workflow execution patterns.
 | ConcurrentDataAccess | 158.1ms | 199 KB |
 | WorkflowChainConcurrency | 475.6ms | 448.7 KB |
 | HighContentionScenario | 1,285.4ms | 144.81 KB |
+
+{% if site.url %}
+<div class="perf-vchart">
+  <div class="perf-vchart-title">Concurrency Scaling (Sequential vs Concurrent Time)</div>
+  <div class="perf-vchart-subtitle">Near-perfect linear scaling: 15.7x speedup for 16 concurrent workflows</div>
+  <div class="perf-vchart-container">
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">159ms</div><div class="perf-vchart-fill wc" style="height: 15%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">159ms</div><div class="perf-vchart-fill wf" style="height: 15%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">1 wf (1.0x)</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">319ms</div><div class="perf-vchart-fill wc" style="height: 28%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">159ms</div><div class="perf-vchart-fill wf" style="height: 15%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">2 wf (2.0x)</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">626ms</div><div class="perf-vchart-fill wc" style="height: 50%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">159ms</div><div class="perf-vchart-fill wf" style="height: 15%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">4 wf (3.9x)</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">1.26s</div><div class="perf-vchart-fill wc" style="height: 75%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">160ms</div><div class="perf-vchart-fill wf" style="height: 15%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">8 wf (7.9x)</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">2.51s</div><div class="perf-vchart-fill wc" style="height: 100%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">159ms</div><div class="perf-vchart-fill wf" style="height: 15%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">16 wf (15.7x)</div>
+    </div>
+  </div>
+  <div class="perf-vchart-legend">
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wc"></div>Sequential Execution</div>
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wf"></div>Concurrent Execution</div>
+  </div>
+</div>
+{% endif %}
 
 **Key Findings**:
 - Near-linear scaling up to 16 concurrent workflows
