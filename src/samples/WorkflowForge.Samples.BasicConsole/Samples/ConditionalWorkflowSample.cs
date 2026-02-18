@@ -80,13 +80,11 @@ public class ConditionalWorkflowSample : ISample
     }
 }
 
-public class InitializeOrderOperation : IWorkflowOperation
+public class InitializeOrderOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "InitializeOrder";
-    public bool SupportsRestore => false;
+    public override string Name => "InitializeOrder";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [START] Initializing order...");
         await Task.Delay(50, cancellationToken);
@@ -97,24 +95,19 @@ public class InitializeOrderOperation : IWorkflowOperation
         return "Order initialized";
     }
 
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("order_status", out _);
         foundry.Properties.TryRemove("processing_start", out _);
         return Task.CompletedTask;
     }
-
-    public void Dispose()
-    { }
 }
 
-public class PremiumOrderProcessingOperation : IWorkflowOperation
+public class PremiumOrderProcessingOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "PremiumOrderProcessing";
-    public bool SupportsRestore => false;
+    public override string Name => "PremiumOrderProcessing";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [PREMIUM] Processing high-value order with premium service...");
         await Task.Delay(150, cancellationToken);
@@ -128,7 +121,7 @@ public class PremiumOrderProcessingOperation : IWorkflowOperation
         return "Premium processing assigned";
     }
 
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("processing_type", out _);
         foundry.Properties.TryRemove("priority_level", out _);
@@ -136,18 +129,13 @@ public class PremiumOrderProcessingOperation : IWorkflowOperation
         foundry.Properties.TryRemove("premium_benefits", out _);
         return Task.CompletedTask;
     }
-
-    public void Dispose()
-    { }
 }
 
-public class StandardOrderProcessingOperation : IWorkflowOperation
+public class StandardOrderProcessingOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "StandardOrderProcessing";
-    public bool SupportsRestore => false;
+    public override string Name => "StandardOrderProcessing";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [STANDARD] Processing order with standard service...");
         await Task.Delay(80, cancellationToken);
@@ -160,30 +148,25 @@ public class StandardOrderProcessingOperation : IWorkflowOperation
         return "Standard processing assigned";
     }
 
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("processing_type", out _);
         foundry.Properties.TryRemove("priority_level", out _);
         foundry.Properties.TryRemove("estimated_completion", out _);
         return Task.CompletedTask;
     }
-
-    public void Dispose()
-    { }
 }
 
-public class CreditCardPaymentOperation : IWorkflowOperation
+public class CreditCardPaymentOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "CreditCardPayment";
-    public bool SupportsRestore => true;
+    public override string Name => "CreditCardPayment";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [PAYMENT] Processing credit card payment...");
         await Task.Delay(120, cancellationToken);
 
-        var transactionId = $"CC-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+        var transactionId = $"CC-{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
         foundry.SetProperty("payment_type", "CreditCard");
         foundry.SetProperty("transaction_id", transactionId);
         foundry.SetProperty("payment_status", "Processed");
@@ -193,7 +176,7 @@ public class CreditCardPaymentOperation : IWorkflowOperation
         return $"Credit card payment: {transactionId}";
     }
 
-    public async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var transactionId = foundry.GetPropertyOrDefault<string>("transaction_id", "Unknown");
         Console.WriteLine($"   [REFUND] Refunding credit card transaction {transactionId}...");
@@ -205,23 +188,18 @@ public class CreditCardPaymentOperation : IWorkflowOperation
 
         Console.WriteLine($"   [SUCCESS] Credit card refund completed");
     }
-
-    public void Dispose()
-    { }
 }
 
-public class BankTransferPaymentOperation : IWorkflowOperation
+public class BankTransferPaymentOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "BankTransferPayment";
-    public bool SupportsRestore => true;
+    public override string Name => "BankTransferPayment";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [PAYMENT] Processing bank transfer payment...");
         await Task.Delay(200, cancellationToken);
 
-        var transferId = $"BT-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+        var transferId = $"BT-{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
         foundry.SetProperty("payment_type", "BankTransfer");
         foundry.SetProperty("transfer_id", transferId);
         foundry.SetProperty("payment_status", "Pending"); // Bank transfers take longer
@@ -232,7 +210,7 @@ public class BankTransferPaymentOperation : IWorkflowOperation
         return $"Bank transfer: {transferId}";
     }
 
-    public async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var transferId = foundry.GetPropertyOrDefault<string>("transfer_id", "Unknown");
         Console.WriteLine($"   [REVERSAL] Reversing bank transfer {transferId}...");
@@ -244,18 +222,13 @@ public class BankTransferPaymentOperation : IWorkflowOperation
 
         Console.WriteLine($"   [SUCCESS] Bank transfer reversal completed");
     }
-
-    public void Dispose()
-    { }
 }
 
-public class FinalizeOrderOperation : IWorkflowOperation
+public class FinalizeOrderOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "FinalizeOrder";
-    public bool SupportsRestore => false;
+    public override string Name => "FinalizeOrder";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [INFO] Finalizing order...");
 
@@ -275,13 +248,10 @@ public class FinalizeOrderOperation : IWorkflowOperation
         return "Order finalized";
     }
 
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("order_status", out _);
         foundry.Properties.TryRemove("completion_time", out _);
         return Task.CompletedTask;
     }
-
-    public void Dispose()
-    { }
 }

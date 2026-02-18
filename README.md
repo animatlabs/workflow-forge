@@ -39,7 +39,7 @@ High-performance, dependency-free workflow orchestration library for .NET. Execu
 - **Minimal Memory**: Linear memory scaling, no memory leaks
 - **Thread-Safe**: Concurrent workflow execution via `ConcurrentDictionary`
 - **Fluent API**: Clean, readable workflow definition with `AddOperations()` and `AddParallelOperations()`
-- **Saga Pattern**: Built-in compensation/rollback via `RestoreAsync()`
+- **Saga Pattern**: Built-in compensation — override `RestoreAsync` in your operation; base class no-op skips non-restorable operations
 - **Lifecycle Hooks**: `OnBeforeExecuteAsync`/`OnAfterExecuteAsync` for setup/teardown without middleware
 - **Middleware Pipeline**: Russian Doll pattern for cross-cutting concerns
 - **Event System**: SRP-compliant lifecycle events for workflows, operations, and compensation
@@ -137,7 +137,7 @@ WorkflowForge follows **production-grade design patterns**:
 
 - **Factory Pattern**: `WorkflowForge.CreateWorkflow()`, `CreateSmith()`, `CreateFoundry()`
 - **Builder Pattern**: Fluent API for workflow construction
-- **Saga Pattern**: Compensation via `RestoreAsync()`
+- **Saga Pattern**: Override `RestoreAsync` for compensation; operations that don't override are safely skipped
 - **Middleware Pattern**: Russian Doll pipeline for operations
 - **Event-Driven**: Lifecycle events for monitoring and integration
 - **Dependency Injection**: Full support for `IServiceProvider`

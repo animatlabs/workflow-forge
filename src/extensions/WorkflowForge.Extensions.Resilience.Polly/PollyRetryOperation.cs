@@ -47,9 +47,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         public override string Name => _name;
 
         /// <inheritdoc />
-        public override bool SupportsRestore => _innerOperation.SupportsRestore;
-
-        /// <inheritdoc />
         protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
@@ -96,11 +93,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
-
-            if (!_innerOperation.SupportsRestore)
-            {
-                throw new NotSupportedException($"The inner operation '{_innerOperation.Name}' does not support restoration.");
-            }
 
             try
             {

@@ -7,7 +7,7 @@ namespace WorkflowForge.Events
     /// Event arguments for compensation triggered events.
     /// Fired when compensation (rollback/saga pattern) is triggered due to a workflow failure.
     /// </summary>
-    public class CompensationTriggeredEventArgs : BaseWorkflowForgeEventArgs
+    public sealed class CompensationTriggeredEventArgs : BaseWorkflowForgeEventArgs
     {
         /// <summary>
         /// Gets the timestamp when compensation was triggered.

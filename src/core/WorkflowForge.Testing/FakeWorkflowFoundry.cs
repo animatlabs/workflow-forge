@@ -23,9 +23,9 @@ namespace WorkflowForge.Testing
     /// <code>
     /// var foundry = new FakeWorkflowFoundry();
     /// var operation = new MyCustomOperation();
-    /// 
+    ///
     /// var result = await operation.ForgeAsync(inputData, foundry, CancellationToken.None);
-    /// 
+    ///
     /// Assert.Contains(operation, foundry.ExecutedOperations);
     /// Assert.Equal(expectedValue, foundry.Properties["key"]);
     /// </code>
@@ -247,79 +247,104 @@ namespace WorkflowForge.Testing
         /// </summary>
         public static readonly TestNullLogger Instance = new TestNullLogger();
 
-        private TestNullLogger() { }
+        private TestNullLogger()
+        { }
 
         /// <inheritdoc />
-        public void LogTrace(string message, params object[] args) { }
+        public void LogTrace(string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogTrace(Exception exception, string message, params object[] args) { }
+        public void LogTrace(Exception exception, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogTrace(IDictionary<string, string> properties, string message, params object[] args) { }
+        public void LogTrace(IDictionary<string, string> properties, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogTrace(IDictionary<string, string> properties, Exception exception, string message, params object[] args) { }
+        public void LogTrace(IDictionary<string, string> properties, Exception exception, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogDebug(string message, params object[] args) { }
+        public void LogDebug(string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogDebug(Exception exception, string message, params object[] args) { }
+        public void LogDebug(Exception exception, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogDebug(IDictionary<string, string> properties, string message, params object[] args) { }
+        public void LogDebug(IDictionary<string, string> properties, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogDebug(IDictionary<string, string> properties, Exception exception, string message, params object[] args) { }
+        public void LogDebug(IDictionary<string, string> properties, Exception exception, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogInformation(string message, params object[] args) { }
+        public void LogInformation(string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogInformation(Exception exception, string message, params object[] args) { }
+        public void LogInformation(Exception exception, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogInformation(IDictionary<string, string> properties, string message, params object[] args) { }
+        public void LogInformation(IDictionary<string, string> properties, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogInformation(IDictionary<string, string> properties, Exception exception, string message, params object[] args) { }
+        public void LogInformation(IDictionary<string, string> properties, Exception exception, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogWarning(string message, params object[] args) { }
+        public void LogWarning(string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogWarning(Exception exception, string message, params object[] args) { }
+        public void LogWarning(Exception exception, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogWarning(IDictionary<string, string> properties, string message, params object[] args) { }
+        public void LogWarning(IDictionary<string, string> properties, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogWarning(IDictionary<string, string> properties, Exception exception, string message, params object[] args) { }
+        public void LogWarning(IDictionary<string, string> properties, Exception exception, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogError(string message, params object[] args) { }
+        public void LogError(string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogError(Exception exception, string message, params object[] args) { }
+        public void LogError(Exception exception, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogError(IDictionary<string, string> properties, string message, params object[] args) { }
+        public void LogError(IDictionary<string, string> properties, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogError(IDictionary<string, string> properties, Exception exception, string message, params object[] args) { }
+        public void LogError(IDictionary<string, string> properties, Exception exception, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogCritical(string message, params object[] args) { }
+        public void LogCritical(string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogCritical(Exception exception, string message, params object[] args) { }
+        public void LogCritical(Exception exception, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogCritical(IDictionary<string, string> properties, string message, params object[] args) { }
+        public void LogCritical(IDictionary<string, string> properties, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
-        public void LogCritical(IDictionary<string, string> properties, Exception exception, string message, params object[] args) { }
+        public void LogCritical(IDictionary<string, string> properties, Exception exception, string message, params object[] args)
+        { }
 
         /// <inheritdoc />
         public IDisposable BeginScope<TState>(TState state, IDictionary<string, string>? properties = null)
@@ -327,7 +352,8 @@ namespace WorkflowForge.Testing
 
         private sealed class EmptyDisposable : IDisposable
         {
-            public void Dispose() { }
+            public void Dispose()
+            { }
         }
     }
 }

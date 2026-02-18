@@ -39,7 +39,7 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
             if (healthCheckService == null) throw new ArgumentNullException(nameof(healthCheckService));
 
-            await healthCheckService.CheckHealthAsync(cancellationToken);
+            await healthCheckService.CheckHealthAsync(cancellationToken).ConfigureAwait(false);
             return healthCheckService.OverallStatus;
         }
     }

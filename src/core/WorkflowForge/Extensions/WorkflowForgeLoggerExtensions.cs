@@ -28,7 +28,7 @@ namespace WorkflowForge.Extensions
                 [PropertyNameConstants.TotalOperationCount] = workflow.Operations.Count.ToString()
             };
 
-            if (foundry.Properties.TryGetValue("ParentWorkflowExecutionId", out var parentId))
+            if (foundry.Properties.TryGetValue(FoundryPropertyKeys.ParentWorkflowExecutionId, out var parentId))
             {
                 properties[PropertyNameConstants.ParentWorkflowExecutionId] = parentId?.ToString() ?? string.Empty;
             }

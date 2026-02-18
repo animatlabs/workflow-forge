@@ -1,0 +1,104 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to NuGet (true/false)'
+        required: false
+        default: false
+        type: boolean
+      version:
+        description: 'Package version override (e.g. 2.1.0)'
+        required: false
+        type: string
+      sign:
+        description: 'Sign packages (true/false)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore WorkflowForge.sln
+
+    - name: Build
+      run: dotnet build WorkflowForge.sln --configuration Release --no-restore
+
+    - name: Test
+      run: dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: '**/test-results.trx'
+
+    - name: Pack
+      run: |
+        VERSION_ARG=""
+        if [ -n "${{ github.event.inputs.version }}" ]; then
+          VERSION_ARG="-p:PackageVersion=${{ github.event.inputs.version }}"
+        fi
+        dotnet pack WorkflowForge.sln --configuration Release --no-build --output ./packages $VERSION_ARG
+
+    - name: Upload packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-packages
+        path: |
+          ./packages/*.nupkg
+          ./packages/*.snupkg
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Download packages
+      uses: actions/download-artifact@v4
+      with:
+        name: nuget-packages
+        path: ./packages
+
+    - name: Sign packages
+      if: github.event.inputs.sign == 'true'
+      run: |
+        echo "${{ secrets.SIGNING_CERT_BASE64 }}" | base64 --decode > cert.pfx
+        for pkg in ./packages/*.nupkg ./packages/*.snupkg; do
+          dotnet nuget sign "$pkg" --certificate-path cert.pfx --certificate-password "${{ secrets.SIGNING_CERT_PASSWORD }}" --timestamper http://timestamp.digicert.com
+        done
+        rm -f cert.pfx
+
+    - name: Push to NuGet
+      run: |
+        for pkg in ./packages/*.nupkg; do
+          dotnet nuget push "$pkg" --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        done
+        for pkg in ./packages/*.snupkg; do
+          dotnet nuget push "$pkg" --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        done

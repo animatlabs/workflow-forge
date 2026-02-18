@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 
 namespace WorkflowForge.Middleware
 {
@@ -77,7 +78,7 @@ namespace WorkflowForge.Middleware
 
             // Check if workflow has custom timeout
             TimeSpan timeout = _defaultTimeout;
-            if (foundry.Properties.TryGetValue("Workflow.Timeout", out var customTimeout)
+            if (foundry.Properties.TryGetValue(FoundryPropertyKeys.WorkflowTimeout, out var customTimeout)
                 && customTimeout is TimeSpan ts)
             {
                 timeout = ts;
@@ -94,6 +95,7 @@ namespace WorkflowForge.Middleware
             _logger.LogDebug($"Workflow '{workflow.Name}' executing with {timeout.TotalSeconds}s timeout");
 
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            foundry.Properties[FoundryPropertyKeys.WorkflowTimeoutCancellationToken] = timeoutCts.Token;
             var executionTask = next();
             var timeoutTask = Task.Delay(timeout, cancellationToken);
 
@@ -113,8 +115,8 @@ namespace WorkflowForge.Middleware
                 var errorMessage = $"Workflow '{workflow.Name}' execution exceeded the configured timeout of {timeout.TotalSeconds} seconds.";
                 _logger.LogError(errorMessage);
 
-                foundry.Properties["Workflow.TimedOut"] = true;
-                foundry.Properties["Workflow.TimeoutDuration"] = timeout;
+                foundry.Properties[FoundryPropertyKeys.WorkflowTimedOut] = true;
+                foundry.Properties[FoundryPropertyKeys.WorkflowTimeoutDuration] = timeout;
 
                 throw new TimeoutException(errorMessage);
             }

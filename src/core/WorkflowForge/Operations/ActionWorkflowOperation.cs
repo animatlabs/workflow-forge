@@ -37,11 +37,6 @@ namespace WorkflowForge.Operations
         public override string Name { get; }
 
         /// <summary>
-        /// Gets a value indicating whether this operation supports restoration.
-        /// </summary>
-        public override bool SupportsRestore => _restoreFunc != null;
-
-        /// <summary>
         /// Executes the action and returns the input data unchanged.
         /// </summary>
         /// <param name="input">The input data to pass through.</param>
@@ -76,12 +71,12 @@ namespace WorkflowForge.Operations
         /// <returns>A task representing the restoration operation.</returns>
         public override async Task RestoreAsync(object? output, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (!SupportsRestore)
-                throw new NotSupportedException($"Action operation '{Name}' does not support restoration.");
+            if (_restoreFunc == null)
+                return;
 
             try
             {
-                await _restoreFunc!(output, foundry, cancellationToken).ConfigureAwait(false);
+                await _restoreFunc(output, foundry, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {
@@ -126,11 +121,6 @@ namespace WorkflowForge.Operations
         public override string Name { get; }
 
         /// <summary>
-        /// Gets a value indicating whether this operation supports restoration.
-        /// </summary>
-        public override bool SupportsRestore => _restoreFunc != null;
-
-        /// <summary>
         /// Executes the typed action and returns the input data unchanged.
         /// </summary>
         /// <param name="input">The typed input data to pass through.</param>
@@ -159,12 +149,12 @@ namespace WorkflowForge.Operations
         /// <returns>A task representing the restoration operation.</returns>
         public override async Task RestoreAsync(TInput output, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (!SupportsRestore)
-                throw new NotSupportedException($"Action operation '{Name}' does not support restoration.");
+            if (_restoreFunc == null)
+                return;
 
             try
             {
-                await _restoreFunc!(output, foundry, cancellationToken).ConfigureAwait(false);
+                await _restoreFunc(output, foundry, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {

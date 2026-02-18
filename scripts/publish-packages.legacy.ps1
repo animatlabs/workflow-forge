@@ -1,17 +1,20 @@
+# LEGACY: This script has been replaced by publish-packages.py (cross-platform).
+# See scripts/publish-packages.py for the recommended publish workflow.
+
 param (
-    [string]$CoreVersion = "2.0.0",
-    [string]$TestingVersion = "2.0.0",
-    [string]$DependencyInjectionVersion = "2.0.0",
-    [string]$SerilogVersion = "2.0.0",
-    [string]$PollyVersion = "2.0.0",
-    [string]$ResilienceVersion = "2.0.0",
-    [string]$PerformanceVersion = "2.0.0",
-    [string]$HealthChecksVersion = "2.0.0",
-    [string]$OpenTelemetryVersion = "2.0.0",
-    [string]$PersistenceVersion = "2.0.0",
-    [string]$RecoveryVersion = "2.0.0",
-    [string]$ValidationVersion = "2.0.0",
-    [string]$AuditVersion = "2.0.0",
+    [string]$CoreVersion = "2.1.0",
+    [string]$TestingVersion = "2.1.0",
+    [string]$DependencyInjectionVersion = "2.1.0",
+    [string]$SerilogVersion = "2.1.0",
+    [string]$PollyVersion = "2.1.0",
+    [string]$ResilienceVersion = "2.1.0",
+    [string]$PerformanceVersion = "2.1.0",
+    [string]$HealthChecksVersion = "2.1.0",
+    [string]$OpenTelemetryVersion = "2.1.0",
+    [string]$PersistenceVersion = "2.1.0",
+    [string]$RecoveryVersion = "2.1.0",
+    [string]$ValidationVersion = "2.1.0",
+    [string]$AuditVersion = "2.1.0",
     [string]$NuGetApiKey,
     [switch]$Publish
 )
@@ -21,9 +24,10 @@ if ($Publish -and -not $NuGetApiKey) {
     exit 1
 }
 
-# Use absolute path for output directory
+# Script is in scripts/ subfolder; root is parent
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$OutputDir = Join-Path $ScriptDir "nupkgs"
+$RootDir = Split-Path -Parent $ScriptDir
+$OutputDir = Join-Path $RootDir "nupkgs"
 
 function PackAndPublish {
     param (
@@ -35,8 +39,8 @@ function PackAndPublish {
 
     Write-Host "Processing $PackageName..." -ForegroundColor Cyan
     
-    # Resolve to absolute path
-    $AbsProjectPath = Join-Path $ScriptDir $ProjectPath
+    # Resolve to absolute path (relative to repo root)
+    $AbsProjectPath = Join-Path $RootDir $ProjectPath
     if (-not (Test-Path $AbsProjectPath)) {
         Write-Host "ERROR: Project file not found: $AbsProjectPath" -ForegroundColor Red
         return $false
@@ -116,7 +120,7 @@ function PackAndPublish {
 # Create output directory if needed
 if (-not (Test-Path $OutputDir)) {
     Write-Host "Creating output directory: $OutputDir" -ForegroundColor Yellow
-    New-Item -ItemType Directory -Path $OutputDir | Out-Null
+    New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 }
 
 Write-Host "Cleaning old packages..." -ForegroundColor Yellow
@@ -124,7 +128,7 @@ Get-ChildItem $OutputDir -Filter "*.nupkg" -ErrorAction SilentlyContinue | Remov
 Get-ChildItem $OutputDir -Filter "*.snupkg" -ErrorAction SilentlyContinue | Remove-Item -Force
 
 Write-Host "Restoring dependencies..." -ForegroundColor Yellow
-Push-Location $ScriptDir
+Push-Location $RootDir
 try {
     dotnet restore --verbosity quiet
     if ($LASTEXITCODE -ne 0) {

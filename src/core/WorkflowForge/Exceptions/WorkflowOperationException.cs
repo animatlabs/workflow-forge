@@ -9,7 +9,7 @@ namespace WorkflowForge.Exceptions
     /// Provides detailed context about the failing operation for debugging and monitoring.
     /// </summary>
     [Serializable]
-    public class WorkflowOperationException : WorkflowForgeException
+    public sealed class WorkflowOperationException : WorkflowForgeException
     {
         /// <summary>Gets the name of the operation that failed.</summary>
         public string? OperationName { get; }
@@ -65,7 +65,7 @@ namespace WorkflowForge.Exceptions
         }
 
         /// <summary>Initializes a new instance with serialized data.</summary>
-        protected WorkflowOperationException(SerializationInfo info, StreamingContext context) : base(info, context)
+        private WorkflowOperationException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
             OperationName = info.GetString(nameof(OperationName));
             OperationId = (Guid?)info.GetValue(nameof(OperationId), typeof(Guid?));

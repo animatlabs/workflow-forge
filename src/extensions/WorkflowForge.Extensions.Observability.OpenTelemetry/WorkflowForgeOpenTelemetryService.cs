@@ -317,6 +317,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             _disposed = true;
             _activitySource?.Dispose();
             _meter?.Dispose();
+            GC.SuppressFinalize(this);
 
             _logger.LogInformation("OpenTelemetry service disposed for {ServiceName}", ServiceName);
         }

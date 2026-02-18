@@ -142,7 +142,6 @@ public interface IWorkflowOperation : IDisposable
 {
     Guid Id { get; }
     string Name { get; }
-    bool SupportsRestore { get; }
     
     Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken);
     Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken);
@@ -229,7 +228,6 @@ workflow.AddOperation("LogCompletion", logOp);
 public class CalculateTotalOperation : WorkflowOperationBase
 {
     public override string Name => "CalculateTotal";
-    public override bool SupportsRestore => false;
 
     protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
@@ -277,7 +275,6 @@ Implement `RestoreAsync` for rollback capabilities:
 public class ChargePaymentOperation : WorkflowOperationBase
 {
     public override string Name => "ChargePayment";
-    public override bool SupportsRestore => true;
 
     protected override async Task<object?> ForgeAsyncCore(
         object? inputData,

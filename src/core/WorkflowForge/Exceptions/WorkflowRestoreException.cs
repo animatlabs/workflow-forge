@@ -9,7 +9,7 @@ namespace WorkflowForge.Exceptions
     /// Provides specific context for workflow restoration scenarios.
     /// </summary>
     [Serializable]
-    public class WorkflowRestoreException : WorkflowForgeException
+    public sealed class WorkflowRestoreException : WorkflowForgeException
     {
         /// <summary>Gets the name of the operation that failed restoration.</summary>
         public string? OperationName { get; }
@@ -46,7 +46,7 @@ namespace WorkflowForge.Exceptions
         }
 
         /// <summary>Initializes a new instance with serialized data.</summary>
-        protected WorkflowRestoreException(SerializationInfo info, StreamingContext context) : base(info, context)
+        private WorkflowRestoreException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
             OperationName = info.GetString(nameof(OperationName));
             ExecutionId = (Guid?)info.GetValue(nameof(ExecutionId), typeof(Guid?));

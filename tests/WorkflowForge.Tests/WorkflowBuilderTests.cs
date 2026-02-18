@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Operations;
+using WorkflowForge.Testing;
 
 namespace WorkflowForge.Tests;
 
@@ -335,6 +336,71 @@ public class WorkflowBuilderTests
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => builder.AddOperation(actionName, (Action<IWorkflowFoundry>)null!));
         Assert.Throws<ArgumentNullException>(() => builder.AddOperation(actionName, (Func<IWorkflowFoundry, CancellationToken, Task>)null!));
+    }
+
+    [Fact]
+    public async Task AddOperation_GivenNameActionAndRestoreAction_InvokesRestoreDelegate_WhenRestoreAsyncCalled()
+    {
+        // Arrange
+        var restoreInvoked = false;
+        var restoreAction = new Func<IWorkflowFoundry, CancellationToken, Task>((foundry, ct) =>
+        {
+            restoreInvoked = true;
+            return Task.CompletedTask;
+        });
+
+        var workflow = WorkflowForge.CreateWorkflow("RestoreTest")
+            .AddOperation("RestorableOp", (foundry, ct) => Task.CompletedTask, restoreAction)
+            .Build();
+
+        var operation = workflow.Operations[0];
+        var foundry = new FakeWorkflowFoundry();
+
+        // Act
+        await operation.RestoreAsync("output", foundry, CancellationToken.None);
+
+        // Assert
+        Assert.True(restoreInvoked);
+    }
+
+    [Fact]
+    public async Task AddOperation_GivenAsyncRestoreAction_InvokesRestoreDelegate_WhenRestoreAsyncCalled()
+    {
+        // Arrange
+        var restoreInvoked = false;
+        var restoreAction = new Func<IWorkflowFoundry, CancellationToken, Task>(async (foundry, ct) =>
+        {
+            await Task.Yield();
+            restoreInvoked = true;
+        });
+
+        var workflow = WorkflowForge.CreateWorkflow("RestoreTest")
+            .AddOperation("RestorableOp", (foundry, ct) => Task.CompletedTask, restoreAction)
+            .Build();
+
+        var operation = workflow.Operations[0];
+        var foundry = new FakeWorkflowFoundry();
+
+        // Act
+        await operation.RestoreAsync("output", foundry, CancellationToken.None);
+
+        // Assert
+        Assert.True(restoreInvoked);
+    }
+
+    [Fact]
+    public async Task AddOperation_GivenOperationWithoutRestoreAction_DoesNotThrow_WhenRestoreAsyncCalled()
+    {
+        // Arrange - ActionWorkflowOperation without restoreAction has no-op RestoreAsync
+        var workflow = WorkflowForge.CreateWorkflow("NoRestoreTest")
+            .AddOperation("NoRestoreOp", (foundry, ct) => Task.CompletedTask)
+            .Build();
+
+        var operation = Assert.IsType<ActionWorkflowOperation>(workflow.Operations[0]);
+        var foundry = new FakeWorkflowFoundry();
+
+        // Act & Assert - Should not throw
+        await operation.RestoreAsync("output", foundry, CancellationToken.None);
     }
 
     [Fact]
@@ -831,9 +897,9 @@ public class WorkflowBuilderTests
 
         // Act
         builder.AddParallelOperations(
-            operations, 
-            maxConcurrency: 2, 
-            timeout: TimeSpan.FromSeconds(30), 
+            operations,
+            maxConcurrency: 2,
+            timeout: TimeSpan.FromSeconds(30),
             name: "ParallelGroup");
         var workflow = builder.Build();
 
@@ -860,7 +926,7 @@ public class WorkflowBuilderTests
         var builder = WorkflowForge.CreateWorkflow().WithName("Test");
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => 
+        Assert.Throws<ArgumentException>(() =>
             builder.AddParallelOperations(new List<IWorkflowOperation>()));
     }
 

@@ -8,7 +8,7 @@ namespace WorkflowForge.Exceptions
     /// Provides context about data access and manipulation errors.
     /// </summary>
     [Serializable]
-    public class FoundryDataException : WorkflowForgeException
+    public sealed class FoundryDataException : WorkflowForgeException
     {
         /// <summary>Gets the data key that caused the error, if applicable.</summary>
         public string? DataKey { get; }
@@ -27,7 +27,7 @@ namespace WorkflowForge.Exceptions
         }
 
         /// <summary>Initializes a new instance with serialized data.</summary>
-        protected FoundryDataException(SerializationInfo info, StreamingContext context) : base(info, context)
+        private FoundryDataException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
             DataKey = info.GetString(nameof(DataKey));
         }

@@ -168,7 +168,7 @@ public class WorkflowEventsSample : ISample
 /// <summary>
 /// Operation that can be monitored for timing and execution patterns
 /// </summary>
-public class MonitoredOperation : IWorkflowOperation
+public class MonitoredOperation : WorkflowOperationBase
 {
     private readonly string _operationName;
     private readonly TimeSpan _simulatedDuration;
@@ -179,11 +179,9 @@ public class MonitoredOperation : IWorkflowOperation
         _simulatedDuration = simulatedDuration;
     }
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => _operationName;
-    public bool SupportsRestore => false;
+    public override string Name => _operationName;
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Executing monitored operation: {OperationName}", _operationName);
 
@@ -202,20 +200,12 @@ public class MonitoredOperation : IWorkflowOperation
 
         return result;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException($"Operation {_operationName} does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Operation that always succeeds for testing event flows
 /// </summary>
-public class SuccessfulOperation : IWorkflowOperation
+public class SuccessfulOperation : WorkflowOperationBase
 {
     private readonly string _operationName;
 
@@ -224,11 +214,9 @@ public class SuccessfulOperation : IWorkflowOperation
         _operationName = operationName;
     }
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => _operationName;
-    public bool SupportsRestore => false;
+    public override string Name => _operationName;
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Executing successful operation: {OperationName}", _operationName);
 
@@ -238,20 +226,12 @@ public class SuccessfulOperation : IWorkflowOperation
 
         return "Success";
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException($"Operation {_operationName} does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Operation that always fails for testing error event flows
 /// </summary>
-public class FailingOperation : IWorkflowOperation
+public class FailingOperation : WorkflowOperationBase
 {
     private readonly string _operationName;
 
@@ -260,11 +240,9 @@ public class FailingOperation : IWorkflowOperation
         _operationName = operationName;
     }
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => _operationName;
-    public bool SupportsRestore => false;
+    public override string Name => _operationName;
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Executing failing operation: {OperationName}", _operationName);
 
@@ -274,12 +252,4 @@ public class FailingOperation : IWorkflowOperation
 
         throw new InvalidOperationException($"Simulated failure in operation: {_operationName}");
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException($"Operation {_operationName} does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }

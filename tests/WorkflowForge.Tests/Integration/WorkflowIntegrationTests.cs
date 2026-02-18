@@ -551,7 +551,7 @@ public class WorkflowIntegrationTests
         protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             var text = foundry.Properties["extractedText"] as string ?? "";
-            var wordCount = text.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
+            var wordCount = text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length;
 
             var analysis = new Dictionary<string, object>
             {

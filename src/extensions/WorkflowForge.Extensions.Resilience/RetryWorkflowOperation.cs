@@ -45,9 +45,6 @@ namespace WorkflowForge.Extensions.Resilience
         public override string Name { get; }
 
         /// <inheritdoc />
-        public override bool SupportsRestore => _operation.SupportsRestore;
-
-        /// <inheritdoc />
         protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
@@ -63,9 +60,6 @@ namespace WorkflowForge.Extensions.Resilience
         /// <inheritdoc />
         public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (!SupportsRestore)
-                throw new NotSupportedException($"Operation '{_operation.Name}' does not support restoration.");
-
             // Don't retry restore operations - they should be idempotent
             // Pass the output data through for restoration
             await _operation.RestoreAsync(outputData, foundry, cancellationToken).ConfigureAwait(false);
@@ -78,10 +72,11 @@ namespace WorkflowForge.Extensions.Resilience
             {
                 _operation?.Dispose();
             }
-            catch
+            catch (Exception ex)
             {
-                // Swallow disposal exceptions
+                System.Diagnostics.Debug.WriteLine($"RetryWorkflowOperation.Dispose: Exception while disposing operation '{Name}': {ex}");
             }
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

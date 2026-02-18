@@ -32,10 +32,5 @@ namespace WorkflowForge.Abstractions
         /// Gets the operations that make up this workflow.
         /// </summary>
         IReadOnlyList<IWorkflowOperation> Operations { get; }
-
-        /// <summary>
-        /// Gets a value indicating whether this workflow supports restoration (rollback).
-        /// </summary>
-        bool SupportsRestore { get; }
     }
 }

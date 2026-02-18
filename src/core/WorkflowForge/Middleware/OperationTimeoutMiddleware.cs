@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 
 namespace WorkflowForge.Middleware
 {
@@ -13,7 +14,7 @@ namespace WorkflowForge.Middleware
     /// <para><strong>Timeout Configuration:</strong></para>
     /// <list type="bullet">
     /// <item><description><strong>Global Default</strong>: Set via constructor parameter, applies to all operations</description></item>
-    /// <item><description><strong>Per-Operation Override</strong>: Set via foundry.Properties[$"Operation.{operationId}.Timeout"], overrides global default</description></item>
+    /// <item><description><strong>Per-Operation Override</strong>: Set via foundry.Properties[$"Operation.{index}:{operationName}.Timeout"], overrides global default</description></item>
     /// <item><description><strong>No Timeout</strong>: TimeSpan.Zero disables timeout enforcement</description></item>
     /// </list>
     ///
@@ -23,8 +24,8 @@ namespace WorkflowForge.Middleware
     /// foundry.AddMiddleware(new OperationTimeoutMiddleware(
     ///     TimeSpan.FromSeconds(30), logger));
     ///
-    /// // Override for specific operation
-    /// foundry.Properties[$"Operation.{slowOperation.Id}.Timeout"] = TimeSpan.FromMinutes(5);
+    /// // Override for specific operation at index 2 named "SlowOperation"
+    /// foundry.Properties["Operation.2:SlowOperation.Timeout"] = TimeSpan.FromMinutes(5);
     /// </code>
     /// </remarks>
     public sealed class OperationTimeoutMiddleware : IWorkflowOperationMiddleware
@@ -37,7 +38,7 @@ namespace WorkflowForge.Middleware
         /// </summary>
         /// <param name="defaultTimeout">
         /// Default timeout for operation execution. TimeSpan.Zero = no timeout (default).
-        /// Can be overridden per-operation via foundry.Properties[$"Operation.{operationId}.Timeout"].
+        /// Can be overridden per-operation via foundry.Properties[$"Operation.{index}:{operationName}.Timeout"].
         /// </param>
         /// <param name="logger">Logger for timeout events.</param>
         /// <exception cref="ArgumentNullException">Thrown when logger is null.</exception>
@@ -76,11 +77,17 @@ namespace WorkflowForge.Middleware
 
             // Check if operation has custom timeout
             TimeSpan timeout = _defaultTimeout;
-            var timeoutKey = $"Operation.{operation.Id}.Timeout";
-            if (foundry.Properties.TryGetValue(timeoutKey, out var customTimeout)
-                && customTimeout is TimeSpan ts)
+            var operationIndex = foundry.Properties.TryGetValue(FoundryPropertyKeys.CurrentOperationIndex, out var indexObj) && indexObj is int idx
+                ? idx
+                : -1;
+            if (operationIndex >= 0)
             {
-                timeout = ts;
+                var timeoutKey = string.Format(FoundryPropertyKeys.OperationTimeoutFormat, operationIndex, operation.Name);
+                if (foundry.Properties.TryGetValue(timeoutKey, out var customTimeout)
+                    && customTimeout is TimeSpan ts)
+                {
+                    timeout = ts;
+                }
             }
 
             // TimeSpan.Zero = no timeout enforcement
@@ -112,8 +119,8 @@ namespace WorkflowForge.Middleware
                 var errorMessage = $"Operation '{operation.Name}' execution exceeded the configured timeout of {timeout.TotalSeconds} seconds.";
                 _logger.LogError(errorMessage);
 
-                foundry.Properties["Operation.TimedOut"] = true;
-                foundry.Properties["Operation.TimeoutDuration"] = timeout;
+                foundry.Properties[FoundryPropertyKeys.OperationTimedOut] = true;
+                foundry.Properties[FoundryPropertyKeys.OperationTimeoutDuration] = timeout;
 
                 throw new TimeoutException(errorMessage);
             }

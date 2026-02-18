@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 using WorkflowForge.Extensions.Validation.Options;
 
 namespace WorkflowForge.Extensions.Validation
@@ -61,19 +62,19 @@ namespace WorkflowForge.Extensions.Validation
                 {
                     _logger.LogWarning($"Validation skipped for operation '{operation.Name}': no data to validate");
                 }
-                return await next(cancellationToken);
+                return await next(cancellationToken).ConfigureAwait(false);
             }
 
-            var validationResult = await _validator.ValidateAsync(dataToValidate, cancellationToken);
+            var validationResult = await _validator.ValidateAsync(dataToValidate, cancellationToken).ConfigureAwait(false);
 
             if (validationResult.IsValid)
             {
                 _logger.LogInformation($"Validation passed for operation '{operation.Name}'");
                 if (_options.StoreValidationResults)
                 {
-                    foundry.Properties["Validation.Status"] = "Success";
+                    foundry.Properties[FoundryPropertyKeys.ValidationStatus] = "Success";
                 }
-                return await next(cancellationToken);
+                return await next(cancellationToken).ConfigureAwait(false);
             }
 
             var errorMessages = string.Join("; ", validationResult.Errors.Select(e => e.ToString()));
@@ -85,8 +86,8 @@ namespace WorkflowForge.Extensions.Validation
 
             if (_options.StoreValidationResults)
             {
-                foundry.Properties["Validation.Status"] = "Failed";
-                foundry.Properties["Validation.Errors"] = validationResult.Errors;
+                foundry.Properties[FoundryPropertyKeys.ValidationStatus] = "Failed";
+                foundry.Properties[FoundryPropertyKeys.ValidationErrors] = validationResult.Errors;
             }
 
             if (_options.ThrowOnValidationError && !_options.IgnoreValidationFailures)
@@ -96,7 +97,7 @@ namespace WorkflowForge.Extensions.Validation
                     validationResult.Errors);
             }
 
-            return await next(cancellationToken);
+            return await next(cancellationToken).ConfigureAwait(false);
         }
     }
 }

@@ -247,7 +247,7 @@ public sealed class WorkflowForgeOptions : WorkflowForgeOptionsBase
 
 Without explicit settings, WorkflowForge operates with:
 
-- **Automatic compensation**: On failure, `WorkflowSmith` triggers `RestoreAsync` (only for operations with `SupportsRestore`)
+- **Automatic compensation**: On failure, `WorkflowSmith` triggers `RestoreAsync` on all completed operations (no-op base class default handles non-restorable operations)
 - **Stop-on-first-error**: Execution stops at the first failed operation
 - **Best-effort compensation**: Compensation continues even if a restore fails
 - **No concurrency limits**: Limited only by system resources

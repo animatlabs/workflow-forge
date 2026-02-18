@@ -104,6 +104,8 @@ public class PaymentResult
 
 ### Step 2: Create Custom Operations
 
+> **Recommended**: Always extend `WorkflowOperationBase` instead of implementing `IWorkflowOperation` directly. The base class eliminates boilerplate and provides lifecycle hooks.
+
 **Best Practice**: Use class-based operations for production scenarios (better performance, testability, and maintainability).
 
 ```csharp
@@ -114,7 +116,6 @@ using WorkflowForge.Operations;
 public class ValidateOrderOperation : WorkflowOperationBase
 {
     public override string Name => "ValidateOrder";
-    public override bool SupportsRestore => false; // Validation doesn't need rollback
 
     protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
@@ -162,7 +163,6 @@ using WorkflowForge.Operations;
 public class ProcessPaymentOperation : WorkflowOperationBase
 {
     public override string Name => "ProcessPayment";
-    public override bool SupportsRestore => true; // Payment can be refunded
 
     protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
@@ -223,7 +223,6 @@ using WorkflowForge.Operations;
 public class FulfillOrderOperation : WorkflowOperationBase
 {
     public override string Name => "FulfillOrder";
-    public override bool SupportsRestore => false;
 
     protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
@@ -356,12 +355,14 @@ var value = foundry.GetPropertyOrDefault<T>("Key");
 var value = foundry.GetPropertyOrDefault<T>("Key", defaultValue);
 ```
 
-**SECONDARY**: Type-safe via `IWorkflowOperation<TInput, TOutput>` (for explicit input/output contracts)
+**SECONDARY**: Type-safe via `WorkflowOperationBase<TInput, TOutput>` (for explicit input/output contracts)
 
 ```csharp
-public class MyOperation : IWorkflowOperation<Order, OrderResult>
+public class MyOperation : WorkflowOperationBase<Order, OrderResult>
 {
-    public async Task<OrderResult> ForgeAsync(
+    public override string Name => "MyOperation";
+
+    protected override async Task<OrderResult> ForgeAsyncCore(
         Order input,
         IWorkflowFoundry foundry,
         CancellationToken cancellationToken)
@@ -376,13 +377,30 @@ public class MyOperation : IWorkflowOperation<Order, OrderResult>
 
 ### Compensation (Saga Pattern)
 
-WorkflowForge supports automatic rollback on failure:
+WorkflowForge supports automatic rollback on failure. Override `RestoreAsync` in your operation to support compensation. The base class provides a no-op default — operations that don't override it are safely skipped during compensation.
+
+For inline operations, use the optional `restoreAction` parameter:
+
+```csharp
+var workflow = WorkflowForge.CreateWorkflow("OrderWorkflow")
+    .AddOperation("ProcessPayment", async (foundry, ct) =>
+    {
+        foundry.Properties["payment_id"] = "PAY-123";
+        // Process payment...
+    },
+    restoreAction: async (foundry, ct) =>
+    {
+        var paymentId = foundry.Properties["payment_id"];
+        // Refund payment...
+    })
+    .Build();
+```
+
+For class-based operations, override `RestoreAsync`:
 
 ```csharp
 public class MyOperation : WorkflowOperationBase
 {
-    public override bool SupportsRestore => true;
-
     protected override async Task<object?> ForgeAsyncCore(...) 
     {
         // Forward logic
@@ -546,7 +564,7 @@ foundry.UseValidation(
 **Solution**: Use `foundry.SetProperty()` to store and `foundry.GetPropertyOrDefault()` to retrieve data.
 
 **Issue**: Compensation not running
-**Solution**: Set `SupportsRestore = true` on your operation. Compensation runs automatically when a workflow fails and operations with `SupportsRestore = true` have been executed.
+**Solution**: Override `RestoreAsync` in your operation to implement compensation logic. Compensation runs automatically when a workflow fails — operations that override `RestoreAsync` run their rollback; operations that don't override are safely skipped.
 
 ### Getting Help
 

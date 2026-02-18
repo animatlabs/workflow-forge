@@ -91,7 +91,13 @@ public static class Program
 
         ServiceProvider = services.BuildServiceProvider();
 
-        Console.Clear();
+        if (args.Length > 0 && args[0].Equals("--validate", StringComparison.OrdinalIgnoreCase))
+        {
+            await RunValidationMode();
+            return;
+        }
+
+        try { Console.Clear(); } catch (IOException) { /* Console handle not available (e.g. redirected output on .NET Framework) */ }
         PrintHeader();
 
         try
@@ -107,6 +113,54 @@ public static class Program
                 Console.ReadKey();
             }
         }
+    }
+
+    private static async Task RunValidationMode()
+    {
+        var allPassed = true;
+        var passed = 0;
+        var failed = 0;
+
+        Console.WriteLine("======================================================");
+        Console.WriteLine("  WorkflowForge Samples - VALIDATION MODE");
+        Console.WriteLine("======================================================");
+        Console.WriteLine($"  Runtime:  {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}");
+        Console.WriteLine($"  OS:       {System.Runtime.InteropServices.RuntimeInformation.OSDescription}");
+        Console.WriteLine($"  Samples:  {Samples.Count}");
+        Console.WriteLine($"  Time:     {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+        Console.WriteLine("======================================================");
+        Console.WriteLine();
+
+        var sortedKeys = Samples.Keys
+            .OrderBy(k => int.TryParse(k, out var n) ? n : int.MaxValue)
+            .ToList();
+
+        foreach (var key in sortedKeys)
+        {
+            var sample = Samples[key];
+            var sampleName = sample.GetType().Name.Replace("Sample", "");
+
+            try
+            {
+                await sample.RunAsync();
+                passed++;
+                Console.WriteLine($"  [PASS] [{key,2}] {sampleName}");
+            }
+            catch (Exception ex)
+            {
+                failed++;
+                allPassed = false;
+                Console.WriteLine($"  [FAIL] [{key,2}] {sampleName}: {ex.GetType().Name}: {ex.Message}");
+            }
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("======================================================");
+        Console.WriteLine($"  Results: {passed} passed, {failed} failed, {Samples.Count} total");
+        Console.WriteLine($"  Status:  {(allPassed ? "ALL SAMPLES PASSED" : "SOME SAMPLES FAILED")}");
+        Console.WriteLine("======================================================");
+
+        Environment.Exit(allPassed ? 0 : 1);
     }
 
     private static void PrintHeader()
@@ -229,7 +283,7 @@ public static class Program
                     Console.WriteLine("Press any key to return to menu...");
                     Console.ReadKey();
                 }
-                Console.Clear();
+                try { Console.Clear(); } catch (IOException) { /* Console handle not available (e.g. redirected output on .NET Framework) */ }
                 PrintHeader();
             }
         }
@@ -254,7 +308,7 @@ public static class Program
             Console.WriteLine("Press any key to return to menu...");
             Console.ReadKey();
         }
-        Console.Clear();
+        try { Console.Clear(); } catch (IOException) { /* Console handle not available (e.g. redirected output on .NET Framework) */ }
         PrintHeader();
     }
 
@@ -280,7 +334,7 @@ public static class Program
             Console.WriteLine("Press any key to return to menu...");
             Console.ReadKey();
         }
-        Console.Clear();
+        try { Console.Clear(); } catch (IOException) { /* Console handle not available (e.g. redirected output on .NET Framework) */ }
         PrintHeader();
     }
 

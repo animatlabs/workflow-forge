@@ -4,17 +4,31 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 using WorkflowForge.Extensions.Persistence.Abstractions;
 
 namespace WorkflowForge.Extensions.Persistence
 {
     /// <summary>
     /// Persists and resumes workflow execution by checkpointing after each operation via a user-provided provider.
+    /// Uses an index-based counter to track the current operation position. The counter is stored on
+    /// <c>foundry.Properties</c> and incremented after each operation completes, making it O(1) per operation
+    /// with no dictionary lookups. Safe for nested workflows because each foundry has its own property dictionary.
     /// </summary>
     public sealed class PersistenceMiddleware : IWorkflowOperationMiddleware
     {
         private readonly IWorkflowPersistenceProvider _provider;
         private readonly PersistenceOptions? _options;
+
+        /// <summary>
+        /// Internal property key for the execution counter used to track current operation index.
+        /// </summary>
+        internal const string ExecutionCounterKey = "__wf_persistence_exec_counter__";
+
+        /// <summary>
+        /// Internal property key used to flag that snapshot state has been restored.
+        /// </summary>
+        internal const string RestoredFlagKey = "__wf_persistence_restored__";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PersistenceMiddleware"/> class.
@@ -40,6 +54,8 @@ namespace WorkflowForge.Extensions.Persistence
         /// <summary>
         /// Executes an operation within the persistence pipeline. Restores state when available,
         /// skips operations that were already completed, and checkpoints after successful execution.
+        /// The current operation index is read from <see cref="FoundryPropertyKeys.CurrentOperationIndex"/>
+        /// which the foundry sets before each middleware invocation.
         /// </summary>
         /// <param name="operation">The operation being executed.</param>
         /// <param name="foundry">The foundry execution context.</param>
@@ -54,53 +70,83 @@ namespace WorkflowForge.Extensions.Persistence
             Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default)
         {
-            if (foundry.CurrentWorkflow is { } wf)
+            var workflow = foundry.CurrentWorkflow;
+            if (workflow == null)
             {
-                var (foundryKey, workflowKey) = ResolveKeys(foundry, wf);
-                var snapshot = await _provider.TryLoadAsync(foundryKey, workflowKey, cancellationToken).ConfigureAwait(false);
-                if (snapshot != null)
+                return await next(cancellationToken).ConfigureAwait(false);
+            }
+
+            // Read current operation index from foundry (set by WorkflowFoundry before middleware invocation)
+            int currentIndex;
+            if (foundry.Properties.TryGetValue(FoundryPropertyKeys.CurrentOperationIndex, out var indexObj) && indexObj is int idx)
+            {
+                currentIndex = idx;
+            }
+            else
+            {
+                // Fallback: use an internal counter if the foundry didn't set the index
+                // (e.g., older foundry versions or custom foundry implementations)
+                if (foundry.Properties.TryGetValue(ExecutionCounterKey, out var counterObj) && counterObj is int counter)
                 {
-                    const string restoredFlagKey = "__wf_persistence_restored__";
-                    if (!foundry.Properties.ContainsKey(restoredFlagKey))
+                    currentIndex = counter;
+                }
+                else
+                {
+                    currentIndex = 0;
+                }
+
+                foundry.Properties[ExecutionCounterKey] = currentIndex + 1;
+            }
+
+            // Resolve stable keys once
+            var (foundryKey, workflowKey) = ResolveKeys(foundry, workflow);
+
+            // Restore + skip logic
+            var snapshot = await _provider.TryLoadAsync(foundryKey, workflowKey, cancellationToken).ConfigureAwait(false);
+            if (snapshot != null)
+            {
+                if (!foundry.Properties.ContainsKey(RestoredFlagKey))
+                {
+                    foreach (var kv in snapshot.Properties)
                     {
-                        foreach (var kv in snapshot.Properties)
-                        {
-                            foundry.Properties[kv.Key] = kv.Value;
-                        }
-                        foundry.Properties[restoredFlagKey] = true;
+                        foundry.Properties[kv.Key] = kv.Value;
+                    }
+                    foundry.Properties[RestoredFlagKey] = true;
+                }
+
+                if (snapshot.NextOperationIndex > currentIndex)
+                {
+                    // Return the stored output from the restored snapshot so the foundry
+                    // preserves the correct value for output chaining and compensation.
+                    var outputKey = string.Format(FoundryPropertyKeys.OperationOutputFormat, currentIndex, operation.Name);
+                    if (foundry.Properties.TryGetValue(outputKey, out var storedOutput))
+                    {
+                        return storedOutput;
                     }
 
-                    var operations = wf.Operations;
-                    var currentIndex = operations.ToList().FindIndex(op => op.Id == operation.Id);
-                    if (snapshot.NextOperationIndex > currentIndex)
-                    {
-                        return inputData;
-                    }
+                    return inputData;
                 }
             }
 
             var result = await next(cancellationToken).ConfigureAwait(false);
 
-            if (foundry.CurrentWorkflow is { } workflow)
+            // Checkpoint after successful execution
+            var operationCount = workflow.Operations.Count;
+            var newSnapshot = new WorkflowExecutionSnapshot
             {
-                var operations = workflow.Operations;
-                var index = operations.ToList().FindIndex(op => op.Id == operation.Id);
-                var snapshot = new WorkflowExecutionSnapshot
-                {
-                    FoundryExecutionId = ResolveKeys(foundry, workflow).foundryKey,
-                    WorkflowId = ResolveKeys(foundry, workflow).workflowKey,
-                    WorkflowName = workflow.Name,
-                    NextOperationIndex = index + 1,
-                    Properties = new Dictionary<string, object?>(foundry.Properties)
-                };
+                FoundryExecutionId = foundryKey,
+                WorkflowId = workflowKey,
+                WorkflowName = workflow.Name,
+                NextOperationIndex = currentIndex + 1,
+                Properties = new Dictionary<string, object?>(foundry.Properties)
+            };
 
-                await _provider.SaveAsync(snapshot, cancellationToken).ConfigureAwait(false);
+            await _provider.SaveAsync(newSnapshot, cancellationToken).ConfigureAwait(false);
 
-                if (snapshot.NextOperationIndex >= operations.Count)
-                {
-                    var (foundryKey, workflowKey) = ResolveKeys(foundry, workflow);
-                    await _provider.DeleteAsync(foundryKey, workflowKey, cancellationToken).ConfigureAwait(false);
-                }
+            // Clean up snapshot when all operations are done
+            if (newSnapshot.NextOperationIndex >= operationCount)
+            {
+                await _provider.DeleteAsync(foundryKey, workflowKey, cancellationToken).ConfigureAwait(false);
             }
 
             return result;

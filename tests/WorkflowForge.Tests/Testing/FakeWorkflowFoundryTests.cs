@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Operations;
 using WorkflowForge.Testing;
-using Xunit;
 
 namespace WorkflowForge.Tests.Testing
 {
@@ -45,7 +44,7 @@ namespace WorkflowForge.Tests.Testing
             Assert.Equal(newId, foundry.ExecutionId);
         }
 
-        #endregion
+        #endregion Constructor Tests
 
         #region Operation Tracking Tests
 
@@ -98,7 +97,7 @@ namespace WorkflowForge.Tests.Testing
             Assert.Same(operation, foundry.ExecutedOperations[0]);
         }
 
-        #endregion
+        #endregion Operation Tracking Tests
 
         #region Properties Tests
 
@@ -118,7 +117,7 @@ namespace WorkflowForge.Tests.Testing
             Assert.Equal("myValue", foundry.Properties["myKey"]);
         }
 
-        #endregion
+        #endregion Properties Tests
 
         #region Reset Tests
 
@@ -142,7 +141,7 @@ namespace WorkflowForge.Tests.Testing
             Assert.False(foundry.IsFrozen);
         }
 
-        #endregion
+        #endregion Reset Tests
 
         #region Event Tests
 
@@ -184,7 +183,7 @@ namespace WorkflowForge.Tests.Testing
             Assert.True(failedRaised);
         }
 
-        #endregion
+        #endregion Event Tests
 
         #region Dispose Tests
 
@@ -201,13 +200,14 @@ namespace WorkflowForge.Tests.Testing
             Assert.Throws<ObjectDisposedException>(() => foundry.AddOperation(new SimpleTestOperation("Test")));
         }
 
-        #endregion
+        #endregion Dispose Tests
 
         #region Test Operations
 
         private class SimpleTestOperation : WorkflowOperationBase
         {
             public SimpleTestOperation(string name) => Name = name;
+
             public override string Name { get; }
 
             protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
@@ -240,6 +240,7 @@ namespace WorkflowForge.Tests.Testing
         private class FailingTestOperation : WorkflowOperationBase
         {
             public FailingTestOperation(string name) => Name = name;
+
             public override string Name { get; }
 
             protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
@@ -248,6 +249,6 @@ namespace WorkflowForge.Tests.Testing
             }
         }
 
-        #endregion
+        #endregion Test Operations
     }
 }

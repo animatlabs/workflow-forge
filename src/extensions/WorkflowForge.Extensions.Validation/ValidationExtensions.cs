@@ -97,7 +97,7 @@ namespace WorkflowForge.Extensions.Validation
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
 
-            var result = await new DataAnnotationsWorkflowValidator<T>().ValidateAsync(data);
+            var result = await new DataAnnotationsWorkflowValidator<T>().ValidateAsync(data).ConfigureAwait(false);
 
             foundry.Properties[propertyKey] = result;
             foundry.Properties[$"{propertyKey}.IsValid"] = result.IsValid;
@@ -128,7 +128,7 @@ namespace WorkflowForge.Extensions.Validation
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
             if (validator == null) throw new ArgumentNullException(nameof(validator));
 
-            var result = await validator.ValidateAsync(data);
+            var result = await validator.ValidateAsync(data).ConfigureAwait(false);
 
             foundry.Properties[propertyKey] = result;
             foundry.Properties[$"{propertyKey}.IsValid"] = result.IsValid;
@@ -155,7 +155,7 @@ namespace WorkflowForge.Extensions.Validation
         {
             if (data is T typedData)
             {
-                return await _validator.ValidateAsync(typedData, cancellationToken);
+                return await _validator.ValidateAsync(typedData, cancellationToken).ConfigureAwait(false);
             }
 
             return ValidationResult.Failure($"Data type mismatch. Expected {typeof(T).Name}, got {data?.GetType().Name ?? "null"}");

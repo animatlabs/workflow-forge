@@ -43,6 +43,8 @@ namespace WorkflowForge.Operations
             ISystemTimeProvider? timeProvider = null)
         {
             if (operations == null) throw new ArgumentNullException(nameof(operations));
+            if (operations.Any(op => op == null))
+                throw new ArgumentException("Operations collection contains null elements.", nameof(operations));
 
             _operations = operations.ToList();
             if (_operations.Count == 0)
@@ -66,9 +68,6 @@ namespace WorkflowForge.Operations
 
         /// <inheritdoc />
         public override string Name { get; }
-
-        /// <inheritdoc />
-        public override bool SupportsRestore => _operations.All(op => op.SupportsRestore);
 
         /// <inheritdoc />
         protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
@@ -123,7 +122,6 @@ namespace WorkflowForge.Operations
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ForEachWorkflowOperation));
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (!SupportsRestore) throw new NotSupportedException($"ForEach operation '{Name}' does not support restoration because one or more child operations do not support restoration.");
 
             // Use operation-specific concurrency setting (from constructor)
             var effectiveMaxConcurrency = _maxConcurrency;

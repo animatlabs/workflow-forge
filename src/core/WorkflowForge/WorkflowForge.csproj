@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>2.0.0</Version>
-    <PackageVersion>2.0.0</PackageVersion>
+    <Version>2.1.0</Version>
+    <PackageVersion>2.1.0</PackageVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -41,24 +41,29 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
-Major release v2.0.0:
-- NEW: Validation extension using DataAnnotations
-- NEW: Audit extension for compliance and operational monitoring
-- BREAKING: Events system refactored for SRP (3 focused interfaces)
-- ISystemTimeProvider injected via DI for testability
-- 446 comprehensive tests, 100% passing
-- Enterprise-ready production workflows
+v2.1.0: BREAKING: Removed SupportsRestore property from IWorkflowOperation and IWorkflow interfaces. Compensation now always attempts RestoreAsync (no-op default). Added optional restoreAction on WorkflowBuilder.AddOperation. Added FoundryPropertyKeys constants. Sealed EventArgs and Exception classes. Fixed event handler memory leaks, dispose race conditions, PersistenceMiddleware O(n²) indexing, and thread safety issues. Added CI/CD pipeline and cross-platform publish script.
     </PackageReleaseNotes>
   </PropertyGroup>
 
+  <!-- InternalsVisibleTo: After SNK generation, add PublicKey=... with the public key token to each entry -->
   <ItemGroup>
     <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.OpenTelemetry" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.Performance" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Persistence" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Audit" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Validation" />
     <InternalsVisibleTo Include="WorkflowForge.Tests" />
 	<InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
     <InternalsVisibleTo Include="WorkflowForge.Extensions.Resilience.Tests" />
     <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.Performance.Tests" />
     <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.HealthChecks.Tests" />
     <InternalsVisibleTo Include="WorkflowForge.Extensions.Resilience.Polly.Tests" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Persistence.Tests" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Validation.Tests" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Audit.Tests" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.DependencyInjection.Tests" />
+    <InternalsVisibleTo Include="WorkflowForge.Benchmarks" />
+    <InternalsVisibleTo Include="WorkflowForge.Benchmarks.Comparative" />
   </ItemGroup>
 
   <ItemGroup>
@@ -66,8 +71,5 @@ Major release v2.0.0:
     <None Include="../../../icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.102" PrivateAssets="All" />
-    </ItemGroup>
 
 </Project> 

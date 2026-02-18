@@ -1,6 +1,7 @@
 using WorkflowForge.Abstractions;
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
 using WorkflowForge.Extensions;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
 
@@ -53,24 +54,19 @@ public class Scenario6_ErrorHandling_WorkflowForge : IWorkflowScenario
 
     public Task CleanupAsync() => Task.CompletedTask;
 
-    private class ErrorTestOperation : IWorkflowOperation
+    private class ErrorTestOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "ErrorTest";
-        public bool SupportsRestore => true;
+        public override string Name => "ErrorTest";
 
-        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             throw new InvalidOperationException("Benchmark error");
         }
 
-        public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             foundry.Properties["compensated"] = true;
             return Task.CompletedTask;
         }
-
-        public void Dispose()
-        { }
     }
 }

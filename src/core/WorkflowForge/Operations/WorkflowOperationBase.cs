@@ -17,9 +17,6 @@ namespace WorkflowForge.Operations
         /// <inheritdoc />
         public abstract string Name { get; }
 
-        /// <inheritdoc />
-        public virtual bool SupportsRestore => false;
-
         /// <summary>
         /// Called before the operation executes. Override to add setup/initialization logic.
         /// </summary>
@@ -60,6 +57,7 @@ namespace WorkflowForge.Operations
         /// </remarks>
         public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
+            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
             await OnBeforeExecuteAsync(inputData, foundry, cancellationToken).ConfigureAwait(false);
             var result = await ForgeAsyncCore(inputData, foundry, cancellationToken).ConfigureAwait(false);
             await OnAfterExecuteAsync(inputData, result, foundry, cancellationToken).ConfigureAwait(false);
@@ -67,17 +65,20 @@ namespace WorkflowForge.Operations
         }
 
         /// <inheritdoc />
+        /// <remarks>
+        /// The base implementation is a no-op. Override this method in your operation
+        /// to provide compensation/rollback logic. Operations that don't override this
+        /// are safely skipped during compensation.
+        /// </remarks>
         public virtual Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (!SupportsRestore)
-                throw new NotSupportedException($"Operation '{Name}' does not support restoration.");
-
             return Task.CompletedTask;
         }
 
         /// <inheritdoc />
         public virtual void Dispose()
         {
+            GC.SuppressFinalize(this);
             // Override in derived classes if needed
         }
     }
@@ -130,6 +131,7 @@ namespace WorkflowForge.Operations
         /// <returns>The typed output data.</returns>
         public async Task<TOutput> ForgeAsync(TInput input, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
+            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
             await OnBeforeExecuteAsync(input, foundry, cancellationToken).ConfigureAwait(false);
             var result = await ForgeAsyncCore(input, foundry, cancellationToken).ConfigureAwait(false);
             await OnAfterExecuteAsync(input, result, foundry, cancellationToken).ConfigureAwait(false);
@@ -146,9 +148,6 @@ namespace WorkflowForge.Operations
         /// <returns>A task representing the restoration operation.</returns>
         public virtual Task RestoreAsync(TOutput output, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (!SupportsRestore)
-                throw new NotSupportedException($"Operation '{Name}' does not support restoration.");
-
             return Task.CompletedTask;
         }
 
@@ -198,9 +197,6 @@ namespace WorkflowForge.Operations
         /// </summary>
         public override sealed async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (!SupportsRestore)
-                throw new NotSupportedException($"Operation '{Name}' does not support restoration.");
-
             // Handle type conversion for output data
             TOutput typedOutput;
 

@@ -1,3 +1,4 @@
+#if !NET48
 using Elsa.Extensions;
 using Elsa.Workflows;
 using Microsoft.Extensions.DependencyInjection;
@@ -93,3 +94,4 @@ public class Scenario11_ParallelExecution_Elsa : IWorkflowScenario
         }
     }
 }
+#endif

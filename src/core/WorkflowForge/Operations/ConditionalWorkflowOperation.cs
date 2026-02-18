@@ -15,7 +15,7 @@ namespace WorkflowForge.Operations
         private readonly IWorkflowOperation _trueOperation;
         private readonly IWorkflowOperation? _falseOperation;
         private volatile bool _disposed;
-        private bool _lastConditionResult;
+        private volatile bool _lastConditionResult;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ConditionalWorkflowOperation"/> class.
@@ -97,9 +97,6 @@ namespace WorkflowForge.Operations
         public override string Name { get; }
 
         /// <inheritdoc />
-        public override bool SupportsRestore => _trueOperation?.SupportsRestore == true || _falseOperation?.SupportsRestore == true;
-
-        /// <inheritdoc />
         protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ConditionalWorkflowOperation));
@@ -125,7 +122,6 @@ namespace WorkflowForge.Operations
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ConditionalWorkflowOperation));
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (!SupportsRestore) throw new NotSupportedException($"Conditional operation '{Name}' does not support restoration");
 
             // Restore based on the last condition result
             if (_lastConditionResult)

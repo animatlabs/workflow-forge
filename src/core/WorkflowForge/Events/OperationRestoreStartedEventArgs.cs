@@ -7,7 +7,7 @@ namespace WorkflowForge.Events
     /// Event arguments for operation restore started events.
     /// Fired when an operation's restoration (compensation/rollback) begins.
     /// </summary>
-    public class OperationRestoreStartedEventArgs : BaseWorkflowForgeEventArgs
+    public sealed class OperationRestoreStartedEventArgs : BaseWorkflowForgeEventArgs
     {
         /// <summary>
         /// Gets the operation being restored.

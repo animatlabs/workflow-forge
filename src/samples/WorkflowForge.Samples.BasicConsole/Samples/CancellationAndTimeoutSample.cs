@@ -1,6 +1,7 @@
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Middleware;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -50,7 +51,7 @@ public class CancellationAndTimeoutSample : ISample
         }
     }
 
-    private sealed class SlowOperation : IWorkflowOperation
+    private sealed class SlowOperation : WorkflowOperationBase
     {
         private readonly int _delayMs;
 
@@ -60,22 +61,14 @@ public class CancellationAndTimeoutSample : ISample
             _delayMs = delayMs;
         }
 
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name { get; }
-        public bool SupportsRestore => false;
+        public override string Name { get; }
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             foundry.Logger.LogInformation($"Starting {Name} with {_delayMs}ms delay");
             await Task.Delay(_delayMs, cancellationToken);
             foundry.Logger.LogInformation($"{Name} completed");
             return inputData;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 }

@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 using WorkflowForge.Operations;
 
 namespace WorkflowForge.Extensions
@@ -19,7 +22,7 @@ namespace WorkflowForge.Extensions
         public static void SetCorrelationId(this IWorkflowFoundry foundry, string correlationId)
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            foundry.Properties["CorrelationId"] = correlationId;
+            foundry.Properties[FoundryPropertyKeys.CorrelationId] = correlationId;
         }
 
         /// <summary>
@@ -28,7 +31,7 @@ namespace WorkflowForge.Extensions
         public static string? GetCorrelationId(this IWorkflowFoundry foundry)
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            return foundry.Properties.TryGetValue("CorrelationId", out var correlationId)
+            return foundry.Properties.TryGetValue(FoundryPropertyKeys.CorrelationId, out var correlationId)
                 ? correlationId?.ToString()
                 : null;
         }
@@ -39,7 +42,7 @@ namespace WorkflowForge.Extensions
         public static void SetParentWorkflowExecutionId(this IWorkflowFoundry foundry, string parentWorkflowExecutionId)
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            foundry.Properties["ParentWorkflowExecutionId"] = parentWorkflowExecutionId;
+            foundry.Properties[FoundryPropertyKeys.ParentWorkflowExecutionId] = parentWorkflowExecutionId;
         }
 
         /// <summary>
@@ -98,13 +101,12 @@ namespace WorkflowForge.Extensions
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
             if (operations == null) throw new ArgumentNullException(nameof(operations));
+            if (operations.Any(op => op == null))
+                throw new ArgumentException("Operations collection contains null elements.", nameof(operations));
 
             foreach (var operation in operations)
             {
-                if (operation != null)
-                {
-                    foundry.AddOperation(operation);
-                }
+                foundry.AddOperation(operation);
             }
 
             return foundry;
@@ -121,13 +123,12 @@ namespace WorkflowForge.Extensions
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
             if (operations == null) throw new ArgumentNullException(nameof(operations));
+            if (operations.Any(op => op == null))
+                throw new ArgumentException("Operations collection contains null elements.", nameof(operations));
 
             foreach (var operation in operations)
             {
-                if (operation != null)
-                {
-                    foundry.AddOperation(operation);
-                }
+                foundry.AddOperation(operation);
             }
 
             return foundry;
@@ -155,20 +156,25 @@ namespace WorkflowForge.Extensions
         /// <param name="foundry">The foundry to add the operation to.</param>
         /// <param name="name">The name of the operation.</param>
         /// <param name="action">The action to execute. Takes the foundry as parameter.</param>
+        /// <param name="restoreAction">Optional asynchronous restoration action for compensation.</param>
         /// <returns>The same foundry instance for method chaining.</returns>
         /// <exception cref="ArgumentNullException">Thrown when foundry, name, or action is null.</exception>
         /// <exception cref="ArgumentException">Thrown when name is empty or whitespace.</exception>
-        public static IWorkflowFoundry WithOperation(this IWorkflowFoundry foundry, string name, Func<IWorkflowFoundry, Task> action)
+        public static IWorkflowFoundry WithOperation(this IWorkflowFoundry foundry, string name, Func<IWorkflowFoundry, Task> action, Func<IWorkflowFoundry, Task>? restoreAction = null)
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Operation name cannot be null, empty, or whitespace.", nameof(name));
             if (action == null) throw new ArgumentNullException(nameof(action));
 
-            var operation = new DelegateWorkflowOperation(name, async (input, foundry, ct) =>
+            Func<object?, IWorkflowFoundry, CancellationToken, Task>? adaptedRestore = restoreAction != null
+                ? async (output, f, ct) => await restoreAction(f).ConfigureAwait(false)
+                : (Func<object?, IWorkflowFoundry, CancellationToken, Task>?)null;
+
+            var operation = new DelegateWorkflowOperation(name, async (input, f, ct) =>
             {
-                await action(foundry);
+                await action(f).ConfigureAwait(false);
                 return input; // Pass through input data
-            });
+            }, adaptedRestore);
 
             foundry.AddOperation(operation);
             return foundry;
@@ -180,20 +186,25 @@ namespace WorkflowForge.Extensions
         /// <param name="foundry">The foundry to add the operation to.</param>
         /// <param name="name">The name of the operation.</param>
         /// <param name="action">The synchronous action to execute. Takes the foundry as parameter.</param>
+        /// <param name="restoreAction">Optional synchronous restoration action for compensation.</param>
         /// <returns>The same foundry instance for method chaining.</returns>
         /// <exception cref="ArgumentNullException">Thrown when foundry, name, or action is null.</exception>
         /// <exception cref="ArgumentException">Thrown when name is empty or whitespace.</exception>
-        public static IWorkflowFoundry WithOperation(this IWorkflowFoundry foundry, string name, Action<IWorkflowFoundry> action)
+        public static IWorkflowFoundry WithOperation(this IWorkflowFoundry foundry, string name, Action<IWorkflowFoundry> action, Action<IWorkflowFoundry>? restoreAction = null)
         {
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Operation name cannot be null, empty, or whitespace.", nameof(name));
             if (action == null) throw new ArgumentNullException(nameof(action));
 
-            var operation = new DelegateWorkflowOperation(name, (input, foundry, ct) =>
+            Func<object?, IWorkflowFoundry, CancellationToken, Task>? adaptedRestore = restoreAction != null
+                ? (output, f, ct) => { restoreAction(f); return Task.CompletedTask; }
+            : (Func<object?, IWorkflowFoundry, CancellationToken, Task>?)null;
+
+            var operation = new DelegateWorkflowOperation(name, (input, f, ct) =>
             {
-                action(foundry);
+                action(f);
                 return Task.FromResult(input); // Pass through input data
-            });
+            }, adaptedRestore);
 
             foundry.AddOperation(operation);
             return foundry;
@@ -232,5 +243,52 @@ namespace WorkflowForge.Extensions
             foundry.AddMiddleware(middleware);
             return foundry;
         }
+
+        #region Operation Output Access (Orchestrator-Level API)
+
+        /// <summary>
+        /// Gets the output of a specific operation by its position in the workflow.
+        /// This is an orchestrator-level API for workflow composition and test inspection.
+        /// Operations should NOT use this to read other operations' outputs -- use the
+        /// input parameter of ForgeAsyncCore or foundry.Properties with domain-specific keys instead.
+        /// </summary>
+        /// <param name="foundry">The foundry to read from.</param>
+        /// <param name="operationIndex">The zero-based index of the operation in the workflow.</param>
+        /// <param name="operationName">The name of the operation at that index.</param>
+        /// <returns>The operation output, or null if not found.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when operationIndex is negative.</exception>
+        /// <exception cref="ArgumentException">Thrown when operationName is null or empty.</exception>
+        public static object? GetOperationOutput(this IWorkflowFoundry foundry, int operationIndex, string operationName)
+        {
+            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (operationIndex < 0) throw new ArgumentOutOfRangeException(nameof(operationIndex), "Operation index must be non-negative.");
+            if (string.IsNullOrWhiteSpace(operationName)) throw new ArgumentException("Operation name cannot be null or empty.", nameof(operationName));
+
+            var key = string.Format(FoundryPropertyKeys.OperationOutputFormat, operationIndex, operationName);
+            return foundry.Properties.TryGetValue(key, out var value) ? value : null;
+        }
+
+        /// <summary>
+        /// Gets the strongly-typed output of a specific operation by its position in the workflow.
+        /// This is an orchestrator-level API for workflow composition and test inspection.
+        /// Operations should NOT use this to read other operations' outputs -- use the
+        /// input parameter of ForgeAsyncCore or foundry.Properties with domain-specific keys instead.
+        /// </summary>
+        /// <typeparam name="T">The expected output type.</typeparam>
+        /// <param name="foundry">The foundry to read from.</param>
+        /// <param name="operationIndex">The zero-based index of the operation in the workflow.</param>
+        /// <param name="operationName">The name of the operation at that index.</param>
+        /// <returns>The operation output cast to <typeparamref name="T"/>, or default if not found or wrong type.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when operationIndex is negative.</exception>
+        /// <exception cref="ArgumentException">Thrown when operationName is null or empty.</exception>
+        public static T? GetOperationOutput<T>(this IWorkflowFoundry foundry, int operationIndex, string operationName)
+        {
+            var output = GetOperationOutput(foundry, operationIndex, operationName);
+            return output is T typed ? typed : default;
+        }
+
+        #endregion Operation Output Access (Orchestrator-Level API)
     }
 }

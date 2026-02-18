@@ -117,7 +117,7 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
                 }
                 catch (Exception ex)
                 {
-                    var shouldRetry = await ShouldRetryAsync(attemptNumber, ex, cancellationToken);
+                    var shouldRetry = await ShouldRetryAsync(attemptNumber, ex, cancellationToken).ConfigureAwait(false);
                     if (!shouldRetry)
                     {
                         Logger?.LogError(ex, $"Attempt {attemptNumber} failed and will not be retried");

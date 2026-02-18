@@ -1,6 +1,7 @@
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Observability.OpenTelemetry;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -151,13 +152,11 @@ public class OpenTelemetryObservabilitySample : ISample
 /// <summary>
 /// Order validation operation with OpenTelemetry tracing
 /// </summary>
-public class OrderValidationOperation : IWorkflowOperation
+public class OrderValidationOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "OrderValidation";
-    public bool SupportsRestore => true;
+    public override string Name => "OrderValidation";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var scenario = foundry.Properties["scenario"] as string ?? "unknown";
         var customerId = foundry.Properties["customer_id"] as string ?? "unknown";
@@ -233,7 +232,7 @@ public class OrderValidationOperation : IWorkflowOperation
         return validationSummary;
     }
 
-    public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var orderId = foundry.Properties["order_id"] as string ?? "unknown";
         var telemetryService = foundry.GetOpenTelemetryService();
@@ -250,21 +249,16 @@ public class OrderValidationOperation : IWorkflowOperation
         activity?.SetTag("restore.status", "completed");
         foundry.Logger.LogInformation("Order validation restoration completed for order {OrderId}", orderId);
     }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Payment processing operation with performance metrics
 /// </summary>
-public class PaymentProcessingOperation : IWorkflowOperation
+public class PaymentProcessingOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "PaymentProcessing";
-    public bool SupportsRestore => true;
+    public override string Name => "PaymentProcessing";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var validationData = inputData as dynamic;
         var scenario = foundry.Properties["scenario"] as string ?? "unknown";
@@ -290,7 +284,7 @@ public class PaymentProcessingOperation : IWorkflowOperation
         var paymentResult = new
         {
             OrderId = validationData?.OrderId ?? "unknown",
-            PaymentId = $"pay_{Guid.NewGuid().ToString("N")[..8]}",
+            PaymentId = $"pay_{Guid.NewGuid().ToString("N").Substring(0, 8)}",
             Amount = 99.99m,
             Currency = "USD",
             ProcessingTime = processingTime,
@@ -312,7 +306,7 @@ public class PaymentProcessingOperation : IWorkflowOperation
         return paymentResult;
     }
 
-    public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var paymentData = outputData as dynamic;
         var telemetryService = foundry.GetOpenTelemetryService();
@@ -329,21 +323,16 @@ public class PaymentProcessingOperation : IWorkflowOperation
         activity?.SetTag("restore.status", "completed");
         foundry.Logger.LogInformation("Payment restoration completed for payment ID {PaymentId}", paymentData?.PaymentId ?? "unknown");
     }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Inventory check operation with system metrics
 /// </summary>
-public class InventoryCheckOperation : IWorkflowOperation
+public class InventoryCheckOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "InventoryCheck";
-    public bool SupportsRestore => false;
+    public override string Name => "InventoryCheck";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var paymentData = inputData as dynamic;
         var scenario = foundry.Properties["scenario"] as string ?? "unknown";
@@ -381,26 +370,16 @@ public class InventoryCheckOperation : IWorkflowOperation
 
         return inventoryResult;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException("Inventory check does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Order completion operation with comprehensive observability
 /// </summary>
-public class OrderCompletionOperation : IWorkflowOperation
+public class OrderCompletionOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "OrderCompletion";
-    public bool SupportsRestore => false;
+    public override string Name => "OrderCompletion";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var inventoryData = inputData as dynamic;
         var scenario = foundry.Properties["scenario"] as string ?? "unknown";
@@ -418,7 +397,7 @@ public class OrderCompletionOperation : IWorkflowOperation
         var completionResult = new
         {
             OrderId = inventoryData?.OrderId ?? "unknown",
-            CompletionId = $"comp_{Guid.NewGuid().ToString("N")[..8]}",
+            CompletionId = $"comp_{Guid.NewGuid().ToString("N").Substring(0, 8)}",
             Status = "Completed",
             CompletionTime = 150,
             Scenario = scenario,
@@ -446,12 +425,4 @@ public class OrderCompletionOperation : IWorkflowOperation
 
         return completionResult;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException("Order completion does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }

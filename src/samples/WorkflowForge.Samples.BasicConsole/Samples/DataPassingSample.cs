@@ -1,5 +1,6 @@
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -51,13 +52,11 @@ public class DataPassingSample : ISample
     }
 }
 
-public class ValidateCustomerOperation : IWorkflowOperation
+public class ValidateCustomerOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "ValidateCustomer";
-    public bool SupportsRestore => false;
+    public override string Name => "ValidateCustomer";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var customerId = foundry.GetPropertyOrDefault<int>("customer_id");
         Console.WriteLine($"   [INFO] Validating customer {customerId}...");
@@ -73,24 +72,19 @@ public class ValidateCustomerOperation : IWorkflowOperation
         return "Customer validated";
     }
 
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("customer_name", out _);
         foundry.Properties.TryRemove("customer_tier", out _);
         return Task.CompletedTask;
     }
-
-    public void Dispose()
-    { }
 }
 
-public class CalculateDiscountOperation : IWorkflowOperation
+public class CalculateDiscountOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "CalculateDiscount";
-    public bool SupportsRestore => false;
+    public override string Name => "CalculateDiscount";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var amount = foundry.GetPropertyOrDefault<decimal>("order_amount");
         var tier = foundry.GetPropertyOrDefault<string>("customer_tier", string.Empty);
@@ -119,25 +113,20 @@ public class CalculateDiscountOperation : IWorkflowOperation
         return $"Discount calculated: {discount * 100}%";
     }
 
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("discount_percent", out _);
         foundry.Properties.TryRemove("discount_amount", out _);
         foundry.Properties.TryRemove("final_amount", out _);
         return Task.CompletedTask;
     }
-
-    public void Dispose()
-    { }
 }
 
-public class ProcessPaymentOperation : IWorkflowOperation
+public class ProcessPaymentOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "ProcessPayment";
-    public bool SupportsRestore => true;
+    public override string Name => "ProcessPayment";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var amount = foundry.GetPropertyOrDefault<decimal>("final_amount");
         var customerName = foundry.GetPropertyOrDefault<string>("customer_name", string.Empty);
@@ -147,7 +136,7 @@ public class ProcessPaymentOperation : IWorkflowOperation
         // Simulate payment processing
         await Task.Delay(200, cancellationToken);
 
-        var transactionId = $"TXN-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+        var transactionId = $"TXN-{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
         foundry.SetProperty("transaction_id", transactionId);
         foundry.SetProperty("payment_status", "Completed");
 
@@ -155,7 +144,7 @@ public class ProcessPaymentOperation : IWorkflowOperation
         return $"Payment processed: {transactionId}";
     }
 
-    public async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var transactionId = foundry.GetPropertyOrDefault<string>("transaction_id", "Unknown");
         Console.WriteLine($"   [REFUND] Refunding transaction {transactionId}...");
@@ -167,18 +156,13 @@ public class ProcessPaymentOperation : IWorkflowOperation
 
         Console.WriteLine($"   [SUCCESS] Transaction {transactionId} refunded successfully");
     }
-
-    public void Dispose()
-    { }
 }
 
-public class GenerateReceiptOperation : IWorkflowOperation
+public class GenerateReceiptOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "GenerateReceipt";
-    public bool SupportsRestore => false;
+    public override string Name => "GenerateReceipt";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var customerName = foundry.GetPropertyOrDefault<string>("customer_name", string.Empty);
         var transactionId = foundry.GetPropertyOrDefault<string>("transaction_id", string.Empty);
@@ -188,19 +172,16 @@ public class GenerateReceiptOperation : IWorkflowOperation
         // Simulate receipt generation
         await Task.Delay(60, cancellationToken);
 
-        var receiptNumber = $"RCP-{DateTime.UtcNow:yyyyMMdd}-{Random.Shared.Next(1000, 9999)}";
+        var receiptNumber = $"RCP-{DateTime.UtcNow:yyyyMMdd}-{ThreadSafeRandom.Next(1000, 9999)}";
         foundry.SetProperty("receipt_number", receiptNumber);
 
         Console.WriteLine($"   [SUCCESS] Receipt generated: {receiptNumber}");
         return $"Receipt: {receiptNumber}";
     }
 
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("receipt_number", out _);
         return Task.CompletedTask;
     }
-
-    public void Dispose()
-    { }
 }

@@ -16,6 +16,7 @@ namespace WorkflowForge
     public sealed class WorkflowBuilder
     {
         private readonly List<IWorkflowOperation> _operations = new();
+        private ReadOnlyCollection<IWorkflowOperation>? _cachedOperations;
         private readonly IServiceProvider? _serviceProvider;
 
         private string? _name;
@@ -28,7 +29,7 @@ namespace WorkflowForge
         internal string? Name => _name;
         internal string? Description => _description;
         internal string Version => _version;
-        internal IReadOnlyList<IWorkflowOperation> Operations => new ReadOnlyCollection<IWorkflowOperation>(_operations);
+        internal IReadOnlyList<IWorkflowOperation> Operations => _cachedOperations ??= new ReadOnlyCollection<IWorkflowOperation>(_operations);
 
         /// <summary>
         /// Initializes a new instance of the WorkflowBuilder class.
@@ -112,6 +113,7 @@ namespace WorkflowForge
                 throw new ArgumentNullException(nameof(operation));
 
             _operations.Add(operation);
+            _cachedOperations = null;
             return this;
         }
 
@@ -221,10 +223,11 @@ namespace WorkflowForge
         /// </summary>
         /// <param name="name">The name of the operation for identification purposes.</param>
         /// <param name="action">The asynchronous action to execute. Receives the workflow foundry and cancellation token.</param>
+        /// <param name="restoreAction">Optional asynchronous restoration action for compensation.</param>
         /// <returns>The current WorkflowBuilder instance for method chaining.</returns>
         /// <exception cref="ArgumentException">Thrown when name is null, empty, or whitespace.</exception>
         /// <exception cref="ArgumentNullException">Thrown when action is null.</exception>
-        public WorkflowBuilder AddOperation(string name, Func<IWorkflowFoundry, CancellationToken, Task> action)
+        public WorkflowBuilder AddOperation(string name, Func<IWorkflowFoundry, CancellationToken, Task> action, Func<IWorkflowFoundry, CancellationToken, Task>? restoreAction = null)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Operation name cannot be null, empty, or whitespace.", nameof(name));
@@ -236,7 +239,11 @@ namespace WorkflowForge
             var adaptedAction = new Func<object?, IWorkflowFoundry, CancellationToken, Task>((input, foundry, token) =>
                 action(foundry, token));
 
-            var operation = new ActionWorkflowOperation(name, adaptedAction);
+            Func<object?, IWorkflowFoundry, CancellationToken, Task>? adaptedRestore = restoreAction != null
+                ? (output, foundry, token) => restoreAction(foundry, token)
+                : null;
+
+            var operation = new ActionWorkflowOperation(name, adaptedAction, adaptedRestore);
             return AddOperation(operation);
         }
 
@@ -247,10 +254,11 @@ namespace WorkflowForge
         /// </summary>
         /// <param name="name">The name of the operation for identification purposes.</param>
         /// <param name="action">The synchronous action to execute. Receives the workflow foundry.</param>
+        /// <param name="restoreAction">Optional synchronous restoration action for compensation.</param>
         /// <returns>The current WorkflowBuilder instance for method chaining.</returns>
         /// <exception cref="ArgumentException">Thrown when name is null, empty, or whitespace.</exception>
         /// <exception cref="ArgumentNullException">Thrown when action is null.</exception>
-        public WorkflowBuilder AddOperation(string name, Action<IWorkflowFoundry> action)
+        public WorkflowBuilder AddOperation(string name, Action<IWorkflowFoundry> action, Action<IWorkflowFoundry>? restoreAction = null)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("Operation name cannot be null, empty, or whitespace.", nameof(name));
@@ -265,7 +273,15 @@ namespace WorkflowForge
                 return Task.CompletedTask;
             });
 
-            var operation = new ActionWorkflowOperation(name, asyncAction);
+            Func<object?, IWorkflowFoundry, CancellationToken, Task>? adaptedRestore = restoreAction != null
+                ? (output, foundry, _) =>
+                {
+                    restoreAction(foundry);
+                    return Task.CompletedTask;
+                }
+            : null;
+
+            var operation = new ActionWorkflowOperation(name, asyncAction, adaptedRestore);
             return AddOperation(operation);
         }
 

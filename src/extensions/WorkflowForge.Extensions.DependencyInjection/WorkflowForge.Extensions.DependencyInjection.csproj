@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>2.0.0</Version>
-    <PackageVersion>2.0.0</PackageVersion>
+    <Version>2.1.0</Version>
+    <PackageVersion>2.1.0</PackageVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -38,6 +38,9 @@
     <!-- Documentation -->
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes>
+v2.1.0: Updated for WorkflowForge v2.1.0 compatibility. Service registration helpers for dependency injection.
+    </PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -57,7 +60,6 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.2" />
     
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.102" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>

@@ -8,7 +8,7 @@ namespace WorkflowForge.Exceptions
     /// Provides specific context for workflow cancellation scenarios.
     /// </summary>
     [Serializable]
-    public class WorkflowCancelledException : WorkflowForgeException
+    public sealed class WorkflowCancelledException : WorkflowForgeException
     {
         /// <summary>Initializes a new instance with a specified error message.</summary>
         public WorkflowCancelledException(string message) : base(message) { }
@@ -17,6 +17,6 @@ namespace WorkflowForge.Exceptions
         public WorkflowCancelledException(string message, Exception innerException) : base(message, innerException) { }
 
         /// <summary>Initializes a new instance with serialized data.</summary>
-        protected WorkflowCancelledException(SerializationInfo info, StreamingContext context) : base(info, context) { }
+        private WorkflowCancelledException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 }

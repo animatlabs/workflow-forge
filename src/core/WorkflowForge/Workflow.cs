@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Collections.ObjectModel;
 using WorkflowForge.Abstractions;
 
 namespace WorkflowForge
@@ -17,7 +17,6 @@ namespace WorkflowForge
         public IReadOnlyList<IWorkflowOperation> Operations { get; }
         public IReadOnlyDictionary<string, object?> Properties { get; }
         public DateTimeOffset CreatedAt { get; }
-        public bool SupportsRestore { get; }
 
         public Workflow(
             string name,
@@ -32,10 +31,10 @@ namespace WorkflowForge
             Name = name ?? throw new ArgumentNullException(nameof(name));
             Description = description;
             Version = version ?? throw new ArgumentNullException(nameof(version));
-            Operations = new List<IWorkflowOperation>(operations ?? throw new ArgumentNullException(nameof(operations)));
+            Operations = new ReadOnlyCollection<IWorkflowOperation>(
+                new List<IWorkflowOperation>(operations ?? throw new ArgumentNullException(nameof(operations))));
             Properties = new Dictionary<string, object?>(properties ?? throw new ArgumentNullException(nameof(properties)));
             CreatedAt = time.UtcNow;
-            SupportsRestore = operations.All(op => op.SupportsRestore);
         }
 
         public void Dispose()

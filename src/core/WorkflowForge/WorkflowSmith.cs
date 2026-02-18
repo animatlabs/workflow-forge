@@ -65,7 +65,7 @@ namespace WorkflowForge
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _serviceProvider = serviceProvider;
             _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
-            _options = options ?? new WorkflowForgeOptions();
+            _options = options?.CloneTyped() ?? new WorkflowForgeOptions();
 
             // Validate options
             var validationErrors = _options.Validate();
@@ -146,7 +146,8 @@ namespace WorkflowForge
                 }
                 finally
                 {
-                    _concurrencyLimiter.Release();
+                    try { _concurrencyLimiter.Release(); }
+                    catch (ObjectDisposedException) { /* Smith disposed during execution */ }
                 }
             }
             else
@@ -210,7 +211,7 @@ namespace WorkflowForge
 
                     // FIRE: WorkflowFailed event
                     var duration = _timeProvider.UtcNow - startTime;
-                    var failedOperationName = foundry.Properties.TryGetValue("Operation.LastFailedName", out var failedNameValue)
+                    var failedOperationName = foundry.Properties.TryGetValue(FoundryPropertyKeys.LastFailedName, out var failedNameValue)
                         ? failedNameValue?.ToString() ?? "Unknown"
                         : "Unknown";
                     WorkflowFailed?.Invoke(this, new WorkflowFailedEventArgs(
@@ -220,27 +221,25 @@ namespace WorkflowForge
                         failedOperationName,
                         duration));
 
-                    if (workflow.SupportsRestore)
+                    // Always attempt compensation — the base class no-op handles non-restorable operations
+                    var lastForgedIndex = -1;
+                    if (foundry.Properties.TryGetValue(FoundryPropertyKeys.LastCompletedIndex, out var lastCompletedValue)
+                        && lastCompletedValue is int completedIndex)
                     {
-                        var lastForgedIndex = -1;
-                        if (foundry.Properties.TryGetValue("Operation.LastCompletedIndex", out var lastCompletedValue)
-                            && lastCompletedValue is int completedIndex)
-                        {
-                            lastForgedIndex = completedIndex;
-                        }
+                        lastForgedIndex = completedIndex;
+                    }
 
-                        var compensationErrors = await CompensateForgedOperationsAsync(
-                            workflow.Operations,
-                            lastForgedIndex,
-                            foundry,
-                            cancellationToken).ConfigureAwait(false);
+                    var compensationErrors = await CompensateForgedOperationsAsync(
+                        workflow.Operations,
+                        lastForgedIndex,
+                        foundry,
+                        cancellationToken).ConfigureAwait(false);
 
-                        if (compensationErrors.Count > 0 && (foundry.Options.FailFastCompensation || foundry.Options.ThrowOnCompensationError))
-                        {
-                            throw new AggregateException(
-                                "Workflow failed and compensation encountered errors.",
-                                PrependOriginalException(ex, compensationErrors));
-                        }
+                    if (compensationErrors.Count > 0 && (foundry.Options.FailFastCompensation || foundry.Options.ThrowOnCompensationError))
+                    {
+                        throw new AggregateException(
+                            "Workflow failed and compensation encountered errors.",
+                            PrependOriginalException(ex, compensationErrors));
                     }
 
                     throw;
@@ -363,18 +362,6 @@ namespace WorkflowForge
             for (int i = lastForgedIndex; i >= 0; i--)
             {
                 var operation = operations[i];
-                if (!operation.SupportsRestore)
-                {
-                    var skipProperties = new Dictionary<string, string>
-                    {
-                        [PropertyNameConstants.ExecutionId] = operation.Id.ToString(),
-                        [PropertyNameConstants.ExecutionName] = operation.Name,
-                        [PropertyNameConstants.ExecutionType] = operation.GetType().Name
-                    };
-
-                    _logger.LogDebug(skipProperties, WorkflowLogMessageConstants.CompensationActionSkipped);
-                    continue;
-                }
 
                 var operationProperties = new Dictionary<string, string>
                 {
@@ -395,7 +382,7 @@ namespace WorkflowForge
                     OperationRestoreStarted?.Invoke(this, new OperationRestoreStartedEventArgs(operation, foundry));
 
                     object? outputData = null;
-                    var outputKey = $"Operation.{operation.Id}.Output";
+                    var outputKey = string.Format(FoundryPropertyKeys.OperationOutputFormat, i, operation.Name);
                     if (foundry.Properties.TryGetValue(outputKey, out var storedOutput))
                     {
                         outputData = storedOutput;
@@ -414,6 +401,12 @@ namespace WorkflowForge
                         restoreDuration));
 
                     successCount++;
+                }
+                catch (NotSupportedException)
+                {
+                    // Backward compatibility: direct IWorkflowOperation implementors may still throw
+                    // NotSupportedException from RestoreAsync. Treat as a skip (no-op).
+                    _logger.LogDebug(operationProperties, WorkflowLogMessageConstants.CompensationActionSkipped);
                 }
                 catch (Exception compensationEx)
                 {
@@ -515,6 +508,18 @@ namespace WorkflowForge
 
             // Dispose concurrency limiter if it was created
             _concurrencyLimiter?.Dispose();
+
+            WorkflowStarted = null;
+            WorkflowCompleted = null;
+            WorkflowFailed = null;
+            CompensationTriggered = null;
+            CompensationCompleted = null;
+            OperationRestoreStarted = null;
+            OperationRestoreCompleted = null;
+            OperationRestoreFailed = null;
+
+            foreach (var middleware in _workflowMiddlewares)
+                (middleware as IDisposable)?.Dispose();
 
             _disposed = true;
             GC.SuppressFinalize(this);

@@ -72,6 +72,7 @@ namespace WorkflowForge.Extensions.Resilience
         public void Dispose()
         {
             _policy?.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 }

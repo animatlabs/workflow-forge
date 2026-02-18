@@ -5,6 +5,7 @@ using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Observability.Performance.Configurations;
 using WorkflowForge.Extensions.Resilience.Polly.Options;
+using WorkflowForge.Operations;
 using WorkflowForge.Options;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
@@ -128,13 +129,11 @@ public class OptionsPatternSample : ISample
 /// <summary>
 /// Example operation that uses configuration from the Options pattern
 /// </summary>
-public class ConfigurationAwareOperation : IWorkflowOperation
+public class ConfigurationAwareOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "ConfigurationAware";
-    public bool SupportsRestore => false;
+    public override string Name => "ConfigurationAware";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [INFO] Processing with configuration-aware operation...");
 
@@ -157,26 +156,16 @@ public class ConfigurationAwareOperation : IWorkflowOperation
         await Task.Delay(150, cancellationToken);
         return "Configuration processed successfully";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-    {
-        return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Example operation that validates settings at runtime
 /// </summary>
-public class SettingsValidationOperation : IWorkflowOperation
+public class SettingsValidationOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "SettingsValidation";
-    public bool SupportsRestore => false;
+    public override string Name => "SettingsValidation";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [INFO] Validating runtime settings...");
 
@@ -199,12 +188,4 @@ public class SettingsValidationOperation : IWorkflowOperation
         await Task.Delay(100, cancellationToken);
         return "Settings validation completed";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-    {
-        return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    { }
 }

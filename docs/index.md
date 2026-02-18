@@ -99,7 +99,6 @@ public interface IWorkflow : IDisposable
     string? Description { get; }
     string Version { get; }
     IReadOnlyList<IWorkflowOperation> Operations { get; }
-    bool SupportsRestore { get; }
 }
 ```
 
@@ -139,12 +138,13 @@ public interface IWorkflowOperation : IDisposable
 {
     Guid Id { get; }
     string Name { get; }
-    bool SupportsRestore { get; }
     
     Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
     Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
 }
 ```
+
+Override `RestoreAsync` in your operation to support compensation. The base class provides a no-op default — operations that don't override it are safely skipped during compensation.
 
 ---
 

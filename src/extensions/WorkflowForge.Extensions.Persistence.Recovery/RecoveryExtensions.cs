@@ -54,9 +54,9 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
                     cancellationToken: cancellationToken).ConfigureAwait(false);
                 return; // Success
             }
-            catch
+            catch (Exception ex)
             {
-                // ignore and proceed to fresh execution attempts
+                foundry.Logger.LogWarning(ex, "Recovery resume failed, proceeding to fresh execution attempts");
             }
 
             // Phase 2: attempt a fresh execution with retry options

@@ -143,7 +143,6 @@ namespace WorkflowForge.Extensions.Audit.Tests
         {
             public Guid Id { get; } = Guid.NewGuid();
             public string Name => "TestOperation";
-            public bool SupportsRestore => false;
 
             public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
             {

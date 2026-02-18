@@ -6,7 +6,7 @@ namespace WorkflowForge.Events
     /// <summary>
     /// Event arguments for workflow started events.
     /// </summary>
-    public class WorkflowStartedEventArgs : BaseWorkflowForgeEventArgs
+    public sealed class WorkflowStartedEventArgs : BaseWorkflowForgeEventArgs
     {
         /// <summary>
         /// Gets the timestamp when the workflow started.

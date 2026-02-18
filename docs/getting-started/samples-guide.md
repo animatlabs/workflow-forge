@@ -8,6 +8,8 @@ description: 33 progressive samples covering basic workflows, compensation, para
 **Total Samples**: 33  
 **Project**: `src/samples/WorkflowForge.Samples.BasicConsole`
 
+> **Note**: All samples have been updated to use `WorkflowOperationBase` for custom operations instead of implementing `IWorkflowOperation` directly.
+
 ## Table of Contents
 
 - [Learning Path](#learning-path)
@@ -107,20 +109,18 @@ if (approved) {
 ### Sample 4: ClassBasedOperationsSample.cs
 **Purpose**: Demonstrate class-based operations as the preferred pattern  
 **Demonstrates**:
-- Class-based operations implementing `IWorkflowOperation`
+- Class-based operations extending `WorkflowOperationBase`
 - Output chaining between operations
 - Property-based state management
 - Production-ready operation structure
 
 **Key Code Pattern**:
 ```csharp
-public sealed class ValidateOrderOperation : IWorkflowOperation
+public sealed class ValidateOrderOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "ValidateOrder";
-    public bool SupportsRestore => false;
+    public override string Name => "ValidateOrder";
 
-    public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+    protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
     {
         var userName = foundry.Properties["user_name"]?.ToString();
         var orderTotal = (decimal)foundry.Properties["order_total"]!;
@@ -128,11 +128,6 @@ public sealed class ValidateOrderOperation : IWorkflowOperation
         foundry.SetProperty("order_valid", orderTotal > 0 && !string.IsNullOrEmpty(userName));
         return Task.FromResult(inputData);
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken ct)
-        => Task.CompletedTask;
-    
-    public void Dispose() { }
 }
 
 // Usage
@@ -144,7 +139,7 @@ foundry
 
 **Data Flow**: Dictionary-based via `foundry.Properties`  
 **Complexity**: Simple  
-**Recommendation**: Use class-based operations for production scenarios
+**Recommendation**: Use class-based operations extending `WorkflowOperationBase` for production scenarios
 
 ---
 
@@ -735,7 +730,7 @@ foundry.AddMiddleware(new TimingMiddleware());
 
 **Key Code Pattern**:
 ```csharp
-// Class-based (production-recommended)
+// Class-based (production-recommended) - extend WorkflowOperationBase
 public class ProcessOrderOperation : WorkflowOperationBase
 {
     protected override async Task<object?> ForgeAsyncCore(...) { ... }
@@ -747,16 +742,16 @@ public class ProcessOrderOperation : WorkflowOperationBase
 // Inline sync
 .AddOperation("Process", (foundry) => { ... })
 
-// Typed generic
-public class ProcessOperation : IWorkflowOperation<Order, OrderResult>
+// Typed generic - extend WorkflowOperationBase<TInput, TOutput>
+public class ProcessOperation : WorkflowOperationBase<Order, OrderResult>
 {
-    public async Task<OrderResult> ForgeAsync(Order input, ...) { ... }
+    protected override async Task<OrderResult> ForgeAsyncCore(Order input, ...) { ... }
 }
 ```
 
 **Data Flow**: Dictionary-based + type-safe  
 **Complexity**: Advanced  
-**Recommendation**: Class-based operations for production scenarios
+**Recommendation**: Class-based operations extending `WorkflowOperationBase` for production scenarios
 
 ---
 
@@ -1012,8 +1007,8 @@ foundry
 
 await foundry.ForgeAsync();
 
-// Each operation receives the previous operation's output as inputData
-public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+// Each operation receives the previous operation's output as inputData (extend WorkflowOperationBase)
+protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
 {
     var value = inputData is int number ? number : 0;
     var result = value * _multiplier;
@@ -1053,8 +1048,8 @@ var workflow = WorkflowForge.CreateWorkflow("ServiceProviderDemo")
 
 await smith.ForgeAsync(workflow);
 
-// Inside the operation
-public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
+// Inside the operation (extend WorkflowOperationBase)
+protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
 {
     var calculator = foundry.ServiceProvider?.GetRequiredService<IPriceCalculator>()
         ?? throw new InvalidOperationException("IPriceCalculator not registered.");
