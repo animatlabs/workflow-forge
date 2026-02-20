@@ -9,6 +9,7 @@ Welcome to WorkflowForge! This guide will walk you through installing, configuri
 
 ## Table of Contents
 
+- [What's New in 2.1.0](#whats-new-in-210)
 - [What's New in 2.0.0](#whats-new-in-200)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -19,9 +20,35 @@ Welcome to WorkflowForge! This guide will walk you through installing, configuri
 
 ---
 
+## What's New in 2.1.0
+
+**WorkflowForge 2.1.0** introduces multi-framework support, compensation improvements, and infrastructure hardening:
+
+### Multi-Target Framework Support
+All libraries, tests, samples, and benchmarks now target **.NET 10.0**, **.NET 8.0**, and **.NET Framework 4.8** for broad runtime coverage.
+
+### Compensation Improvements (Breaking)
+- `SupportsRestore` property removed from `IWorkflowOperation` and `IWorkflow` interfaces
+- Compensation always attempts `RestoreAsync` on all operations; the base class provides a no-op default for non-restorable operations
+- Optional `restoreAction` / `restoreFunc` parameters added to builder and factory methods for inline compensation
+
+### Performance and Reliability
+- All EventArgs and exception classes sealed for JIT devirtualization
+- `ConfigureAwait(false)` added to all library await calls
+- `GC.SuppressFinalize` applied consistently across disposables
+- Thread-safety fixes for `ConditionalWorkflowOperation`, `HealthCheckService`, and `WorkflowSmith` disposal
+
+### New APIs
+- `GetOperationOutput` / `GetOperationOutput<T>` for orchestrator-level output inspection
+- `FoundryPropertyKeys` constants replacing magic strings
+
+See the full [CHANGELOG](https://github.com/animatlabs/workflow-forge/blob/main/CHANGELOG.md) for complete details.
+
+---
+
 ## What's New in 2.0.0
 
-**WorkflowForge 2.0.0** introduces major improvements:
+**WorkflowForge 2.0.0** introduced major improvements:
 
 ### Dependency Isolation
 Extensions internalize third-party dependencies with **ILRepack** where appropriate, while keeping Microsoft/System assemblies external for runtime unification.
@@ -43,7 +70,7 @@ Extensions internalize third-party dependencies with **ILRepack** where appropri
 
 Before you begin, ensure you have:
 
-- **.NET SDK**: .NET 6.0+ (WorkflowForge targets .NET Standard 2.0)
+- **.NET SDK**: .NET 8.0+ or .NET Framework 4.8 (WorkflowForge targets .NET Standard 2.0)
 - **IDE**: Visual Studio 2022, VS Code, or JetBrains Rider
 - **Basic C# knowledge**: Understanding of async/await patterns
 
@@ -269,7 +296,7 @@ Console.WriteLine($"Processing order {order.Id}...\n");
 // Build the workflow
 var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
     .WithDescription("Complete order processing workflow")
-    .WithVersion("2.0.0")
+    .WithVersion("2.1.0")
     .AddOperation(new ValidateOrderOperation())
     .AddOperation(new ProcessPaymentOperation())
     .AddOperation(new FulfillOrderOperation())

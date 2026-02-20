@@ -7,7 +7,7 @@
 
 High-performance, dependency-free workflow orchestration library for .NET. Execute thousands of workflows per second with microsecond-level operation latency and minimal memory footprint.
 
-**Version**: 2.0.0  
+**Version**: 2.1.0  
 **License**: MIT  
 **Compatibility**: .NET Standard 2.0
 
@@ -15,15 +15,15 @@ High-performance, dependency-free workflow orchestration library for .NET. Execu
 
 ## Performance at a Glance
 
-**Internal Benchmarks** (.NET 8.0.23, Windows 11, 50 iterations):
-- **Operation Execution**: 12-45μs median latency
-- **Workflow Throughput**: 39-178μs for typical operations
-- **Memory Footprint**: 3.2-121KB across scenarios
+**Internal Benchmarks** (.NET 8.0.24, .NET 10.0.3, .NET FX 4.8.1, Windows 11, 50 iterations):
+- **Operation Execution**: 15-135μs median latency
+- **Workflow Throughput**: 67-190μs for custom operations
+- **Memory Footprint**: 3.2-146KB across scenarios
 - **Concurrent Scaling**: Near-perfect (16x speedup for 16 workflows)
 
 **Competitive Benchmarks** (12 scenarios vs. Workflow Core, Elsa):
-- **11-540x faster** execution (State Machine: up to 540x)
-- **9-573x less** memory allocation
+- **13-522x faster** execution (State Machine: up to 522x on .NET 10.0)
+- **6-578x less** memory allocation
 - **Microsecond-scale** execution vs. millisecond-scale competitors
 
 [Full Performance Details](docs/performance/performance.md) | [Competitive Analysis](docs/performance/competitive-analysis.md)
@@ -206,41 +206,44 @@ WorkflowForge excels at:
 
 ### Internal Performance
 
-**Operation Performance**:
-- Custom: 26.1μs median
-- Delegate: 37.8μs median
-- Logging: 9.8μs median
+**Operation Performance** (.NET 8.0 medians):
+- Custom: 58.4μs median
+- Delegate: 53.0μs median
+- Logging: 14.6μs median
 
-**Workflow Throughput** (10 operations):
-- Sequential custom: 96.9μs median
-- High-performance config: 635.2μs mean
+**Workflow Throughput** (10 custom operations):
+- Sequential custom: 87.2μs median
+- ForEach loop: 57.6μs median
 
 **Concurrency** (8 workflows, 5 ops each):
-- Sequential: 631.75ms
-- Concurrent: 78.88ms (8x speedup)
+- Sequential: 624ms
+- Concurrent: 79ms (7.9x speedup)
 
-**Memory Allocation** (100 iterations):
-- Minimal workflow: 2.65KB
-- No Gen2 collections
+**Memory Allocation**:
+- Minimal workflow: 3.04KB
+- No Gen2 collections in typical workloads
 
 [Internal Benchmarks](docs/performance/performance.md#internal-performance-benchmarks)
 
 ### Competitive Performance
 
-**Sequential Workflow** (10 operations):
-- WorkflowForge: 247μs median
-- Workflow Core: 6,531μs median (26x slower)
-- Elsa: 17,617μs median (71x slower)
-
 **State Machine** (25 transitions):
-- WorkflowForge: 68μs median
-- Workflow Core: 20,624μs median (303x slower)
-- Elsa: 36,695μs median (540x slower)
 
-**Creation Overhead**:
-- WorkflowForge: 13μs median
-- Workflow Core: 814μs median (63x slower)
-- Elsa: 2,107μs median (162x slower)
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 83μs | 42,205μs (508x) | 43,328μs (522x) |
+| .NET 8.0 | 111μs | 39,500μs (356x) | 45,714μs (412x) |
+| .NET FX 4.8 | 101μs | 25,884μs (256x) | N/A |
+
+**Sequential Workflow** (10 operations):
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 290μs | 15,428μs (53x) | 26,595μs (92x) |
+| .NET 8.0 | 314μs | 15,997μs (51x) | 26,881μs (86x) |
+| .NET FX 4.8 | 179μs | 10,325μs (58x) | N/A |
+
+On **.NET 10.0**, State Machine advantage reaches **522x** vs Elsa.
 
 [Competitive Benchmarks](docs/performance/competitive-analysis.md)
 

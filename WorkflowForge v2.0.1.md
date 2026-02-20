@@ -1,6 +1,8 @@
-# WorkflowForge v2.0.1 — Comprehensive Patch Plan
+# WorkflowForge v2.0.1 — Comprehensive Patch Plan (Historical)
 
-> **Version**: 2.0.1 (patch — no breaking API changes)  
+> **Note**: This plan was originally scoped as a v2.0.1 patch, but was released as **v2.1.0** due to the breaking removal of `SupportsRestore` from public interfaces. See [CHANGELOG.md](CHANGELOG.md) for the final release details.
+
+> **Version**: 2.0.1 (originally planned; released as 2.1.0)  
 > **Date**: February 15, 2026  
 > **Scope**: Restore gate fix, bug fixes, code quality, package signing, cross-platform publish script
 

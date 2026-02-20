@@ -1,0 +1,173 @@
+# WorkflowForge 2.1.0 Release Checklist
+
+This document outlines the steps required to sign, package, and publish WorkflowForge 2.1.0 to NuGet.org.
+
+## Pre-Release Status
+
+| Item | Status |
+|------|--------|
+| Code changes merged | Done |
+| All tests passing (net48/net8.0/net10.0) | Done |
+| CHANGELOG.md updated | Done |
+| ISSUES.md items complete | Done (52/52) |
+| Documentation updated | Done |
+| Benchmarks captured and documented | Done |
+| Version bumped to 2.1.0 in all csproj files | Done |
+
+## Pending: Steps on Your End
+
+### 1. Strong-Name Signing (SNK) — Optional but Recommended
+
+Strong-name signing allows consumers to reference WorkflowForge from strong-named assemblies.
+
+```bash
+cd src
+
+# Generate the key pair
+sn -k WorkflowForge.snk
+
+# Extract and display the public key (needed for InternalsVisibleTo)
+sn -p WorkflowForge.snk WorkflowForge.pub
+sn -tp WorkflowForge.pub
+```
+
+After generating:
+
+1. Uncomment the signing lines in `src/Directory.Build.props`:
+
+```xml
+<SignAssembly>true</SignAssembly>
+<AssemblyOriginatorKeyFile>WorkflowForge.snk</AssemblyOriginatorKeyFile>
+```
+
+2. Update `InternalsVisibleTo` in `src/core/WorkflowForge/WorkflowForge.csproj` with the public key:
+
+```xml
+<InternalsVisibleTo Include="WorkflowForge.Tests, PublicKey=YOUR_PUBLIC_KEY_HERE" />
+```
+
+3. Rebuild and re-run tests to verify everything still works:
+
+```bash
+dotnet build src/WorkflowForge.sln
+dotnet test src/WorkflowForge.sln
+```
+
+**Keep `WorkflowForge.snk` secret.** Add it to `.gitignore` if not already present.
+
+### 2. NuGet Package Signing (PFX) — Optional but Recommended
+
+NuGet package signing provides tamper-evident publishing and eliminates install warnings.
+
+**Option A: SignPath Foundation (Free for Open Source) — Recommended**
+
+[SignPath Foundation](https://signpath.org) provides **free code signing certificates** for qualifying open source projects:
+
+- No cost for OSS projects with an OSI-approved license
+- No personal identification required -- signs against your repository
+- Private keys stored on Hardware Security Modules (HSM)
+- Supports NuGet `.nupkg` and `.snupkg` signing
+- Integrates with CI/CD pipelines (GitHub Actions, Azure DevOps)
+
+To apply:
+1. Visit [signpath.org](https://signpath.org) and submit your project
+2. Your project must be actively maintained, released, and use an OSI-approved license
+3. Once approved, configure the signing pipeline per their [documentation](https://docs.signpath.io)
+
+**Option B: Create a self-signed certificate (for testing/development only)**
+
+Self-signed certificates are not trusted by package managers and will show warnings. Use only for local testing.
+
+```powershell
+$cert = New-SelfSignedCertificate -Subject "CN=AnimatLabs" -Type CodeSigningCert -CertStoreLocation "Cert:\CurrentUser\My"
+Export-PfxCertificate -Cert $cert -FilePath "AnimatLabs.pfx" -Password (ConvertTo-SecureString -String "YOUR_PASSWORD" -Force -AsPlainText)
+```
+
+**Option C: Purchase a code-signing certificate**
+- Obtain from a CA (DigiCert, Sectigo, etc.)
+- Export as `.pfx` with a password
+- Most expensive option but provides broadest trust
+
+### 3. Configure GitHub Actions Secrets
+
+Navigate to **GitHub Repository > Settings > Secrets and variables > Actions** and add:
+
+| Secret | Value | Required For |
+|--------|-------|--------------|
+| `NUGET_API_KEY` | NuGet.org API key | Publishing packages |
+| `SIGNING_CERT_BASE64` | Base64-encoded `.pfx` file | Package signing |
+| `SIGNING_CERT_PASSWORD` | Certificate password | Package signing |
+
+To generate the Base64 value:
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("path\to\cert.pfx"))
+```
+
+### 4. Build, Pack, and Publish
+
+**Option A: Local publish using Python script**
+
+```bash
+# Dry run (build and pack only)
+python scripts/publish-packages.py --version 2.1.0
+
+# With signing
+python scripts/publish-packages.py --version 2.1.0 --sign --cert-path path/to/cert.pfx --cert-password PASSWORD
+
+# Full pipeline (sign + publish)
+python scripts/publish-packages.py --version 2.1.0 --sign --cert-path cert.pfx --cert-password PWD --publish --api-key YOUR_NUGET_API_KEY
+```
+
+**Option B: GitHub Actions (recommended for production)**
+
+1. Push the `release/2.x` branch to GitHub
+2. Navigate to **Actions > Publish Packages** workflow
+3. Trigger the workflow manually (workflow_dispatch)
+4. The CI pipeline will build, test, pack, sign (if secrets configured), and publish
+
+### 5. Create GitHub Release
+
+1. Create a Git tag: `git tag v2.1.0 && git push origin v2.1.0`
+2. Go to **GitHub > Releases > Draft a new release**
+3. Select tag `v2.1.0`
+4. Title: `WorkflowForge 2.1.0`
+5. Body: Copy the `[2.1.0]` section from `CHANGELOG.md`
+6. Attach the `.nupkg` files if publishing manually
+
+## Packages to Publish (13 total)
+
+| Package | Description |
+|---------|-------------|
+| WorkflowForge | Core library (zero dependencies) |
+| WorkflowForge.Testing | Test utilities and helpers |
+| WorkflowForge.Extensions.DependencyInjection | Microsoft.Extensions.DI integration |
+| WorkflowForge.Extensions.Logging.Serilog | Serilog structured logging |
+| WorkflowForge.Extensions.Resilience | Core retry/resilience abstractions |
+| WorkflowForge.Extensions.Resilience.Polly | Polly-based circuit breakers and retries |
+| WorkflowForge.Extensions.Observability.Performance | Performance metrics and profiling |
+| WorkflowForge.Extensions.Observability.HealthChecks | Health check monitoring |
+| WorkflowForge.Extensions.Observability.OpenTelemetry | Distributed tracing |
+| WorkflowForge.Extensions.Persistence | Workflow state storage |
+| WorkflowForge.Extensions.Persistence.Recovery | Resume interrupted workflows |
+| WorkflowForge.Extensions.Validation | DataAnnotations validation |
+| WorkflowForge.Extensions.Audit | Audit logging |
+
+## Known .NET Framework 4.8 Limitations
+
+The following extensions have reduced functionality on .NET Framework 4.8 (documented in `ISSUES.md`):
+
+- **Validation Extension**: DataAnnotations behavior differences
+- **HealthChecks Extension**: Limited `IHealthCheck` support
+
+These are documented limitations and do not block release.
+
+## Post-Release Verification
+
+After publishing, verify the packages on NuGet.org:
+
+1. Check all 13 packages appear at `https://www.nuget.org/profiles/AnimatLabs`
+2. Verify package versions show `2.1.0`
+3. Confirm `.snupkg` symbol packages are linked
+4. Test installation: `dotnet add package WorkflowForge --version 2.1.0`
+5. Verify SourceLink by stepping into WorkflowForge code in a debugger

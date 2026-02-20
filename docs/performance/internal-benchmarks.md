@@ -5,12 +5,14 @@ description: Internal performance benchmarks validating WorkflowForge's microsec
 
 # WorkflowForge Internal Benchmarks
 
-This document presents WorkflowForge's internal performance benchmarks - comprehensive self-testing that validates the framework's performance characteristics independently of competitor comparisons.
+This document presents WorkflowForge's internal performance benchmarks—comprehensive self-testing that validates the framework's performance characteristics independently of competitor comparisons.
 
-**Test System**: Windows 11 (25H2), Intel 11th Gen i7-1185G7, .NET 8.0.23  
+**Version**: 2.1.0  
+**Test System**: Windows 11 (25H2), Intel 11th Gen i7-1185G7, .NET SDK 10.0.103  
+**Runtimes**: .NET 10.0.3, .NET 8.0.24, .NET Framework 4.8.1  
 **Benchmark Framework**: BenchmarkDotNet v0.15.8  
 **Methodology**: 50 iterations per benchmark, 5 warmup iterations  
-**Last Updated**: January 2026
+**Last Updated**: February 2026
 
 ---
 
@@ -21,432 +23,377 @@ This document presents WorkflowForge's internal performance benchmarks - compreh
 - [Workflow Throughput](#workflow-throughput)
 - [Memory Allocation](#memory-allocation)
 - [Concurrency Scaling](#concurrency-scaling)
-- [Key Insights](#key-insights)
+- [Optimization Recommendations](#optimization-recommendations)
+- [Related Documentation](#related-documentation)
 
 ---
 
 ## Executive Summary
 
-WorkflowForge internal benchmarks demonstrate (50 iterations):
+WorkflowForge internal benchmarks demonstrate (50 iterations, median values):
 
 | Metric | Result |
 |--------|--------|
-| **Operation Execution** | 12-45μs median (excluding delays) |
-| **Operation Creation** | 1.8-1.9μs median |
-| **Workflow Throughput** | 39-178μs for custom operations |
-| **Memory Baseline** | 3.2KB minimal allocation |
-| **Concurrency Scaling** | Near-linear (16x speedup for 16 workflows) |
+| **Operation Execution** | 14-135μs median (excluding delays) |
+| **Operation Creation** | 1.9-2.5μs median |
+| **Workflow Throughput** | 38-272μs for custom operations (1-50 ops, all runtimes) |
+| **Memory Baseline** | 3,296 B minimal allocation (constant) |
+| **Concurrency Scaling** | Near-perfect (7.9x for 8 workers, 15.7x for 16 workers) |
 | **GC Pressure** | Gen0 only for typical workloads |
+
+{% if site.url %}
+<div class="perf-stats">
+  <div class="perf-stat">
+    <div class="perf-stat-value">135μs</div>
+    <div class="perf-stat-label">Max CPU-bound Op</div>
+  </div>
+  <div class="perf-stat">
+    <div class="perf-stat-value">3.3KB</div>
+    <div class="perf-stat-label">Minimal Footprint</div>
+  </div>
+  <div class="perf-stat">
+    <div class="perf-stat-value">15.7x</div>
+    <div class="perf-stat-label">Concurrency Speedup</div>
+  </div>
+  <div class="perf-stat">
+    <div class="perf-stat-value">2.5μs</div>
+    <div class="perf-stat-label">Op Creation</div>
+  </div>
+</div>
+{% endif %}
 
 ---
 
 ## Operation Performance
 
-Tests individual operation types for execution time and memory allocation.
+Tests individual operation types for execution time and memory allocation across .NET 8.0, .NET 10.0, and .NET Framework 4.8.
 
 ### Operation Execution (Median Times)
 
-| Operation Type | Median | Allocated |
-|----------------|--------|-----------|
-| LoggingOperationExecution | 10.3μs | 1,912 B |
-| ConditionalOperationFalse | 22.5μs | 768 B |
-| DelegateOperationExecution | 27.3μs | 464 B |
-| CustomOperationExecution | 27.5μs | 296 B |
-| OperationWithRestoration | 28.5μs | 472 B |
-| ActionOperationExecution | 34.3μs | 488 B |
-| ForEachOperationSmallCollection | 38.4μs | 1,984 B |
-| ConditionalOperationTrue | 53.2μs | 704 B |
-| ChainedOperationsExecution | 56.7μs | 3,832 B |
-| OperationExceptionHandling | 58.7μs | 1,688 B |
-| OperationDataManipulation | 59.4μs | 8,376 B |
-| ForEachOperationLargeCollection | 67.4μs | 6,776 B |
-| DelayOperationExecution | 15,089μs | 1,272 B |
+| Operation Type | .NET 8.0 | .NET 10.0 | .NET FX 4.8 | Allocated (.NET 8) |
+|----------------|----------|-----------|-------------|--------------------|
+| LoggingOperationExecution | 14.6μs | 14.5μs | 10.2μs | 1,912 B |
+| ConditionalOperationFalse | 53.5μs | 55.9μs | 35.7μs | 1,072 B |
+| ConditionalOperationTrue | 56.1μs | 48.9μs | 32.1μs | 1,016 B |
+| CustomOperationExecution | 58.4μs | 54.5μs | 36.7μs | 456 B |
+| DelegateOperationExecution | 53.0μs | 55.3μs | 37.4μs | 616 B |
+| ActionOperationExecution | 64.7μs | 65.8μs | 53.4μs | 648 B |
+| ForEachSmallCollection | 78.6μs | 82.1μs | 47.6μs | 2,336 B |
+| ForEachLargeCollection | 102.9μs | 92.9μs | 85.6μs | 7,128 B |
+| WithRestoration | 79.5μs | 72.5μs | 71.5μs | 632 B |
+| DataManipulation | 93.9μs | 92.7μs | 116.1μs | 8,536 B |
+| ChainedOperations | 127.2μs | 122.3μs | 96.7μs | 4,288 B |
+| ExceptionHandling | 134.5μs | 94.5μs | 115.4μs | 2,944 B |
+| DelayOperationExecution | 15,143μs | 15,141μs | 15,327μs | 1,432 B |
+
+*DelayOperationExecution contains a 15ms delay; .NET FX 4.8 does not report allocation metrics.*
 
 ### Operation Creation (Median Times)
 
-| Operation Type | Median | Allocated |
-|----------------|--------|-----------|
-| DelegateOperationCreation | 1.5μs | 64 B |
-| ActionOperationCreation | 1.8μs | 56 B |
-| CustomOperationCreation | 1.8μs | 32 B |
+| Operation Type | .NET 8.0 | .NET 10.0 | .NET FX 4.8 | Allocated (.NET 8) |
+|----------------|----------|-----------|-------------|--------------------|
+| DelegateCreation | 2.5μs | 2.4μs | 1.9μs | 56 B |
+| ActionCreation | 2.4μs | 2.1μs | 2.1μs | 56 B |
+| CustomCreation | 2.5μs | 1.9μs | 2.0μs | 32 B |
 
 {% if site.url %}
 <div class="perf-vchart">
   <div class="perf-vchart-title">Operation Execution Times (Median, Lower is Better)</div>
-  <div class="perf-vchart-subtitle">All CPU-bound operations execute in under 70 microseconds</div>
+  <div class="perf-vchart-subtitle">CPU-bound operations execute in under 135 microseconds across all runtimes</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">10.3μs</div><div class="perf-vchart-fill wf" style="height: 15%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">14.6μs</div><div class="perf-vchart-fill wf" style="height: 11%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">53.0μs</div><div class="perf-vchart-fill wf" style="height: 39%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">58.4μs</div><div class="perf-vchart-fill wf" style="height: 43%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">64.7μs</div><div class="perf-vchart-fill wf" style="height: 48%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">78.6μs</div><div class="perf-vchart-fill wf" style="height: 58%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">102.9μs</div><div class="perf-vchart-fill wf" style="height: 76%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">127.2μs</div><div class="perf-vchart-fill wf" style="height: 94%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">134.5μs</div><div class="perf-vchart-fill wf" style="height: 100%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">Logging</div>
+      <div class="perf-vchart-group-label">.NET 8.0</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">22.5μs</div><div class="perf-vchart-fill wf" style="height: 33%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">14.5μs</div><div class="perf-vchart-fill wf" style="height: 11%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">55.3μs</div><div class="perf-vchart-fill wf" style="height: 41%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">54.5μs</div><div class="perf-vchart-fill wf" style="height: 41%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">65.8μs</div><div class="perf-vchart-fill wf" style="height: 49%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">82.1μs</div><div class="perf-vchart-fill wf" style="height: 61%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">92.9μs</div><div class="perf-vchart-fill wf" style="height: 69%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">122.3μs</div><div class="perf-vchart-fill wf" style="height: 91%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">94.5μs</div><div class="perf-vchart-fill wf" style="height: 70%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">Cond False</div>
+      <div class="perf-vchart-group-label">.NET 10.0</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">27.3μs</div><div class="perf-vchart-fill wf" style="height: 41%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">10.2μs</div><div class="perf-vchart-fill wf" style="height: 8%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">37.4μs</div><div class="perf-vchart-fill wf" style="height: 28%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">36.7μs</div><div class="perf-vchart-fill wf" style="height: 27%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">53.4μs</div><div class="perf-vchart-fill wf" style="height: 40%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">47.6μs</div><div class="perf-vchart-fill wf" style="height: 35%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">85.6μs</div><div class="perf-vchart-fill wf" style="height: 64%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">96.7μs</div><div class="perf-vchart-fill wf" style="height: 72%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">115.4μs</div><div class="perf-vchart-fill wf" style="height: 86%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">Delegate</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">27.5μs</div><div class="perf-vchart-fill wf" style="height: 41%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">Custom</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">34.3μs</div><div class="perf-vchart-fill wf" style="height: 51%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">Action</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">38.4μs</div><div class="perf-vchart-fill wf" style="height: 57%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">ForEach S</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">53.2μs</div><div class="perf-vchart-fill wf" style="height: 79%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">Cond True</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">56.7μs</div><div class="perf-vchart-fill wf" style="height: 84%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">Chained</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">59.4μs</div><div class="perf-vchart-fill wf" style="height: 88%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">Data</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">67.4μs</div><div class="perf-vchart-fill wf" style="height: 100%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">ForEach L</div>
+      <div class="perf-vchart-group-label">.NET FX 4.8</div>
     </div>
   </div>
   <div class="perf-vchart-legend">
-    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wf"></div>WorkflowForge (CPU-bound ops only)</div>
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wf"></div>WorkflowForge (Logging → Delegate → Custom → Action → ForEach S → ForEach L → Chained → Exception)</div>
   </div>
 </div>
 {% endif %}
 
 **Key Findings**:
-- Custom operations are the most memory-efficient (296 B)
-- Logging operations are fastest (10.3μs)
-- Operation creation is extremely fast (1.5-1.8μs)
-- Exception handling adds minimal overhead
+
+- Custom operations are the most memory-efficient (456 B)
+- Logging operations are fastest (14.6μs)
+- Operation creation is extremely fast (2.1-2.5μs)
+- Exception handling adds moderate overhead; .NET 10.0 improves it significantly (94.5μs vs 134.5μs)
 
 ---
 
 ## Workflow Throughput
 
-Tests complete workflow execution patterns with varying operation counts.
+Tests complete workflow execution patterns with varying operation counts. Delay-bound workflows contain built-in delay operations (~15ms per operation).
 
-### Custom Operations vs Delegate Operations (Median Times)
+### Workflow Patterns (OperationCount=1, Median by Runtime)
 
-| Operations | Custom Ops | Delegate Ops | Custom Memory | Delegate Memory |
-|------------|------------|--------------|---------------|-----------------|
-| 1 | 38μs | 15,178μs* | 2.74 KB | 3.5 KB |
-| 5 | 64μs | 79,303μs* | 5.55 KB | 8.98 KB |
-| 10 | 87μs | 159,824μs* | 9.72 KB | 17.88 KB |
-| 25 | 120μs | 400,443μs* | 21.87 KB | 43.97 KB |
-| 50 | 190μs | 787,131μs* | 43.41 KB | 85.76 KB |
+| Pattern | .NET 8.0 | .NET 10.0 | .NET FX 4.8 | Memory (.NET 8) | Notes |
+|---------|----------|-----------|-------------|-----------------|-------|
+| SequentialCustomOperations | 81.6μs | 67.4μs | 37.9μs | 2,984 B | CPU-bound |
+| HighPerformanceConfiguration | 112.6μs | 83.7μs | 62.8μs | 3,560 B | CPU-bound |
+| ForEachLoopWorkflow | 82.8μs | 88.1μs | 47.1μs | 5,064 B | CPU-bound |
+| SequentialDelegateOperations | 15,180μs | 15,026μs | 15,365μs | 3,768 B | Delay-bound |
+| DataPassingWorkflow | 15,067μs | 15,198μs | 15,373μs | 3,912 B | Delay-bound |
+| ConditionalOperationsWorkflow | 15,194μs | 15,177μs | 15,363μs | 4,240 B | Delay-bound |
+| LoggingOperationsWorkflow | 15,188μs | 15,233μs | 15,358μs | 6,072 B | Delay-bound |
+| MemoryIntensiveWorkflow | 15,147μs | 15,216μs | 15,325μs | 4,744 B | Delay-bound |
 
-*Delegate operations include 15ms delay per operation for testing purposes.
+*Memory column shows .NET 8.0 allocation; .NET FX 4.8 allocation metrics are NA.*
+
+### Throughput Scaling (SequentialCustomOperations, Median by Runtime)
+
+| Operations | .NET 8.0 | .NET 10.0 | .NET FX 4.8 | Memory (.NET 8) |
+|------------|----------|-----------|-------------|-----------------|
+| 1 | 81.6μs | 67.4μs | 37.9μs | 2,984 B |
+| 5 | 77.2μs | 74.1μs | 78.7μs | 6,368 B |
+| 10 | 92.7μs | 94.2μs | 120.3μs | 10,640 B |
+| 25 | 138.2μs | 134.0μs | 186.8μs | 25,736 B |
+| 50 | 236.8μs | 214.3μs | 272.3μs | 51,376 B |
 
 {% if site.url %}
 <div class="perf-vchart">
   <div class="perf-vchart-title">Custom Operation Throughput Scaling (1-50 Operations)</div>
-  <div class="perf-vchart-subtitle">Sub-200μs execution even at 50 operations with linear memory growth</div>
+  <div class="perf-vchart-subtitle">Sub-275μs execution at 50 operations with linear memory growth across runtimes</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">38μs</div><div class="perf-vchart-fill wf" style="height: 20%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">81.6μs</div><div class="perf-vchart-fill wf" style="height: 30%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">77.2μs</div><div class="perf-vchart-fill wf" style="height: 28%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">92.7μs</div><div class="perf-vchart-fill wf" style="height: 34%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">138.2μs</div><div class="perf-vchart-fill wf" style="height: 51%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">236.8μs</div><div class="perf-vchart-fill wf" style="height: 87%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">1 op</div>
+      <div class="perf-vchart-group-label">.NET 8.0</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">64μs</div><div class="perf-vchart-fill wf" style="height: 34%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">67.4μs</div><div class="perf-vchart-fill wf" style="height: 25%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">74.1μs</div><div class="perf-vchart-fill wf" style="height: 27%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">94.2μs</div><div class="perf-vchart-fill wf" style="height: 35%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">134μs</div><div class="perf-vchart-fill wf" style="height: 49%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">214.3μs</div><div class="perf-vchart-fill wf" style="height: 79%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">5 ops</div>
+      <div class="perf-vchart-group-label">.NET 10.0</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">87μs</div><div class="perf-vchart-fill wf" style="height: 46%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">37.9μs</div><div class="perf-vchart-fill wf" style="height: 14%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">78.7μs</div><div class="perf-vchart-fill wf" style="height: 29%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">120.3μs</div><div class="perf-vchart-fill wf" style="height: 44%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">186.8μs</div><div class="perf-vchart-fill wf" style="height: 69%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">272.3μs</div><div class="perf-vchart-fill wf" style="height: 100%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">10 ops</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">120μs</div><div class="perf-vchart-fill wf" style="height: 63%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">25 ops</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">190μs</div><div class="perf-vchart-fill wf" style="height: 100%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">50 ops</div>
+      <div class="perf-vchart-group-label">.NET FX 4.8</div>
     </div>
   </div>
   <div class="perf-vchart-legend">
-    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wf"></div>Custom Operation Execution (median)</div>
-  </div>
-</div>
-{% endif %}
-
-### Workflow Patterns (10 Operations, Median Times)
-
-| Pattern | Median | Memory |
-|---------|--------|--------|
-| ForEachLoopWorkflow | 57.6μs | 4.94 KB |
-| SequentialCustomOperations | 87.2μs | 9.72 KB |
-| HighPerformanceConfiguration | 96.6μs | 16.3 KB |
-| DataPassingWorkflow | 159,605μs* | 18.46 KB |
-| ConditionalOperationsWorkflow | 159,489μs* | 19.64 KB |
-| MemoryIntensiveWorkflow | 159,382μs* | 28.04 KB |
-| LoggingOperationsWorkflow | 158,484μs* | 39.45 KB |
-
-*Includes built-in delays for realistic simulation.
-
-{% if site.url %}
-<div class="perf-vchart">
-  <div class="perf-vchart-title">Workflow Pattern Comparison (10 Operations, CPU-bound only)</div>
-  <div class="perf-vchart-subtitle">ForEach loop is the fastest pattern; memory scales with complexity</div>
-  <div class="perf-vchart-container">
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">57.6μs</div><div class="perf-vchart-fill wf" style="height: 60%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">ForEach</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">87.2μs</div><div class="perf-vchart-fill wf" style="height: 90%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">Sequential</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">96.6μs</div><div class="perf-vchart-fill wf" style="height: 100%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">High Perf</div>
-    </div>
-  </div>
-  <div class="perf-vchart-legend">
-    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wf"></div>WorkflowForge (CPU-bound patterns)</div>
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wf"></div>SequentialCustomOperations (1→5→10→25→50 ops)</div>
   </div>
 </div>
 {% endif %}
 
 **Key Findings**:
-- ForEach loops are highly optimized (57.6μs for 10 items)
+
+- CPU-bound workflows execute in 38-272μs for 1-50 operations across runtimes
 - Memory scales linearly with operation count
-- Custom operations are ~1000x faster than delegate with delays
+- Delay-bound workflows (~15ms) are dominated by delay duration, not framework overhead
 
 ---
 
 ## Memory Allocation
 
-Tests memory allocation patterns and GC behavior.
+Tests memory allocation patterns and GC behavior. All values are median for 10 allocations unless noted.
 
-### Allocation Patterns (Median Times, 50 Allocations)
+### Allocation Patterns (10 Allocations, Median by Runtime)
 
-| Pattern | Median | Memory | GC Gen0 | GC Gen1 | GC Gen2 |
-|---------|--------|--------|---------|---------|---------|
-| MinimalAllocationWorkflow | 40.3μs | 3.04 KB | - | - | - |
-| StringBuilderOptimization | 245.9μs | 67.12 KB | - | - | - |
-| SmallObjectAllocation | 247.6μs | 79.99 KB | - | - | - |
-| StringConcatenationAllocation | 255.9μs | 86.72 KB | - | - | - |
-| CollectionAllocation | 265.7μs | 73.88 KB | - | - | - |
-| MemoryPressureScenario | 300.4μs | 1,530.7 KB | - | - | - |
-| ObjectPoolingSimulation | 306.0μs | 91.55 KB | - | - | - |
-| ArrayReuseOptimization | 366.5μs | 82.21 KB | - | - | - |
-| LargeObjectAllocation | 1,671.8μs | 4,962.6 KB | Yes | Yes | Yes |
+| Pattern | .NET 8.0 | .NET 10.0 | .NET FX 4.8 | Memory (.NET 8) | GC |
+|---------|----------|-----------|-------------|-----------------|-----|
+| MinimalAllocationWorkflow | 51.8μs | 113.7μs | 36.5μs | 3,296 B | No Gen0/1/2 |
+| SmallObjectAllocation | 138.1μs | 188.8μs | 142.3μs | 18,376 B | — |
+| StringConcatenationAllocation | 110.6μs | 191.0μs | 211.3μs | 16,352 B | — |
+| StringBuilderOptimization | 114.4μs | 173.3μs | 146.4μs | 15,712 B | — |
+| CollectionAllocation | 120.1μs | 201.4μs | 122.1μs | 17,360 B | — |
+| ObjectPoolingSimulation | 150.0μs | 213.3μs | 186.5μs | 21,448 B | — |
+| ArrayReuseOptimization | 128.1μs | 134.6μs | 198.2μs | 22,344 B | — |
+| MemoryPressureScenario | 256.5μs | 377.7μs | 297.2μs | 317,472 B | — |
+| LargeObjectAllocation | 710.6μs | 992.5μs | 613.2μs | 1,018,056 B | Gen0+Gen1+Gen2 |
+| DisposableResourceManagement | 160,024μs | 160,135μs | 159,696μs | 19,232 B | Delay-bound |
 
-### Memory Scaling
+*Memory column shows .NET 8.0 allocation; .NET Framework 4.8 allocation metrics are NA (Allocated column shows "—" in benchmarks).*
 
-| Allocations | Minimal Workflow | Small Objects | Large Objects |
-|-------------|------------------|---------------|---------------|
-| 10 | 3.04 KB | 16.71 KB | 992.63 KB |
-| 50 | 3.04 KB | 79.99 KB | 4,962.6 KB |
-| 100 | 3.04 KB | 159.5 KB | 4,961.85 KB |
-| 500 | 3.04 KB | 776.02 KB | 4,951.25 KB |
+### Memory Scaling (MinimalAllocationWorkflow, .NET 8.0)
+
+| Allocations | .NET 8.0 Memory | .NET 10.0 Memory |
+|-------------|----------------|-----------------|
+| 10 | 3,296 B | 3,296 B |
+| 50 | 3,296 B | 3,296 B |
+| 100 | 3,296 B | 3,296 B |
+| 500 | 3,296 B | 3,296 B |
+
+The minimal allocation workflow maintains a **constant footprint** of 3,296 B regardless of allocation count—demonstrating effective object reuse and pooling within the framework. .NET Framework 4.8 does not report allocation metrics.
 
 {% if site.url %}
 <div class="perf-vchart">
-  <div class="perf-vchart-title">Memory Allocation Patterns (50 Allocations)</div>
-  <div class="perf-vchart-subtitle">Minimal workflow stays at 3KB; large objects trigger GC</div>
+  <div class="perf-vchart-title">Memory Allocation Patterns (10 Allocations)</div>
+  <div class="perf-vchart-subtitle">Minimal workflow stays at 3.3KB; large objects trigger full GC. .NET FX 4.8 allocation metrics NA.</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">3KB</div><div class="perf-vchart-fill wf" style="height: 13%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">3.3KB</div><div class="perf-vchart-fill wf" style="height: 1%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">15.7KB</div><div class="perf-vchart-fill wf" style="height: 5%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">18.4KB</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">22.3KB</div><div class="perf-vchart-fill wf" style="height: 7%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">317KB</div><div class="perf-vchart-fill wc" style="height: 31%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">1.0MB</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">Minimal</div>
+      <div class="perf-vchart-group-label">.NET 8.0</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">67KB</div><div class="perf-vchart-fill wf" style="height: 49%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">3.3KB</div><div class="perf-vchart-fill wf" style="height: 1%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">15.7KB</div><div class="perf-vchart-fill wf" style="height: 5%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">18.4KB</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">22.3KB</div><div class="perf-vchart-fill wf" style="height: 7%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">317KB</div><div class="perf-vchart-fill wc" style="height: 31%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">1.0MB</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">StringBuilder</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">74KB</div><div class="perf-vchart-fill wf" style="height: 51%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">Collection</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">80KB</div><div class="perf-vchart-fill wf" style="height: 52%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">Small Obj</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">87KB</div><div class="perf-vchart-fill wf" style="height: 53%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">String</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">92KB</div><div class="perf-vchart-fill wf" style="height: 53%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">Pooling</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">1.5MB</div><div class="perf-vchart-fill wc" style="height: 86%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">Pressure</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">4.9MB</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">Large Obj</div>
+      <div class="perf-vchart-group-label">.NET 10.0</div>
     </div>
   </div>
   <div class="perf-vchart-legend">
     <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wf"></div>Typical (no GC pressure)</div>
-    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wc"></div>Elevated (Gen0)</div>
+    <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color wc"></div>Elevated</div>
     <div class="perf-vchart-legend-item"><div class="perf-vchart-legend-color elsa"></div>High (Gen0/1/2)</div>
   </div>
 </div>
 {% endif %}
 
 **Key Findings**:
-- Minimal allocation baseline is constant at 3.04 KB
-- No GC pressure for typical workflows (Gen0 only)
+
+- Minimal allocation baseline is constant at 3,296 B across 10-500 allocations
+- No GC pressure for typical workflows
 - Large object allocations trigger full GC (Gen0/1/2)
-- StringBuilder optimization saves ~20KB vs concatenation at 50 allocations
+- StringBuilder optimization saves ~640 B vs concatenation at 10 allocations
 
 ---
 
 ## Concurrency Scaling
 
-Tests concurrent workflow execution patterns.
+Tests concurrent workflow execution patterns across .NET 8.0, .NET 10.0, and .NET Framework 4.8.
 
-### Scaling Factor (10 Operations per Workflow)
+### Scaling with 8 Workflows (5 ops per workflow)
 
-| Concurrent Workflows | Sequential Time | Concurrent Time | Speedup | Memory per WF |
-|---------------------|-----------------|-----------------|---------|---------------|
-| 1 | 159.48ms | 159.48ms | 1.0x | 19.47 KB |
-| 2 | 318.96ms | 159.17ms | 2.0x | 18.06 KB |
-| 4 | 626.34ms | 159.38ms | 3.9x | 19.11 KB |
-| 8 | 1,255.18ms | 159.53ms | 7.9x | 18.73 KB |
-| 16 | 2,507.85ms | 159.49ms | 15.7x | 18.88 KB |
+| Pattern | .NET 8.0 | .NET 10.0 | .NET FX 4.8 | Memory (.NET 8) | Speedup |
+|---------|----------|-----------|-------------|-----------------|---------|
+| SequentialWorkflows | 627.7 ms | 627.1 ms | 644.8 ms | 80.38 KB | — |
+| ConcurrentWorkflows | 79.4 ms | 79.3 ms | 79.8 ms | 83.38 KB | 7.9x |
+| ParallelWorkflows | 79.3 ms | 79.3 ms | 79.8 ms | 83.32 KB | 7.9x |
 
-### Concurrency Patterns (8 Workflows, 10 Operations)
+### Scaling with 16 Workflows (5 ops per workflow)
 
-| Pattern | Median | Memory |
-|---------|--------|--------|
-| SharedResourceConcurrency | 154.5ms | 156.35 KB |
-| ConcurrentWorkflows | 159.6ms | 149.87 KB |
-| ParallelWorkflows | 159.2ms | 151.34 KB |
-| TaskBasedConcurrency | 157.9ms | 151.36 KB |
-| ConcurrentDataAccess | 158.1ms | 199 KB |
-| WorkflowChainConcurrency | 475.6ms | 448.7 KB |
-| HighContentionScenario | 1,285.4ms | 144.81 KB |
+| Pattern | .NET 8.0 | .NET 10.0 | .NET FX 4.8 | Memory (.NET 8) | Speedup |
+|---------|----------|-----------|-------------|-----------------|---------|
+| SequentialWorkflows | 1,247 ms | 1,256 ms | 1,290 ms | 160.46 KB | — |
+| ConcurrentWorkflows | 79.3 ms | 79.2 ms | 79.7 ms | 166.34 KB | 15.7x |
+
+### Scaling with 8 Workflows, 25 ops each
+
+| Pattern | .NET 8.0 | .NET 10.0 | .NET FX 4.8 | Memory (.NET 8) | Speedup |
+|---------|----------|-----------|-------------|-----------------|---------|
+| SequentialWorkflows | 3,140 ms | 3,143 ms | 3,225 ms | 380.25 KB | — |
+| ConcurrentWorkflows | 400.5 ms | 401.1 ms | 402.4 ms | 383.25 KB | 7.8x |
 
 {% if site.url %}
 <div class="perf-vchart">
   <div class="perf-vchart-title">Concurrency Scaling (Sequential vs Concurrent Time)</div>
-  <div class="perf-vchart-subtitle">Near-perfect linear scaling: 15.7x speedup for 16 concurrent workflows</div>
+  <div class="perf-vchart-subtitle">Near-perfect linear scaling across runtimes: 7.9x for 8 workflows, 15.7x for 16 workflows</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">159ms</div><div class="perf-vchart-fill wc" style="height: 15%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">159ms</div><div class="perf-vchart-fill wf" style="height: 15%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">628ms</div><div class="perf-vchart-fill wc" style="height: 50%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">79ms</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">1 wf (1.0x)</div>
+      <div class="perf-vchart-group-label">.NET 8.0 (8 wf, 7.9x)</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">319ms</div><div class="perf-vchart-fill wc" style="height: 28%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">159ms</div><div class="perf-vchart-fill wf" style="height: 15%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">1.25s</div><div class="perf-vchart-fill wc" style="height: 100%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">79ms</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">2 wf (2.0x)</div>
+      <div class="perf-vchart-group-label">.NET 8.0 (16 wf, 15.7x)</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">626ms</div><div class="perf-vchart-fill wc" style="height: 50%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">159ms</div><div class="perf-vchart-fill wf" style="height: 15%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">627ms</div><div class="perf-vchart-fill wc" style="height: 50%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">79ms</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">4 wf (3.9x)</div>
+      <div class="perf-vchart-group-label">.NET 10.0 (8 wf, 7.9x)</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">1.26s</div><div class="perf-vchart-fill wc" style="height: 75%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">160ms</div><div class="perf-vchart-fill wf" style="height: 15%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">1.26s</div><div class="perf-vchart-fill wc" style="height: 100%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">79ms</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">8 wf (7.9x)</div>
+      <div class="perf-vchart-group-label">.NET 10.0 (16 wf, 15.9x)</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">2.51s</div><div class="perf-vchart-fill wc" style="height: 100%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">159ms</div><div class="perf-vchart-fill wf" style="height: 15%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">645ms</div><div class="perf-vchart-fill wc" style="height: 50%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">80ms</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">16 wf (15.7x)</div>
+      <div class="perf-vchart-group-label">.NET FX 4.8 (8 wf, 8.1x)</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">1.29s</div><div class="perf-vchart-fill wc" style="height: 100%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">80ms</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">.NET FX 4.8 (16 wf, 16.2x)</div>
     </div>
   </div>
   <div class="perf-vchart-legend">
@@ -457,42 +404,25 @@ Tests concurrent workflow execution patterns.
 {% endif %}
 
 **Key Findings**:
-- Near-linear scaling up to 16 concurrent workflows
-- Consistent memory overhead per workflow (~18-19 KB)
-- Shared resource patterns maintain good performance
-- High contention scenarios serialize as expected
+
+- Near-perfect scaling: 7.9x speedup for 8 workflows, 15.7x for 16 workflows
+- Memory overhead scales linearly with workflow count
+- Heavier workflows (25 ops) maintain ~7.8x speedup with 8 concurrent workers
 
 ---
 
-## Key Insights
+## Optimization Recommendations
 
-### Performance Characteristics
-
-1. **Operation Execution**: 10-67μs median for CPU-bound operations
-2. **Operation Creation**: Sub-2μs overhead for all operation types
-3. **Memory Efficiency**: 3.04 KB baseline, linear scaling
-4. **Concurrency**: Near-perfect linear scaling (15.7x for 16 workflows)
-
-### Recommendations
-
-1. **Use Custom Operations** for production - most efficient (296 B allocation)
-2. **Prefer ForEach loops** - highly optimized (57.6μs for 10 items)
-3. **Avoid Large Object Allocations** - triggers Gen2 GC
-4. **Scale Horizontally** - linear scaling supports high throughput
-
-### Comparison with Competitive Benchmarks
-
-These internal benchmarks validate the competitive benchmark findings:
-
-| Metric | Internal Result | Competitive Advantage |
-|--------|-----------------|----------------------|
-| Sequential Execution | 38-190μs | 27-76x faster than competitors |
-| Memory Allocation | 3-86 KB | 29-203x less than competitors |
-| Concurrency Scaling | 15.7x for 16 WF | Near-perfect vs degraded competitors |
+1. **Use Custom Operations** for production—most memory-efficient (456 B per execution).
+2. **Prefer Logging operations** for lightweight tasks—fastest at 14.6μs.
+3. **Avoid large object allocations** in operations—triggers Gen2 GC and degrades throughput.
+4. **Scale horizontally**—concurrency shows near-perfect linear scaling (7.9x for 8 workers, 15.7x for 16).
+5. **Minimize allocation in hot paths**—MinimalAllocationWorkflow demonstrates constant 3,296 B footprint.
+6. **Use .NET 10.0** where available—improved exception handling (94.5μs vs 134.5μs) and some operation gains.
 
 ---
 
 ## Related Documentation
 
 - [Performance Overview](performance.md) - Summary and production targets
-- [Competitive Analysis](competitive-analysis.md) - Head-to-head comparisons
+- [Competitive Analysis](competitive-analysis.md) - Head-to-head comparisons with Workflow Core and Elsa Workflows

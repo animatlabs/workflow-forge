@@ -538,7 +538,7 @@ All operations are async-first:
 - Direct execution paths
 - No reflection in hot paths
 
-**Result**: 11-540x faster than competitors, 9-573x less memory (12 scenarios tested).
+**Result**: 13-522x faster than competitors, 6-578x less memory (12 scenarios tested across .NET 10.0, .NET 8.0, and .NET Framework 4.8).
 
 ---
 

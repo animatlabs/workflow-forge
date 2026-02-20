@@ -422,16 +422,18 @@ var smith = services.BuildServiceProvider().GetRequiredService<IWorkflowSmith>()
 
 WorkflowForge Core is optimized for production workloads (12 scenarios benchmarked, 50 iterations):
 
-- **Execution Speed**: 11-540x faster than competitors
-- **State Machine**: Up to 540x faster (highest advantage)
-- **Memory**: 9-573x less allocation than competitors
+- **Execution Speed**: 13-522x faster than competitors
+- **State Machine**: Up to 522x faster (highest advantage, .NET 10.0)
+- **Memory**: 6-578x less allocation than competitors
 - **Concurrency**: Near-perfect linear scaling (16x speedup for 16 workflows)
 
 | Scenario | WorkflowForge | Workflow Core | Elsa | Advantage |
 |----------|---------------|---------------|------|-----------|
-| Sequential (10 ops) | 247μs | 6,531μs | 17,617μs | 26-71x |
-| State Machine (25) | 68μs | 20,624μs | 36,695μs | 303-540x |
-| Concurrent (8 workers) | 356μs | 38,833μs | 94,018μs | 109-264x |
+| Sequential (10 ops) | 314μs | 15,997μs | 26,881μs | 51-86x |
+| State Machine (25) | 111μs | 39,500μs | 45,714μs | 356-412x |
+| Concurrent (8 workers) | 482μs | 59,141μs | 137,342μs | 123-285x |
+
+*Benchmark data from .NET 8.0; up to 522x faster on .NET 10.0 (State Machine).*
 
 See [Performance Documentation](../../../docs/performance/performance.md) for all 12 scenarios.
 
@@ -452,9 +454,9 @@ public class WorkflowTests
         var executionOrder = new List<string>();
         
         var workflow = WorkflowForge.CreateWorkflow("Test")
-            .WithOperation("Step1", async (foundry) => executionOrder.Add("Step1"))
-            .WithOperation("Step2", async (foundry) => executionOrder.Add("Step2"))
-            .WithOperation("Step3", async (foundry) => executionOrder.Add("Step3"))
+            .AddOperation("Step1", (foundry) => executionOrder.Add("Step1"))
+            .AddOperation("Step2", (foundry) => executionOrder.Add("Step2"))
+            .AddOperation("Step3", (foundry) => executionOrder.Add("Step3"))
             .Build();
         
         using var foundry = WorkflowForge.CreateFoundry("Test");
