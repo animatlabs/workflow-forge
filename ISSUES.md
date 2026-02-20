@@ -2,7 +2,7 @@
 
 > **Generated**: February 15, 2026
 > **Version**: 2.1.0
-> **Total Items**: 42
+> **Total Items**: 52
 
 Use this file to track progress on all v2.1.0 work items. Each entry is structured as a GitHub-issue-style card. You can convert these into actual GitHub issues or update the checkboxes here directly.
 
@@ -15,7 +15,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `breaking-change`, `enhancement`, `core`
 - **Priority**: Critical
 - **Phase**: 1.1
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Remove the `bool SupportsRestore { get; }` property from both `IWorkflowOperation` and `IWorkflow` interfaces. This is a breaking change — any direct implementor of these interfaces will need to remove their `SupportsRestore` property. Update the `RestoreAsync` XML doc to remove the `<exception cref="NotSupportedException">` tag.
 
@@ -36,7 +36,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `enhancement`, `core`
 - **Priority**: Critical
 - **Phase**: 1.2
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: In `WorkflowOperationBase`, remove the `SupportsRestore` property and change `RestoreAsync` from throwing `NotSupportedException` to returning `Task.CompletedTask` (no-op). This applies to both the untyped and typed variants, as well as the sealed untyped override in the generic base.
 
@@ -57,7 +57,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `enhancement`, `core`, `bug`
 - **Priority**: Critical
 - **Phase**: 1.3–1.4
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Remove the `if (workflow.SupportsRestore)` gate that prevents ALL compensation if any operation doesn't support restore. Remove `SupportsRestore` from `Workflow.cs`. The smith should always enter the compensation path on failure. In `CompensateForgedOperationsAsync`, remove the per-operation `SupportsRestore` skip and just call `RestoreAsync` on every completed operation. Add `catch (NotSupportedException)` for backward compat. Also fix Bug #10 (Operations downcast) using `.AsReadOnly()`.
 
@@ -80,7 +80,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `enhancement`, `core`
 - **Priority**: High
 - **Phase**: 1.5
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Remove the `SupportsRestore` property and all `if (!SupportsRestore) throw` guards from 8 operation classes. For delegate/action operations, change `RestoreAsync` to check if `_restoreFunc != null` and invoke it, else return `Task.CompletedTask`. Update comments in `LoggingOperation` and `DelayOperation`.
 
@@ -111,7 +111,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `enhancement`, `core`
 - **Priority**: Medium
 - **Phase**: 1.6
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Add an optional `restoreAction` parameter to the async and sync `AddOperation` overloads in `WorkflowBuilder`. Add matching optional `restoreFunc` parameters to `DelegateWorkflowOperation` static factory methods and the `WorkflowOperations` factory class. Also fix Bug #11 by caching the `ReadOnlyCollection` for the `Operations` property.
 
@@ -135,7 +135,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `bug`, `core`
 - **Priority**: Critical
 - **Phase**: 2
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: The timeout middleware creates a linked `CancellationTokenSource` but never propagates it to `next()`. Timed-out workflows continue executing in background. Fix by storing the linked CTS token in `foundry.Properties` and cancelling after timeout detection.
 
@@ -154,7 +154,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `bug`, `core`
 - **Priority**: High
 - **Phase**: 2
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: `_lastConditionResult` is a non-volatile `bool` shared between `ForgeAsync` (write) and `RestoreAsync` (read) which can be on different threads. Add `volatile` modifier.
 
@@ -171,7 +171,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `bug`, `core`
 - **Priority**: High
 - **Phase**: 2
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Neither `WorkflowSmith` nor `WorkflowFoundry` clears event subscriptions on `Dispose()`. Since the smith is registered as Singleton in DI, event handlers create GC roots for the app's lifetime. Set all event fields to `null` in `Dispose()`.
 
@@ -190,7 +190,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `bug`, `extensions`
 - **Priority**: High
 - **Phase**: 2
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: `RecoveryExtensions.cs` and `RecoveryCoordinator.cs` have `catch { /* ignore */ }` with no logging. Failed resume/recovery is invisible. Log the exception at Warning level before continuing.
 
@@ -209,7 +209,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `bug`, `core`
 - **Priority**: Medium
 - **Phase**: 2
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: If `ForgeAsync` is mid-flight and calls `_concurrencyLimiter.Release()` after `Dispose()` has called `_concurrencyLimiter?.Dispose()`, it throws `ObjectDisposedException`. Wrap the `Release()` call in a `try-catch(ObjectDisposedException)`.
 
@@ -227,7 +227,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `bug`, `core`
 - **Priority**: Medium
 - **Phase**: 2
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: `_options = options ?? new WorkflowForgeOptions();` stores the caller's reference. Mutations to the options object after smith construction affect the smith. Fix by cloning: `_options = options?.CloneTyped() ?? new WorkflowForgeOptions();`
 
@@ -245,7 +245,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `bug`, `core`
 - **Priority**: Medium
 - **Phase**: 2
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: `OperationStarted?.Invoke(...)` is inside the try block. If an event handler throws, it's caught by the outer catch and treated as an operation failure. Wrap event invocations in individual try-catch blocks that log but don't fail the operation.
 
@@ -263,7 +263,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `bug`, `performance`, `extensions`
 - **Priority**: Medium
 - **Phase**: 2
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: `operations.ToList().FindIndex(op => op.Id == operation.Id)` is called twice per operation execution, giving O(n^2) total. Build a `Dictionary<Guid, int>` index once per workflow execution and reuse it.
 
@@ -281,7 +281,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `bug`, `packaging`
 - **Priority**: Low
 - **Phase**: 2
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: The Serilog extension csproj has no `<Version>` or `<PackageVersion>` tag, defaulting to 1.0.0 when packed. Add `<Version>2.1.0</Version>`.
 
@@ -298,7 +298,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `bug`, `core`
 - **Priority**: Low
 - **Phase**: 1.3 (covered by WF-003)
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: `new List<IWorkflowOperation>(operations)` cast to `IReadOnlyList<T>` can be downcast back to `List<T>` by consumers. Use `.AsReadOnly()`.
 
@@ -315,7 +315,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `bug`, `performance`, `core`
 - **Priority**: Low
 - **Phase**: 1.6 (covered by WF-005)
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: `Operations` returns `new ReadOnlyCollection<IWorkflowOperation>(_operations)` every time. Cache the collection and invalidate on mutation.
 
@@ -335,7 +335,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `code-quality`, `core`
 - **Priority**: Medium
 - **Phase**: 3.1
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Create a new `FoundryPropertyKeys` static class with all framework-owned property keys currently scattered as magic strings. Includes operation output/state, timing, error, timeout, correlation keys, plus `Workflow.Name`, `Validation.Status`, and `Validation.Errors` discovered in audit. Update all files using these magic strings to reference the constants.
 
@@ -363,7 +363,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `code-quality`, `core`
 - **Priority**: Low
 - **Phase**: 3.2
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Add `sealed` modifier to all 11 EventArgs classes and all concrete (non-base) exception classes. Enables JIT devirtualization.
 
@@ -382,7 +382,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `code-quality`, `core`
 - **Priority**: Low
 - **Phase**: 3.3
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Rename `WorkflowForgeLoggerExtesions.cs` (missing 'n') to `WorkflowForgeLoggerExtensions.cs`.
 
@@ -400,7 +400,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `code-quality`, `core`
 - **Priority**: Low
 - **Phase**: 3.4
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Make `TimingMiddlewareOptions`, `LoggingMiddlewareOptions`, and `ErrorHandlingMiddlewareOptions` extend `WorkflowForgeOptionsBase` with proper `Validate()` and `Clone()` implementations.
 
@@ -422,7 +422,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `code-quality`, `core`
 - **Priority**: Medium
 - **Phase**: 3.5
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Add `foundry ?? throw new ArgumentNullException` to `WorkflowOperationBase.ForgeAsync`, null-element validation to `ForEachWorkflowOperation` constructor, and throw on null operations in `FoundryPropertyExtensions.WithOperations` instead of silent skip.
 
@@ -443,7 +443,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `code-quality`, `core`, `extensions`
 - **Priority**: Low
 - **Phase**: 3.6
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Add `GC.SuppressFinalize(this)` to all `Dispose()` methods that are currently missing it, for consistency with CA1816 and Microsoft's dispose pattern guidance.
 
@@ -468,7 +468,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `code-quality`, `core`
 - **Priority**: Medium
 - **Phase**: 3.7
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: In `WorkflowSmith.Dispose()`, iterate through workflow and operation middleware collections and dispose any that implement `IDisposable`.
 
@@ -486,7 +486,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `code-quality`, `extensions`
 - **Priority**: Medium
 - **Phase**: 3.8
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Library code should use `ConfigureAwait(false)` on all `await` calls to avoid capturing the synchronization context. Add it to 15+ locations across extension projects.
 
@@ -517,7 +517,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `bug`, `extensions`
 - **Priority**: Medium
 - **Phase**: 3.9
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: `LastResults` is updated from a timer callback and read without synchronization. Use `Interlocked.Exchange` or `lock` to ensure thread-safe reads and writes.
 
@@ -535,7 +535,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `code-quality`, `extensions`
 - **Priority**: Low
 - **Phase**: 3.10
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: `RetryWorkflowOperation.Dispose()` catches all exceptions silently. Add logging for swallowed exceptions.
 
@@ -554,7 +554,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `tests`
 - **Priority**: High
 - **Phase**: 4
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Update 10 existing test files to remove all `SupportsRestore` assertions and references. Add 6 new test classes: builder restore parameter, mixed compensation integration, NotSupportedException backward compat, event memory leak, options clone, dispose race.
 
@@ -587,7 +587,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `samples`
 - **Priority**: High
 - **Phase**: 5
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Remove `SupportsRestore` property from all sample operation classes (57+ occurrences across 24+ files). Change any `RestoreAsync` that throws `NotSupportedException` to `return Task.CompletedTask`. Update `CompensationBehaviorSample.cs` to demonstrate mixed-workflow compensation. Add builder restore example.
 
@@ -608,7 +608,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `docs`
 - **Priority**: High
 - **Phase**: 6
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Line-by-line update of 11 doc files (27+ occurrences of `SupportsRestore`). Remove all references, update interface definitions, rewrite compensation guidance, update code examples. Create `CHANGELOG.md` at repository root. Update `README.md`.
 
@@ -639,7 +639,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `infra`, `packaging`
 - **Priority**: High
 - **Phase**: 7
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Update `<Version>` in all 13 `.csproj` files from 2.0.0 to 2.1.0. Create `src/Directory.Build.props` with centralized build settings (LangVersion, Nullable, Deterministic, SignAssembly, SourceLink, symbol packages). Generate `WorkflowForge.snk` and update `InternalsVisibleTo` entries with public key token.
 
@@ -662,7 +662,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `infra`, `ci-cd`
 - **Priority**: Medium
 - **Phase**: 8
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Create `.github/workflows/build-test.yml` with build/test on push to `main` and PRs. Add a separate `workflow_dispatch` trigger for publishing (manual only, NOT auto-publish). Matrix: `net8.0` test runner.
 
@@ -682,7 +682,7 @@ Use this file to track progress on all v2.1.0 work items. Each entry is structur
 - **Labels**: `infra`, `tooling`
 - **Priority**: Low
 - **Phase**: 8
-- **Status**: [ ] Not started
+- **Status**: [x] Completed
 
 **Description**: Create `publish-packages.py` (Python 3.8+, standard library only) with `--version`, `--api-key`, `--publish`, `--sign` flags. Dry-run by default. Rename `publish-packages.ps1` to `publish-packages.legacy.ps1` with note at top pointing to Python version. Also remove `SupportsRestore` from benchmark file.
 

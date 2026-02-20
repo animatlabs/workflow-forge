@@ -1,5 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
+using BenchmarkDotNet.Jobs;
 using System.Collections.Concurrent;
 using WorkflowForge.Extensions;
 
@@ -13,7 +14,9 @@ namespace WorkflowForge.Benchmarks;
 /// - Scalability under concurrent load
 /// </summary>
 [MemoryDiagnoser]
-[SimpleJob(RunStrategy.Monitoring, iterationCount: 50)]
+[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net48, iterationCount: 50)]
+[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net80, iterationCount: 50)]
+[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net10_0, iterationCount: 50)]
 [MarkdownExporter]
 [HtmlExporter]
 public class ConcurrencyBenchmark
@@ -62,14 +65,28 @@ public class ConcurrencyBenchmark
     public async Task<string> ParallelWorkflows()
     {
         var results = new string[ConcurrentWorkflowCount];
+        var semaphore = new SemaphoreSlim(Environment.ProcessorCount, Environment.ProcessorCount);
+        var tasks = new Task[ConcurrentWorkflowCount];
 
-        await Parallel.ForEachAsync(
-            Enumerable.Range(0, ConcurrentWorkflowCount),
-            new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
-            async (index, cancellationToken) =>
+        for (int i = 0; i < ConcurrentWorkflowCount; i++)
+        {
+            var index = i;
+            tasks[index] = Task.Run(async () =>
             {
-                results[index] = await RunSingleWorkflow($"Parallel_{index}");
+                await semaphore.WaitAsync();
+                try
+                {
+                    results[index] = await RunSingleWorkflow($"Parallel_{index}");
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
             });
+        }
+
+        await Task.WhenAll(tasks);
+        semaphore.Dispose();
 
         return $"Completed {results.Length} workflows in parallel";
     }

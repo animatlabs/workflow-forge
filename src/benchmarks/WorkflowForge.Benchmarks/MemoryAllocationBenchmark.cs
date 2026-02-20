@@ -1,5 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
+using BenchmarkDotNet.Jobs;
 using System.Collections.Concurrent;
 using System.Text;
 using WorkflowForge.Extensions;
@@ -14,7 +15,9 @@ namespace WorkflowForge.Benchmarks;
 /// - Memory-optimized configurations
 /// </summary>
 [MemoryDiagnoser]
-[SimpleJob(RunStrategy.Monitoring, iterationCount: 50)]
+[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net48, iterationCount: 50)]
+[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net80, iterationCount: 50)]
+[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net10_0, iterationCount: 50)]
 [MarkdownExporter]
 [HtmlExporter]
 public class MemoryAllocationBenchmark
@@ -77,7 +80,8 @@ public class MemoryAllocationBenchmark
             {
                 // Allocate large objects (85KB+ to go to LOH)
                 var largeData = new byte[100_000];
-                Array.Fill(largeData, (byte)(index % 256));
+                var fillByte = (byte)(index % 256);
+                for (int k = 0; k < largeData.Length; k++) largeData[k] = fillByte;
                 foundry.Properties[$"large_{index}"] = largeData;
                 await Task.Yield();
             });
@@ -210,7 +214,8 @@ public class MemoryAllocationBenchmark
                 // Allocate various sizes to create memory pressure
                 var size = (index % 5 + 1) * 10_000; // 10KB to 50KB
                 var allocation = new byte[size];
-                Array.Fill(allocation, (byte)(index % 256));
+                var fillByte = (byte)(index % 256);
+                for (int k = 0; k < allocation.Length; k++) allocation[k] = fillByte;
                 data.Add(allocation);
 
                 // Occasionally force GC to test pressure handling
@@ -272,8 +277,8 @@ public class MemoryAllocationBenchmark
             {
                 var array = (int[])foundry.Properties["reuseable_array"]!;
 
-                // Reuse array instead of allocating new one
-                Array.Fill(array, index, 0, Math.Min(array.Length, index + 1));
+                var fillCount = Math.Min(array.Length, index + 1);
+                for (int k = 0; k < fillCount; k++) array[k] = index;
 
                 await Task.Yield();
                 foundry.Properties[$"array_sum_{index}"] = array.Sum();

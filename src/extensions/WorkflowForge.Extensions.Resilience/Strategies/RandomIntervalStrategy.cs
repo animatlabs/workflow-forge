@@ -15,6 +15,7 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
         private readonly TimeSpan _maxInterval;
         private readonly int _maxAttempts;
         private readonly Func<Exception, bool>? _retryPredicate;
+        private static readonly Random SeedSource = new Random();
         private readonly Random _random;
 
         /// <summary>
@@ -45,8 +46,9 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
             _maxAttempts = maxAttempts;
             _retryPredicate = retryPredicate;
 
-            // Use thread-safe random with different seed per instance
-            _random = new Random(Environment.TickCount + GetHashCode());
+            int seed;
+            lock (SeedSource) { seed = SeedSource.Next(); }
+            _random = new Random(seed);
         }
 
         /// <inheritdoc />

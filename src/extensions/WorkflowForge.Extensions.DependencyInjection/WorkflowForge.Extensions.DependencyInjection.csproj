@@ -39,7 +39,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
-v2.1.0: Updated for WorkflowForge v2.1.0 compatibility. Service registration helpers for dependency injection.
+v2.1.0: Updated for WorkflowForge v2.1.0 compatibility. Removed SupportsRestore references. Added ConfigureAwait(false) to all await calls. Improved error handling and resource disposal.
     </PackageReleaseNotes>
   </PropertyGroup>
 
