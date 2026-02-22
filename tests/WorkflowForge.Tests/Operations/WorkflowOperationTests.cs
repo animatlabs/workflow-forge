@@ -113,7 +113,8 @@ public class WorkflowOperationBaseTests
 
         protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             var result = inputData?.ToString()?.ToUpper() ?? "";
             return Task.FromResult<object?>(result);
@@ -135,7 +136,8 @@ public class WorkflowOperationBaseTests
 
         protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             await Task.Delay(_delay, cancellationToken);
             return inputData;

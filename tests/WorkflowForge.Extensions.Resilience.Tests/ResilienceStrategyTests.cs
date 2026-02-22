@@ -107,7 +107,7 @@ public class ExponentialBackoffStrategyTests
         var maxDelay = TimeSpan.FromSeconds(10);
         const int maxAttempts = 5;
         const double multiplier = 2.0;
-        var strategy = new ExponentialBackoffStrategy(baseDelay, maxDelay, maxAttempts, multiplier);
+        var strategy = new ExponentialBackoffStrategy(baseDelay, maxDelay, maxAttempts, multiplier, enableJitter: false);
 
         // Act
         var delay1 = strategy.GetRetryDelay(1, null); // Should be 0 for first attempt

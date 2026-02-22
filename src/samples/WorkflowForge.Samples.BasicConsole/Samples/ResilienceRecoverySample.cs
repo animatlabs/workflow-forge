@@ -33,7 +33,8 @@ public class ResilienceRecoverySample : ISample
 
         // Ensure clean start for deterministic behavior
         var checkpointFile = Path.Combine(checkpoints, $"{foundryKey:N}_{workflowKey:N}.json");
-        if (File.Exists(checkpointFile)) File.Delete(checkpointFile);
+        if (File.Exists(checkpointFile))
+            File.Delete(checkpointFile);
 
         // First run: enable persistence + a simple retry middleware for transient errors
         using (var f1 = WorkflowForge.CreateFoundry("ResilienceRecoveryDemo"))

@@ -1,5 +1,5 @@
-using BenchmarkDotNet.Running;
 using System.Runtime.InteropServices;
+using BenchmarkDotNet.Running;
 
 namespace WorkflowForge.Benchmarks;
 

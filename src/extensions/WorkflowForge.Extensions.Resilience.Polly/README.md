@@ -25,29 +25,28 @@ dotnet add package WorkflowForge.Extensions.Resilience.Polly
 ## Quick Start
 
 ```csharp
+using WorkflowForge;
 using WorkflowForge.Extensions.Resilience.Polly;
-using Polly;
 
-// Configure retry policy
-var retryPolicy = Policy
-    .Handle<HttpRequestException>()
-    .WaitAndRetryAsync(
-        retryCount: 3,
-        sleepDurationProvider: attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
-        onRetry: (exception, timeSpan, retryCount, context) =>
-        {
-            logger.LogWarning("Retry {RetryCount} after {Delay}ms", 
-                retryCount, timeSpan.TotalMilliseconds);
-        });
+// Option 1: Foundry-level middleware (applies to all operations)
+using var foundry = WorkflowForge.CreateFoundry("ResilientWorkflow");
+foundry.UsePollyRetry(maxRetryAttempts: 3, baseDelay: TimeSpan.FromSeconds(1));
 
-// Wrap operation with policy
-var operation = new PollyWrappedOperation<HttpResponseMessage>(
+// Option 2: Wrap individual operations
+var resilientOp = PollyRetryOperation.WithRetryPolicy(
     new CallExternalApiOperation(),
-    retryPolicy);
+    maxRetryAttempts: 3,
+    baseDelay: TimeSpan.FromSeconds(1));
 
 var workflow = WorkflowForge.CreateWorkflow("ResilientWorkflow")
-    .AddOperation(operation)
+    .AddOperation(resilientOp)
     .Build();
+
+// Option 3: Comprehensive policies (retry + circuit breaker + timeout)
+foundry.UsePollyComprehensive(
+    maxRetryAttempts: 3,
+    circuitBreakerThreshold: 5,
+    timeoutDuration: TimeSpan.FromSeconds(30));
 ```
 
 ## Key Features

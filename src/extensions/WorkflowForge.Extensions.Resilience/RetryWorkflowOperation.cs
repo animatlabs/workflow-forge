@@ -47,7 +47,8 @@ namespace WorkflowForge.Extensions.Resilience
         /// <inheritdoc />
         protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             // Use the resilience strategy to execute the operation with retry logic
             return await _retryStrategy.ExecuteAsync(async () =>
@@ -177,8 +178,10 @@ namespace WorkflowForge.Extensions.Resilience
             string? name = null,
             IWorkflowForgeLogger? logger = null)
         {
-            if (operation == null) throw new ArgumentNullException(nameof(operation));
-            if (settings == null) throw new ArgumentNullException(nameof(settings));
+            if (operation == null)
+                throw new ArgumentNullException(nameof(operation));
+            if (settings == null)
+                throw new ArgumentNullException(nameof(settings));
 
             IWorkflowResilienceStrategy strategy = settings.StrategyType switch
             {

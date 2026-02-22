@@ -274,7 +274,8 @@ public class ConcurrencyTests
             });
 
             // Small delay to increase concurrency
-            if (i % 2 == 0) await Task.Delay(1);
+            if (i % 2 == 0)
+                await Task.Delay(1);
 
             foundry.AddOperation(operation);
         });

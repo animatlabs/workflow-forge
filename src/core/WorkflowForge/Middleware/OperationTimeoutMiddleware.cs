@@ -71,9 +71,12 @@ namespace WorkflowForge.Middleware
             Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default)
         {
-            if (operation == null) throw new ArgumentNullException(nameof(operation));
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (next == null) throw new ArgumentNullException(nameof(next));
+            if (operation == null)
+                throw new ArgumentNullException(nameof(operation));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (next == null)
+                throw new ArgumentNullException(nameof(next));
 
             // Check if operation has custom timeout
             TimeSpan timeout = _defaultTimeout;

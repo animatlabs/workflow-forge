@@ -6,10 +6,8 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <!-- TODO: Generate WorkflowForge.snk (e.g. sn -k WorkflowForge.snk) and place in src/ before uncommenting.
-         After SNK generation, uncomment below and add PublicKey=... to InternalsVisibleTo in WorkflowForge.csproj -->
-    <!-- <SignAssembly>true</SignAssembly> -->
-    <!-- <AssemblyOriginatorKeyFile>WorkflowForge.snk</AssemblyOriginatorKeyFile> -->
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\WorkflowForge.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>

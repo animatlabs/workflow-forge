@@ -375,25 +375,34 @@ dotnet add package WorkflowForge.Extensions.Persistence
 **Usage:**
 ```csharp
 using WorkflowForge.Extensions.Persistence;
+using WorkflowForge.Extensions.Persistence.Abstractions;
 
 // Implement custom storage provider
-public class MyStorageProvider : IWorkflowStateStore
+public class MyStorageProvider : IWorkflowPersistenceProvider
 {
-    public async Task SaveStateAsync(WorkflowState state, CancellationToken ct)
+    public Task SaveAsync(WorkflowExecutionSnapshot snapshot, CancellationToken ct = default)
     {
         // Save to your database, file system, etc.
+        return Task.CompletedTask;
     }
-    
-    public async Task<WorkflowState?> LoadStateAsync(string workflowId, CancellationToken ct)
+
+    public Task<WorkflowExecutionSnapshot?> TryLoadAsync(
+        Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default)
     {
         // Load from your storage
+        return Task.FromResult<WorkflowExecutionSnapshot?>(null);
+    }
+
+    public Task DeleteAsync(Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default)
+    {
+        return Task.CompletedTask;
     }
 }
 
 // Use in workflow
-var stateStore = new MyStorageProvider();
+var provider = new MyStorageProvider();
 var foundry = WorkflowForge.CreateFoundry("PersistentWorkflow");
-foundry.AddStateStore(stateStore);
+foundry.UsePersistence(provider);
 ```
 
 #### WorkflowForge.Extensions.Persistence.Recovery
@@ -417,20 +426,20 @@ dotnet add package WorkflowForge.Extensions.Persistence.Recovery
 using WorkflowForge.Extensions.Persistence;
 using WorkflowForge.Extensions.Persistence.Recovery;
 
-var stateStore = new MyStorageProvider();
-var recoveryService = new WorkflowRecoveryService(stateStore);
+var provider = new MyStorageProvider();
 
-// Attempt to recover workflow
-var state = await recoveryService.LoadWorkflowStateAsync("workflow-123");
-if (state != null && state.CanRecover)
-{
-    var foundry = WorkflowForge.CreateFoundry("RecoveredWorkflow");
-    foundry.AddStateStore(stateStore);
-    foundry.EnableRecovery(state);
-    
-    // Resume from last checkpoint
-    await smith.ForgeAsync(workflow, foundry);
-}
+// Resume workflow from last checkpoint
+using var foundry = WorkflowForge.CreateFoundry("RecoveredWorkflow");
+foundry.UsePersistence(provider, options);
+
+var smith = WorkflowForge.CreateSmith();
+await smith.ForgeWithRecoveryAsync(
+    workflow,
+    foundry,
+    provider,
+    foundryKey,
+    workflowKey,
+    new RecoveryMiddlewareOptions { MaxRetryAttempts = 3, UseExponentialBackoff = true });
 ```
 
 **See Also:**
@@ -737,8 +746,8 @@ This keeps extension behavior predictable and avoids preset helper methods that 
 
 // Configuration loading
 var foundryConfig = configuration.GetSection("WorkflowForge");
-var foundry = WorkflowForge.CreateFoundry("ProcessOrder")
-    .ConfigureFromSection(foundryConfig);
+services.Configure<WorkflowForgeOptions>(foundryConfig);
+var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
 ```
 
 ### Validation Extension

@@ -142,7 +142,8 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             long memoryAllocated = 0,
             KeyValuePair<string, object?>[]? tags = null)
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
 
             var metricTags = CreateTagsArray(operationName, success, tags);
 
@@ -168,7 +169,8 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <param name="tags">Additional tags for the metric.</param>
         public void IncrementActiveOperations(string operationName, KeyValuePair<string, object?>[]? tags = null)
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
 
             var metricTags = CreateTagsArray(operationName, null, tags);
             _activeOperations.Add(1, metricTags);
@@ -181,7 +183,8 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <param name="tags">Additional tags for the metric.</param>
         public void DecrementActiveOperations(string operationName, KeyValuePair<string, object?>[]? tags = null)
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
 
             var metricTags = CreateTagsArray(operationName, null, tags);
             _activeOperations.Add(-1, metricTags);
@@ -314,7 +317,8 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// </summary>
         public void Dispose()
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
 
             _disposed = true;
             _activitySource?.Dispose();

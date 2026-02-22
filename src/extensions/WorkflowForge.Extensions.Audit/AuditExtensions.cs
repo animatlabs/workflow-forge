@@ -28,8 +28,10 @@ namespace WorkflowForge.Extensions.Audit
             ISystemTimeProvider? timeProvider = null,
             string? initiatedBy = null)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (auditProvider == null) throw new ArgumentNullException(nameof(auditProvider));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (auditProvider == null)
+                throw new ArgumentNullException(nameof(auditProvider));
 
             options ??= new AuditMiddlewareOptions();
 
@@ -76,8 +78,10 @@ namespace WorkflowForge.Extensions.Audit
             ISystemTimeProvider? timeProvider = null,
             string? initiatedBy = null)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (auditProvider == null) throw new ArgumentNullException(nameof(auditProvider));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (auditProvider == null)
+                throw new ArgumentNullException(nameof(auditProvider));
             if (string.IsNullOrWhiteSpace(operationName))
                 throw new ArgumentException("Operation name cannot be null or empty", nameof(operationName));
 

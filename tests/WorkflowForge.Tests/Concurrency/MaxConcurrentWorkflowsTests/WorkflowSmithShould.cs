@@ -31,7 +31,8 @@ namespace WorkflowForge.Tests.Concurrency.MaxConcurrentWorkflowsTests
 
         private static void SafeDeleteDirectory(string path)
         {
-            if (!Directory.Exists(path)) return;
+            if (!Directory.Exists(path))
+                return;
 
             const int maxRetries = 3;
             for (int attempt = 0; attempt < maxRetries; attempt++)

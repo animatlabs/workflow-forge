@@ -40,7 +40,8 @@ namespace WorkflowForge.Extensions.Validation.Tests
                 options);
 
             var nextCalled = false;
-            Task<object?> Next(CancellationToken _) { nextCalled = true; return Task.FromResult<object?>(null); }
+            Task<object?> Next(CancellationToken _)
+            { nextCalled = true; return Task.FromResult<object?>(null); }
 
             await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
 
@@ -83,7 +84,8 @@ namespace WorkflowForge.Extensions.Validation.Tests
                 options);
 
             var nextCalled = false;
-            Task<object?> Next(CancellationToken _) { nextCalled = true; return Task.FromResult<object?>(null); }
+            Task<object?> Next(CancellationToken _)
+            { nextCalled = true; return Task.FromResult<object?>(null); }
 
             await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
 
@@ -105,7 +107,8 @@ namespace WorkflowForge.Extensions.Validation.Tests
                 options);
 
             var nextCalled = false;
-            Task<object?> Next(CancellationToken _) { nextCalled = true; return Task.FromResult<object?>(null); }
+            Task<object?> Next(CancellationToken _)
+            { nextCalled = true; return Task.FromResult<object?>(null); }
 
             await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
 

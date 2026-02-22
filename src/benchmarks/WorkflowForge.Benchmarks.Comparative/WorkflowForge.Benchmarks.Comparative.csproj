@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
+    <SonarQubeExclude>true</SonarQubeExclude>
     
     <!-- Package Information -->
     <AssemblyName>WorkflowForge.Benchmarks.Comparative</AssemblyName>

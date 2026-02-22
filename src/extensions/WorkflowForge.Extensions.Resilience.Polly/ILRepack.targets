@@ -14,7 +14,8 @@
       TargetKind="SameAsPrimaryAssembly"
       Internalize="true"
       Parallel="true"
-      DebugInfo="false" />
+      DebugInfo="false"
+      KeyFile="$(AssemblyOriginatorKeyFile)" />
   </Target>
 
   <Target Name="ILRepackCleanup" AfterTargets="WorkflowForgeILRepack" Condition="$(Configuration.Contains('Release'))">

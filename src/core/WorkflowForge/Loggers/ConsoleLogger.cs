@@ -12,6 +12,13 @@ namespace WorkflowForge.Loggers
     /// </summary>
     public sealed class ConsoleLogger : IWorkflowForgeLogger
     {
+        private const string LevelTrace = "TRACE";
+        private const string LevelDebug = "DEBUG";
+        private const string LevelInfo = "INFO";
+        private const string LevelWarn = "WARN";
+        private const string LevelError = "ERROR";
+        private const string LevelCritical = "CRITICAL";
+
         private readonly string _prefix;
         private readonly ISystemTimeProvider _timeProvider;
 
@@ -29,145 +36,145 @@ namespace WorkflowForge.Loggers
         /// <inheritdoc />
         public void LogTrace(string message, params object[] args)
         {
-            WriteToConsole("TRACE", FormatMessage(message, args), ConsoleColor.DarkGray);
+            WriteToConsole(LevelTrace, FormatMessage(message, args), ConsoleColor.DarkGray);
         }
 
         /// <inheritdoc />
         public void LogTrace(Exception exception, string message, params object[] args)
         {
-            WriteToConsole("TRACE", $"{FormatMessage(message, args)} | Exception: {exception}", ConsoleColor.DarkGray);
+            WriteToConsole(LevelTrace, $"{FormatMessage(message, args)} | Exception: {exception}", ConsoleColor.DarkGray);
         }
 
         /// <inheritdoc />
         public void LogTrace(IDictionary<string, string> properties, string message, params object[] args)
         {
-            WriteToConsole("TRACE", FormatMessageWithProperties(message, properties, args), ConsoleColor.DarkGray);
+            WriteToConsole(LevelTrace, FormatMessageWithProperties(message, properties, args), ConsoleColor.DarkGray);
         }
 
         /// <inheritdoc />
         public void LogTrace(IDictionary<string, string> properties, Exception exception, string message, params object[] args)
         {
-            WriteToConsole("TRACE", $"{FormatMessageWithProperties(message, properties, args)} | Exception: {exception}", ConsoleColor.DarkGray);
+            WriteToConsole(LevelTrace, $"{FormatMessageWithProperties(message, properties, args)} | Exception: {exception}", ConsoleColor.DarkGray);
         }
 
         /// <inheritdoc />
         public void LogDebug(string message, params object[] args)
         {
-            WriteToConsole("DEBUG", FormatMessage(message, args), ConsoleColor.Gray);
+            WriteToConsole(LevelDebug, FormatMessage(message, args), ConsoleColor.Gray);
         }
 
         /// <inheritdoc />
         public void LogDebug(Exception exception, string message, params object[] args)
         {
-            WriteToConsole("DEBUG", $"{FormatMessage(message, args)} | Exception: {exception}", ConsoleColor.Gray);
+            WriteToConsole(LevelDebug, $"{FormatMessage(message, args)} | Exception: {exception}", ConsoleColor.Gray);
         }
 
         /// <inheritdoc />
         public void LogDebug(IDictionary<string, string> properties, string message, params object[] args)
         {
-            WriteToConsole("DEBUG", FormatMessageWithProperties(message, properties, args), ConsoleColor.Gray);
+            WriteToConsole(LevelDebug, FormatMessageWithProperties(message, properties, args), ConsoleColor.Gray);
         }
 
         /// <inheritdoc />
         public void LogDebug(IDictionary<string, string> properties, Exception exception, string message, params object[] args)
         {
-            WriteToConsole("DEBUG", $"{FormatMessageWithProperties(message, properties, args)} | Exception: {exception}", ConsoleColor.Gray);
+            WriteToConsole(LevelDebug, $"{FormatMessageWithProperties(message, properties, args)} | Exception: {exception}", ConsoleColor.Gray);
         }
 
         /// <inheritdoc />
         public void LogInformation(string message, params object[] args)
         {
-            WriteToConsole("INFO", FormatMessage(message, args), ConsoleColor.White);
+            WriteToConsole(LevelInfo, FormatMessage(message, args), ConsoleColor.White);
         }
 
         /// <inheritdoc />
         public void LogInformation(Exception exception, string message, params object[] args)
         {
-            WriteToConsole("INFO", $"{FormatMessage(message, args)} | Exception: {exception}", ConsoleColor.White);
+            WriteToConsole(LevelInfo, $"{FormatMessage(message, args)} | Exception: {exception}", ConsoleColor.White);
         }
 
         /// <inheritdoc />
         public void LogInformation(IDictionary<string, string> properties, string message, params object[] args)
         {
-            WriteToConsole("INFO", FormatMessageWithProperties(message, properties, args), ConsoleColor.White);
+            WriteToConsole(LevelInfo, FormatMessageWithProperties(message, properties, args), ConsoleColor.White);
         }
 
         /// <inheritdoc />
         public void LogInformation(IDictionary<string, string> properties, Exception exception, string message, params object[] args)
         {
-            WriteToConsole("INFO", $"{FormatMessageWithProperties(message, properties, args)} | Exception: {exception}", ConsoleColor.White);
+            WriteToConsole(LevelInfo, $"{FormatMessageWithProperties(message, properties, args)} | Exception: {exception}", ConsoleColor.White);
         }
 
         /// <inheritdoc />
         public void LogWarning(string message, params object[] args)
         {
-            WriteToConsole("WARN", FormatMessage(message, args), ConsoleColor.Yellow);
+            WriteToConsole(LevelWarn, FormatMessage(message, args), ConsoleColor.Yellow);
         }
 
         /// <inheritdoc />
         public void LogWarning(Exception exception, string message, params object[] args)
         {
-            WriteToConsole("WARN", $"{FormatMessage(message, args)} | Exception: {exception}", ConsoleColor.Yellow);
+            WriteToConsole(LevelWarn, $"{FormatMessage(message, args)} | Exception: {exception}", ConsoleColor.Yellow);
         }
 
         /// <inheritdoc />
         public void LogWarning(IDictionary<string, string> properties, string message, params object[] args)
         {
-            WriteToConsole("WARN", FormatMessageWithProperties(message, properties, args), ConsoleColor.Yellow);
+            WriteToConsole(LevelWarn, FormatMessageWithProperties(message, properties, args), ConsoleColor.Yellow);
         }
 
         /// <inheritdoc />
         public void LogWarning(IDictionary<string, string> properties, Exception exception, string message, params object[] args)
         {
-            WriteToConsole("WARN", $"{FormatMessageWithProperties(message, properties, args)} | Exception: {exception}", ConsoleColor.Yellow);
+            WriteToConsole(LevelWarn, $"{FormatMessageWithProperties(message, properties, args)} | Exception: {exception}", ConsoleColor.Yellow);
         }
 
         /// <inheritdoc />
         public void LogError(string message, params object[] args)
         {
-            WriteToConsole("ERROR", FormatMessage(message, args), ConsoleColor.Red);
+            WriteToConsole(LevelError, FormatMessage(message, args), ConsoleColor.Red);
         }
 
         /// <inheritdoc />
         public void LogError(Exception exception, string message, params object[] args)
         {
-            WriteToConsole("ERROR", $"{FormatMessage(message, args)} | Exception: {exception}", ConsoleColor.Red);
+            WriteToConsole(LevelError, $"{FormatMessage(message, args)} | Exception: {exception}", ConsoleColor.Red);
         }
 
         /// <inheritdoc />
         public void LogError(IDictionary<string, string> properties, string message, params object[] args)
         {
-            WriteToConsole("ERROR", FormatMessageWithProperties(message, properties, args), ConsoleColor.Red);
+            WriteToConsole(LevelError, FormatMessageWithProperties(message, properties, args), ConsoleColor.Red);
         }
 
         /// <inheritdoc />
         public void LogError(IDictionary<string, string> properties, Exception exception, string message, params object[] args)
         {
-            WriteToConsole("ERROR", $"{FormatMessageWithProperties(message, properties, args)} | Exception: {exception}", ConsoleColor.Red);
+            WriteToConsole(LevelError, $"{FormatMessageWithProperties(message, properties, args)} | Exception: {exception}", ConsoleColor.Red);
         }
 
         /// <inheritdoc />
         public void LogCritical(string message, params object[] args)
         {
-            WriteToConsole("CRITICAL", FormatMessage(message, args), ConsoleColor.Magenta);
+            WriteToConsole(LevelCritical, FormatMessage(message, args), ConsoleColor.Magenta);
         }
 
         /// <inheritdoc />
         public void LogCritical(Exception exception, string message, params object[] args)
         {
-            WriteToConsole("CRITICAL", $"{FormatMessage(message, args)} | Exception: {exception}", ConsoleColor.Magenta);
+            WriteToConsole(LevelCritical, $"{FormatMessage(message, args)} | Exception: {exception}", ConsoleColor.Magenta);
         }
 
         /// <inheritdoc />
         public void LogCritical(IDictionary<string, string> properties, string message, params object[] args)
         {
-            WriteToConsole("CRITICAL", FormatMessageWithProperties(message, properties, args), ConsoleColor.Magenta);
+            WriteToConsole(LevelCritical, FormatMessageWithProperties(message, properties, args), ConsoleColor.Magenta);
         }
 
         /// <inheritdoc />
         public void LogCritical(IDictionary<string, string> properties, Exception exception, string message, params object[] args)
         {
-            WriteToConsole("CRITICAL", $"{FormatMessageWithProperties(message, properties, args)} | Exception: {exception}", ConsoleColor.Magenta);
+            WriteToConsole(LevelCritical, $"{FormatMessageWithProperties(message, properties, args)} | Exception: {exception}", ConsoleColor.Magenta);
         }
 
         /// <inheritdoc />

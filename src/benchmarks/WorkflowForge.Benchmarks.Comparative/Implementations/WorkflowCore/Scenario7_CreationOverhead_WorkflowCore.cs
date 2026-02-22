@@ -28,7 +28,8 @@ public class Scenario7_CreationOverhead_WorkflowCore : IWorkflowScenario
         // Just register, don't start
         workflowHost.RegisterWorkflow<CreationWorkflow, CreationData>();
 
-        if (serviceProvider is IDisposable disposable) disposable.Dispose();
+        if (serviceProvider is IDisposable disposable)
+            disposable.Dispose();
         await Task.CompletedTask;
 
         return new ScenarioResult

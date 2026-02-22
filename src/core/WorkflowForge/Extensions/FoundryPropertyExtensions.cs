@@ -21,7 +21,8 @@ namespace WorkflowForge.Extensions
         /// </summary>
         public static void SetCorrelationId(this IWorkflowFoundry foundry, string correlationId)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
             foundry.Properties[FoundryPropertyKeys.CorrelationId] = correlationId;
         }
 
@@ -30,7 +31,8 @@ namespace WorkflowForge.Extensions
         /// </summary>
         public static string? GetCorrelationId(this IWorkflowFoundry foundry)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
             return foundry.Properties.TryGetValue(FoundryPropertyKeys.CorrelationId, out var correlationId)
                 ? correlationId?.ToString()
                 : null;
@@ -41,7 +43,8 @@ namespace WorkflowForge.Extensions
         /// </summary>
         public static void SetParentWorkflowExecutionId(this IWorkflowFoundry foundry, string parentWorkflowExecutionId)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
             foundry.Properties[FoundryPropertyKeys.ParentWorkflowExecutionId] = parentWorkflowExecutionId;
         }
 
@@ -50,8 +53,10 @@ namespace WorkflowForge.Extensions
         /// </summary>
         public static bool TryGetProperty<T>(this IWorkflowFoundry foundry, string key, out T? value)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (string.IsNullOrWhiteSpace(key)) throw new ArgumentException("Key cannot be null or empty.", nameof(key));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (string.IsNullOrWhiteSpace(key))
+                throw new ArgumentException("Key cannot be null or empty.", nameof(key));
 
             if (foundry.Properties.TryGetValue(key, out var obj) && obj is T t)
             {
@@ -84,8 +89,10 @@ namespace WorkflowForge.Extensions
         /// </summary>
         public static IWorkflowFoundry SetProperty(this IWorkflowFoundry foundry, string key, object? value)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (string.IsNullOrWhiteSpace(key)) throw new ArgumentException("Key cannot be null or empty.", nameof(key));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (string.IsNullOrWhiteSpace(key))
+                throw new ArgumentException("Key cannot be null or empty.", nameof(key));
             foundry.Properties[key] = value;
             return foundry;
         }
@@ -99,8 +106,10 @@ namespace WorkflowForge.Extensions
         /// <exception cref="ArgumentNullException">Thrown when foundry or operations is null.</exception>
         public static IWorkflowFoundry WithOperations(this IWorkflowFoundry foundry, params IWorkflowOperation[] operations)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (operations == null) throw new ArgumentNullException(nameof(operations));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (operations == null)
+                throw new ArgumentNullException(nameof(operations));
             if (operations.Any(op => op == null))
                 throw new ArgumentException("Operations collection contains null elements.", nameof(operations));
 
@@ -121,8 +130,10 @@ namespace WorkflowForge.Extensions
         /// <exception cref="ArgumentNullException">Thrown when foundry or operations is null.</exception>
         public static IWorkflowFoundry WithOperations(this IWorkflowFoundry foundry, IEnumerable<IWorkflowOperation> operations)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (operations == null) throw new ArgumentNullException(nameof(operations));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (operations == null)
+                throw new ArgumentNullException(nameof(operations));
             if (operations.Any(op => op == null))
                 throw new ArgumentException("Operations collection contains null elements.", nameof(operations));
 
@@ -143,8 +154,10 @@ namespace WorkflowForge.Extensions
         /// <exception cref="ArgumentNullException">Thrown when foundry or operation is null.</exception>
         public static IWorkflowFoundry WithOperation(this IWorkflowFoundry foundry, IWorkflowOperation operation)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (operation == null) throw new ArgumentNullException(nameof(operation));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (operation == null)
+                throw new ArgumentNullException(nameof(operation));
 
             foundry.AddOperation(operation);
             return foundry;
@@ -162,9 +175,12 @@ namespace WorkflowForge.Extensions
         /// <exception cref="ArgumentException">Thrown when name is empty or whitespace.</exception>
         public static IWorkflowFoundry WithOperation(this IWorkflowFoundry foundry, string name, Func<IWorkflowFoundry, Task> action, Func<IWorkflowFoundry, Task>? restoreAction = null)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Operation name cannot be null, empty, or whitespace.", nameof(name));
-            if (action == null) throw new ArgumentNullException(nameof(action));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Operation name cannot be null, empty, or whitespace.", nameof(name));
+            if (action == null)
+                throw new ArgumentNullException(nameof(action));
 
             Func<object?, IWorkflowFoundry, CancellationToken, Task>? adaptedRestore = restoreAction != null
                 ? async (output, f, ct) => await restoreAction(f).ConfigureAwait(false)
@@ -192,9 +208,12 @@ namespace WorkflowForge.Extensions
         /// <exception cref="ArgumentException">Thrown when name is empty or whitespace.</exception>
         public static IWorkflowFoundry WithOperation(this IWorkflowFoundry foundry, string name, Action<IWorkflowFoundry> action, Action<IWorkflowFoundry>? restoreAction = null)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Operation name cannot be null, empty, or whitespace.", nameof(name));
-            if (action == null) throw new ArgumentNullException(nameof(action));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Operation name cannot be null, empty, or whitespace.", nameof(name));
+            if (action == null)
+                throw new ArgumentNullException(nameof(action));
 
             Func<object?, IWorkflowFoundry, CancellationToken, Task>? adaptedRestore = restoreAction != null
                 ? (output, f, ct) => { restoreAction(f); return Task.CompletedTask; }
@@ -219,8 +238,10 @@ namespace WorkflowForge.Extensions
         /// <exception cref="ArgumentNullException">Thrown when foundry or middleware is null.</exception>
         public static IWorkflowFoundry WithMiddleware(this IWorkflowFoundry foundry, IWorkflowOperationMiddleware middleware)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (middleware == null) throw new ArgumentNullException(nameof(middleware));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (middleware == null)
+                throw new ArgumentNullException(nameof(middleware));
 
             foundry.AddMiddleware(middleware);
             return foundry;
@@ -243,9 +264,12 @@ namespace WorkflowForge.Extensions
         /// <exception cref="ArgumentException">Thrown when operationName is null or empty.</exception>
         public static object? GetOperationOutput(this IWorkflowFoundry foundry, int operationIndex, string operationName)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (operationIndex < 0) throw new ArgumentOutOfRangeException(nameof(operationIndex), "Operation index must be non-negative.");
-            if (string.IsNullOrWhiteSpace(operationName)) throw new ArgumentException("Operation name cannot be null or empty.", nameof(operationName));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (operationIndex < 0)
+                throw new ArgumentOutOfRangeException(nameof(operationIndex), "Operation index must be non-negative.");
+            if (string.IsNullOrWhiteSpace(operationName))
+                throw new ArgumentException("Operation name cannot be null or empty.", nameof(operationName));
 
             var key = string.Format(FoundryPropertyKeys.OperationOutputFormat, operationIndex, operationName);
             return foundry.Properties.TryGetValue(key, out var value) ? value : null;

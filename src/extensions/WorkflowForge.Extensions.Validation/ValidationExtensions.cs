@@ -23,8 +23,10 @@ namespace WorkflowForge.Extensions.Validation
             Func<IWorkflowFoundry, T?> dataExtractor,
             ValidationMiddlewareOptions? options = null) where T : class
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (dataExtractor == null) throw new ArgumentNullException(nameof(dataExtractor));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (dataExtractor == null)
+                throw new ArgumentNullException(nameof(dataExtractor));
 
             options ??= new ValidationMiddlewareOptions();
 
@@ -60,9 +62,12 @@ namespace WorkflowForge.Extensions.Validation
             Func<IWorkflowFoundry, T?> dataExtractor,
             ValidationMiddlewareOptions? options = null) where T : class
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (validator == null) throw new ArgumentNullException(nameof(validator));
-            if (dataExtractor == null) throw new ArgumentNullException(nameof(dataExtractor));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (validator == null)
+                throw new ArgumentNullException(nameof(validator));
+            if (dataExtractor == null)
+                throw new ArgumentNullException(nameof(dataExtractor));
 
             options ??= new ValidationMiddlewareOptions();
 
@@ -95,7 +100,8 @@ namespace WorkflowForge.Extensions.Validation
             T data,
             string propertyKey = "ValidationResult")
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             var result = await new DataAnnotationsWorkflowValidator<T>().ValidateAsync(data).ConfigureAwait(false);
 
@@ -125,8 +131,10 @@ namespace WorkflowForge.Extensions.Validation
             T data,
             string propertyKey = "ValidationResult")
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (validator == null) throw new ArgumentNullException(nameof(validator));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (validator == null)
+                throw new ArgumentNullException(nameof(validator));
 
             var result = await validator.ValidateAsync(data).ConfigureAwait(false);
 

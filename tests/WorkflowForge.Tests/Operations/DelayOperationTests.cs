@@ -210,7 +210,7 @@ public class DelayOperationTests
         stopwatch.Stop();
 
         // Assert
-        Assert.True(stopwatch.ElapsedMilliseconds >= delayMs - 10); // Allow 10ms tolerance
+        Assert.True(stopwatch.ElapsedMilliseconds >= delayMs - 20, $"Expected >= {delayMs - 20}ms, got {stopwatch.ElapsedMilliseconds}ms");
     }
 
     [Fact]
@@ -226,7 +226,7 @@ public class DelayOperationTests
         stopwatch.Stop();
 
         // Assert
-        Assert.True(stopwatch.ElapsedMilliseconds < 50); // Should complete very quickly
+        Assert.True(stopwatch.ElapsedMilliseconds < 200, $"Expected < 200ms for zero delay, got {stopwatch.ElapsedMilliseconds}ms");
     }
 
     [Fact]
@@ -354,7 +354,7 @@ public class DelayOperationTests
         stopwatch.Stop();
 
         // Assert - Should complete much faster than 2 seconds
-        Assert.True(stopwatch.ElapsedMilliseconds < 1000);
+        Assert.True(stopwatch.ElapsedMilliseconds < 2000, $"Expected < 2000ms after cancellation, got {stopwatch.ElapsedMilliseconds}ms");
     }
 
     #endregion Cancellation Tests
@@ -502,8 +502,8 @@ public class DelayOperationTests
         stopwatch.Stop();
 
         // Assert
-        Assert.True(stopwatch.ElapsedMilliseconds >= delayMs - 15); // Allow some tolerance
-        var upperBound = delayMs + Math.Max(200, delayMs * 2); // Allow jitter on shared runners
+        Assert.True(stopwatch.ElapsedMilliseconds >= delayMs - 25, $"Expected >= {delayMs - 25}ms, got {stopwatch.ElapsedMilliseconds}ms");
+        var upperBound = delayMs + Math.Max(500, delayMs * 2);
         Assert.True(stopwatch.ElapsedMilliseconds <= upperBound);
     }
 

@@ -470,13 +470,14 @@ var retryPolicy = Policy
                 retryCount, timeSpan.TotalMilliseconds);
         });
 
-// Wrap operation with policy
-var operation = new PollyWrappedOperation<HttpResponseMessage>(
+// Wrap operation with Polly retry
+var resilientOp = PollyRetryOperation.WithRetryPolicy(
     new CallExternalApiOperation(),
-    retryPolicy);
+    maxRetryAttempts: 3,
+    baseDelay: TimeSpan.FromSeconds(1));
 
 var workflow = WorkflowForge.CreateWorkflow("ResilientWorkflow")
-    .AddOperation(operation)
+    .AddOperation(resilientOp)
     .Build();
 ```
 
@@ -602,36 +603,42 @@ await smith.ForgeAsync(workflow, foundry);
 
 **Zero Dependencies**: Pure WorkflowForge extension. Implement `IAuditProvider` for your storage.
 
-### Persistence Extensions
+### Persistence Extension
 
 ```csharp
-using WorkflowForge.Extensions.Persistence.InMemory;
-using WorkflowForge.Extensions.Persistence.SQLite;
+using WorkflowForge.Extensions.Persistence;
+using WorkflowForge.Extensions.Persistence.Abstractions;
 
-// In-memory persistence (development/testing)
-var inMemoryProvider = new InMemoryPersistenceProvider();
-await inMemoryProvider.SaveWorkflowStateAsync(executionId, state);
-var loadedState = await inMemoryProvider.LoadWorkflowStateAsync(executionId);
-
-// SQLite persistence (production)
-var sqliteProvider = new SQLitePersistenceProvider("workflows.db");
-await sqliteProvider.SaveWorkflowStateAsync(executionId, state);
-var loadedState = await sqliteProvider.LoadWorkflowStateAsync(executionId);
-
-// Use in workflow
-foundry.SetProperty("PersistenceProvider", sqliteProvider);
-
-// Save checkpoints during execution
-var checkpointOp = new DelegateWorkflowOperation(async (foundry, ct) =>
+// Implement IWorkflowPersistenceProvider for your storage
+public sealed class MyPersistenceProvider : IWorkflowPersistenceProvider
 {
-    var provider = foundry.GetPropertyOrDefault<IPersistenceProvider>("PersistenceProvider");
-    var state = new WorkflowState { /* ... */ };
-    await provider.SaveWorkflowStateAsync(foundry.ExecutionId, state, ct);
-});
+    public Task SaveAsync(WorkflowExecutionSnapshot snapshot, CancellationToken ct = default)
+    {
+        // Save to your database, file system, etc.
+        return Task.CompletedTask;
+    }
+
+    public Task<WorkflowExecutionSnapshot?> TryLoadAsync(
+        Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default)
+    {
+        // Load from your storage
+        return Task.FromResult<WorkflowExecutionSnapshot?>(null);
+    }
+
+    public Task DeleteAsync(Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default)
+    {
+        // Delete from your storage
+        return Task.CompletedTask;
+    }
+}
+
+// Enable persistence via middleware
+var provider = new MyPersistenceProvider();
+using var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
+foundry.UsePersistence(provider);
 ```
 
-**Zero Dependencies (InMemory)**: Pure WorkflowForge extension.  
-**Dependency Isolation (SQLite)**: Microsoft.Data.Sqlite embedded.
+**Zero Dependencies**: Bring-your-own-storage pattern with no external dependencies.
 
 ---
 

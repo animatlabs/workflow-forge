@@ -55,7 +55,8 @@ namespace WorkflowForge.Operations
             string? name = null,
             Guid? id = null)
         {
-            if (condition == null) throw new ArgumentNullException(nameof(condition));
+            if (condition == null)
+                throw new ArgumentNullException(nameof(condition));
 
             _condition = (inputData, foundry, cancellationToken) => condition(foundry, cancellationToken);
             _trueOperation = trueOperation ?? throw new ArgumentNullException(nameof(trueOperation));
@@ -80,7 +81,8 @@ namespace WorkflowForge.Operations
             string? name = null,
             Guid? id = null)
         {
-            if (condition == null) throw new ArgumentNullException(nameof(condition));
+            if (condition == null)
+                throw new ArgumentNullException(nameof(condition));
 
             _condition = (inputData, foundry, cancellationToken) => Task.FromResult(condition(inputData, foundry));
             _trueOperation = trueOperation ?? throw new ArgumentNullException(nameof(trueOperation));
@@ -99,8 +101,10 @@ namespace WorkflowForge.Operations
         /// <inheritdoc />
         protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(ConditionalWorkflowOperation));
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(ConditionalWorkflowOperation));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             // Evaluate condition with input data
             _lastConditionResult = await _condition(inputData, foundry, cancellationToken).ConfigureAwait(false);
@@ -120,8 +124,10 @@ namespace WorkflowForge.Operations
         /// <inheritdoc />
         public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(ConditionalWorkflowOperation));
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(ConditionalWorkflowOperation));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             // Restore based on the last condition result
             if (_lastConditionResult)
@@ -137,7 +143,8 @@ namespace WorkflowForge.Operations
         /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
 
             if (disposing)
             {

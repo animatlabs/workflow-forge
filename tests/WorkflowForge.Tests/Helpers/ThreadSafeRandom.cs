@@ -25,7 +25,8 @@ internal static class ThreadSafeRandom
         if (t_local == null)
         {
             int seed;
-            lock (s_global) { seed = s_global.Next(); }
+            lock (s_global)
+            { seed = s_global.Next(); }
             t_local = new Random(seed);
         }
         return t_local;

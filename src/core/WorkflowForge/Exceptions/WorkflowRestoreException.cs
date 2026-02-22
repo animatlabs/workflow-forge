@@ -54,6 +54,8 @@ namespace WorkflowForge.Exceptions
         }
 
         /// <summary>Sets serialization info for the exception.</summary>
+#pragma warning disable SYSLIB0051 // Required for .NET Framework 4.8 serialization compatibility
+
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);
@@ -62,12 +64,17 @@ namespace WorkflowForge.Exceptions
             info.AddValue(nameof(WorkflowId), WorkflowId);
         }
 
+#pragma warning restore SYSLIB0051
+
         private static string FormatMessage(string message, Guid? executionId, Guid? workflowId, string? operationName)
         {
             var context = new List<string>();
-            if (executionId.HasValue) context.Add($"ExecutionId={executionId}");
-            if (workflowId.HasValue) context.Add($"WorkflowId={workflowId}");
-            if (!string.IsNullOrEmpty(operationName)) context.Add($"Operation={operationName}");
+            if (executionId.HasValue)
+                context.Add($"ExecutionId={executionId}");
+            if (workflowId.HasValue)
+                context.Add($"WorkflowId={workflowId}");
+            if (!string.IsNullOrEmpty(operationName))
+                context.Add($"Operation={operationName}");
 
             return context.Count > 0
                 ? $"{message} [{string.Join(", ", context)}]"

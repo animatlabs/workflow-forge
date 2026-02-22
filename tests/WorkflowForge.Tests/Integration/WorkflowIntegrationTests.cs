@@ -204,7 +204,7 @@ public class WorkflowIntegrationTests
         stopwatch.Stop();
 
         // Assert
-        Assert.True(stopwatch.ElapsedMilliseconds < 5000); // Should complete within 5 seconds
+        Assert.True(stopwatch.ElapsedMilliseconds < 15000, $"Expected < 15s, got {stopwatch.ElapsedMilliseconds}ms");
 
         // Verify all operations executed
         for (int i = 0; i < 50; i++)

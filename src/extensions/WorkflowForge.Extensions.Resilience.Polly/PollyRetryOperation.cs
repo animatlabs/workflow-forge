@@ -1,10 +1,10 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
 using Polly.Timeout;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Exceptions;
 using WorkflowForge.Extensions.Resilience.Polly.Options;
@@ -114,7 +114,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
 
             if (disposing)
             {
@@ -169,12 +170,13 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     ShouldHandle = new PredicateBuilder().Handle<Exception>(ex => !(ex is OperationCanceledException)),
                     MaxRetryAttempts = maxRetryAttempts,
                     Delay = delay,
+                    MaxDelay = maxDelayValue,
                     BackoffType = DelayBackoffType.Exponential,
                     UseJitter = true,
                     OnRetry = args =>
                     {
                         logger?.LogWarning("Retry attempt {AttemptNumber} for operation {OperationName} in {DelayMs}ms due to: {ErrorMessage}",
-                            args.AttemptNumber, innerOperation.Name, args.RetryDelay.TotalMilliseconds, args.Outcome.Exception?.Message);
+                            args.AttemptNumber, innerOperation.Name, args.RetryDelay.TotalMilliseconds, args.Outcome.Exception?.Message ?? "Unknown");
                         return default;
                     }
                 })
@@ -262,7 +264,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                         if (settings.EnableDetailedLogging)
                         {
                             logger?.LogWarning("Retry attempt {AttemptNumber} for operation {OperationName} in {DelayMs}ms due to: {ErrorMessage}",
-                                args.AttemptNumber, innerOperation.Name, args.RetryDelay.TotalMilliseconds, args.Outcome.Exception?.Message);
+                                args.AttemptNumber, innerOperation.Name, args.RetryDelay.TotalMilliseconds, args.Outcome.Exception?.Message ?? "Unknown");
                         }
                         return default;
                     }

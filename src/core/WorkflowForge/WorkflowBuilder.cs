@@ -316,8 +316,10 @@ namespace WorkflowForge
         /// <exception cref="ArgumentException">Thrown when operations is empty.</exception>
         public static IWorkflow Sequential(params IWorkflowOperation[] operations)
         {
-            if (operations == null) throw new ArgumentNullException(nameof(operations));
-            if (operations.Length == 0) throw new ArgumentException("At least one operation is required.", nameof(operations));
+            if (operations == null)
+                throw new ArgumentNullException(nameof(operations));
+            if (operations.Length == 0)
+                throw new ArgumentException("At least one operation is required.", nameof(operations));
 
             var builder = new WorkflowBuilder()
                 .WithName($"Sequential-{Guid.NewGuid():N}");
@@ -339,8 +341,10 @@ namespace WorkflowForge
         /// <exception cref="ArgumentException">Thrown when operations is empty.</exception>
         public static IWorkflow Parallel(params IWorkflowOperation[] operations)
         {
-            if (operations == null) throw new ArgumentNullException(nameof(operations));
-            if (operations.Length == 0) throw new ArgumentException("At least one operation is required.", nameof(operations));
+            if (operations == null)
+                throw new ArgumentNullException(nameof(operations));
+            if (operations.Length == 0)
+                throw new ArgumentException("At least one operation is required.", nameof(operations));
 
             var builder = new WorkflowBuilder()
                 .WithName($"Parallel-{Guid.NewGuid():N}")

@@ -11,6 +11,7 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
     /// </summary>
     public sealed class ExponentialBackoffStrategy : ResilienceStrategyBase
     {
+        private static readonly Random JitterRandom = new();
         private readonly TimeSpan _baseDelay;
         private readonly TimeSpan _maxDelay;
         private readonly double _backoffMultiplier;
@@ -65,6 +66,16 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
 
             // Cap at max delay
             var actualDelay = exponentialDelay > _maxDelay ? _maxDelay : exponentialDelay;
+
+            if (_enableJitter)
+            {
+                var jitterFactor = 1.0 + (JitterRandom.NextDouble() - 0.5) * 0.5;
+                actualDelay = TimeSpan.FromMilliseconds(actualDelay.TotalMilliseconds * jitterFactor);
+                if (actualDelay > _maxDelay)
+                    actualDelay = _maxDelay;
+                if (actualDelay < TimeSpan.Zero)
+                    actualDelay = TimeSpan.Zero;
+            }
 
             Logger?.LogDebug("Calculated retry delay for attempt {AttemptNumber}: {DelayMs}ms (exponential: {ExponentialMs}ms, capped: {IsCapped})",
                 attemptNumber, actualDelay.TotalMilliseconds, exponentialDelay.TotalMilliseconds, actualDelay == _maxDelay);

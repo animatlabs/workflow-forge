@@ -136,14 +136,14 @@ await smith.ForgeAsync(workflow, foundry);
 
 ### ❌ Wrong: Order-dependent middleware added in wrong order
 ```csharp
-foundry.UseRetry();        // Innermost
+foundry.UsePollyRetry();    // Innermost
 foundry.UseErrorHandling(); // Should be outermost
 ```
 
 ### ✅ Correct: Error handling wraps retry
 ```csharp
 foundry.UseErrorHandling(); // Outermost - catches retry errors
-foundry.UseRetry();        // Innermost - wraps operation
+foundry.UsePollyRetry();    // Innermost - wraps operation
 ```
 
 ## Debugging Middleware

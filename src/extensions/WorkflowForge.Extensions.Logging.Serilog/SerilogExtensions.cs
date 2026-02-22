@@ -1,6 +1,6 @@
+using System;
 using Serilog;
 using Serilog.Events;
-using System;
 using WorkflowForge.Abstractions;
 
 namespace WorkflowForge.Extensions.Logging.Serilog

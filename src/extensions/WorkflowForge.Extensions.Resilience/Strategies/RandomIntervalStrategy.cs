@@ -46,7 +46,8 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
             _maxInterval = maxInterval;
 
             int seed;
-            lock (SeedSource) { seed = SeedSource.Next(); }
+            lock (SeedSource)
+            { seed = SeedSource.Next(); }
             _random = new Random(seed);
         }
 

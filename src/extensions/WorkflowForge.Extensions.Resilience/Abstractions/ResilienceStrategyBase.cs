@@ -66,7 +66,7 @@ namespace WorkflowForge.Extensions.Resilience.Abstractions
         public abstract Task ExecuteAsync(Func<Task> operation, CancellationToken cancellationToken = default);
 
         /// <inheritdoc />
-        public virtual Task<bool> ShouldRetryAsync(int attemptNumber, Exception? exception, CancellationToken cancellationToken)
+        public virtual Task<bool> ShouldRetryAsync(int attemptNumber, Exception? exception, CancellationToken cancellationToken = default)
         {
             if (attemptNumber >= MaxAttempts)
             {
@@ -138,7 +138,7 @@ namespace WorkflowForge.Extensions.Resilience.Abstractions
         }
 
         /// <inheritdoc />
-        public virtual async Task<T> ExecuteAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken)
+        public virtual async Task<T> ExecuteAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken = default)
         {
             T result = default!;
             await ExecuteAsync(async () => { result = await operation().ConfigureAwait(false); }, cancellationToken).ConfigureAwait(false);

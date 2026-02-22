@@ -67,7 +67,8 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
                 {
                     lastEx = ex;
                     attempts++;
-                    if (attempts >= _options.MaxRetryAttempts) break;
+                    if (attempts >= _options.MaxRetryAttempts)
+                        break;
 
                     var delay = _options.BaseDelay;
                     if (_options.UseExponentialBackoff)
@@ -80,7 +81,8 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
             }
 
             // Surface the last exception after exhausting retries
-            if (lastEx != null) throw lastEx;
+            if (lastEx != null)
+                throw lastEx;
         }
 
         public async Task<int> ResumeAllAsync(

@@ -1,21 +1,17 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Reflection;
 using System.Threading.Tasks;
-using WorkflowForge;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.Audit;
-using WorkflowForge.Extensions.Audit.Options;
-using WorkflowForge.Extensions.Validation;
-using WorkflowForge.Extensions.Validation.Options;
 using WorkflowForge.Extensions.Persistence;
 using WorkflowForge.Extensions.Persistence.Abstractions;
 using WorkflowForge.Extensions.Persistence.Recovery;
 using WorkflowForge.Extensions.Persistence.Recovery.Options;
+using WorkflowForge.Extensions.Validation;
+using WorkflowForge.Extensions.Validation.Options;
 
 namespace WorkflowForge.Extensions.DependencyInjection.Tests
 {
@@ -37,9 +33,9 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
             var options = provider.GetRequiredService<IOptions<ValidationMiddlewareOptions>>().Value;
 
             var foundry = WorkflowForge.CreateFoundry("Test");
-            
+
             foundry.UseValidation(f => new TestModel { Value = -1 }, options);
-            
+
             var workflow = WorkflowForge.CreateWorkflow("TestWorkflow")
                 .AddOperation("Op1", async (f, ct) => { f.SetProperty("result", "success"); })
                 .Build();
@@ -68,7 +64,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
             var options = provider.GetRequiredService<IOptions<ValidationMiddlewareOptions>>().Value;
 
             var foundry = WorkflowForge.CreateFoundry("Test");
-            
+
             foundry.UseValidation(f => new TestModel { Value = -1 }, options);
 
             var workflow = WorkflowForge.CreateWorkflow("TestWorkflow")
@@ -76,7 +72,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
                 .Build();
 
             var smith = WorkflowForge.CreateSmith();
-            await Assert.ThrowsAsync<WorkflowValidationException>(() => 
+            await Assert.ThrowsAsync<WorkflowValidationException>(() =>
                 smith.ForgeAsync(workflow, foundry));
         }
 
@@ -97,7 +93,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
 
             var providerMock = new InMemoryPersistenceProvider();
             var foundry = WorkflowForge.CreateFoundry("Test");
-            
+
             foundry.UsePersistence(providerMock, options);
 
             var workflow = WorkflowForge.CreateWorkflow("TestWorkflow")
@@ -180,4 +176,3 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
         }
     }
 }
-

@@ -109,8 +109,10 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <exception cref="ObjectDisposedException">Thrown when the service has been disposed.</exception>
         public void RegisterHealthCheck(IHealthCheck healthCheck)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(HealthCheckService));
-            if (healthCheck == null) throw new ArgumentNullException(nameof(healthCheck));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(HealthCheckService));
+            if (healthCheck == null)
+                throw new ArgumentNullException(nameof(healthCheck));
 
             _healthChecks.AddOrUpdate(healthCheck.Name, healthCheck, (key, existing) => healthCheck);
 
@@ -130,7 +132,8 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <returns>True if the health check was removed; otherwise, false.</returns>
         public bool UnregisterHealthCheck(string name)
         {
-            if (_disposed || string.IsNullOrWhiteSpace(name)) return false;
+            if (_disposed || string.IsNullOrWhiteSpace(name))
+                return false;
 
             var removed = _healthChecks.TryRemove(name, out _);
             if (removed)
@@ -154,7 +157,8 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <exception cref="ObjectDisposedException">Thrown when the service has been disposed.</exception>
         public async Task<IReadOnlyDictionary<string, HealthCheckResult>> CheckHealthAsync(CancellationToken cancellationToken = default)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(HealthCheckService));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(HealthCheckService));
             cancellationToken.ThrowIfCancellationRequested();
 
             var results = new Dictionary<string, HealthCheckResult>();
@@ -219,8 +223,10 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <returns>The health check result, or null if the health check is not found.</returns>
         public async Task<HealthCheckResult?> CheckHealthAsync(string name, CancellationToken cancellationToken = default)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(HealthCheckService));
-            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Name cannot be null or empty", nameof(name));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(HealthCheckService));
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Name cannot be null or empty", nameof(name));
 
             if (!_healthChecks.TryGetValue(name, out var healthCheck))
             {
@@ -301,7 +307,8 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
 
         private void PeriodicHealthCheck(object? state)
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
 
             _ = Task.Run(async () =>
             {
@@ -322,7 +329,8 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// </summary>
         public void Dispose()
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
 
             _disposed = true;
             _periodicCheckTimer?.Dispose();

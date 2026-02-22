@@ -1,11 +1,11 @@
-using Polly;
-using Polly.CircuitBreaker;
-using Polly.Retry;
-using Polly.Timeout;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Polly;
+using Polly.CircuitBreaker;
+using Polly.Retry;
+using Polly.Timeout;
 using WorkflowForge.Abstractions;
 
 namespace WorkflowForge.Extensions.Resilience.Polly
@@ -49,7 +49,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             var policyProperties = new Dictionary<string, string>
             {
                 [ResiliencePropertyNames.PolicyType] = "ResiliencePolicy",
-                [ResiliencePropertyNames.PolicyName] = _name,
                 [ResiliencePropertyNames.PolicyName] = _name
             };
 
@@ -123,6 +122,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     ShouldHandle = new PredicateBuilder().Handle<Exception>(ex => !(ex is OperationCanceledException)),
                     MaxRetryAttempts = maxRetryAttempts,
                     Delay = delay,
+                    MaxDelay = maxDelayValue,
                     BackoffType = DelayBackoffType.Exponential,
                     UseJitter = true,
                     OnRetry = args =>

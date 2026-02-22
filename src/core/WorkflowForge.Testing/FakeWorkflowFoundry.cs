@@ -106,7 +106,8 @@ namespace WorkflowForge.Testing
         public void AddOperation(IWorkflowOperation operation)
         {
             ThrowIfDisposed();
-            if (operation == null) throw new ArgumentNullException(nameof(operation));
+            if (operation == null)
+                throw new ArgumentNullException(nameof(operation));
             _operations.Add(operation);
         }
 
@@ -114,7 +115,8 @@ namespace WorkflowForge.Testing
         public void AddMiddleware(IWorkflowOperationMiddleware middleware)
         {
             ThrowIfDisposed();
-            if (middleware == null) throw new ArgumentNullException(nameof(middleware));
+            if (middleware == null)
+                throw new ArgumentNullException(nameof(middleware));
             _middlewares.Add(middleware);
         }
 
@@ -122,7 +124,8 @@ namespace WorkflowForge.Testing
         public void AddMiddlewares(IEnumerable<IWorkflowOperationMiddleware> middlewares)
         {
             ThrowIfDisposed();
-            if (middlewares == null) throw new ArgumentNullException(nameof(middlewares));
+            if (middlewares == null)
+                throw new ArgumentNullException(nameof(middlewares));
             foreach (var middleware in middlewares)
             {
                 AddMiddleware(middleware);
@@ -133,7 +136,8 @@ namespace WorkflowForge.Testing
         public void ReplaceOperations(IEnumerable<IWorkflowOperation> operations)
         {
             ThrowIfDisposed();
-            if (operations == null) throw new ArgumentNullException(nameof(operations));
+            if (operations == null)
+                throw new ArgumentNullException(nameof(operations));
             _operations.Clear();
             foreach (var operation in operations)
             {
@@ -224,7 +228,8 @@ namespace WorkflowForge.Testing
         /// <param name="operation">The operation to track as executed.</param>
         public void TrackExecution(IWorkflowOperation operation)
         {
-            if (operation == null) throw new ArgumentNullException(nameof(operation));
+            if (operation == null)
+                throw new ArgumentNullException(nameof(operation));
             _executedOperations.Add(operation);
         }
 

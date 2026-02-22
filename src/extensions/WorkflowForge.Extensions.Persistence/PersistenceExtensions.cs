@@ -23,8 +23,10 @@ namespace WorkflowForge.Extensions.Persistence
             IWorkflowPersistenceProvider provider,
             PersistenceOptions? options = null)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (provider == null) throw new ArgumentNullException(nameof(provider));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (provider == null)
+                throw new ArgumentNullException(nameof(provider));
 
             options ??= new PersistenceOptions();
 

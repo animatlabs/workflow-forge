@@ -19,6 +19,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `src/Directory.Build.props` for centralized build settings and SourceLink
 - Strong-name assembly signing infrastructure
 - XML doc `<remarks>` on `IWorkflowOperation` recommending `WorkflowOperationBase`
+- `.gitattributes` for consistent line endings and binary file handling
+- `.sonarlint/WorkflowForge.json` local SonarLint configuration
+- `RELEASE.md` detailed release procedures and checklist
+- `tests/Directory.Build.props` for centralized test project settings (SonarCloud exclusion, strong-name signing)
+- `MixedCompensationTests` and `WorkflowSmithDisposeTests` integration test classes
 
 ### Changed
 - CI/CD pipeline integrated with SonarCloud for continuous code quality analysis (with caching)
@@ -27,7 +32,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `IDisposable` pattern corrected across all operation base classes (proper `Dispose(bool)` virtual method)
 - SonarAnalyzer.CSharp added to all source projects; removed from test/benchmark/sample projects (no value with rules suppressed)
 - GitHub Actions updated to latest versions (checkout@v6, setup-dotnet@v5, upload-artifact@v6, download-artifact@v7)
-- Minimal CI workflow (`ci.yml`) added for main branch OSS verification (build + test only)
 - CI/CD pipeline hardened: permissions moved to job level, secrets moved to `env:` blocks, SonarCloud quality gate made non-blocking
 - NuGet README logos converted from HTML `<img>` to Markdown syntax for reliable rendering
 - SonarCloud quality badges (Quality Gate, Coverage, Reliability, Security, Maintainability) and GitHub Actions build badge added to `README.md` and `docs/index.md`
@@ -62,6 +66,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Publish scripts removed in favor of GitHub Actions CI/CD pipeline
 - Documentation updated to emphasize `WorkflowOperationBase` over direct `IWorkflowOperation` implementation
 - All documentation examples updated to use `WorkflowOperationBase` / `ForgeAsyncCore` pattern
+- `CONTRIBUTING.md` updated with current development workflow, coding standards, and release process
+- Solution file (`WorkflowForge.sln`) reorganized for multi-targeting project layout
+- Flaky test tolerances widened across timing-sensitive and environment-dependent tests for reliable CI execution
 
 ### Removed
 - **BREAKING**: `SupportsRestore` property removed from `IWorkflowOperation` interface

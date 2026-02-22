@@ -1,7 +1,7 @@
+using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using System;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Options;
 using WorkflowForge.Options.Middleware;
@@ -48,8 +48,10 @@ namespace WorkflowForge.Extensions.DependencyInjection
             string? loggingSectionName = null,
             string? errorHandlingSectionName = null)
         {
-            if (services == null) throw new ArgumentNullException(nameof(services));
-            if (configuration == null) throw new ArgumentNullException(nameof(configuration));
+            if (services == null)
+                throw new ArgumentNullException(nameof(services));
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
 
             // Bind and validate core WorkflowForge options
             var coreSection = coreSectionName ?? WorkflowForgeOptions.DefaultSectionName;
@@ -121,7 +123,8 @@ namespace WorkflowForge.Extensions.DependencyInjection
             Action<LoggingMiddlewareOptions>? configureLogging = null,
             Action<ErrorHandlingMiddlewareOptions>? configureErrorHandling = null)
         {
-            if (services == null) throw new ArgumentNullException(nameof(services));
+            if (services == null)
+                throw new ArgumentNullException(nameof(services));
 
             // Configure and validate core options
             var coreBuilder = services.AddOptions<WorkflowForgeOptions>();
@@ -200,7 +203,8 @@ namespace WorkflowForge.Extensions.DependencyInjection
         /// </example>
         public static IServiceCollection AddWorkflowSmith(this IServiceCollection services)
         {
-            if (services == null) throw new ArgumentNullException(nameof(services));
+            if (services == null)
+                throw new ArgumentNullException(nameof(services));
 
             services.AddSingleton<IWorkflowSmith>(serviceProvider =>
             {

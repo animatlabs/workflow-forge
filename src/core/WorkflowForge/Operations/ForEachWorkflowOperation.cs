@@ -42,7 +42,8 @@ namespace WorkflowForge.Operations
             Guid? id = null,
             ISystemTimeProvider? timeProvider = null)
         {
-            if (operations == null) throw new ArgumentNullException(nameof(operations));
+            if (operations == null)
+                throw new ArgumentNullException(nameof(operations));
             if (operations.Any(op => op == null))
                 throw new ArgumentException("Operations collection contains null elements.", nameof(operations));
 
@@ -72,8 +73,10 @@ namespace WorkflowForge.Operations
         /// <inheritdoc />
         protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(ForEachWorkflowOperation));
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(ForEachWorkflowOperation));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             // Use operation-specific concurrency setting (from constructor)
             var effectiveMaxConcurrency = _maxConcurrency;
@@ -120,8 +123,10 @@ namespace WorkflowForge.Operations
         /// <inheritdoc />
         public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(ForEachWorkflowOperation));
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(ForEachWorkflowOperation));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             // Use operation-specific concurrency setting (from constructor)
             var effectiveMaxConcurrency = _maxConcurrency;
@@ -162,7 +167,8 @@ namespace WorkflowForge.Operations
         /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
 
             if (disposing)
             {
@@ -258,7 +264,8 @@ namespace WorkflowForge.Operations
 
         private static object? ExtractDataForIndex(object? inputData, int index)
         {
-            if (inputData == null) return null;
+            if (inputData == null)
+                return null;
 
             // Handle array types
             if (inputData is Array array && index < array.Length)

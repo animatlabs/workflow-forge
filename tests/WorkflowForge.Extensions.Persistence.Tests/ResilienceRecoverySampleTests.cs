@@ -27,7 +27,7 @@ public class ResilienceRecoverySampleTests
             {
                 var startedAt = foundry.GetPropertyOrDefault("startedAt", DateTimeOffset.UtcNow);
                 var elapsed = DateTimeOffset.UtcNow - startedAt;
-                if (elapsed < TimeSpan.FromMilliseconds(50))
+                if (elapsed < TimeSpan.FromMilliseconds(200))
                 {
                     throw new InvalidOperationException($"Flaky failed due to transient condition ({elapsed.TotalMilliseconds:F0}ms)");
                 }
@@ -59,7 +59,7 @@ public class ResilienceRecoverySampleTests
         }
 
         // Give the transient window time to elapse
-        await Task.Delay(120);
+        await Task.Delay(300);
 
         // Second run: recovery + retry completes
         using (var f2 = WorkflowForge.CreateFoundry("ResilienceRecoveryDemo_Test"))

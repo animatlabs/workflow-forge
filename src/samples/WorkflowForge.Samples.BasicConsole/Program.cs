@@ -97,7 +97,9 @@ public static class Program
             return;
         }
 
-        try { Console.Clear(); } catch (IOException) { /* Console handle not available (e.g. redirected output on .NET Framework) */ }
+        try
+        { Console.Clear(); }
+        catch (IOException) { /* Console handle not available (e.g. redirected output on .NET Framework) */ }
         PrintHeader();
 
         try
@@ -283,7 +285,9 @@ public static class Program
                     Console.WriteLine("Press any key to return to menu...");
                     Console.ReadKey();
                 }
-                try { Console.Clear(); } catch (IOException) { /* Console handle not available (e.g. redirected output on .NET Framework) */ }
+                try
+                { Console.Clear(); }
+                catch (IOException) { /* Console handle not available (e.g. redirected output on .NET Framework) */ }
                 PrintHeader();
             }
         }
@@ -308,7 +312,9 @@ public static class Program
             Console.WriteLine("Press any key to return to menu...");
             Console.ReadKey();
         }
-        try { Console.Clear(); } catch (IOException) { /* Console handle not available (e.g. redirected output on .NET Framework) */ }
+        try
+        { Console.Clear(); }
+        catch (IOException) { /* Console handle not available (e.g. redirected output on .NET Framework) */ }
         PrintHeader();
     }
 
@@ -334,7 +340,9 @@ public static class Program
             Console.WriteLine("Press any key to return to menu...");
             Console.ReadKey();
         }
-        try { Console.Clear(); } catch (IOException) { /* Console handle not available (e.g. redirected output on .NET Framework) */ }
+        try
+        { Console.Clear(); }
+        catch (IOException) { /* Console handle not available (e.g. redirected output on .NET Framework) */ }
         PrintHeader();
     }
 

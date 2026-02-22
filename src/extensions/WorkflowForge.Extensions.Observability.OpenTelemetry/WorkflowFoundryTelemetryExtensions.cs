@@ -59,7 +59,8 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
         public static WorkflowForgeOpenTelemetryService? GetOpenTelemetryService(this IWorkflowFoundry foundry)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             return foundry.Properties.TryGetValue(OpenTelemetryServiceKey, out var serviceObj) && serviceObj is WorkflowForgeOpenTelemetryService service ? service : null;
         }
@@ -74,7 +75,8 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
         public static bool EnableOpenTelemetry(this IWorkflowFoundry foundry, WorkflowForgeOpenTelemetryOptions? options = null)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             try
             {
@@ -108,7 +110,8 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
         public static bool DisableOpenTelemetry(this IWorkflowFoundry foundry)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             try
             {
@@ -140,7 +143,8 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
         public static Activity? StartActivity(this IWorkflowFoundry foundry, string operationName, ActivityKind kind = ActivityKind.Internal)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             var service = foundry.GetOpenTelemetryService();
             return service?.StartActivity(operationName, kind);
@@ -164,10 +168,12 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             long memoryAllocated = 0,
             params (string Key, object? Value)[] tags)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             var service = foundry.GetOpenTelemetryService();
-            if (service == null) return;
+            if (service == null)
+                return;
 
             KeyValuePair<string, object?>[]? tagArray = null;
             if (tags?.Length > 0)
@@ -194,10 +200,12 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             string operationName,
             params (string Key, object? Value)[] tags)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             var service = foundry.GetOpenTelemetryService();
-            if (service == null) return;
+            if (service == null)
+                return;
 
             KeyValuePair<string, object?>[]? tagArray = null;
             if (tags?.Length > 0)
@@ -224,10 +232,12 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             string operationName,
             params (string Key, object? Value)[] tags)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             var service = foundry.GetOpenTelemetryService();
-            if (service == null) return;
+            if (service == null)
+                return;
 
             KeyValuePair<string, object?>[]? tagArray = null;
             if (tags?.Length > 0)
@@ -255,7 +265,8 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         public static Counter<T>? CreateCounter<T>(this IWorkflowFoundry foundry, string name, string? unit = null, string? description = null)
             where T : struct
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             var service = foundry.GetOpenTelemetryService();
             return service?.CreateCounter<T>(name, unit, description);
@@ -274,7 +285,8 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         public static Histogram<T>? CreateHistogram<T>(this IWorkflowFoundry foundry, string name, string? unit = null, string? description = null)
             where T : struct
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             var service = foundry.GetOpenTelemetryService();
             return service?.CreateHistogram<T>(name, unit, description);
@@ -288,7 +300,8 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
         public static bool IsOpenTelemetryEnabled(this IWorkflowFoundry foundry)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             return foundry.GetOpenTelemetryService() != null;
         }

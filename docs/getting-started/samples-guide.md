@@ -450,12 +450,14 @@ foundry.UsePollyTimeout(TimeSpan.FromSeconds(10));
 
 **Key Code Pattern**:
 ```csharp
-services.AddOpenTelemetryTracing(builder => builder
-    .AddWorkflowForgeInstrumentation()
-    .AddJaegerExporter()
-);
+using WorkflowForge.Extensions.Observability.OpenTelemetry;
 
-foundry.EnableOpenTelemetry();
+var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
+foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions
+{
+    ServiceName = "OrderService",
+    ServiceVersion = "1.0.0"
+});
 ```
 
 **Data Flow**: Dictionary-based  
@@ -545,11 +547,14 @@ foundry.UsePersistence(persistenceProvider);
 
 **Key Code Pattern**:
 ```csharp
-var recoveryProvider = new FileRecoveryProvider("./recovery");
-foundry.UseRecovery(recoveryProvider);
+var provider = new MyPersistenceProvider();
+using var foundry = WorkflowForge.CreateFoundry("RecoveredWorkflow");
+foundry.UsePersistence(provider, options);
 
-// Resume workflow from checkpoint
-await smith.ResumeAsync(workflowId);
+// Resume workflow from last checkpoint
+await smith.ForgeWithRecoveryAsync(
+    workflow, foundry, provider,
+    foundryKey, workflowKey);
 ```
 
 **Data Flow**: Dictionary-based  

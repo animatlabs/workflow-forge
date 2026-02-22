@@ -1,6 +1,6 @@
-# WorkflowForge 2.1.0 Release Checklist
+# WorkflowForge Release Checklist
 
-This document outlines the steps required to sign, package, and publish WorkflowForge 2.1.0 to NuGet.org.
+This document outlines the steps required to sign, package, and publish WorkflowForge to NuGet.org.
 
 ## Pre-Release Status
 
@@ -9,14 +9,10 @@ This document outlines the steps required to sign, package, and publish Workflow
 | Code changes merged | Done |
 | All tests passing (net48/net8.0/net10.0) | Done |
 | CHANGELOG.md updated | Done |
-| ISSUES.md items complete | Done (60/60) |
 | Documentation updated | Done |
 | Benchmarks captured and documented | Done |
-| Version bumped to 2.1.0 in all csproj files | Done |
-| SonarCloud integrated (non-blocking quality gate) | Done |
+| Version bumped in all csproj files | Done |
 | Zero-warning build (net48/net8.0/net10.0) | Done |
-| SonarCloud + CI badges added to README.md | Done |
-| NuGet README logos converted to Markdown | Done |
 
 ## Pending: Steps on Your End
 
@@ -25,7 +21,7 @@ This document outlines the steps required to sign, package, and publish Workflow
 Strong-name signing allows consumers to reference WorkflowForge from strong-named assemblies.
 
 ```bash
-cd src
+# Run from repository root
 
 # Generate the key pair
 sn -k WorkflowForge.snk
@@ -35,31 +31,27 @@ sn -p WorkflowForge.snk WorkflowForge.pub
 sn -tp WorkflowForge.pub
 ```
 
-After generating:
+Strong-name signing is already configured:
 
-1. Uncomment the signing lines in `src/Directory.Build.props`:
+- `src/Directory.Build.props` and `tests/Directory.Build.props` set `SignAssembly=true` and reference the SNK file
+- All `InternalsVisibleTo` entries in `src/core/WorkflowForge/WorkflowForge.csproj` include the `PublicKey=` suffix
+- The `WorkflowForge.Extensions.Resilience.Polly` ILRepack targets re-sign the merged assembly via `KeyFile`
+- Public key token: `50cc659aecc59b65`
 
-```xml
-<SignAssembly>true</SignAssembly>
-<AssemblyOriginatorKeyFile>WorkflowForge.snk</AssemblyOriginatorKeyFile>
-```
+The `WorkflowForge.snk` file is committed to the repository (standard for OSS projects).
+Strong-name signing provides assembly identity only, not security. NuGet code signing (PFX
+via SignPath) provides the tamper-proof security guarantee.
 
-2. Update **all** `InternalsVisibleTo` entries in `src/core/WorkflowForge/WorkflowForge.csproj` with the public key. There are entries for test projects, extension projects, and benchmarks -- each one needs the `PublicKey=` suffix:
-
-```xml
-<InternalsVisibleTo Include="WorkflowForge.Tests, PublicKey=YOUR_PUBLIC_KEY_HERE" />
-<InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.OpenTelemetry, PublicKey=YOUR_PUBLIC_KEY_HERE" />
-<!-- ... repeat for all other InternalsVisibleTo entries -->
-```
-
-3. Rebuild and re-run tests to verify everything still works:
+If you ever need to regenerate the SNK (this will change assembly identity):
 
 ```bash
-dotnet build WorkflowForge.sln
-dotnet test WorkflowForge.sln
+sn -k WorkflowForge.snk
+sn -p WorkflowForge.snk WorkflowForge.pub
+sn -tp WorkflowForge.pub
 ```
 
-**Keep `WorkflowForge.snk` secret.** Add it to `.gitignore` if not already present.
+Then update the `PublicKey=` values in all `InternalsVisibleTo` entries and the `DynamicProxyGenAssembly2`
+entry (use the Moq well-known public key for that one).
 
 ### 2. NuGet Package Signing (PFX) — Optional but Recommended
 
@@ -100,6 +92,7 @@ Navigate to **GitHub Repository > Settings > Secrets and variables > Actions** a
 
 | Secret | Value | Required For |
 |--------|-------|--------------|
+| `SONAR_TOKEN` | SonarCloud project token | Code quality analysis |
 | `NUGET_API_KEY` | NuGet.org API key | Publishing packages |
 | `SIGNING_CERT_BASE64` | Base64-encoded `.pfx` file | Package signing |
 | `SIGNING_CERT_PASSWORD` | Certificate password | Package signing |

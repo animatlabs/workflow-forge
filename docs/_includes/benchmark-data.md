@@ -34,7 +34,7 @@
 | 9 | State Machine (25) | 83μs | 42,205μs | 43,328μs | 508-522x |
 | 10 | Long Running* | 72ms | 71ms | 84ms | Memory-focused |
 | 11 | Parallel (16 ops) | 65μs | 3,140μs | 30,926μs | 48-477x |
-| 12 | Event-Driven* | 6.9ms | 21.6ms | 19.5ms | 2.8-3.1x |
+| 12 | Event-Driven* | 6.0ms | 6.5ms | 19.5ms | 1.1-3.2x |
 
 ### Execution Time (.NET Framework 4.8)
 

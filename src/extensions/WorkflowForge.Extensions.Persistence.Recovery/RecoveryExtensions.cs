@@ -27,10 +27,14 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
             RecoveryMiddlewareOptions? options = null,
             CancellationToken cancellationToken = default)
         {
-            if (smith == null) throw new ArgumentNullException(nameof(smith));
-            if (workflow == null) throw new ArgumentNullException(nameof(workflow));
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (provider == null) throw new ArgumentNullException(nameof(provider));
+            if (smith == null)
+                throw new ArgumentNullException(nameof(smith));
+            if (workflow == null)
+                throw new ArgumentNullException(nameof(workflow));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (provider == null)
+                throw new ArgumentNullException(nameof(provider));
 
             options ??= new RecoveryMiddlewareOptions();
 
@@ -77,7 +81,8 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
                 {
                     lastEx = ex;
                     attempts++;
-                    if (attempts >= options.MaxRetryAttempts) break;
+                    if (attempts >= options.MaxRetryAttempts)
+                        break;
 
                     var delay = options.BaseDelay;
                     if (options.UseExponentialBackoff)
@@ -89,7 +94,8 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
                 }
             }
 
-            if (lastEx != null) throw lastEx;
+            if (lastEx != null)
+                throw lastEx;
         }
     }
 }

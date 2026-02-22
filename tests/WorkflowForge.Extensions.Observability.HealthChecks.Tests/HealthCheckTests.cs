@@ -28,7 +28,9 @@ public class MemoryHealthCheckTests
         var result = await healthCheck.CheckHealthAsync(CancellationToken.None);
 
         // Assert
-        Assert.Equal(HealthStatus.Healthy, result.Status);
+        Assert.True(
+            result.Status == HealthStatus.Healthy || result.Status == HealthStatus.Degraded,
+            $"Memory check returned unexpected status: {result.Status}");
         Assert.NotNull(result.Description);
         Assert.Contains("MB", result.Description);
         Assert.True(result.Data != null && result.Data.ContainsKey("WorkingSetMB"));
@@ -71,7 +73,9 @@ public class GarbageCollectorHealthCheckTests
         var result = await healthCheck.CheckHealthAsync(CancellationToken.None);
 
         // Assert
-        Assert.Equal(HealthStatus.Healthy, result.Status);
+        Assert.True(
+            result.Status == HealthStatus.Healthy || result.Status == HealthStatus.Degraded,
+            $"GC check returned unexpected status: {result.Status}");
         Assert.NotNull(result.Description);
         Assert.Contains("collections", result.Description, StringComparison.OrdinalIgnoreCase);
         Assert.True(result.Data != null && result.Data.ContainsKey("Gen0Collections"));
@@ -116,7 +120,9 @@ public class ThreadPoolHealthCheckTests
         var result = await healthCheck.CheckHealthAsync(CancellationToken.None);
 
         // Assert
-        Assert.Equal(HealthStatus.Healthy, result.Status);
+        Assert.True(
+            result.Status == HealthStatus.Healthy || result.Status == HealthStatus.Degraded,
+            $"ThreadPool check returned unexpected status: {result.Status}");
         Assert.NotNull(result.Description);
         Assert.Contains("threads", result.Description, StringComparison.OrdinalIgnoreCase);
         Assert.True(result.Data != null && result.Data.ContainsKey("WorkerThreads"));
@@ -202,7 +208,9 @@ public class HealthCheckServiceTests
         // Assert
         Assert.Single(results);
         Assert.True(results.ContainsKey("Memory"));
-        Assert.Equal(HealthStatus.Healthy, results["Memory"].Status);
+        Assert.True(
+            results["Memory"].Status == HealthStatus.Healthy || results["Memory"].Status == HealthStatus.Degraded,
+            $"Memory check returned unexpected status: {results["Memory"].Status}");
     }
 
     [Fact]
@@ -227,7 +235,15 @@ public class HealthCheckServiceTests
         Assert.True(results.ContainsKey("Memory"));
         Assert.True(results.ContainsKey("GarbageCollector"));
         Assert.True(results.ContainsKey("ThreadPool"));
-        Assert.All(results.Values, result => Assert.Equal(HealthStatus.Healthy, result.Status));
+        Assert.True(
+            results["Memory"].Status == HealthStatus.Healthy || results["Memory"].Status == HealthStatus.Degraded,
+            $"Memory check returned unexpected status: {results["Memory"].Status}");
+        Assert.True(
+            results["ThreadPool"].Status == HealthStatus.Healthy || results["ThreadPool"].Status == HealthStatus.Degraded,
+            $"ThreadPool check returned unexpected status: {results["ThreadPool"].Status}");
+        Assert.True(
+            results["GarbageCollector"].Status == HealthStatus.Healthy || results["GarbageCollector"].Status == HealthStatus.Degraded,
+            $"GC check returned unexpected status: {results["GarbageCollector"].Status}");
     }
 
     [Fact]

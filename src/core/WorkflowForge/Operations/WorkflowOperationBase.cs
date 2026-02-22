@@ -57,7 +57,8 @@ namespace WorkflowForge.Operations
         /// </remarks>
         public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
             await OnBeforeExecuteAsync(inputData, foundry, cancellationToken).ConfigureAwait(false);
             var result = await ForgeAsyncCore(inputData, foundry, cancellationToken).ConfigureAwait(false);
             await OnAfterExecuteAsync(inputData, result, foundry, cancellationToken).ConfigureAwait(false);
@@ -118,7 +119,8 @@ namespace WorkflowForge.Operations
         /// <returns>The typed output data.</returns>
         public async Task<TOutput> ForgeAsync(TInput input, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
             await OnBeforeExecuteAsync(input, foundry, cancellationToken).ConfigureAwait(false);
             var result = await ForgeAsyncCore(input, foundry, cancellationToken).ConfigureAwait(false);
             await OnAfterExecuteAsync(input, result, foundry, cancellationToken).ConfigureAwait(false);

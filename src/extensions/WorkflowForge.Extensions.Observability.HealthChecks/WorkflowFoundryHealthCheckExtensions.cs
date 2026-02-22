@@ -20,7 +20,8 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
         public static HealthCheckService CreateHealthCheckService(this IWorkflowFoundry foundry, TimeSpan? checkInterval = null)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             // Use the foundry's logger, which is always available
             return new HealthCheckService(foundry.Logger, timeProvider: null, checkInterval);
@@ -36,8 +37,10 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <exception cref="ArgumentNullException">Thrown when foundry or healthCheckService is null.</exception>
         public static async Task<HealthStatus> CheckFoundryHealthAsync(this IWorkflowFoundry foundry, HealthCheckService healthCheckService, CancellationToken cancellationToken = default)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (healthCheckService == null) throw new ArgumentNullException(nameof(healthCheckService));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (healthCheckService == null)
+                throw new ArgumentNullException(nameof(healthCheckService));
 
             await healthCheckService.CheckHealthAsync(cancellationToken).ConfigureAwait(false);
             return healthCheckService.OverallStatus;

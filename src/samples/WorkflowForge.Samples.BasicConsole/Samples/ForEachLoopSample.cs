@@ -134,7 +134,8 @@ public class ProcessSingleOrderOperation : WorkflowOperationBase
 
     protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        if (inputData == null) return null;
+        if (inputData == null)
+            return null;
 
         // Extract order data (inputData will be one order from the split)
         var orderData = inputData.ToString()!;
@@ -156,7 +157,8 @@ public class SendNotificationOperation : WorkflowOperationBase
 
     protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        if (inputData == null) return null;
+        if (inputData == null)
+            return null;
 
         var notificationData = inputData.ToString()!;
         Console.WriteLine($"   [INFO] Sending notification: {notificationData}");

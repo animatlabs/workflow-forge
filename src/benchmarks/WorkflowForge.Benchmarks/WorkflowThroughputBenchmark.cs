@@ -195,7 +195,8 @@ public class WorkflowThroughputBenchmark
                 // Simulate memory allocation
                 var data = new byte[1024]; // 1KB allocation per operation
                 var fillByte = (byte)(operationIndex % 256);
-                for (int k = 0; k < data.Length; k++) data[k] = fillByte;
+                for (int k = 0; k < data.Length; k++)
+                    data[k] = fillByte;
 
                 foundry.Properties[$"data_{operationIndex}"] = data;
                 await Task.Delay(1);
