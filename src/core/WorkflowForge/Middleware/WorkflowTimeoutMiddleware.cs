@@ -87,12 +87,12 @@ namespace WorkflowForge.Middleware
             // TimeSpan.Zero = no timeout enforcement
             if (timeout == TimeSpan.Zero)
             {
-                _logger.LogDebug($"Workflow '{workflow.Name}' executing without timeout");
+                _logger.LogDebug("Workflow {WorkflowName} executing without timeout", workflow.Name);
                 await next().ConfigureAwait(false);
                 return;
             }
 
-            _logger.LogDebug($"Workflow '{workflow.Name}' executing with {timeout.TotalSeconds}s timeout");
+            _logger.LogDebug("Workflow {WorkflowName} executing with {TimeoutSeconds}s timeout", workflow.Name, timeout.TotalSeconds);
 
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             foundry.Properties[FoundryPropertyKeys.WorkflowTimeoutCancellationToken] = timeoutCts.Token;
@@ -112,8 +112,8 @@ namespace WorkflowForge.Middleware
                     throw new OperationCanceledException(cancellationToken);
                 }
 
-                var errorMessage = $"Workflow '{workflow.Name}' execution exceeded the configured timeout of {timeout.TotalSeconds} seconds.";
-                _logger.LogError(errorMessage);
+                var errorMessage = string.Format("Workflow '{0}' execution exceeded the configured timeout of {1} seconds.", workflow.Name, timeout.TotalSeconds);
+                _logger.LogError("Workflow '{WorkflowName}' execution exceeded the configured timeout of {TimeoutSeconds} seconds.", workflow.Name, timeout.TotalSeconds);
 
                 foundry.Properties[FoundryPropertyKeys.WorkflowTimedOut] = true;
                 foundry.Properties[FoundryPropertyKeys.WorkflowTimeoutDuration] = timeout;
@@ -122,7 +122,7 @@ namespace WorkflowForge.Middleware
             }
 
             await executionTask.ConfigureAwait(false);
-            _logger.LogDebug($"Workflow '{workflow.Name}' completed within timeout ({timeout.TotalSeconds}s)");
+            _logger.LogDebug("Workflow {WorkflowName} completed within timeout ({TimeoutSeconds}s)", workflow.Name, timeout.TotalSeconds);
         }
     }
 }

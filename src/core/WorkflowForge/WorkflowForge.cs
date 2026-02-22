@@ -57,7 +57,7 @@ namespace WorkflowForge
             try
             {
                 var builder = new WorkflowBuilder(serviceProvider);
-                return workflowName != null ? (WorkflowBuilder)builder.WithName(workflowName) : builder;
+                return workflowName != null ? builder.WithName(workflowName) : builder;
             }
             catch (Exception ex) when (!(ex is ArgumentException))
             {

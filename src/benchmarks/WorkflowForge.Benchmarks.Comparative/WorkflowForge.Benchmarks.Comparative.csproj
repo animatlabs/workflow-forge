@@ -18,7 +18,6 @@
     <!-- BenchmarkDotNet for scientific performance measurement -->
     <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.8" />
-    
     <!-- Workflow Core - Established workflow engine (latest stable) -->
     <PackageReference Include="WorkflowCore" Version="3.17.0" />
     

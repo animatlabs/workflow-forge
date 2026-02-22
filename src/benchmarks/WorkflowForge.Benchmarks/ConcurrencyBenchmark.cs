@@ -28,8 +28,9 @@ public class ConcurrencyBenchmark
     public int OperationsPerWorkflow { get; set; }
 
     [GlobalSetup]
-    public void Setup()
+    public static void Setup()
     {
+        // Method intentionally left empty.
     }
 
     [Benchmark(Baseline = true)]
@@ -261,7 +262,7 @@ public class ConcurrencyBenchmark
         return $"{workflowName} completed with global data";
     }
 
-    private async Task<T> ExecuteWithSemaphore<T>(SemaphoreSlim semaphore, Func<Task<T>> operation)
+    private static async Task<T> ExecuteWithSemaphore<T>(SemaphoreSlim semaphore, Func<Task<T>> operation)
     {
         await semaphore.WaitAsync();
         try
@@ -280,7 +281,7 @@ public class ConcurrencyBenchmark
 /// </summary>
 public class SharedBenchmarkResource
 {
-    private readonly object _lock = new object();
+    private readonly object _lock = new();
     private int _counter;
 
     public int Counter => _counter;
@@ -300,7 +301,7 @@ public class SharedBenchmarkResource
 /// </summary>
 public class HighContentionResource
 {
-    private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
     private int _accessCount;
 
     public int AccessCount => _accessCount;

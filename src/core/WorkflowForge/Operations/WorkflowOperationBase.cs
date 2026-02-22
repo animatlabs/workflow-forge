@@ -24,7 +24,7 @@ namespace WorkflowForge.Operations
         /// <param name="foundry">The workflow foundry providing context and services.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        protected virtual Task OnBeforeExecuteAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected virtual Task OnBeforeExecuteAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace WorkflowForge.Operations
         /// <param name="foundry">The workflow foundry providing context and services.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        protected virtual Task OnAfterExecuteAsync(object? inputData, object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected virtual Task OnAfterExecuteAsync(object? inputData, object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace WorkflowForge.Operations
         /// <param name="foundry">The workflow foundry providing context and services.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The output data from the operation.</returns>
-        protected abstract Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken);
+        protected abstract Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
 
         /// <inheritdoc />
         /// <remarks>
@@ -75,11 +75,19 @@ namespace WorkflowForge.Operations
             return Task.CompletedTask;
         }
 
-        /// <inheritdoc />
-        public virtual void Dispose()
+        /// <summary>
+        /// Releases managed resources. Override in derived classes to dispose of owned resources.
+        /// </summary>
+        /// <param name="disposing">True if called from <see cref="Dispose()"/>, false if from a finalizer.</param>
+        protected virtual void Dispose(bool disposing)
         {
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            Dispose(disposing: true);
             GC.SuppressFinalize(this);
-            // Override in derived classes if needed
         }
     }
 
@@ -92,27 +100,6 @@ namespace WorkflowForge.Operations
     public abstract class WorkflowOperationBase<TInput, TOutput> : WorkflowOperationBase, IWorkflowOperation<TInput, TOutput>
     {
         /// <summary>
-        /// Called before the operation executes with typed input. Override to add setup/initialization logic.
-        /// </summary>
-        /// <param name="input">The typed input data for the operation.</param>
-        /// <param name="foundry">The workflow foundry providing context and services.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        protected virtual Task OnBeforeExecuteAsync(TInput input, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        /// <summary>
-        /// Called after the operation executes successfully with typed data. Override to add cleanup/finalization logic.
-        /// </summary>
-        /// <param name="input">The typed input data that was passed to the operation.</param>
-        /// <param name="output">The typed output data produced by the operation.</param>
-        /// <param name="foundry">The workflow foundry providing context and services.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        protected virtual Task OnAfterExecuteAsync(TInput input, TOutput output, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        /// <summary>
         /// Strongly-typed core operation logic.
         /// This is the main method you should override in your custom operations.
         /// </summary>
@@ -120,7 +107,7 @@ namespace WorkflowForge.Operations
         /// <param name="foundry">The workflow foundry providing context and services.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The typed output data.</returns>
-        protected abstract Task<TOutput> ForgeAsyncCore(TInput input, IWorkflowFoundry foundry, CancellationToken cancellationToken);
+        protected abstract Task<TOutput> ForgeAsyncCore(TInput input, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Executes the typed operation with lifecycle hooks.
@@ -139,28 +126,15 @@ namespace WorkflowForge.Operations
         }
 
         /// <summary>
-        /// Strongly-typed restoration logic.
-        /// Override this method if your operation supports restoration/rollback.
-        /// </summary>
-        /// <param name="output">The typed output data to restore.</param>
-        /// <param name="foundry">The workflow foundry providing context and services.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task representing the restoration operation.</returns>
-        public virtual Task RestoreAsync(TOutput output, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        /// <summary>
         /// Implements the untyped interface by casting to/from the typed interface.
         /// DO NOT OVERRIDE THIS METHOD - it handles type conversion automatically.
         /// </summary>
-        protected override sealed async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override sealed async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             // Handle type conversion and validation
             TInput typedInput;
 
-            if (typeof(TInput) == typeof(object) || inputData is TInput directCast)
+            if (typeof(TInput) == typeof(object) || inputData is TInput)
             {
                 typedInput = (TInput)inputData!;
             }
@@ -180,16 +154,48 @@ namespace WorkflowForge.Operations
         }
 
         /// <summary>
-        /// Overrides base hooks to prevent double-calling when typed hooks are used.
+        /// Called before the operation executes with typed input. Override to add setup/initialization logic.
         /// </summary>
-        protected override Task OnBeforeExecuteAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask; // Typed hooks are called in typed ForgeAsync
+        /// <param name="input">The typed input data for the operation.</param>
+        /// <param name="foundry">The workflow foundry providing context and services.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        protected virtual Task OnBeforeExecuteAsync(TInput input, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
 
         /// <summary>
         /// Overrides base hooks to prevent double-calling when typed hooks are used.
         /// </summary>
-        protected override Task OnAfterExecuteAsync(object? inputData, object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override Task OnBeforeExecuteAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
             => Task.CompletedTask; // Typed hooks are called in typed ForgeAsync
+
+        /// <summary>
+        /// Called after the operation executes successfully with typed data. Override to add cleanup/finalization logic.
+        /// </summary>
+        /// <param name="input">The typed input data that was passed to the operation.</param>
+        /// <param name="output">The typed output data produced by the operation.</param>
+        /// <param name="foundry">The workflow foundry providing context and services.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        protected virtual Task OnAfterExecuteAsync(TInput input, TOutput output, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        /// <summary>
+        /// Overrides base hooks to prevent double-calling when typed hooks are used.
+        /// </summary>
+        protected override Task OnAfterExecuteAsync(object? inputData, object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+            => Task.CompletedTask; // Typed hooks are called in typed ForgeAsync
+
+        /// <summary>
+        /// Strongly-typed restoration logic.
+        /// Override this method if your operation supports restoration/rollback.
+        /// </summary>
+        /// <param name="output">The typed output data to restore.</param>
+        /// <param name="foundry">The workflow foundry providing context and services.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A task representing the restoration operation.</returns>
+        public virtual Task RestoreAsync(TOutput output, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
 
         /// <summary>
         /// Implements the untyped restoration interface.
@@ -200,7 +206,7 @@ namespace WorkflowForge.Operations
             // Handle type conversion for output data
             TOutput typedOutput;
 
-            if (typeof(TOutput) == typeof(object) || outputData is TOutput directCast)
+            if (typeof(TOutput) == typeof(object) || outputData is TOutput)
             {
                 typedOutput = (TOutput)outputData!;
             }

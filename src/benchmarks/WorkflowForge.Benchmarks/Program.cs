@@ -92,7 +92,7 @@ public class Program
         allPassed &= ValidateBenchmark("Concurrency", () =>
         {
             var b = new ConcurrencyBenchmark { ConcurrentWorkflowCount = 2, OperationsPerWorkflow = 3 };
-            b.Setup();
+            ConcurrencyBenchmark.Setup();
             b.SequentialWorkflows().GetAwaiter().GetResult();
             b.ConcurrentWorkflows().GetAwaiter().GetResult();
             b.ParallelWorkflows().GetAwaiter().GetResult();

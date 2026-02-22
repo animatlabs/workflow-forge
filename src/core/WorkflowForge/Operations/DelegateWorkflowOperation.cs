@@ -270,18 +270,6 @@ namespace WorkflowForge.Operations
         }
 
         /// <summary>
-        /// Creates a simple asynchronous operation.
-        /// </summary>
-        /// <param name="name">The operation name.</param>
-        /// <param name="func">The asynchronous function to execute.</param>
-        /// <param name="restoreFunc">Optional restoration function for compensation.</param>
-        /// <returns>A new delegate workflow operation.</returns>
-        public static DelegateWorkflowOperation CreateAsync(string name, Func<object?, Task<object?>> func, Func<object?, IWorkflowFoundry, CancellationToken, Task>? restoreFunc = null)
-        {
-            return DelegateWorkflowOperation.FromAsync(name, func, restoreFunc);
-        }
-
-        /// <summary>
         /// Creates a strongly-typed synchronous operation.
         /// </summary>
         /// <typeparam name="TInput">The input type.</typeparam>
@@ -293,6 +281,18 @@ namespace WorkflowForge.Operations
         public static DelegateWorkflowOperation<TInput, TOutput> Create<TInput, TOutput>(string name, Func<TInput, TOutput> func, Func<TOutput, IWorkflowFoundry, CancellationToken, Task>? restoreFunc = null)
         {
             return DelegateWorkflowOperation<TInput, TOutput>.FromSync(name, func, restoreFunc);
+        }
+
+        /// <summary>
+        /// Creates a simple asynchronous operation.
+        /// </summary>
+        /// <param name="name">The operation name.</param>
+        /// <param name="func">The asynchronous function to execute.</param>
+        /// <param name="restoreFunc">Optional restoration function for compensation.</param>
+        /// <returns>A new delegate workflow operation.</returns>
+        public static DelegateWorkflowOperation CreateAsync(string name, Func<object?, Task<object?>> func, Func<object?, IWorkflowFoundry, CancellationToken, Task>? restoreFunc = null)
+        {
+            return DelegateWorkflowOperation.FromAsync(name, func, restoreFunc);
         }
 
         /// <summary>

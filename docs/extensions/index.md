@@ -477,7 +477,7 @@ Console.WriteLine($"Operations/sec: {stats.OperationsPerSecond:F2}");
 // Per-operation statistics
 foreach (var opStats in stats.GetAllOperationStatistics())
 {
-    Console.WriteLine($"{opStats.OperationName}: {opStats.AverageDuration.TotalMilliseconds:F2}ms average");
+    Console.WriteLine($"{opStats.OperationName}: {opStats.AverageExecutionTime.TotalMilliseconds:F2}ms average");
 }
 ```
 

@@ -59,10 +59,10 @@ dotnet test -c Release
 3. **Build & Test**: Run `dotnet build` and `dotnet test` across all target frameworks (net48, net8.0, net10.0)
 4. **Pack**: Run `dotnet pack` to generate `.nupkg` and `.snupkg` packages
 5. **Sign** (if configured): Sign packages with `dotnet nuget sign` using code-signing certificate
-6. **Publish**: Use `python scripts/publish-packages.py --version <version> --publish --api-key <key>` or trigger the GitHub Actions publish workflow
+6. **Publish**: Trigger the GitHub Actions **Build and Test** workflow via `workflow_dispatch` with `publish: true`
 7. **Tag & Release**: Create a GitHub Release with the tag matching the version and reference the CHANGELOG
 
-See [`scripts/README.md`](scripts/README.md) for detailed instructions on strong-name signing (SNK), NuGet package signing (PFX), and GitHub Actions secrets setup.
+See [`RELEASE.md`](RELEASE.md) for detailed instructions on strong-name signing (SNK), NuGet package signing (PFX), and GitHub Actions secrets setup.
 
 ## Code of Conduct
 

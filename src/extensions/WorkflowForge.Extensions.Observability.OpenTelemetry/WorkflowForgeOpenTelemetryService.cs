@@ -26,11 +26,13 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         private readonly Histogram<long> _operationMemoryAllocations;
         private readonly UpDownCounter<int> _activeOperations;
 
-        // System metrics
+        // System metrics -- fields are assigned by the Meter SDK and must be kept alive
+        // to prevent the observable gauges from being garbage collected.
+#pragma warning disable S4487
         private readonly ObservableGauge<long> _memoryUsage;
-
         private readonly ObservableGauge<long> _gcCollections;
         private readonly ObservableGauge<int> _threadPoolAvailable;
+#pragma warning restore S4487
 
         private volatile bool _disposed;
 
@@ -270,7 +272,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             return tagsList.ToArray();
         }
 
-        private long GetMemoryUsage()
+        private static long GetMemoryUsage()
         {
             try
             {
@@ -282,7 +284,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             }
         }
 
-        private long GetTotalGcCollections()
+        private static long GetTotalGcCollections()
         {
             try
             {
@@ -294,7 +296,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             }
         }
 
-        private int GetAvailableThreadPoolThreads()
+        private static int GetAvailableThreadPoolThreads()
         {
             try
             {

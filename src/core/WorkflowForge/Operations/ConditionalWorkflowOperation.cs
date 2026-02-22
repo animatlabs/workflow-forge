@@ -135,30 +135,33 @@ namespace WorkflowForge.Operations
         }
 
         /// <inheritdoc />
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
             if (_disposed) return;
 
-            try
+            if (disposing)
             {
-                _trueOperation?.Dispose();
-            }
-            catch
-            {
-                // Swallow disposal exceptions
-            }
+                try
+                {
+                    _trueOperation?.Dispose();
+                }
+                catch
+                {
+                    // Swallow disposal exceptions
+                }
 
-            try
-            {
-                _falseOperation?.Dispose();
-            }
-            catch
-            {
-                // Swallow disposal exceptions
+                try
+                {
+                    _falseOperation?.Dispose();
+                }
+                catch
+                {
+                    // Swallow disposal exceptions
+                }
             }
 
             _disposed = true;
-            GC.SuppressFinalize(this);
+            base.Dispose(disposing);
         }
 
         /// <summary>

@@ -76,13 +76,13 @@ public class CompensationBehaviorSample : ISample
 
         protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
-            foundry.Logger.LogInformation($"{Name} executed");
+            foundry.Logger.LogInformation("{OperationName} executed", Name);
             return Task.FromResult(inputData);
         }
 
         public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
-            foundry.Logger.LogInformation($"{Name} restore invoked");
+            foundry.Logger.LogInformation("{OperationName} restore invoked", Name);
             if (_simulateRestoreFailure && Name == "StepB")
             {
                 throw new InvalidOperationException($"{Name} restore failed intentionally");
@@ -105,7 +105,7 @@ public class CompensationBehaviorSample : ISample
 
         protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
-            foundry.Logger.LogInformation($"{Name} executed (no restore logic)");
+            foundry.Logger.LogInformation("{OperationName} executed (no restore logic)", Name);
             return Task.FromResult(inputData);
         }
     }

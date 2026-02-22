@@ -2,7 +2,7 @@
 
 > **Generated**: February 15, 2026
 > **Version**: 2.1.0
-> **Total Items**: 52
+> **Total Items**: 60
 
 Use this file to track progress on all v2.1.0 work items. Each entry is structured as a GitHub-issue-style card. You can convert these into actual GitHub issues or update the checkboxes here directly.
 
@@ -1040,3 +1040,161 @@ Also changed `workflow.Operations.Count()` (LINQ extension) to `workflow.Operati
 **Affected Files**:
 - `.github/workflows/build-test.yml`
 - `scripts/publish-packages.py`
+
+---
+
+### WF-053: Integrate SonarCloud with CI/CD pipeline
+
+- **Labels**: `infrastructure`, `code-quality`, `ci-cd`
+- **Priority**: High
+- **Status**: [x] Completed
+
+**Description**: Integrated SonarCloud for continuous code quality analysis. Added `dotnet-sonarscanner` to the build pipeline with OpenCover coverage reporting. Configured `sonar.exclusions` to exclude benchmarks, samples, and tests from analysis (saves line quota). Configured `sonar.coverage.exclusions` for the same. Added SonarCloud package caching for faster CI runs. Required `SONAR_TOKEN` repository secret and Java 17 (`setup-java@v4`) as SonarScanner prerequisites.
+
+**Affected Files**:
+- `.github/workflows/build-test.yml`
+
+---
+
+### WF-054: Fix structured logging across codebase (string interpolation removal)
+
+- **Labels**: `code-quality`, `core`, `extensions`, `samples`
+- **Priority**: High
+- **Status**: [x] Completed
+
+**Description**: Converted all `$"..."` string interpolation in logger calls to structured logging format with named placeholders (`{OperationName}`, `{WorkflowName}`, etc.). Fixed `ConsoleLogger.FormatMessage` to convert named placeholders to positional format before `string.Format`. Affected 28+ logger calls in core/extensions and 11 calls in samples. `ConsoleLogger` internal string composition (final output formatting) intentionally kept as interpolation since it is the logger's own rendering, not a template.
+
+**Affected Files**:
+- `src/core/WorkflowForge/Loggers/ConsoleLogger.cs`
+- `src/core/WorkflowForge/Middleware/WorkflowTimeoutMiddleware.cs`
+- `src/core/WorkflowForge/Middleware/OperationTimeoutMiddleware.cs`
+- `src/extensions/WorkflowForge.Extensions.Audit/AuditMiddleware.cs`
+- `src/extensions/WorkflowForge.Extensions.Validation/ValidationMiddleware.cs`
+- `src/extensions/WorkflowForge.Extensions.Resilience/Strategies/ExponentialBackoffStrategy.cs`
+- `src/extensions/WorkflowForge.Extensions.Resilience/Strategies/RandomIntervalStrategy.cs`
+- `src/extensions/WorkflowForge.Extensions.Resilience.Polly/PollyRetryOperation.cs`
+- `src/extensions/WorkflowForge.Extensions.Resilience.Polly/PollyResilienceStrategy.cs`
+- `src/samples/WorkflowForge.Samples.BasicConsole/Samples/CancellationAndTimeoutSample.cs`
+- `src/samples/WorkflowForge.Samples.BasicConsole/Samples/WorkflowMiddlewareSample.cs`
+- `src/samples/WorkflowForge.Samples.BasicConsole/Samples/ContinueOnErrorSample.cs`
+- `src/samples/WorkflowForge.Samples.BasicConsole/Samples/CompensationBehaviorSample.cs`
+
+---
+
+### WF-055: Resolve SonarCloud quality gate failures (code smells, security hotspots, duplication)
+
+- **Labels**: `code-quality`, `core`, `extensions`
+- **Priority**: High
+- **Status**: [x] Completed
+
+**Description**: Addressed SonarCloud quality gate failures: 8 security hotspots, 3.0% code duplication, C reliability and security ratings. Fixes included: extracting duplicate retry logic into `ResilienceStrategyBase`, correcting `IDisposable` pattern across 5 operation classes (`WorkflowOperationBase`, `ForEachWorkflowOperation`, `ConditionalWorkflowOperation`, `RetryWorkflowOperation`, `PollyRetryOperation`), removing unused fields (`_executionLock` in `WorkflowFoundry`), making methods static where appropriate (`SerilogWorkflowForgeLogger.PushProperties`), fixing null checks on unconstrained generics (`DataAnnotationsWorkflowValidator`), and suppressing intentional patterns (`ObservableGauge` fields, `System.Random` in non-cryptographic context, `InMemoryAuditProvider.Entries` snapshot semantics).
+
+**Affected Files**:
+- `src/extensions/WorkflowForge.Extensions.Resilience/Abstractions/ResilienceStrategyBase.cs`
+- `src/extensions/WorkflowForge.Extensions.Resilience/Strategies/ExponentialBackoffStrategy.cs`
+- `src/extensions/WorkflowForge.Extensions.Resilience/Strategies/RandomIntervalStrategy.cs`
+- `src/extensions/WorkflowForge.Extensions.Resilience/Strategies/FixedIntervalStrategy.cs`
+- `src/core/WorkflowForge/Operations/WorkflowOperationBase.cs`
+- `src/core/WorkflowForge/Operations/ForEachWorkflowOperation.cs`
+- `src/core/WorkflowForge/Operations/ConditionalWorkflowOperation.cs`
+- `src/extensions/WorkflowForge.Extensions.Resilience/RetryWorkflowOperation.cs`
+- `src/extensions/WorkflowForge.Extensions.Resilience.Polly/PollyRetryOperation.cs`
+- `src/core/WorkflowForge/WorkflowFoundry.cs`
+- `src/extensions/WorkflowForge.Extensions.Logging.Serilog/SerilogWorkflowForgeLogger.cs`
+- `src/extensions/WorkflowForge.Extensions.Validation/DataAnnotationsWorkflowValidator.cs`
+- `src/extensions/WorkflowForge.Extensions.Observability.HealthChecks/HealthCheckService.cs`
+- `src/extensions/WorkflowForge.Extensions.Observability.OpenTelemetry/WorkflowForgeOpenTelemetryService.cs`
+- `src/extensions/WorkflowForge.Extensions.Audit/InMemoryAuditProvider.cs`
+
+---
+
+### WF-056: Remove SonarAnalyzer from test/benchmark/sample projects
+
+- **Labels**: `infrastructure`, `code-quality`
+- **Priority**: Medium
+- **Status**: [x] Completed
+
+**Description**: Removed `SonarAnalyzer.CSharp` package reference from all test (7), benchmark (2), and sample (1) projects. These projects are excluded from SonarCloud analysis via `sonar.exclusions`, so the analyzer adds zero value while increasing build time. Removed the `NoWarn` Sonar rule suppressions from `tests/Directory.Build.props` since the rules no longer fire without the analyzer installed. Added minimal `ci.yml` workflow for main branch OSS/SignPath verification (build + test only, no Sonar/pack).
+
+**Affected Files**:
+- `tests/WorkflowForge.Tests/WorkflowForge.Tests.csproj`
+- `tests/WorkflowForge.Extensions.Audit.Tests/WorkflowForge.Extensions.Audit.Tests.csproj`
+- `tests/WorkflowForge.Extensions.Observability.HealthChecks.Tests/WorkflowForge.Extensions.Observability.HealthChecks.Tests.csproj`
+- `tests/WorkflowForge.Extensions.Persistence.Tests/WorkflowForge.Extensions.Persistence.Tests.csproj`
+- `tests/WorkflowForge.Extensions.Resilience.Tests/WorkflowForge.Extensions.Resilience.Tests.csproj`
+- `tests/WorkflowForge.Extensions.Validation.Tests/WorkflowForge.Extensions.Validation.Tests.csproj`
+- `tests/WorkflowForge.Extensions.DependencyInjection.Tests/WorkflowForge.Extensions.DependencyInjection.Tests.csproj`
+- `src/benchmarks/WorkflowForge.Benchmarks/WorkflowForge.Benchmarks.csproj`
+- `src/benchmarks/WorkflowForge.Benchmarks.Comparative/WorkflowForge.Benchmarks.Comparative.csproj`
+- `src/samples/WorkflowForge.Samples.BasicConsole/WorkflowForge.Samples.BasicConsole.csproj`
+- `tests/Directory.Build.props`
+- `.github/workflows/ci.yml`
+
+---
+
+### WF-057: Harden CI/CD pipeline security and configuration
+
+- **Labels**: `infrastructure`, `ci-cd`, `code-quality`
+- **Priority**: High
+- **Status**: [x] Completed
+
+**Description**: Moved `permissions: contents: read` from workflow level to job level in both `build-test.yml` and `ci.yml` for least-privilege. Moved all secret references (`SIGNING_CERT_BASE64`, `SIGNING_CERT_PASSWORD`, `NUGET_API_KEY`) from inline `run:` blocks to `env:` blocks to avoid expanding secrets in shell commands. Made SonarCloud quality gate non-blocking (`continue-on-error: true` on `SonarCloud End` step) so builds are not blocked by quality gate failures.
+
+**Affected Files**:
+- `.github/workflows/build-test.yml`
+- `.github/workflows/ci.yml`
+
+---
+
+### WF-058: Eliminate all build warnings and add .editorconfig
+
+- **Labels**: `code-quality`, `infrastructure`
+- **Priority**: High
+- **Status**: [x] Completed
+
+**Description**: Fixed all compiler warnings across the solution to achieve a zero-warning build. Fixed nullable reference dereference (CS8602) in `MiddlewareSample.cs` and nullable argument warning (CS8604) in `ConfigurationBindingTests.cs`. Added `.editorconfig` for consistent code style enforcement across the team.
+
+**Affected Files**:
+- `src/samples/WorkflowForge.Samples.BasicConsole/Samples/MiddlewareSample.cs`
+- `tests/WorkflowForge.Extensions.DependencyInjection.Tests/ConfigurationBindingTests.cs`
+- `.editorconfig` (new)
+
+---
+
+### WF-059: Convert NuGet README logos from HTML to Markdown and add quality badges
+
+- **Labels**: `documentation`, `packaging`
+- **Priority**: Medium
+- **Status**: [x] Completed
+
+**Description**: Converted HTML `<img>` logo tags to Markdown image syntax (`![WorkflowForge](url)`) in 16 README files to ensure proper rendering on NuGet.org. Added SonarCloud quality badges (Quality Gate, Coverage, Reliability, Security, Maintainability) and GitHub Actions build badge to `README.md` and `docs/index.md`.
+
+**Affected Files**:
+- `README.md`
+- `docs/index.md`
+- `src/core/WorkflowForge/README.md`
+- `src/extensions/WorkflowForge.Extensions.Resilience/README.md`
+- `src/extensions/WorkflowForge.Extensions.Resilience.Polly/README.md`
+- `src/extensions/WorkflowForge.Extensions.Audit/README.md`
+- `src/extensions/WorkflowForge.Extensions.Validation/README.md`
+- `src/extensions/WorkflowForge.Extensions.Persistence/README.md`
+- `src/extensions/WorkflowForge.Extensions.Persistence.Recovery/README.md`
+- `src/extensions/WorkflowForge.Extensions.Observability.Performance/README.md`
+- `src/extensions/WorkflowForge.Extensions.Observability.HealthChecks/README.md`
+- `src/extensions/WorkflowForge.Extensions.Observability.OpenTelemetry/README.md`
+- `src/extensions/WorkflowForge.Extensions.Logging.Serilog/README.md`
+- `src/benchmarks/WorkflowForge.Benchmarks/README.md`
+- `src/benchmarks/WorkflowForge.Benchmarks.Comparative/README.md`
+- `src/benchmarks/WorkflowForge.Benchmarks.Comparative/BENCHMARK_EXCLUSIONS.md`
+- `src/samples/WorkflowForge.Samples.BasicConsole/README.md`
+- `src/samples/README.md`
+
+---
+
+### WF-060: Remove publish scripts and consolidate release documentation
+
+- **Labels**: `infrastructure`, `documentation`
+- **Priority**: Medium
+- **Status**: [x] Completed
+
+**Description**: Removed `scripts/` folder (`publish-packages.py`, `publish-packages.legacy.ps1`, `README.md`) since publishing is now handled entirely by the GitHub Actions CI/CD pipeline. Updated `RELEASE.md`, `CONTRIBUTING.md`, and `CHANGELOG.md` to remove all references to the deleted scripts and point to GitHub Actions as the sole publishing mechanism.

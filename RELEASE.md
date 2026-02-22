@@ -9,10 +9,14 @@ This document outlines the steps required to sign, package, and publish Workflow
 | Code changes merged | Done |
 | All tests passing (net48/net8.0/net10.0) | Done |
 | CHANGELOG.md updated | Done |
-| ISSUES.md items complete | Done (52/52) |
+| ISSUES.md items complete | Done (60/60) |
 | Documentation updated | Done |
 | Benchmarks captured and documented | Done |
 | Version bumped to 2.1.0 in all csproj files | Done |
+| SonarCloud integrated (non-blocking quality gate) | Done |
+| Zero-warning build (net48/net8.0/net10.0) | Done |
+| SonarCloud + CI badges added to README.md | Done |
+| NuGet README logos converted to Markdown | Done |
 
 ## Pending: Steps on Your End
 
@@ -51,8 +55,8 @@ After generating:
 3. Rebuild and re-run tests to verify everything still works:
 
 ```bash
-dotnet build src/WorkflowForge.sln
-dotnet test src/WorkflowForge.sln
+dotnet build WorkflowForge.sln
+dotnet test WorkflowForge.sln
 ```
 
 **Keep `WorkflowForge.snk` secret.** Add it to `.gitignore` if not already present.
@@ -106,29 +110,30 @@ To generate the Base64 value:
 [Convert]::ToBase64String([IO.File]::ReadAllBytes("path\to\cert.pfx"))
 ```
 
-### 4. Build, Pack, and Publish
-
-**Option A: Local publish using Python script**
-
-```bash
-# Dry run (build and pack only)
-python scripts/publish-packages.py --version 2.1.0
-
-# With signing
-python scripts/publish-packages.py --version 2.1.0 --sign --cert-path path/to/cert.pfx --cert-password PASSWORD
-
-# Full pipeline (sign + publish)
-python scripts/publish-packages.py --version 2.1.0 --sign --cert-path cert.pfx --cert-password PWD --publish --api-key YOUR_NUGET_API_KEY
-```
-
-**Option B: GitHub Actions (recommended for production)**
+### 4. Build, Pack, and Publish via GitHub Actions
 
 1. Push the `release/2.x` branch to GitHub
 2. Navigate to **Actions > Build and Test** workflow
-3. Trigger the workflow manually (workflow_dispatch) with `publish: true`
+3. Trigger the workflow manually (`workflow_dispatch`) with:
+   - `publish: true` to publish to NuGet
+   - `sign: true` to sign packages (requires signing secrets)
+   - `version: 2.1.0` to set the package version
 4. The CI pipeline will build, test, pack, sign (if secrets configured), and publish
 
-### 5. Create GitHub Release
+The SonarCloud quality gate runs as part of the build but is **non-blocking** -- check the [SonarCloud dashboard](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge) before publishing.
+
+### 5. Create GitHub Issues (Optional but Recommended)
+
+A PowerShell script is provided to create all 60 work items as GitHub Issues:
+
+```powershell
+# Requires GitHub CLI (gh) installed and authenticated
+.\create-github-issues.ps1
+```
+
+This creates labels, issues (WF-001 through WF-060), and closes them as completed. The script outputs a `wf-to-github-issues.json` mapping file.
+
+### 6. Create GitHub Release
 
 1. Create a Git tag: `git tag v2.1.0 && git push origin v2.1.0`
 2. Go to **GitHub > Releases > Draft a new release**
@@ -166,10 +171,17 @@ These are documented limitations and do not block release.
 
 ## Post-Release Verification
 
-After publishing, verify the packages on NuGet.org:
+After publishing, verify:
 
+### NuGet.org
 1. Check all 13 packages appear at `https://www.nuget.org/profiles/AnimatLabs`
 2. Verify package versions show `2.1.0`
 3. Confirm `.snupkg` symbol packages are linked
 4. Test installation: `dotnet add package WorkflowForge --version 2.1.0`
 5. Verify SourceLink by stepping into WorkflowForge code in a debugger
+6. Verify README renders correctly on each package page (logo, badges, content)
+
+### Quality and CI
+7. Verify [SonarCloud dashboard](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge) shows quality gate results
+8. Verify SonarCloud badges render correctly on GitHub README
+9. Verify GitHub Actions build badge shows passing status

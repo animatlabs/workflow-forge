@@ -16,13 +16,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `GetOperationOutput` / `GetOperationOutput<T>` public extension methods for orchestrator-level operation output inspection
 - `CurrentOperationIndex` internal property key set by foundry before each middleware invocation
 - CI/CD pipeline with GitHub Actions (build, test, pack; manual publish dispatch with artifact reuse)
-- Cross-platform Python publish script (`scripts/publish-packages.py`) with `.snupkg` support
 - `src/Directory.Build.props` for centralized build settings and SourceLink
 - Strong-name assembly signing infrastructure
-- `scripts/README.md` with SNK generation guide, signing instructions, and GitHub secrets setup
 - XML doc `<remarks>` on `IWorkflowOperation` recommending `WorkflowOperationBase`
 
 ### Changed
+- CI/CD pipeline integrated with SonarCloud for continuous code quality analysis (with caching)
+- Structured logging enforced across all logger calls in core, extensions, and samples (no string interpolation in templates)
+- Resilience strategy common retry logic extracted into `ResilienceStrategyBase` to eliminate code duplication
+- `IDisposable` pattern corrected across all operation base classes (proper `Dispose(bool)` virtual method)
+- SonarAnalyzer.CSharp added to all source projects; removed from test/benchmark/sample projects (no value with rules suppressed)
+- GitHub Actions updated to latest versions (checkout@v6, setup-dotnet@v5, upload-artifact@v6, download-artifact@v7)
+- Minimal CI workflow (`ci.yml`) added for main branch OSS verification (build + test only)
+- CI/CD pipeline hardened: permissions moved to job level, secrets moved to `env:` blocks, SonarCloud quality gate made non-blocking
+- NuGet README logos converted from HTML `<img>` to Markdown syntax for reliable rendering
+- SonarCloud quality badges (Quality Gate, Coverage, Reliability, Security, Maintainability) and GitHub Actions build badge added to `README.md` and `docs/index.md`
+- Publish scripts (`scripts/`) removed in favor of GitHub Actions CI/CD pipeline
+- `.editorconfig` added for consistent code style enforcement
+- All build warnings eliminated (zero-warning build across net48/net8.0/net10.0)
 - Compensation always attempts `RestoreAsync` on all operations (no-op base class default handles non-restorable operations)
 - `WorkflowOperationBase.RestoreAsync` now returns `Task.CompletedTask` by default instead of throwing `NotSupportedException`
 - `WorkflowSmith` always enters the compensation path on failure (removed workflow-level gate)
@@ -48,7 +59,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `PackageReleaseNotes` updated to v2.1.0 across all 13 csproj files
 - CI/CD publish job downloads build artifacts instead of rebuilding (ensures tested = published)
 - CI/CD workflow uploads and signs both `.nupkg` and `.snupkg` packages
-- Scripts moved to `scripts/` folder
+- Publish scripts removed in favor of GitHub Actions CI/CD pipeline
 - Documentation updated to emphasize `WorkflowOperationBase` over direct `IWorkflowOperation` implementation
 - All documentation examples updated to use `WorkflowOperationBase` / `ForgeAsyncCore` pattern
 
@@ -59,6 +70,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - All `if (!SupportsRestore) throw NotSupportedException` guards removed from `RestoreAsync` methods
 
 ### Fixed
+- `ConsoleLogger.FormatMessage` now converts named placeholders (`{Name}`) to positional (`{0}`) before `string.Format`
+- Security: `System.Random` usage in `RandomIntervalStrategy` documented with `SuppressMessage` (non-cryptographic context)
+- `ObservableGauge` fields in OpenTelemetry service suppressed as intentionally unread (held for metric callback lifetime)
+- `DataAnnotationsWorkflowValidator` null check fixed for unconstrained generic types
+- `HealthCheckService._checkInterval` refactored from field to local variable
+- `SerilogWorkflowForgeLogger.PushProperties` made static
+- Unused `_executionLock` field removed from `WorkflowFoundry`
 - WorkflowTimeoutMiddleware now propagates cancellation token via foundry properties
 - ConditionalWorkflowOperation `_lastConditionResult` made volatile for thread safety
 - Event handler memory leaks: WorkflowSmith and WorkflowFoundry clear events on Dispose

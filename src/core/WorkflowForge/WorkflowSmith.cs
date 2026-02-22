@@ -71,8 +71,8 @@ namespace WorkflowForge
             var validationErrors = _options.Validate();
             if (validationErrors.Count > 0)
             {
-                var errorMessage = $"Invalid WorkflowForge options: {string.Join("; ", validationErrors)}";
-                _logger.LogError(errorMessage);
+                var errorMessage = string.Format("Invalid WorkflowForge options: {0}", string.Join("; ", validationErrors));
+                _logger.LogError("Invalid WorkflowForge options: {ValidationErrors}", string.Join("; ", validationErrors));
                 throw new ArgumentException(errorMessage, nameof(options));
             }
 
@@ -84,7 +84,7 @@ namespace WorkflowForge
                     _options.MaxConcurrentWorkflows);
 
                 _logger.LogInformation(
-                    $"WorkflowSmith initialized with MaxConcurrentWorkflows={_options.MaxConcurrentWorkflows}");
+                    "WorkflowSmith initialized with MaxConcurrentWorkflows={MaxConcurrentWorkflows}", _options.MaxConcurrentWorkflows);
             }
             else
             {

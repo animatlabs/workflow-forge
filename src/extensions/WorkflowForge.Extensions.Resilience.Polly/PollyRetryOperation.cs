@@ -53,7 +53,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
 
             try
             {
-                _logger?.LogDebug($"Executing operation '{_innerOperation.Name}' with Polly resilience policies");
+                _logger?.LogDebug("Executing operation {OperationName} with Polly resilience policies", _innerOperation.Name);
 
                 return await _pipeline.ExecuteAsync(async (ct) =>
                 {
@@ -96,7 +96,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
 
             try
             {
-                _logger?.LogDebug($"Restoring operation '{_innerOperation.Name}' with Polly resilience policies");
+                _logger?.LogDebug("Restoring operation {OperationName} with Polly resilience policies", _innerOperation.Name);
 
                 await _pipeline.ExecuteAsync(async (ct) =>
                 {
@@ -112,21 +112,24 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         }
 
         /// <inheritdoc />
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
             if (_disposed) return;
 
-            try
+            if (disposing)
             {
-                _innerOperation?.Dispose();
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogWarning(ex, "Error disposing inner operation '{OperationName}'", _innerOperation?.Name ?? "Unknown");
+                try
+                {
+                    _innerOperation?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogWarning(ex, "Error disposing inner operation {OperationName}", _innerOperation?.Name ?? "Unknown");
+                }
             }
 
             _disposed = true;
-            base.Dispose();
+            base.Dispose(disposing);
         }
 
         private void ThrowIfDisposed()
@@ -170,7 +173,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     UseJitter = true,
                     OnRetry = args =>
                     {
-                        logger?.LogWarning($"Retry attempt {args.AttemptNumber} for operation '{innerOperation.Name}' in {args.RetryDelay.TotalMilliseconds}ms due to: {args.Outcome.Exception?.Message}");
+                        logger?.LogWarning("Retry attempt {AttemptNumber} for operation {OperationName} in {DelayMs}ms due to: {ErrorMessage}",
+                            args.AttemptNumber, innerOperation.Name, args.RetryDelay.TotalMilliseconds, args.Outcome.Exception?.Message);
                         return default;
                     }
                 })
@@ -206,12 +210,13 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     BreakDuration = breakDuration,
                     OnOpened = args =>
                     {
-                        logger?.LogWarning($"Circuit breaker opened for operation '{innerOperation.Name}' for {breakDuration.TotalSeconds}s");
+                        logger?.LogWarning("Circuit breaker opened for operation {OperationName} for {BreakDurationSeconds}s",
+                            innerOperation.Name, breakDuration.TotalSeconds);
                         return default;
                     },
                     OnClosed = args =>
                     {
-                        logger?.LogInformation($"Circuit breaker closed for operation '{innerOperation.Name}'");
+                        logger?.LogInformation("Circuit breaker closed for operation {OperationName}", innerOperation.Name);
                         return default;
                     }
                 })
@@ -256,7 +261,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     {
                         if (settings.EnableDetailedLogging)
                         {
-                            logger?.LogWarning($"Retry attempt {args.AttemptNumber} for operation '{innerOperation.Name}' in {args.RetryDelay.TotalMilliseconds}ms due to: {args.Outcome.Exception?.Message}");
+                            logger?.LogWarning("Retry attempt {AttemptNumber} for operation {OperationName} in {DelayMs}ms due to: {ErrorMessage}",
+                                args.AttemptNumber, innerOperation.Name, args.RetryDelay.TotalMilliseconds, args.Outcome.Exception?.Message);
                         }
                         return default;
                     }
@@ -276,7 +282,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     {
                         if (settings.EnableDetailedLogging)
                         {
-                            logger?.LogWarning($"Circuit breaker opened for operation '{innerOperation.Name}' for {settings.CircuitBreaker.BreakDuration.TotalSeconds}s");
+                            logger?.LogWarning("Circuit breaker opened for operation {OperationName} for {BreakDurationSeconds}s",
+                                innerOperation.Name, settings.CircuitBreaker.BreakDuration.TotalSeconds);
                         }
                         return default;
                     },
@@ -284,7 +291,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     {
                         if (settings.EnableDetailedLogging)
                         {
-                            logger?.LogInformation($"Circuit breaker closed for operation '{innerOperation.Name}'");
+                            logger?.LogInformation("Circuit breaker closed for operation {OperationName}", innerOperation.Name);
                         }
                         return default;
                     }

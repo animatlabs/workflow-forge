@@ -43,6 +43,8 @@ namespace WorkflowForge
             {
                 operation?.Dispose();
             }
+
+            GC.SuppressFinalize(this);
         }
     }
 }

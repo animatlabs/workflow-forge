@@ -18,7 +18,6 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         private readonly IWorkflowForgeLogger _logger;
         private readonly ISystemTimeProvider _timeProvider;
         private readonly Timer? _periodicCheckTimer;
-        private readonly TimeSpan _checkInterval;
         private readonly object _resultsLock = new object();
         private volatile bool _disposed;
 
@@ -81,7 +80,6 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
-            _checkInterval = checkInterval ?? TimeSpan.FromMinutes(1);
 
             if (registerBuiltInHealthChecks)
             {
@@ -90,12 +88,13 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
 
             if (checkInterval.HasValue)
             {
-                _periodicCheckTimer = new Timer(PeriodicHealthCheck, null, _checkInterval, _checkInterval);
+                var interval = checkInterval.Value;
+                _periodicCheckTimer = new Timer(PeriodicHealthCheck, null, interval, interval);
 
                 var startupProperties = new Dictionary<string, string>
                 {
                     [HealthCheckPropertyNames.HealthStatus] = "ServiceStartup",
-                    [HealthCheckPropertyNames.MonitoringIntervalMs] = _checkInterval.TotalMilliseconds.ToString("F0")
+                    [HealthCheckPropertyNames.MonitoringIntervalMs] = interval.TotalMilliseconds.ToString("F0")
                 };
 
                 _logger.LogInformation(startupProperties, HealthCheckLogMessages.HealthCheckServiceStarted);

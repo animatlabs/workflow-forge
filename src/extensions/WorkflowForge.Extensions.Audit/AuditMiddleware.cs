@@ -164,7 +164,7 @@ namespace WorkflowForge.Extensions.Audit
             catch (Exception ex)
             {
                 // Audit failures should not break workflow execution
-                foundry.Logger.LogError($"Failed to write audit entry: {ex.Message}");
+                foundry.Logger.LogError("Failed to write audit entry: {ErrorMessage}", ex.Message);
             }
         }
     }

@@ -211,24 +211,6 @@ namespace WorkflowForge.Extensions
         }
 
         /// <summary>
-        /// Sets a value in the foundry's properties and returns the foundry for method chaining.
-        /// </summary>
-        /// <param name="foundry">The foundry to set the value in.</param>
-        /// <param name="key">The key for the value.</param>
-        /// <param name="value">The value to set.</param>
-        /// <returns>The same foundry instance for method chaining.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
-        /// <exception cref="ArgumentException">Thrown when key is null or empty.</exception>
-        public static IWorkflowFoundry WithProperty(this IWorkflowFoundry foundry, string key, object? value)
-        {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (string.IsNullOrWhiteSpace(key)) throw new ArgumentException("Key cannot be null or empty.", nameof(key));
-
-            foundry.Properties[key] = value;
-            return foundry;
-        }
-
-        /// <summary>
         /// Adds middleware to the foundry and returns the foundry for method chaining.
         /// </summary>
         /// <param name="foundry">The foundry to add middleware to.</param>

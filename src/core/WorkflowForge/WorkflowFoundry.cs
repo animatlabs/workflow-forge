@@ -23,7 +23,6 @@ namespace WorkflowForge
         private readonly List<IWorkflowOperation> _operations = new();
         private readonly List<IWorkflowOperationMiddleware> _middlewares = new();
         private readonly object _middlewareLock = new();
-        private readonly object _executionLock = new();
         private readonly ISystemTimeProvider _timeProvider;
         private readonly WorkflowForgeOptions _options;
         private volatile bool _disposed;

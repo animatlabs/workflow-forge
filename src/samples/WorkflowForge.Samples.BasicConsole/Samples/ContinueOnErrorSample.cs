@@ -47,7 +47,7 @@ public class ContinueOnErrorSample : ISample
 
         protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
-            foundry.Logger.LogInformation($"{Name} executed");
+            foundry.Logger.LogInformation("{OperationName} executed", Name);
             if (_label == "Final")
             {
                 foundry.SetProperty("final.ran", true);

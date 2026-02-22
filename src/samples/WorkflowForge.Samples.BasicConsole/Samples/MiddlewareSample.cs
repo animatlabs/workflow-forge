@@ -164,7 +164,7 @@ public class SecurityMiddleware : IWorkflowOperationMiddleware
             throw new UnauthorizedAccessException("Missing security credentials");
         }
 
-        if (!token.StartsWith("sec_token_") && !token.StartsWith("admin_token_"))
+        if (!token!.StartsWith("sec_token_") && !token.StartsWith("admin_token_"))
         {
             throw new UnauthorizedAccessException("Invalid security token");
         }

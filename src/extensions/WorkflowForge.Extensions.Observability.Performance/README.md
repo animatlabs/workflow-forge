@@ -1,8 +1,6 @@
 # WorkflowForge.Extensions.Observability.Performance
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
+![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
 
 Performance monitoring extension for WorkflowForge with operation timing and metrics collection.
 
@@ -80,16 +78,17 @@ public class DetailedTimingMiddleware : IWorkflowOperationMiddleware
     }
     
     public async Task<object?> ExecuteAsync(
-        Func<Task<object?>> next,
         IWorkflowOperation operation,
         IWorkflowFoundry foundry,
-        CancellationToken cancellationToken)
+        object? inputData,
+        Func<CancellationToken, Task<object?>> next,
+        CancellationToken cancellationToken = default)
     {
         var sw = Stopwatch.StartNew();
         
         try
         {
-            var result = await next();
+            var result = await next(cancellationToken).ConfigureAwait(false);
             sw.Stop();
             
             if (sw.Elapsed > _slowThreshold)
@@ -129,15 +128,16 @@ public class DetailedTimingMiddleware : IWorkflowOperationMiddleware
 public class MemoryTrackingMiddleware : IWorkflowOperationMiddleware
 {
     public async Task<object?> ExecuteAsync(
-        Func<Task<object?>> next,
         IWorkflowOperation operation,
         IWorkflowFoundry foundry,
-        CancellationToken cancellationToken)
+        object? inputData,
+        Func<CancellationToken, Task<object?>> next,
+        CancellationToken cancellationToken = default)
     {
         var gen0Before = GC.CollectionCount(0);
         var memoryBefore = GC.GetTotalMemory(false);
         
-        var result = await next();
+        var result = await next(cancellationToken).ConfigureAwait(false);
         
         var gen0After = GC.CollectionCount(0);
         var memoryAfter = GC.GetTotalMemory(false);

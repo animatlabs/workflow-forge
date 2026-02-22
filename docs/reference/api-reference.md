@@ -791,22 +791,40 @@ var workflow = WorkflowForge.CreateWorkflow("LoggingWorkflow")
 
 ### ConditionalWorkflowOperation
 
-Executes different operations based on a predicate.
+Executes different operations based on a condition.
 
 ```csharp
 public class ConditionalWorkflowOperation : WorkflowOperationBase
 {
+    // Async condition with input data
     public ConditionalWorkflowOperation(
-        Func<IWorkflowFoundry, bool> predicate,
+        Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>> condition,
         IWorkflowOperation trueOperation,
-        IWorkflowOperation falseOperation);
+        IWorkflowOperation? falseOperation = null,
+        string? name = null,
+        Guid? id = null);
+
+    // Sync condition with input data
+    public ConditionalWorkflowOperation(
+        Func<object?, IWorkflowFoundry, bool> condition,
+        IWorkflowOperation trueOperation,
+        IWorkflowOperation? falseOperation = null,
+        string? name = null,
+        Guid? id = null);
+
+    // Simple condition (foundry-only) via factory
+    public static ConditionalWorkflowOperation Create(
+        Func<IWorkflowFoundry, bool> condition,
+        IWorkflowOperation trueOperation,
+        IWorkflowOperation? falseOperation = null,
+        string? name = null);
 }
 ```
 
 **Example**:
 ```csharp
 var conditionalOp = new ConditionalWorkflowOperation(
-    predicate: f => f.GetPropertyOrDefault<decimal>("Amount") > 100,
+    condition: (input, f) => f.GetPropertyOrDefault<decimal>("Amount") > 100,
     trueOperation: new HighValueOperation(),
     falseOperation: new StandardOperation());
 ```

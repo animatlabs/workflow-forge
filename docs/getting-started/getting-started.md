@@ -157,7 +157,7 @@ public class ValidateOrderOperation : WorkflowOperationBase
             throw new InvalidOperationException("Order not found in foundry properties");
         }
 
-        foundry.Logger.LogInformation($"Validating order {order.Id}");
+        foundry.Logger.LogInformation("Validating order {OrderId}", order.Id);
 
         // Validation logic
         if (string.IsNullOrWhiteSpace(order.CustomerId))
@@ -202,7 +202,7 @@ public class ProcessPaymentOperation : WorkflowOperationBase
             throw new InvalidOperationException("Order not found");
         }
 
-        foundry.Logger.LogInformation($"Processing payment for order {order.Id}");
+        foundry.Logger.LogInformation("Processing payment for order {OrderId}", order.Id);
 
         // Simulate payment processing
         await Task.Delay(100, cancellationToken); // Simulate API call
@@ -217,7 +217,7 @@ public class ProcessPaymentOperation : WorkflowOperationBase
         // Store result in foundry properties
         foundry.SetProperty("PaymentResult", paymentResult);
         
-        foundry.Logger.LogInformation($"Payment processed: {paymentResult.TransactionId}");
+        foundry.Logger.LogInformation("Payment processed: {TransactionId}", paymentResult.TransactionId);
         return paymentResult;
     }
 
@@ -231,7 +231,7 @@ public class ProcessPaymentOperation : WorkflowOperationBase
         
         if (paymentResult != null && paymentResult.Success)
         {
-            foundry.Logger.LogWarning($"Refunding payment {paymentResult.TransactionId}");
+            foundry.Logger.LogWarning("Refunding payment {TransactionId}", paymentResult.TransactionId);
             
             // Simulate refund API call
             await Task.Delay(50, cancellationToken);
@@ -262,7 +262,7 @@ public class FulfillOrderOperation : WorkflowOperationBase
             throw new InvalidOperationException("Order not found");
         }
 
-        foundry.Logger.LogInformation($"Fulfilling order {order.Id}");
+        foundry.Logger.LogInformation("Fulfilling order {OrderId}", order.Id);
 
         // Simulate fulfillment
         await Task.Delay(50, cancellationToken);

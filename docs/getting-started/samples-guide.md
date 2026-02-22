@@ -155,10 +155,10 @@ foundry
 **Key Code Pattern**:
 ```csharp
 var conditional = new ConditionalWorkflowOperation(
-    name: "CheckCondition",
-    predicate: foundry => foundry.GetPropertyOrDefault<bool>("Condition"),
-    onTrue: new TrueOperation(),
-    onFalse: new FalseOperation()
+    condition: (input, foundry) => foundry.GetPropertyOrDefault<bool>("Condition"),
+    trueOperation: new TrueOperation(),
+    falseOperation: new FalseOperation(),
+    name: "CheckCondition"
 );
 ```
 
@@ -500,9 +500,9 @@ app.MapHealthChecks("/health");
 ```csharp
 foundry.EnablePerformanceMonitoring();
 
-var metrics = foundry.GetPerformanceMetrics();
-Console.WriteLine($"Total Duration: {metrics.TotalDuration}ms");
-Console.WriteLine($"Memory Allocated: {metrics.MemoryAllocated}KB");
+var stats = foundry.GetPerformanceStatistics();
+Console.WriteLine($"Total Duration: {stats.TotalDuration}ms");
+Console.WriteLine($"Memory Allocated: {stats.TotalMemoryAllocated}KB");
 ```
 
 **Data Flow**: Dictionary-based  
@@ -812,12 +812,12 @@ public sealed class WorkflowTimingMiddleware : IWorkflowMiddleware
         CancellationToken cancellationToken)
     {
         var start = DateTimeOffset.UtcNow;
-        foundry.Logger.LogInformation($"[WorkflowTiming] Starting {workflow.Name}");
+        foundry.Logger.LogInformation("[WorkflowTiming] Starting {WorkflowName}", workflow.Name);
         
         await next().ConfigureAwait(false);
         
         var duration = DateTimeOffset.UtcNow - start;
-        foundry.Logger.LogInformation($"[WorkflowTiming] Completed in {duration.TotalMilliseconds:F0}ms");
+        foundry.Logger.LogInformation("[WorkflowTiming] Completed in {DurationMs}ms", duration.TotalMilliseconds.ToString("F0"));
     }
 }
 

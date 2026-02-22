@@ -184,10 +184,23 @@ namespace WorkflowForge.Testing
             }
         }
 
+        /// <summary>
+        /// Releases managed resources.
+        /// </summary>
+        /// <param name="disposing">True if called from <see cref="Dispose()"/>.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _disposed = true;
+            }
+        }
+
         /// <inheritdoc />
         public void Dispose()
         {
-            _disposed = true;
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

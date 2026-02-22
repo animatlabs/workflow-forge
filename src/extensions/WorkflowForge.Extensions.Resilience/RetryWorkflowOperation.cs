@@ -66,17 +66,20 @@ namespace WorkflowForge.Extensions.Resilience
         }
 
         /// <inheritdoc />
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            try
+            if (disposing)
             {
-                _operation?.Dispose();
+                try
+                {
+                    _operation?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"RetryWorkflowOperation.Dispose: Exception while disposing operation '{Name}': {ex}");
+                }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"RetryWorkflowOperation.Dispose: Exception while disposing operation '{Name}': {ex}");
-            }
-            GC.SuppressFinalize(this);
+            base.Dispose(disposing);
         }
 
         /// <summary>

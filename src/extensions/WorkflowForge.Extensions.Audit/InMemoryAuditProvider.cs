@@ -17,6 +17,10 @@ namespace WorkflowForge.Extensions.Audit
         /// <summary>
         /// Gets all audit entries.
         /// </summary>
+        /// <summary>
+        /// Gets a snapshot of all audit entries.
+        /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "S2365:Properties should not make collection copies", Justification = "Intentional snapshot semantics for thread-safe read access")]
         public IReadOnlyList<AuditEntry> Entries => _entries.ToList();
 
         /// <summary>

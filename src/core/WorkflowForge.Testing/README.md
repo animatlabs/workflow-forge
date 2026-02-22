@@ -1,5 +1,7 @@
 # WorkflowForge.Testing
 
+![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
+
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Testing.svg)](https://www.nuget.org/packages/WorkflowForge.Testing/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/WorkflowForge.Testing.svg)](https://www.nuget.org/packages/WorkflowForge.Testing/)
 

@@ -96,7 +96,7 @@ namespace WorkflowForge.Middleware
                 return await next(cancellationToken).ConfigureAwait(false);
             }
 
-            _logger.LogDebug($"Operation '{operation.Name}' executing with {timeout.TotalSeconds}s timeout");
+            _logger.LogDebug("Operation {OperationName} executing with {TimeoutSeconds}s timeout", operation.Name, timeout.TotalSeconds);
 
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             var effectiveToken = timeoutCts.Token;
@@ -116,8 +116,8 @@ namespace WorkflowForge.Middleware
                     throw new OperationCanceledException(cancellationToken);
                 }
 
-                var errorMessage = $"Operation '{operation.Name}' execution exceeded the configured timeout of {timeout.TotalSeconds} seconds.";
-                _logger.LogError(errorMessage);
+                var errorMessage = string.Format("Operation '{0}' execution exceeded the configured timeout of {1} seconds.", operation.Name, timeout.TotalSeconds);
+                _logger.LogError("Operation '{OperationName}' execution exceeded the configured timeout of {TimeoutSeconds} seconds.", operation.Name, timeout.TotalSeconds);
 
                 foundry.Properties[FoundryPropertyKeys.OperationTimedOut] = true;
                 foundry.Properties[FoundryPropertyKeys.OperationTimeoutDuration] = timeout;
@@ -126,7 +126,7 @@ namespace WorkflowForge.Middleware
             }
 
             var result = await executionTask.ConfigureAwait(false);
-            _logger.LogDebug($"Operation '{operation.Name}' completed within timeout ({timeout.TotalSeconds}s)");
+            _logger.LogDebug("Operation {OperationName} completed within timeout ({TimeoutSeconds}s)", operation.Name, timeout.TotalSeconds);
             return result;
         }
     }

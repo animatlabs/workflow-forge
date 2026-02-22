@@ -60,7 +60,7 @@ namespace WorkflowForge.Extensions.Validation
             {
                 if (_options.LogValidationErrors)
                 {
-                    _logger.LogWarning($"Validation skipped for operation '{operation.Name}': no data to validate");
+                    _logger.LogWarning("Validation skipped for operation {OperationName}: no data to validate", operation.Name);
                 }
                 return await next(cancellationToken).ConfigureAwait(false);
             }
@@ -69,7 +69,7 @@ namespace WorkflowForge.Extensions.Validation
 
             if (validationResult.IsValid)
             {
-                _logger.LogInformation($"Validation passed for operation '{operation.Name}'");
+                _logger.LogInformation("Validation passed for operation {OperationName}", operation.Name);
                 if (_options.StoreValidationResults)
                 {
                     foundry.Properties[FoundryPropertyKeys.ValidationStatus] = "Success";
@@ -81,7 +81,7 @@ namespace WorkflowForge.Extensions.Validation
 
             if (_options.LogValidationErrors)
             {
-                _logger.LogError($"Validation failed for operation '{operation.Name}': {errorMessages}");
+                _logger.LogError("Validation failed for operation {OperationName}: {ErrorMessages}", operation.Name, errorMessages);
             }
 
             if (_options.StoreValidationResults)

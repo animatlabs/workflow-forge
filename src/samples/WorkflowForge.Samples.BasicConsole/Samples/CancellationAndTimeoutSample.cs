@@ -65,9 +65,9 @@ public class CancellationAndTimeoutSample : ISample
 
         protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
-            foundry.Logger.LogInformation($"Starting {Name} with {_delayMs}ms delay");
+            foundry.Logger.LogInformation("Starting {OperationName} with {DelayMs}ms delay", Name, _delayMs);
             await Task.Delay(_delayMs, cancellationToken);
-            foundry.Logger.LogInformation($"{Name} completed");
+            foundry.Logger.LogInformation("{OperationName} completed", Name);
             return inputData;
         }
     }

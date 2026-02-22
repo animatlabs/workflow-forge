@@ -528,6 +528,6 @@ public class OrderFinalizationOperation : WorkflowOperationBase
 
     public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        throw new NotSupportedException("Order finalization does not support restoration");
+        return Task.CompletedTask;
     }
 }
