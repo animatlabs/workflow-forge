@@ -71,12 +71,17 @@ jobs:
           /o:"animatlabs" `
           /d:sonar.token="$env:SONAR_TOKEN" `
           /d:sonar.host.url="https://sonarcloud.io" `
-          /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" `
           /d:sonar.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**" `
           /d:sonar.coverage.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**"
 
     - name: Build
       run: dotnet build WorkflowForge.sln --configuration Release --no-restore
+
+    - name: SonarCloud End (Static Analysis)
+      continue-on-error: true
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
 
     - name: Test with Coverage
       run: |
@@ -88,7 +93,23 @@ jobs:
           --collect:"XPlat Code Coverage" `
           -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
-    - name: SonarCloud End
+    - name: SonarCloud Begin (Coverage Import)
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        dotnet sonarscanner begin `
+          /k:"animatlabs_workflow-forge" `
+          /o:"animatlabs" `
+          /d:sonar.token="$env:SONAR_TOKEN" `
+          /d:sonar.host.url="https://sonarcloud.io" `
+          /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" `
+          /d:sonar.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**" `
+          /d:sonar.coverage.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**"
+
+    - name: Build for Coverage Import
+      run: dotnet build WorkflowForge.sln --configuration Release --no-restore
+
+    - name: SonarCloud End (Coverage Import)
       continue-on-error: true
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
