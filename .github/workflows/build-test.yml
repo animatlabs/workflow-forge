@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main, release/2.x ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, release/2.x ]
   workflow_dispatch:
     inputs:
       publish:
@@ -22,19 +22,25 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: read
+
 jobs:
   build:
-    runs-on: ubuntu-latest
-    
+    runs-on: windows-latest
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+    - uses: actions/checkout@v6
+
+    - name: Setup .NET 8.0
+      uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: |
-          8.0.x
-          10.0.x
+        dotnet-version: 8.0.x
+
+    - name: Setup .NET 10.0
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
 
     - name: Restore dependencies
       run: dotnet restore WorkflowForge.sln
@@ -54,11 +60,11 @@ jobs:
 
     - name: Pack
       run: |
-        VERSION_ARG=""
-        if [ -n "${{ github.event.inputs.version }}" ]; then
-          VERSION_ARG="-p:PackageVersion=${{ github.event.inputs.version }}"
-        fi
-        dotnet pack WorkflowForge.sln --configuration Release --no-build --output ./packages $VERSION_ARG
+        $versionArg = @()
+        if ("${{ github.event.inputs.version }}") {
+          $versionArg = @("-p:PackageVersion=${{ github.event.inputs.version }}")
+        }
+        dotnet pack WorkflowForge.sln --configuration Release --no-build --output ./packages @versionArg
 
     - name: Upload packages
       uses: actions/upload-artifact@v4
@@ -70,19 +76,22 @@ jobs:
 
   publish:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true'
-    
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+    - uses: actions/checkout@v6
+
+    - name: Setup .NET 8.0
+      uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: |
-          8.0.x
-          10.0.x
-    
+        dotnet-version: 8.0.x
+
+    - name: Setup .NET 10.0
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
+
     - name: Download packages
       uses: actions/download-artifact@v4
       with:
@@ -92,17 +101,21 @@ jobs:
     - name: Sign packages
       if: github.event.inputs.sign == 'true'
       run: |
-        echo "${{ secrets.SIGNING_CERT_BASE64 }}" | base64 --decode > cert.pfx
-        for pkg in ./packages/*.nupkg ./packages/*.snupkg; do
-          dotnet nuget sign "$pkg" --certificate-path cert.pfx --certificate-password "${{ secrets.SIGNING_CERT_PASSWORD }}" --timestamper http://timestamp.digicert.com
-        done
-        rm -f cert.pfx
+        $certBytes = [Convert]::FromBase64String("${{ secrets.SIGNING_CERT_BASE64 }}")
+        [IO.File]::WriteAllBytes("cert.pfx", $certBytes)
+        Get-ChildItem ./packages -Filter *.nupkg | ForEach-Object {
+          dotnet nuget sign $_.FullName --certificate-path cert.pfx --certificate-password "${{ secrets.SIGNING_CERT_PASSWORD }}" --timestamper http://timestamp.digicert.com
+        }
+        Get-ChildItem ./packages -Filter *.snupkg | ForEach-Object {
+          dotnet nuget sign $_.FullName --certificate-path cert.pfx --certificate-password "${{ secrets.SIGNING_CERT_PASSWORD }}" --timestamper http://timestamp.digicert.com
+        }
+        Remove-Item cert.pfx -Force
 
     - name: Push to NuGet
       run: |
-        for pkg in ./packages/*.nupkg; do
-          dotnet nuget push "$pkg" --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
-        done
-        for pkg in ./packages/*.snupkg; do
-          dotnet nuget push "$pkg" --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
-        done
+        Get-ChildItem ./packages -Filter *.nupkg | ForEach-Object {
+          dotnet nuget push $_.FullName --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        }
+        Get-ChildItem ./packages -Filter *.snupkg | ForEach-Object {
+          dotnet nuget push $_.FullName --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        }
