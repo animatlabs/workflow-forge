@@ -1,3 +1,4 @@
+#if !NET48
 using Elsa.Extensions;
 using Elsa.Workflows;
 using Elsa.Workflows.Activities;
@@ -84,3 +85,4 @@ public class Scenario2_DataPassing_Elsa : IWorkflowScenario
         }
     }
 }
+#endif

@@ -130,7 +130,7 @@ public class BuiltInOperationsSample : ISample
 
         using var foundry = WorkflowForge.CreateFoundry("CombinedOperationsDemo");
 
-        foundry.SetProperty("process_id", Guid.NewGuid().ToString("N")[..8]);
+        foundry.SetProperty("process_id", Guid.NewGuid().ToString("N").Substring(0, 8));
         foundry.SetProperty("step_count", 0);
 
         foundry.AddOperation(LoggingOperation.Info("=== Combined Operations Workflow Started ==="));
@@ -212,7 +212,7 @@ public class BuiltInOperationsSample : ISample
 /// <summary>
 /// Custom operation demonstrating timing and custom behavior
 /// </summary>
-public class CustomTimedOperation : IWorkflowOperation
+public class CustomTimedOperation : WorkflowOperationBase
 {
     private readonly string _operationName;
     private readonly TimeSpan _duration;
@@ -223,11 +223,9 @@ public class CustomTimedOperation : IWorkflowOperation
         _duration = duration;
     }
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => _operationName;
-    public bool SupportsRestore => false;
+    public override string Name => _operationName;
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Starting custom timed operation: {OperationName} (Duration: {Duration}ms)",
             _operationName, _duration.TotalMilliseconds);
@@ -243,12 +241,4 @@ public class CustomTimedOperation : IWorkflowOperation
             CompletedAt = DateTime.UtcNow
         };
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException($"Operation {_operationName} does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }

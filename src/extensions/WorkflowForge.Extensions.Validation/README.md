@@ -1,8 +1,6 @@
 # WorkflowForge.Extensions.Validation
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
+![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
 
 Validation extension for WorkflowForge with DataAnnotations-based validation for comprehensive input validation.
 

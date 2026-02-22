@@ -1,10 +1,8 @@
 # WorkflowForge Basic Console Samples
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
+![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
 
-Interactive examples demonstrating the core features and capabilities of WorkflowForge 2.0.
+Interactive examples demonstrating the core features and capabilities of WorkflowForge 2.1.0.
 
 ## Getting Started
 

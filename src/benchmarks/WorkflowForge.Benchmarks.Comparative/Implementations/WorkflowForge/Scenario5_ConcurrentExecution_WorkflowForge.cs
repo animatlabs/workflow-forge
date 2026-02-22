@@ -27,16 +27,18 @@ public class Scenario5_ConcurrentExecution_WorkflowForge : IWorkflowScenario
 
         for (int i = 0; i < _parameters.ConcurrencyLevel; i++)
         {
+            var workflowIndex = i;
             tasks.Add(Task.Run(async () =>
             {
-                using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry($"Concurrent_{i}");
+                using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry($"Concurrent_{workflowIndex}");
 
                 for (int j = 0; j < 10; j++)
                 {
-                    foundry.WithOperation($"Op_{j}", async (foundry) =>
+                    var opIndex = j;
+                    foundry.WithOperation($"Op_{opIndex}", async (foundry) =>
                     {
                         await Task.Yield();
-                        foundry.Properties[$"op_{j}"] = j;
+                        foundry.Properties[$"op_{opIndex}"] = opIndex;
                     });
                 }
 

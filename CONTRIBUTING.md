@@ -30,7 +30,7 @@ dotnet test -c Release
 
 ## Coding Standards
 
-- **Target frameworks**: .NET Standard 2.0 for core, .NET 8.0+ for tests/samples
+- **Target frameworks**: .NET Standard 2.0 for core libraries; net48, net8.0, and net10.0 for tests, benchmarks, and samples
 - **Naming**: Use explicit, descriptive names (avoid abbreviations)
 - **XML Documentation**: Add XML docs for all public APIs
 - **Async/await**: Use async patterns for I/O operations
@@ -54,11 +54,15 @@ dotnet test -c Release
 
 ## Release Process
 
-- Update version in all `.csproj` files
-- Update `README.md`, documentation, and samples for new features
-- Update `publish-packages.ps1` versions
-- Create a GitHub Release with detailed changelog
-- Publish to NuGet using automated script
+1. **Version Bump**: Update `<Version>` and `<PackageReleaseNotes>` in all 13 `.csproj` files
+2. **Documentation**: Update `README.md`, `CHANGELOG.md`, and `docs/` with new version and benchmark data
+3. **Build & Test**: Run `dotnet build` and `dotnet test` across all target frameworks (net48, net8.0, net10.0)
+4. **Pack**: Run `dotnet pack` to generate `.nupkg` and `.snupkg` packages
+5. **Sign** (if configured): Sign packages with `dotnet nuget sign` using code-signing certificate
+6. **Publish**: Trigger the GitHub Actions **Build and Test** workflow via `workflow_dispatch` with `publish: true`
+7. **Tag & Release**: Create a GitHub Release with the tag matching the version and reference the CHANGELOG
+
+See [`RELEASE.md`](RELEASE.md) for detailed instructions on strong-name signing (SNK), NuGet package signing (PFX), and GitHub Actions secrets setup.
 
 ## Code of Conduct
 

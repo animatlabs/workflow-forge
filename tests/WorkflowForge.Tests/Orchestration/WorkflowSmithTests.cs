@@ -126,7 +126,6 @@ namespace WorkflowForge.Tests.Orchestration
             var mock = new Mock<IWorkflowOperation>();
             mock.SetupGet(op => op.Id).Returns(Guid.NewGuid());
             mock.SetupGet(op => op.Name).Returns(name);
-            mock.SetupGet(op => op.SupportsRestore).Returns(true);
 
             if (exception != null)
             {

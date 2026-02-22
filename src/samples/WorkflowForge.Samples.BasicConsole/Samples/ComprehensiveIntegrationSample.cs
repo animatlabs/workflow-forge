@@ -4,6 +4,7 @@ using WorkflowForge.Extensions.Logging.Serilog;
 using WorkflowForge.Extensions.Observability.OpenTelemetry;
 using WorkflowForge.Extensions.Resilience.Polly;
 using WorkflowForge.Extensions.Resilience.Polly.Options;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -57,7 +58,7 @@ public class ComprehensiveIntegrationSample : ISample
             foundry.EnableOpenTelemetry(telemetryOptions);
 
             // Set up order context
-            var orderId = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+            var orderId = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
             var customerId = "CUST-12345";
             var correlationId = Guid.NewGuid().ToString();
 
@@ -98,15 +99,13 @@ public class ComprehensiveIntegrationSample : ISample
 /// <summary>
 /// Order validation with comprehensive resilience and observability
 /// </summary>
-public class OrderValidationWithResilienceOperation : IWorkflowOperation
+public class OrderValidationWithResilienceOperation : WorkflowOperationBase
 {
     private static int _attemptCount = 0;
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "OrderValidationWithResilience";
-    public bool SupportsRestore => true;
+    public override string Name => "OrderValidationWithResilience";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var orderId = foundry.Properties["order_id"] as string ?? "unknown";
         var customerId = foundry.Properties["customer_id"] as string ?? "unknown";
@@ -194,7 +193,7 @@ public class OrderValidationWithResilienceOperation : IWorkflowOperation
         return validationSummary;
     }
 
-    public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var orderId = foundry.Properties["order_id"] as string ?? "unknown";
 
@@ -206,21 +205,16 @@ public class OrderValidationWithResilienceOperation : IWorkflowOperation
 
         foundry.Logger.LogInformation("Order validation restoration completed");
     }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Payment processing with retry logic and comprehensive monitoring
 /// </summary>
-public class PaymentProcessingWithRetryOperation : IWorkflowOperation
+public class PaymentProcessingWithRetryOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "PaymentProcessingWithRetry";
-    public bool SupportsRestore => true;
+    public override string Name => "PaymentProcessingWithRetry";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var validationData = inputData as dynamic;
         var orderId = validationData?.OrderId ?? "unknown";
@@ -249,11 +243,11 @@ public class PaymentProcessingWithRetryOperation : IWorkflowOperation
         var paymentResult = new
         {
             OrderId = orderId,
-            PaymentId = $"PAY-{Guid.NewGuid().ToString("N")[..12].ToUpper()}",
+            PaymentId = $"PAY-{Guid.NewGuid().ToString("N").Substring(0, 12).ToUpper()}",
             Amount = amount,
             Currency = currency,
             ProcessorResponse = "APPROVED",
-            TransactionId = $"TXN-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N")[..6]}",
+            TransactionId = $"TXN-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N").Substring(0, 6)}",
             ProcessingTime = 600,
             Status = "Processed",
             Timestamp = DateTime.UtcNow
@@ -272,7 +266,7 @@ public class PaymentProcessingWithRetryOperation : IWorkflowOperation
         return paymentResult;
     }
 
-    public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var paymentData = outputData as dynamic;
         var paymentId = paymentData?.PaymentId ?? "unknown";
@@ -285,21 +279,16 @@ public class PaymentProcessingWithRetryOperation : IWorkflowOperation
 
         foundry.Logger.LogInformation("Payment reversal completed for payment {PaymentId}", paymentId);
     }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Inventory reservation with observability
 /// </summary>
-public class InventoryReservationOperation : IWorkflowOperation
+public class InventoryReservationOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "InventoryReservation";
-    public bool SupportsRestore => true;
+    public override string Name => "InventoryReservation";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var paymentData = inputData as dynamic;
         var orderId = paymentData?.OrderId ?? "unknown";
@@ -315,7 +304,7 @@ public class InventoryReservationOperation : IWorkflowOperation
         var inventoryResult = new
         {
             OrderId = orderId,
-            ReservationId = $"RES-{Guid.NewGuid().ToString("N")[..10].ToUpper()}",
+            ReservationId = $"RES-{Guid.NewGuid().ToString("N").Substring(0, 10).ToUpper()}",
             ItemsReserved = 1,
             WarehouseLocation = "WH-CENTRAL-001",
             ExpiresAt = DateTime.UtcNow.AddHours(24),
@@ -335,7 +324,7 @@ public class InventoryReservationOperation : IWorkflowOperation
         return inventoryResult;
     }
 
-    public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var inventoryData = outputData as dynamic;
         var reservationId = inventoryData?.ReservationId ?? "unknown";
@@ -348,21 +337,16 @@ public class InventoryReservationOperation : IWorkflowOperation
 
         foundry.Logger.LogInformation("Inventory reservation released: {ReservationId}", reservationId);
     }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Shipping arrangement operation
 /// </summary>
-public class ShippingArrangementOperation : IWorkflowOperation
+public class ShippingArrangementOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "ShippingArrangement";
-    public bool SupportsRestore => false;
+    public override string Name => "ShippingArrangement";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var inventoryData = inputData as dynamic;
         var orderId = inventoryData?.OrderId ?? "unknown";
@@ -378,9 +362,9 @@ public class ShippingArrangementOperation : IWorkflowOperation
         var shippingResult = new
         {
             OrderId = orderId,
-            ShippingId = $"SHIP-{Guid.NewGuid().ToString("N")[..12].ToUpper()}",
+            ShippingId = $"SHIP-{Guid.NewGuid().ToString("N").Substring(0, 12).ToUpper()}",
             Carrier = "FastShip Express",
-            TrackingNumber = $"FS{DateTime.UtcNow:yyyyMMdd}{Guid.NewGuid().ToString("N")[..8].ToUpper()}",
+            TrackingNumber = $"FS{DateTime.UtcNow:yyyyMMdd}{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}",
             EstimatedDelivery = DateTime.UtcNow.AddDays(2),
             ShippingCost = 15.99m,
             Status = "Arranged",
@@ -399,26 +383,16 @@ public class ShippingArrangementOperation : IWorkflowOperation
 
         return shippingResult;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException("Shipping arrangement does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Notification dispatch operation
 /// </summary>
-public class NotificationDispatchOperation : IWorkflowOperation
+public class NotificationDispatchOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "NotificationDispatch";
-    public bool SupportsRestore => false;
+    public override string Name => "NotificationDispatch";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var shippingData = inputData as dynamic;
         var orderId = shippingData?.OrderId ?? "unknown";
@@ -453,7 +427,7 @@ public class NotificationDispatchOperation : IWorkflowOperation
             {
                 Channel = channel,
                 Template = template,
-                MessageId = $"MSG-{Guid.NewGuid().ToString("N")[..8].ToUpper()}",
+                MessageId = $"MSG-{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}",
                 Status = "Sent",
                 Timestamp = DateTime.UtcNow
             };
@@ -484,26 +458,16 @@ public class NotificationDispatchOperation : IWorkflowOperation
 
         return dispatchSummary;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException("Notification dispatch does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Order finalization operation with comprehensive summary
 /// </summary>
-public class OrderFinalizationOperation : IWorkflowOperation
+public class OrderFinalizationOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "OrderFinalization";
-    public bool SupportsRestore => false;
+    public override string Name => "OrderFinalization";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var notificationData = inputData as dynamic;
         var orderId = notificationData?.OrderId ?? "unknown";
@@ -562,11 +526,8 @@ public class OrderFinalizationOperation : IWorkflowOperation
         return finalizationSummary;
     }
 
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        throw new NotSupportedException("Order finalization does not support restoration");
+        return Task.CompletedTask;
     }
-
-    public void Dispose()
-    { }
 }

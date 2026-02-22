@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.DependencyInjection;
 using WorkflowForge.Loggers;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -49,16 +50,14 @@ public class DependencyInjectionSample : ISample
 
     private sealed class OrderIdGenerator : IOrderIdGenerator
     {
-        public string Create() => $"ORD-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+        public string Create() => $"ORD-{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
     }
 
-    private sealed class GenerateOrderIdOperation : IWorkflowOperation
+    private sealed class GenerateOrderIdOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "GenerateOrderId";
-        public bool SupportsRestore => false;
+        public override string Name => "GenerateOrderId";
 
-        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var generator = foundry.ServiceProvider?.GetRequiredService<IOrderIdGenerator>()
                 ?? throw new InvalidOperationException("IOrderIdGenerator not registered.");
@@ -68,31 +67,17 @@ public class DependencyInjectionSample : ISample
             Console.WriteLine($"Generated order id: {orderId}");
             return Task.FromResult<object?>(orderId);
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
-    private sealed class ProcessOrderOperation : IWorkflowOperation
+    private sealed class ProcessOrderOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "ProcessOrder";
-        public bool SupportsRestore => false;
+        public override string Name => "ProcessOrder";
 
-        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var orderId = inputData as string ?? foundry.Properties["order_id"]?.ToString() ?? "unknown";
             Console.WriteLine($"Processing order {orderId} via DI-configured smith.");
             return Task.FromResult(inputData);
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 }

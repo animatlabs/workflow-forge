@@ -27,7 +27,6 @@ public class LoggingOperationTests
         // Assert
         Assert.NotEqual(Guid.Empty, operation.Id);
         Assert.Equal("Log: Test log message", operation.Name);
-        Assert.False(operation.SupportsRestore);
     }
 
     [Fact]
@@ -43,7 +42,6 @@ public class LoggingOperationTests
         // Assert
         Assert.NotEqual(Guid.Empty, operation.Id);
         Assert.Equal("Log: Debug message", operation.Name);
-        Assert.False(operation.SupportsRestore);
     }
 
     [Fact]
@@ -60,7 +58,6 @@ public class LoggingOperationTests
         // Assert
         Assert.NotEqual(Guid.Empty, operation.Id);
         Assert.Equal(customName, operation.Name);
-        Assert.False(operation.SupportsRestore);
     }
 
     [Fact]
@@ -351,26 +348,32 @@ public class LoggingOperationTests
     #region RestoreAsync Tests
 
     [Fact]
-    public async Task RestoreAsync_ThrowsNotSupportedException()
+    public async Task RestoreAsync_CompletesSuccessfully()
     {
         // Arrange
         var operation = new LoggingOperation("Test message");
         var foundry = CreateMockFoundry();
 
-        // Act & Assert
-        await Assert.ThrowsAsync<NotSupportedException>(() =>
-            operation.RestoreAsync("output", foundry.Object));
+        // Act
+        var task = operation.RestoreAsync("output", foundry.Object);
+
+        // Assert
+        await task;
+        Assert.True(task.Status == TaskStatus.RanToCompletion);
     }
 
     [Fact]
-    public async Task RestoreAsync_WithNullFoundry_ThrowsNotSupportedException()
+    public async Task RestoreAsync_WithNullFoundry_CompletesSuccessfully()
     {
-        // Arrange
+        // Arrange - Base implementation returns Task.CompletedTask (no-op), does not validate foundry
         var operation = new LoggingOperation("Test message");
 
-        // Act & Assert
-        await Assert.ThrowsAsync<NotSupportedException>(() =>
-            operation.RestoreAsync("output", null!));
+        // Act
+        var task = operation.RestoreAsync("output", null!);
+
+        // Assert
+        await task;
+        Assert.True(task.Status == TaskStatus.RanToCompletion);
     }
 
     #endregion RestoreAsync Tests

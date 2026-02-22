@@ -323,7 +323,7 @@ public class ConcurrencyTests
                         foundryRef.Properties[$"result_{operationIndex}"] = $"processed_{operationIndex}";
                         foundryRef.Properties[$"timestamp_{operationIndex}"] = DateTime.UtcNow;
 
-                        await Task.Delay(Random.Shared.Next(1, 5));
+                        await Task.Delay(ThreadSafeRandom.Next(1, 5));
                         return $"Completed operation {operationIndex}";
                     });
 
@@ -344,7 +344,7 @@ public class ConcurrencyTests
         Assert.Empty(exceptions);
         Assert.All(foundries, foundry =>
         {
-            var expectedCount = (operationsPerFoundry * 3) + 3; // result + timestamp + output per op, plus last-completed keys
+            var expectedCount = (operationsPerFoundry * 3) + 3 + 1; // result + timestamp + output per op, plus last-completed keys, plus current-operation-index
             Assert.Equal(expectedCount, foundry.Properties.Count);
         });
 

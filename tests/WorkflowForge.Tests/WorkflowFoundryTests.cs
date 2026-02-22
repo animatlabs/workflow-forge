@@ -609,7 +609,7 @@ public class WorkflowFoundryTests
         await foundry.ForgeAsync();
 
         // Assert
-        var outputKey = $"Operation.{operation.Id}.Output";
+        var outputKey = $"Operation.0:{operation.Name}.Output";
         Assert.True(foundry.Properties.TryGetValue(outputKey, out var storedOutput));
         Assert.Equal("result", storedOutput);
         Assert.Equal(0, foundry.Properties["Operation.LastCompletedIndex"]);
@@ -813,8 +813,6 @@ public class WorkflowFoundryTests
 
     #endregion Disposal Tests
 
-
-
     #region Error Handling Tests
 
     [Fact]
@@ -859,7 +857,6 @@ public class WorkflowFoundryTests
         mockWorkflow.Setup(w => w.Description).Returns($"Mock workflow: {name}");
         mockWorkflow.Setup(w => w.Version).Returns("1.0.0");
         mockWorkflow.Setup(w => w.Operations).Returns(new List<IWorkflowOperation>());
-        mockWorkflow.Setup(w => w.SupportsRestore).Returns(true);
         return mockWorkflow.Object;
     }
 
@@ -877,7 +874,6 @@ public class WorkflowFoundryTests
             return Task.FromResult<object?>("TestResult");
         }
     }
-
 
     private class TestMiddleware : IWorkflowOperationMiddleware
     {

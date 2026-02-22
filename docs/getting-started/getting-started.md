@@ -9,6 +9,7 @@ Welcome to WorkflowForge! This guide will walk you through installing, configuri
 
 ## Table of Contents
 
+- [What's New in 2.1.0](#whats-new-in-210)
 - [What's New in 2.0.0](#whats-new-in-200)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -19,9 +20,35 @@ Welcome to WorkflowForge! This guide will walk you through installing, configuri
 
 ---
 
+## What's New in 2.1.0
+
+**WorkflowForge 2.1.0** introduces multi-framework support, compensation improvements, and infrastructure hardening:
+
+### Multi-Target Framework Support
+All libraries, tests, samples, and benchmarks now target **.NET 10.0**, **.NET 8.0**, and **.NET Framework 4.8** for broad runtime coverage.
+
+### Compensation Improvements (Breaking)
+- `SupportsRestore` property removed from `IWorkflowOperation` and `IWorkflow` interfaces
+- Compensation always attempts `RestoreAsync` on all operations; the base class provides a no-op default for non-restorable operations
+- Optional `restoreAction` / `restoreFunc` parameters added to builder and factory methods for inline compensation
+
+### Performance and Reliability
+- All EventArgs and exception classes sealed for JIT devirtualization
+- `ConfigureAwait(false)` added to all library await calls
+- `GC.SuppressFinalize` applied consistently across disposables
+- Thread-safety fixes for `ConditionalWorkflowOperation`, `HealthCheckService`, and `WorkflowSmith` disposal
+
+### New APIs
+- `GetOperationOutput` / `GetOperationOutput<T>` for orchestrator-level output inspection
+- `FoundryPropertyKeys` constants replacing magic strings
+
+See the full [CHANGELOG](https://github.com/animatlabs/workflow-forge/blob/main/CHANGELOG.md) for complete details.
+
+---
+
 ## What's New in 2.0.0
 
-**WorkflowForge 2.0.0** introduces major improvements:
+**WorkflowForge 2.0.0** introduced major improvements:
 
 ### Dependency Isolation
 Extensions internalize third-party dependencies with **ILRepack** where appropriate, while keeping Microsoft/System assemblies external for runtime unification.
@@ -43,7 +70,7 @@ Extensions internalize third-party dependencies with **ILRepack** where appropri
 
 Before you begin, ensure you have:
 
-- **.NET SDK**: .NET 6.0+ (WorkflowForge targets .NET Standard 2.0)
+- **.NET SDK**: .NET 8.0+ or .NET Framework 4.8 (WorkflowForge targets .NET Standard 2.0)
 - **IDE**: Visual Studio 2022, VS Code, or JetBrains Rider
 - **Basic C# knowledge**: Understanding of async/await patterns
 
@@ -104,6 +131,8 @@ public class PaymentResult
 
 ### Step 2: Create Custom Operations
 
+> **Recommended**: Always extend `WorkflowOperationBase` instead of implementing `IWorkflowOperation` directly. The base class eliminates boilerplate and provides lifecycle hooks.
+
 **Best Practice**: Use class-based operations for production scenarios (better performance, testability, and maintainability).
 
 ```csharp
@@ -114,7 +143,6 @@ using WorkflowForge.Operations;
 public class ValidateOrderOperation : WorkflowOperationBase
 {
     public override string Name => "ValidateOrder";
-    public override bool SupportsRestore => false; // Validation doesn't need rollback
 
     protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
@@ -129,7 +157,7 @@ public class ValidateOrderOperation : WorkflowOperationBase
             throw new InvalidOperationException("Order not found in foundry properties");
         }
 
-        foundry.Logger.LogInformation($"Validating order {order.Id}");
+        foundry.Logger.LogInformation("Validating order {OrderId}", order.Id);
 
         // Validation logic
         if (string.IsNullOrWhiteSpace(order.CustomerId))
@@ -162,7 +190,6 @@ using WorkflowForge.Operations;
 public class ProcessPaymentOperation : WorkflowOperationBase
 {
     public override string Name => "ProcessPayment";
-    public override bool SupportsRestore => true; // Payment can be refunded
 
     protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
@@ -175,7 +202,7 @@ public class ProcessPaymentOperation : WorkflowOperationBase
             throw new InvalidOperationException("Order not found");
         }
 
-        foundry.Logger.LogInformation($"Processing payment for order {order.Id}");
+        foundry.Logger.LogInformation("Processing payment for order {OrderId}", order.Id);
 
         // Simulate payment processing
         await Task.Delay(100, cancellationToken); // Simulate API call
@@ -190,7 +217,7 @@ public class ProcessPaymentOperation : WorkflowOperationBase
         // Store result in foundry properties
         foundry.SetProperty("PaymentResult", paymentResult);
         
-        foundry.Logger.LogInformation($"Payment processed: {paymentResult.TransactionId}");
+        foundry.Logger.LogInformation("Payment processed: {TransactionId}", paymentResult.TransactionId);
         return paymentResult;
     }
 
@@ -204,7 +231,7 @@ public class ProcessPaymentOperation : WorkflowOperationBase
         
         if (paymentResult != null && paymentResult.Success)
         {
-            foundry.Logger.LogWarning($"Refunding payment {paymentResult.TransactionId}");
+            foundry.Logger.LogWarning("Refunding payment {TransactionId}", paymentResult.TransactionId);
             
             // Simulate refund API call
             await Task.Delay(50, cancellationToken);
@@ -223,7 +250,6 @@ using WorkflowForge.Operations;
 public class FulfillOrderOperation : WorkflowOperationBase
 {
     public override string Name => "FulfillOrder";
-    public override bool SupportsRestore => false;
 
     protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
@@ -236,7 +262,7 @@ public class FulfillOrderOperation : WorkflowOperationBase
             throw new InvalidOperationException("Order not found");
         }
 
-        foundry.Logger.LogInformation($"Fulfilling order {order.Id}");
+        foundry.Logger.LogInformation("Fulfilling order {OrderId}", order.Id);
 
         // Simulate fulfillment
         await Task.Delay(50, cancellationToken);
@@ -270,7 +296,7 @@ Console.WriteLine($"Processing order {order.Id}...\n");
 // Build the workflow
 var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
     .WithDescription("Complete order processing workflow")
-    .WithVersion("2.0.0")
+    .WithVersion("2.1.0")
     .AddOperation(new ValidateOrderOperation())
     .AddOperation(new ProcessPaymentOperation())
     .AddOperation(new FulfillOrderOperation())
@@ -356,12 +382,14 @@ var value = foundry.GetPropertyOrDefault<T>("Key");
 var value = foundry.GetPropertyOrDefault<T>("Key", defaultValue);
 ```
 
-**SECONDARY**: Type-safe via `IWorkflowOperation<TInput, TOutput>` (for explicit input/output contracts)
+**SECONDARY**: Type-safe via `WorkflowOperationBase<TInput, TOutput>` (for explicit input/output contracts)
 
 ```csharp
-public class MyOperation : IWorkflowOperation<Order, OrderResult>
+public class MyOperation : WorkflowOperationBase<Order, OrderResult>
 {
-    public async Task<OrderResult> ForgeAsync(
+    public override string Name => "MyOperation";
+
+    protected override async Task<OrderResult> ForgeAsyncCore(
         Order input,
         IWorkflowFoundry foundry,
         CancellationToken cancellationToken)
@@ -376,13 +404,30 @@ public class MyOperation : IWorkflowOperation<Order, OrderResult>
 
 ### Compensation (Saga Pattern)
 
-WorkflowForge supports automatic rollback on failure:
+WorkflowForge supports automatic rollback on failure. Override `RestoreAsync` in your operation to support compensation. The base class provides a no-op default — operations that don't override it are safely skipped during compensation.
+
+For inline operations, use the optional `restoreAction` parameter:
+
+```csharp
+var workflow = WorkflowForge.CreateWorkflow("OrderWorkflow")
+    .AddOperation("ProcessPayment", async (foundry, ct) =>
+    {
+        foundry.Properties["payment_id"] = "PAY-123";
+        // Process payment...
+    },
+    restoreAction: async (foundry, ct) =>
+    {
+        var paymentId = foundry.Properties["payment_id"];
+        // Refund payment...
+    })
+    .Build();
+```
+
+For class-based operations, override `RestoreAsync`:
 
 ```csharp
 public class MyOperation : WorkflowOperationBase
 {
-    public override bool SupportsRestore => true;
-
     protected override async Task<object?> ForgeAsyncCore(...) 
     {
         // Forward logic
@@ -546,7 +591,7 @@ foundry.UseValidation(
 **Solution**: Use `foundry.SetProperty()` to store and `foundry.GetPropertyOrDefault()` to retrieve data.
 
 **Issue**: Compensation not running
-**Solution**: Set `SupportsRestore = true` on your operation. Compensation runs automatically when a workflow fails and operations with `SupportsRestore = true` have been executed.
+**Solution**: Override `RestoreAsync` in your operation to implement compensation logic. Compensation runs automatically when a workflow fails — operations that override `RestoreAsync` run their rollback; operations that don't override are safely skipped.
 
 ### Getting Help
 

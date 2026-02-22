@@ -29,7 +29,6 @@ namespace WorkflowForge.Tests.Operations
             Assert.NotNull(foreachOp);
             Assert.NotEqual(Guid.Empty, foreachOp.Id);
             Assert.Equal("ForEach[2]", foreachOp.Name);
-            Assert.True(foreachOp.SupportsRestore);
         }
 
         [Fact]
@@ -74,21 +73,6 @@ namespace WorkflowForge.Tests.Operations
             // Act & Assert
             Assert.Throws<ArgumentException>(() => new ForEachWorkflowOperation(operations, maxConcurrency: 0));
             Assert.Throws<ArgumentException>(() => new ForEachWorkflowOperation(operations, maxConcurrency: -1));
-        }
-
-        [Fact]
-        public void Constructor_WithOneNonRestorableOperation_SupportsRestoreIsFalse()
-        {
-            // Arrange
-            var restorableOp = CreateMockOperation("Op1", supportsRestore: true);
-            var nonRestorableOp = CreateMockOperation("Op2", supportsRestore: false);
-            var operations = new[] { restorableOp.Object, nonRestorableOp.Object };
-
-            // Act
-            var foreachOp = new ForEachWorkflowOperation(operations);
-
-            // Assert
-            Assert.False(foreachOp.SupportsRestore);
         }
 
         #endregion Constructor Tests
@@ -297,19 +281,6 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task RestoreAsync_WhenNotSupported_ThrowsNotSupportedException()
-        {
-            // Arrange
-            var operations = new[] { CreateMockOperation("Op1", supportsRestore: false).Object };
-            var foundry = CreateMockFoundry();
-            var foreachOp = new ForEachWorkflowOperation(operations);
-
-            // Act & Assert
-            await Assert.ThrowsAsync<NotSupportedException>(() =>
-                foreachOp.RestoreAsync(null, foundry.Object));
-        }
-
-        [Fact]
         public async Task RestoreAsync_WithMaxConcurrency_LimitsParallelRestoration()
         {
             // Arrange
@@ -495,12 +466,11 @@ namespace WorkflowForge.Tests.Operations
 
         #region Helper Methods
 
-        private Mock<IWorkflowOperation> CreateMockOperation(string name, bool supportsRestore = true)
+        private Mock<IWorkflowOperation> CreateMockOperation(string name)
         {
             var mock = new Mock<IWorkflowOperation>();
             mock.Setup(op => op.Id).Returns(Guid.NewGuid());
             mock.Setup(op => op.Name).Returns(name);
-            mock.Setup(op => op.SupportsRestore).Returns(supportsRestore);
             mock.Setup(op => op.ForgeAsync(It.IsAny<object>(), It.IsAny<IWorkflowFoundry>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((object?)null);
             mock.Setup(op => op.RestoreAsync(It.IsAny<object>(), It.IsAny<IWorkflowFoundry>(), It.IsAny<CancellationToken>()))

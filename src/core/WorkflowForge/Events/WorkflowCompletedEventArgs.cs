@@ -8,7 +8,7 @@ namespace WorkflowForge.Events
     /// Event arguments for workflow completed events.
     /// Fired when a workflow completes successfully.
     /// </summary>
-    public class WorkflowCompletedEventArgs : BaseWorkflowForgeEventArgs
+    public sealed class WorkflowCompletedEventArgs : BaseWorkflowForgeEventArgs
     {
         /// <summary>
         /// Gets the timestamp when the workflow completed.

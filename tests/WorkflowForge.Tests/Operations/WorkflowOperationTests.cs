@@ -75,25 +75,18 @@ public class WorkflowOperationBaseTests
     }
 
     [Fact]
-    public void SupportsRestore_DefaultImplementation_ReturnsFalse()
-    {
-        // Arrange
-        var operation = new TestOperation("Test");
-
-        // Act & Assert
-        Assert.False(operation.SupportsRestore);
-    }
-
-    [Fact]
-    public async Task RestoreAsync_DefaultImplementation_ThrowsNotSupportedException()
+    public async Task RestoreAsync_DefaultImplementation_ReturnsCompletedTask()
     {
         // Arrange
         var operation = new TestOperation("Test");
         var foundry = new Mock<IWorkflowFoundry>().Object;
 
-        // Act & Assert
-        await Assert.ThrowsAsync<NotSupportedException>(() =>
-            operation.RestoreAsync("output", foundry, CancellationToken.None));
+        // Act
+        var task = operation.RestoreAsync("output", foundry, CancellationToken.None);
+
+        // Assert
+        await task;
+        Assert.True(task.Status == TaskStatus.RanToCompletion);
     }
 
     [Fact]

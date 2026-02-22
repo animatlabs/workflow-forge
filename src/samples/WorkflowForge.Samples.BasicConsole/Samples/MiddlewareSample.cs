@@ -97,9 +97,9 @@ public class MiddlewareSample : ISample
         await foundry.ForgeAsync();
 
         Console.WriteLine("   Middleware pipeline executed successfully");
-        Console.WriteLine($"   Audit entries created: {foundry.Properties.GetValueOrDefault("audit_count", 0)}");
-        Console.WriteLine($"   Security checks performed: {foundry.Properties.GetValueOrDefault("security_checks", 0)}");
-        Console.WriteLine($"   Validation checks performed: {foundry.Properties.GetValueOrDefault("validation_checks", 0)}");
+        Console.WriteLine($"   Audit entries created: {(foundry.Properties.TryGetValue("audit_count", out var ac) ? ac : 0)}");
+        Console.WriteLine($"   Security checks performed: {(foundry.Properties.TryGetValue("security_checks", out var sc) ? sc : 0)}");
+        Console.WriteLine($"   Validation checks performed: {(foundry.Properties.TryGetValue("validation_checks", out var vc) ? vc : 0)}");
     }
 
     private static async Task RunConditionalMiddlewareDemo()
@@ -164,7 +164,7 @@ public class SecurityMiddleware : IWorkflowOperationMiddleware
             throw new UnauthorizedAccessException("Missing security credentials");
         }
 
-        if (!token.StartsWith("sec_token_") && !token.StartsWith("admin_token_"))
+        if (!token!.StartsWith("sec_token_") && !token.StartsWith("admin_token_"))
         {
             throw new UnauthorizedAccessException("Invalid security token");
         }
@@ -231,7 +231,7 @@ public class AuditMiddleware : IWorkflowOperationMiddleware
         {
             OperationId = operation.Id,
             OperationName = operation.Name,
-            UserId = foundry.Properties.GetValueOrDefault("user_id") as string,
+            UserId = (foundry.Properties.TryGetValue("user_id", out var uid) ? uid : null) as string,
             Timestamp = DateTime.UtcNow,
             WorkflowExecutionId = foundry.ExecutionId
         };
@@ -272,7 +272,7 @@ public class AuditMiddleware : IWorkflowOperationMiddleware
 /// <summary>
 /// Sample processing operation for middleware demonstration
 /// </summary>
-public class ProcessingOperation : IWorkflowOperation
+public class ProcessingOperation : WorkflowOperationBase
 {
     private readonly string _operationName;
     private readonly TimeSpan _processingTime;
@@ -283,11 +283,9 @@ public class ProcessingOperation : IWorkflowOperation
         _processingTime = processingTime;
     }
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => _operationName;
-    public bool SupportsRestore => false;
+    public override string Name => _operationName;
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Processing operation started: {OperationName}", _operationName);
 
@@ -305,20 +303,12 @@ public class ProcessingOperation : IWorkflowOperation
 
         return result;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException($"Operation {_operationName} does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Sample business operation for middleware demonstration
 /// </summary>
-public class BusinessOperation : IWorkflowOperation
+public class BusinessOperation : WorkflowOperationBase
 {
     private readonly string _operationName;
     private readonly string _businessData;
@@ -329,11 +319,9 @@ public class BusinessOperation : IWorkflowOperation
         _businessData = businessData;
     }
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => _operationName;
-    public bool SupportsRestore => false;
+    public override string Name => _operationName;
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Business operation started: {OperationName} with data: {BusinessData}",
             _operationName, _businessData);
@@ -345,7 +333,7 @@ public class BusinessOperation : IWorkflowOperation
         {
             OperationName = _operationName,
             BusinessData = _businessData,
-            ProcessedBy = foundry.Properties.GetValueOrDefault("user_id") as string,
+            ProcessedBy = (foundry.Properties.TryGetValue("user_id", out var uid2) ? uid2 : null) as string,
             CompletedAt = DateTime.UtcNow,
             Status = "BusinessCompleted"
         };
@@ -354,20 +342,12 @@ public class BusinessOperation : IWorkflowOperation
 
         return result;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException($"Operation {_operationName} does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Demo operation that simulates processing with configurable timing
 /// </summary>
-public class DemoOperation : IWorkflowOperation
+public class DemoOperation : WorkflowOperationBase
 {
     private readonly string _operationName;
     private readonly TimeSpan _processingTime;
@@ -378,11 +358,9 @@ public class DemoOperation : IWorkflowOperation
         _processingTime = processingTime;
     }
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => _operationName;
-    public bool SupportsRestore => false;
+    public override string Name => _operationName;
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Executing demo operation: {OperationName}", _operationName);
 
@@ -393,20 +371,12 @@ public class DemoOperation : IWorkflowOperation
 
         return $"Result from {_operationName}";
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException("This operation does not support restore.");
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Conditional operation that behaves differently based on foundry properties
 /// </summary>
-public class ConditionalOperation : IWorkflowOperation
+public class ConditionalOperation : WorkflowOperationBase
 {
     private readonly string _operationName;
 
@@ -415,11 +385,9 @@ public class ConditionalOperation : IWorkflowOperation
         _operationName = operationName ?? throw new ArgumentNullException(nameof(operationName));
     }
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => _operationName;
-    public bool SupportsRestore => false;
+    public override string Name => _operationName;
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var enableValidation = foundry.GetPropertyOrDefault<bool>("enable_validation", false);
         var enableCaching = foundry.GetPropertyOrDefault<bool>("enable_caching", false);
@@ -444,12 +412,4 @@ public class ConditionalOperation : IWorkflowOperation
 
         return $"Processed result from {_operationName}";
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException("This operation does not support restore.");
-    }
-
-    public void Dispose()
-    { }
 }

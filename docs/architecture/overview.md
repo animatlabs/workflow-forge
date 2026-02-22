@@ -233,12 +233,13 @@ public interface IWorkflowOperation : IDisposable
 {
     Guid Id { get; }
     string Name { get; }
-    bool SupportsRestore { get; }
     
     Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct);
     Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken ct);
 }
 ```
+
+**Compensation**: Override `RestoreAsync` in your operation to support compensation. The base class provides a no-op default — operations that don't override it are safely skipped during compensation.
 
 **Type-Safe Variant**:
 ```csharp
@@ -475,8 +476,6 @@ Every operation can implement compensation:
 ```csharp
 public class CreateOrderOperation : WorkflowOperationBase
 {
-    public override bool SupportsRestore => true;
-    
     protected override async Task<object?> ForgeAsyncCore(
         object? inputData, 
         IWorkflowFoundry foundry, 
@@ -507,7 +506,7 @@ public class CreateOrderOperation : WorkflowOperationBase
 4. Executes `RestoreAsync` in **reverse order** on completed operations
 5. Fires `CompensationTriggered`, `CompensationCompleted` events
 
-**Design Decision**: Compensation is opt-in via `SupportsRestore` property.
+**Design Decision**: Compensation runs on all completed operations. Override `RestoreAsync` to implement rollback logic; the base class no-op safely skips operations that don't need compensation.
 
 ---
 
@@ -539,7 +538,7 @@ All operations are async-first:
 - Direct execution paths
 - No reflection in hot paths
 
-**Result**: 11-540x faster than competitors, 9-573x less memory (12 scenarios tested).
+**Result**: 13-522x faster than competitors, 6-578x less memory (12 scenarios tested across .NET 10.0, .NET 8.0, and .NET Framework 4.8).
 
 ---
 

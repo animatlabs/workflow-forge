@@ -1,5 +1,5 @@
 using BenchmarkDotNet.Attributes;
-using WorkflowForge.Benchmarks.Comparative.Implementations.Elsa;
+using BenchmarkDotNet.Jobs;
 using WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowCore;
 using WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
@@ -7,7 +7,9 @@ using WorkflowForge.Benchmarks.Comparative.Scenarios;
 namespace WorkflowForge.Benchmarks.Comparative.Benchmarks;
 
 [MemoryDiagnoser]
-[SimpleJob(warmupCount: 5, iterationCount: 50)]
+[SimpleJob(RuntimeMoniker.Net48, warmupCount: 5, iterationCount: 50)]
+[SimpleJob(RuntimeMoniker.Net80, warmupCount: 5, iterationCount: 50)]
+[SimpleJob(RuntimeMoniker.Net10_0, warmupCount: 5, iterationCount: 50)]
 [MarkdownExporter]
 [HtmlExporter]
 public class Scenario6Benchmark
@@ -24,7 +26,7 @@ public class Scenario6Benchmark
         _workflowForgeScenario.SetupAsync().GetAwaiter().GetResult();
         _workflowCoreScenario = new Scenario6_ErrorHandling_WorkflowCore(parameters);
         _workflowCoreScenario.SetupAsync().GetAwaiter().GetResult();
-        _elsaScenario = new Scenario6_ErrorHandling_Elsa(parameters);
+        _elsaScenario = ElsaScenarioFactory.Create(6, parameters);
         _elsaScenario.SetupAsync().GetAwaiter().GetResult();
     }
 

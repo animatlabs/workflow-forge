@@ -210,7 +210,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog
             return PushProperties(properties);
         }
 
-        private IDisposable PushProperties(IDictionary<string, string>? properties)
+        private static IDisposable PushProperties(IDictionary<string, string>? properties)
         {
             if (properties == null)
             {

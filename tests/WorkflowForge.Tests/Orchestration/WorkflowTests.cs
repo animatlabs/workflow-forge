@@ -132,46 +132,6 @@ namespace WorkflowForge.Tests.Orchestration
         #region Property Tests
 
         [Fact]
-        public void SupportsRestore_WhenAllOperationsSupportsRestore_ReturnsTrue()
-        {
-            // Arrange
-            var operations = new List<IWorkflowOperation>
-            {
-                CreateMockOperation("Op1", supportsRestore: true).Object,
-                CreateMockOperation("Op2", supportsRestore: true).Object
-            };
-            var workflow = CreateWorkflow(operations: operations);
-
-            // Act & Assert
-            Assert.True(workflow.SupportsRestore);
-        }
-
-        [Fact]
-        public void SupportsRestore_WhenSomeOperationsDoNotSupportRestore_ReturnsFalse()
-        {
-            // Arrange
-            var operations = new List<IWorkflowOperation>
-            {
-                CreateMockOperation("Op1", supportsRestore: true).Object,
-                CreateMockOperation("Op2", supportsRestore: false).Object
-            };
-            var workflow = CreateWorkflow(operations: operations);
-
-            // Act & Assert
-            Assert.False(workflow.SupportsRestore);
-        }
-
-        [Fact]
-        public void SupportsRestore_WhenNoOperations_ReturnsTrue()
-        {
-            // Arrange
-            var workflow = CreateWorkflow(operations: new List<IWorkflowOperation>());
-
-            // Act & Assert
-            Assert.True(workflow.SupportsRestore);
-        }
-
-        [Fact]
         public void Operations_ReturnsReadOnlyList()
         {
             // Arrange
@@ -360,12 +320,11 @@ namespace WorkflowForge.Tests.Orchestration
 
         #region Helper Methods
 
-        private Mock<IWorkflowOperation> CreateMockOperation(string name, bool supportsRestore = true)
+        private Mock<IWorkflowOperation> CreateMockOperation(string name)
         {
             var mock = new Mock<IWorkflowOperation>();
             mock.Setup(op => op.Id).Returns(Guid.NewGuid());
             mock.Setup(op => op.Name).Returns(name);
-            mock.Setup(op => op.SupportsRestore).Returns(supportsRestore);
             return mock;
         }
 

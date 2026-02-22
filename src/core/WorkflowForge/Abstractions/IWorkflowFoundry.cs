@@ -48,7 +48,7 @@ namespace WorkflowForge.Abstractions
     /// The foundry is the execution environment where operations are performed.
     /// It provides thread-safe access to shared properties, logging capabilities, and dependency injection services.
     /// Each foundry instance represents an isolated execution context that can host one or more workflow executions.
-    /// 
+    ///
     /// <para><strong>Interface Segregation:</strong></para>
     /// <para>
     /// IWorkflowFoundry composes multiple focused interfaces:

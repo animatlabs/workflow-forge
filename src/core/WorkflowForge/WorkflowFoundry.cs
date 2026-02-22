@@ -5,7 +5,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 using WorkflowForge.Events;
+using WorkflowForge.Extensions;
 using WorkflowForge.Loggers;
 using WorkflowForge.Options;
 
@@ -21,7 +23,6 @@ namespace WorkflowForge
         private readonly List<IWorkflowOperation> _operations = new();
         private readonly List<IWorkflowOperationMiddleware> _middlewares = new();
         private readonly object _middlewareLock = new();
-        private readonly object _executionLock = new();
         private readonly ISystemTimeProvider _timeProvider;
         private readonly WorkflowForgeOptions _options;
         private volatile bool _disposed;
@@ -239,7 +240,11 @@ namespace WorkflowForge
                     try
                     {
                         // FIRE: OperationStarted event
-                        OperationStarted?.Invoke(this, new OperationStartedEventArgs(operation, this, null));
+                        try { OperationStarted?.Invoke(this, new OperationStartedEventArgs(operation, this, null)); }
+                        catch (Exception ex) { Logger.LogError(Logger.CreateErrorProperties(ex, "OperationStarted"), ex, "OperationStarted event handler error"); }
+
+                        // Store current operation index so middleware can access it
+                        Properties[FoundryPropertyKeys.CurrentOperationIndex] = i;
 
                         var result = await ExecuteOperationWithMiddleware(operation, inputData, cancellationToken).ConfigureAwait(false);
                         if (Options.EnableOutputChaining)
@@ -247,26 +252,30 @@ namespace WorkflowForge
                             inputData = result;
                         }
 
-                        Properties[$"Operation.{operation.Id}.Output"] = result;
-                        Properties["Operation.LastCompletedIndex"] = i;
-                        Properties["Operation.LastCompletedName"] = operation.Name;
-                        Properties["Operation.LastCompletedId"] = operation.Id;
+                        Properties[string.Format(FoundryPropertyKeys.OperationOutputFormat, i, operation.Name)] = result;
+                        Properties[FoundryPropertyKeys.LastCompletedIndex] = i;
+                        Properties[FoundryPropertyKeys.LastCompletedName] = operation.Name;
+                        Properties[FoundryPropertyKeys.LastCompletedId] = operation.Id;
 
                         var operationDuration = _timeProvider.UtcNow - operationStartTime;
 
                         // FIRE: OperationCompleted event
-                        OperationCompleted?.Invoke(this, new OperationCompletedEventArgs(
+                        try
+                        {
+                            OperationCompleted?.Invoke(this, new OperationCompletedEventArgs(
                             operation,
                             this,
                             null,
                             result,
                             TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
+                        }
+                        catch (Exception ex) { Logger.LogError(Logger.CreateErrorProperties(ex, "OperationCompleted"), ex, "OperationCompleted event handler error"); }
                     }
                     catch (Exception ex)
                     {
-                        Properties["Operation.LastFailedIndex"] = i;
-                        Properties["Operation.LastFailedName"] = operation.Name;
-                        Properties["Operation.LastFailedId"] = operation.Id;
+                        Properties[FoundryPropertyKeys.LastFailedIndex] = i;
+                        Properties[FoundryPropertyKeys.LastFailedName] = operation.Name;
+                        Properties[FoundryPropertyKeys.LastFailedId] = operation.Id;
 
                         var operationDuration = _timeProvider.UtcNow - operationStartTime;
 
@@ -348,6 +357,11 @@ namespace WorkflowForge
         public void Dispose()
         {
             if (_disposed) return;
+
+            OperationStarted = null;
+            OperationCompleted = null;
+            OperationFailed = null;
+
             _disposed = true;
             // Dispose operations
             lock (_operations)
@@ -381,6 +395,5 @@ namespace WorkflowForge
                 throw new InvalidOperationException("Foundry pipeline is frozen during execution.");
             }
         }
-
     }
 }

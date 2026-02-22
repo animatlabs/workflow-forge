@@ -1,5 +1,6 @@
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -46,9 +47,9 @@ public class ClassBasedOperationsSample : ISample
 
     private sealed class OrderContext
     {
-        public string UserName { get; init; } = string.Empty;
-        public decimal OrderTotal { get; init; }
-        public int ItemsCount { get; init; }
+        public string UserName { get; set; } = string.Empty;
+        public decimal OrderTotal { get; set; }
+        public int ItemsCount { get; set; }
         public bool IsValid { get; set; }
         public string ValidationMessage { get; set; } = string.Empty;
         public decimal ShippingCost { get; set; }
@@ -60,13 +61,11 @@ public class ClassBasedOperationsSample : ISample
         public string ConfirmationId { get; set; } = string.Empty;
     }
 
-    private sealed class ValidateOrderOperation : IWorkflowOperation
+    private sealed class ValidateOrderOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "ValidateOrder";
-        public bool SupportsRestore => false;
+        public override string Name => "ValidateOrder";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             Console.WriteLine("   [INFO] Validating order...");
             await Task.Delay(50, cancellationToken);
@@ -91,21 +90,13 @@ public class ClassBasedOperationsSample : ISample
             Console.WriteLine($"   [SUCCESS] {context.ValidationMessage}");
             return context;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
-    private sealed class CalculateShippingOperation : IWorkflowOperation
+    private sealed class CalculateShippingOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "CalculateShipping";
-        public bool SupportsRestore => false;
+        public override string Name => "CalculateShipping";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var context = inputData as OrderContext ?? throw new InvalidOperationException("Order context missing.");
             Console.WriteLine("   [INFO] Calculating shipping...");
@@ -133,21 +124,13 @@ public class ClassBasedOperationsSample : ISample
             Console.WriteLine($"   [INFO] {message}");
             return context;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
-    private sealed class GenerateOrderSummaryOperation : IWorkflowOperation
+    private sealed class GenerateOrderSummaryOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "GenerateOrderSummary";
-        public bool SupportsRestore => false;
+        public override string Name => "GenerateOrderSummary";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var context = inputData as OrderContext ?? throw new InvalidOperationException("Order context missing.");
             Console.WriteLine("   [INFO] Generating order summary...");
@@ -171,21 +154,13 @@ public class ClassBasedOperationsSample : ISample
             Console.WriteLine(summary.Replace("\n", "\n     "));
             return context;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
-    private sealed class ProcessPaymentOperation : IWorkflowOperation
+    private sealed class ProcessPaymentOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "ProcessPayment";
-        public bool SupportsRestore => false;
+        public override string Name => "ProcessPayment";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var context = inputData as OrderContext ?? throw new InvalidOperationException("Order context missing.");
             Console.WriteLine("   [INFO] Processing payment...");
@@ -199,8 +174,8 @@ public class ClassBasedOperationsSample : ISample
             Console.WriteLine("   [INFO] Authorizing transaction...");
             await Task.Delay(120, cancellationToken);
 
-            context.TransactionId = $"TXN-{DateTime.UtcNow:yyyyMMdd}-{Random.Shared.Next(10000, 99999)}";
-            context.AuthCode = Random.Shared.Next(100000, 999999).ToString();
+            context.TransactionId = $"TXN-{DateTime.UtcNow:yyyyMMdd}-{ThreadSafeRandom.Next(10000, 99999)}";
+            context.AuthCode = ThreadSafeRandom.Next(100000, 999999).ToString();
 
             foundry.Properties["transaction_id"] = context.TransactionId;
             foundry.Properties["auth_code"] = context.AuthCode;
@@ -210,28 +185,20 @@ public class ClassBasedOperationsSample : ISample
             Console.WriteLine($"   [SUCCESS] Payment processed! Transaction: {context.TransactionId}, Auth: {context.AuthCode}");
             return context;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
-    private sealed class SendConfirmationOperation : IWorkflowOperation
+    private sealed class SendConfirmationOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "SendConfirmation";
-        public bool SupportsRestore => false;
+        public override string Name => "SendConfirmation";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var context = inputData as OrderContext ?? throw new InvalidOperationException("Order context missing.");
             Console.WriteLine("   [INFO] Sending order confirmation...");
 
             await Task.Delay(90, cancellationToken);
 
-            context.ConfirmationId = $"CONF-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+            context.ConfirmationId = $"CONF-{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
             foundry.Properties["confirmation_id"] = context.ConfirmationId;
             foundry.Properties["confirmation_sent"] = true;
             foundry.Properties["workflow_completed"] = true;
@@ -240,11 +207,5 @@ public class ClassBasedOperationsSample : ISample
             Console.WriteLine($"   [INFO] Final amount charged: ${context.FinalTotal:F2}");
             return context;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 }

@@ -8,7 +8,7 @@ namespace WorkflowForge.Exceptions
     /// Helps identify configuration issues during workflow setup and initialization.
     /// </summary>
     [Serializable]
-    public class WorkflowConfigurationException : WorkflowForgeException
+    public sealed class WorkflowConfigurationException : WorkflowForgeException
     {
         /// <summary>Gets the configuration key that caused the error, if applicable.</summary>
         public string? ConfigurationKey { get; }
@@ -27,7 +27,7 @@ namespace WorkflowForge.Exceptions
         }
 
         /// <summary>Initializes a new instance with serialized data.</summary>
-        protected WorkflowConfigurationException(SerializationInfo info, StreamingContext context) : base(info, context)
+        private WorkflowConfigurationException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
             ConfigurationKey = info.GetString(nameof(ConfigurationKey));
         }

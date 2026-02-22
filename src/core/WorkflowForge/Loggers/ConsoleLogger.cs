@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using WorkflowForge.Abstractions;
 
 namespace WorkflowForge.Loggers
@@ -177,20 +178,64 @@ namespace WorkflowForge.Loggers
             return EmptyDisposable.Instance;
         }
 
-        private string FormatMessage(string message, params object[] args)
+        private static string FormatMessage(string message, params object[] args)
         {
+            if (args == null || args.Length == 0)
+                return message;
+
             try
             {
-                return args?.Length > 0 ? string.Format(message, args) : message;
+                var positionalMessage = ConvertTemplateToPositional(message);
+                return string.Format(positionalMessage, args);
             }
-            catch
+            catch (FormatException)
             {
-                // Fallback if formatting fails
                 return message;
             }
         }
 
-        private string FormatMessageWithProperties(string message, IDictionary<string, string>? properties, params object[] args)
+        /// <summary>
+        /// Converts structured logging templates (e.g., "{OperationName}") to positional
+        /// format strings (e.g., "{0}") so that <see cref="string.Format(string, object[])"/>
+        /// can process them. Already-positional placeholders like "{0}" are preserved.
+        /// </summary>
+        private static string ConvertTemplateToPositional(string template)
+        {
+            int index = 0;
+            int pos = 0;
+            var sb = new StringBuilder(template.Length);
+
+            while (pos < template.Length)
+            {
+                var ch = template[pos];
+
+                if (ch == '{')
+                {
+                    int end = template.IndexOf('}', pos + 1);
+                    if (end > pos)
+                    {
+                        var token = template.Substring(pos + 1, end - pos - 1);
+                        if (int.TryParse(token, out _))
+                        {
+                            sb.Append('{').Append(token).Append('}');
+                        }
+                        else
+                        {
+                            sb.Append('{').Append(index++).Append('}');
+                        }
+                        pos = end + 1;
+                        continue;
+                    }
+                }
+
+                sb.Append(ch);
+                pos++;
+            }
+
+            return sb.ToString();
+        }
+
+        private static string FormatMessageWithProperties(string message, IDictionary<string, string>? properties, params object[] args)
         {
             var formattedMessage = FormatMessage(message, args);
 

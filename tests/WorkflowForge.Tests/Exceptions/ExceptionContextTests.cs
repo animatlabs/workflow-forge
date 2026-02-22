@@ -1,6 +1,5 @@
 using System;
 using WorkflowForge.Exceptions;
-using Xunit;
 
 namespace WorkflowForge.Tests.Exceptions
 {
@@ -93,7 +92,7 @@ namespace WorkflowForge.Tests.Exceptions
             Assert.Contains("Operation=TestOp", exception.Message);
         }
 
-        #endregion
+        #endregion WorkflowOperationException Tests
 
         #region WorkflowRestoreException Tests
 
@@ -147,6 +146,6 @@ namespace WorkflowForge.Tests.Exceptions
             Assert.Same(innerException, exception.InnerException);
         }
 
-        #endregion
+        #endregion WorkflowRestoreException Tests
     }
 }

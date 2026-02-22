@@ -1,10 +1,8 @@
 # Benchmark Exclusions and Rationale
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
+![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
 
-**Last Updated**: January 2026
+**Last Updated**: February 2026
 
 ## Scenario 8: Complete Lifecycle - WorkflowCore Excluded
 

@@ -7,7 +7,7 @@ namespace WorkflowForge.Events
     /// Event arguments for operation restore completed events.
     /// Fired when an operation's restoration (compensation/rollback) completes successfully.
     /// </summary>
-    public class OperationRestoreCompletedEventArgs : BaseWorkflowForgeEventArgs
+    public sealed class OperationRestoreCompletedEventArgs : BaseWorkflowForgeEventArgs
     {
         /// <summary>
         /// Gets the operation that was restored.

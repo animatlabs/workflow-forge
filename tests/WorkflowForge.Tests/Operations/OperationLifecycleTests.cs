@@ -179,6 +179,6 @@ namespace WorkflowForge.Tests.Operations
             }
         }
 
-        #endregion
+        #endregion Test Operations
     }
 }

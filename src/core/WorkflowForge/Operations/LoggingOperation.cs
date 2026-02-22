@@ -87,7 +87,7 @@ namespace WorkflowForge.Operations
             return Task.FromResult(inputData);
         }
 
-        // Uses base RestoreAsync behavior which throws when SupportsRestore is false
+        // Inherits base no-op RestoreAsync — logging has no state to restore
 
         /// <summary>
         /// Creates a trace-level logging operation.

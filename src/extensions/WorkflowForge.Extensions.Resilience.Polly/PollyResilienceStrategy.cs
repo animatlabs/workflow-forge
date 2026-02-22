@@ -140,7 +140,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     UseJitter = true,
                     OnRetry = args =>
                     {
-                        logger?.LogWarning($"Retry attempt {args.AttemptNumber} in {args.RetryDelay.TotalMilliseconds}ms due to: {args.Outcome.Exception?.Message}");
+                        logger?.LogWarning("Retry attempt {AttemptNumber} in {DelayMs}ms due to: {ErrorMessage}",
+                            args.AttemptNumber, args.RetryDelay.TotalMilliseconds, args.Outcome.Exception?.Message);
                         return default;
                     }
                 })
@@ -174,7 +175,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     BreakDuration = breakDuration,
                     OnOpened = args =>
                     {
-                        logger?.LogWarning($"Circuit breaker opened for {breakDuration.TotalSeconds}s");
+                        logger?.LogWarning("Circuit breaker opened for {BreakDurationSeconds}s", breakDuration.TotalSeconds);
                         return default;
                     },
                     OnClosed = args =>
@@ -226,7 +227,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     UseJitter = true,
                     OnRetry = args =>
                     {
-                        logger?.LogWarning($"Retry attempt {args.AttemptNumber} in {args.RetryDelay.TotalMilliseconds}ms due to: {args.Outcome.Exception?.Message}");
+                        logger?.LogWarning("Retry attempt {AttemptNumber} in {DelayMs}ms due to: {ErrorMessage}",
+                            args.AttemptNumber, args.RetryDelay.TotalMilliseconds, args.Outcome.Exception?.Message);
                         return default;
                     }
                 })
@@ -238,7 +240,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     BreakDuration = breakDuration,
                     OnOpened = args =>
                     {
-                        logger?.LogWarning($"Circuit breaker opened for {breakDuration.TotalSeconds}s");
+                        logger?.LogWarning("Circuit breaker opened for {BreakDurationSeconds}s", breakDuration.TotalSeconds);
                         return default;
                     },
                     OnClosed = args =>

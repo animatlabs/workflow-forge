@@ -57,7 +57,7 @@ namespace WorkflowForge.Operations
             return inputData; // Pass through input data unchanged
         }
 
-        // Uses base RestoreAsync behavior which throws when SupportsRestore is false
+        // Inherits base no-op RestoreAsync — delay has no state to restore
 
         /// <summary>
         /// Creates a delay operation with the specified duration.

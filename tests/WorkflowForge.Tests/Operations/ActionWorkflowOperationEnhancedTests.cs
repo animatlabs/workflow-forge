@@ -250,45 +250,40 @@ namespace WorkflowForge.Tests.Operations
         #region RestoreAsync Tests
 
         [Fact]
-        public async Task RestoreAsync_Always_ThrowsNotSupportedException()
+        public async Task RestoreAsync_Always_CompletesSuccessfully()
         {
             // Arrange
             Func<object?, IWorkflowFoundry, CancellationToken, Task> action = (_, _, _) => Task.CompletedTask;
             var operation = new ActionWorkflowOperation("RestoreTest", action);
             var foundry = CreateMockFoundry();
 
-            // Act & Assert
-            await Assert.ThrowsAsync<NotSupportedException>(() =>
-                operation.RestoreAsync("output", foundry.Object));
+            // Act
+            var task = operation.RestoreAsync("output", foundry.Object);
+
+            // Assert
+            await task;
+            Assert.True(task.Status == TaskStatus.RanToCompletion);
         }
 
         [Fact]
-        public async Task RestoreAsync_WithNullOutputData_ThrowsNotSupportedException()
+        public async Task RestoreAsync_WithNullOutputData_CompletesSuccessfully()
         {
             // Arrange
             Func<object?, IWorkflowFoundry, CancellationToken, Task> action = (_, _, _) => Task.CompletedTask;
             var operation = new ActionWorkflowOperation("RestoreNullTest", action);
             var foundry = CreateMockFoundry();
 
-            // Act & Assert
-            await Assert.ThrowsAsync<NotSupportedException>(() =>
-                operation.RestoreAsync(null, foundry.Object));
+            // Act
+            var task = operation.RestoreAsync(null, foundry.Object);
+
+            // Assert
+            await task;
+            Assert.True(task.Status == TaskStatus.RanToCompletion);
         }
 
         #endregion RestoreAsync Tests
 
         #region Properties Tests
-
-        [Fact]
-        public void SupportsRestore_Always_ReturnsFalse()
-        {
-            // Arrange
-            Func<object?, IWorkflowFoundry, CancellationToken, Task> action = (_, _, _) => Task.CompletedTask;
-            var operation = new ActionWorkflowOperation("RestorePropertyTest", action);
-
-            // Act & Assert
-            Assert.False(operation.SupportsRestore);
-        }
 
         [Fact]
         public void Id_IsUniqueForEachInstance()
@@ -340,7 +335,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task RestoreAsync_AfterDispose_ThrowsNotSupportedException()
+        public async Task RestoreAsync_AfterDispose_CompletesSuccessfully()
         {
             // Arrange
             Func<object?, IWorkflowFoundry, CancellationToken, Task> action = (_, _, _) => Task.CompletedTask;
@@ -348,9 +343,12 @@ namespace WorkflowForge.Tests.Operations
             var foundry = CreateMockFoundry();
             operation.Dispose();
 
-            // Act & Assert - ActionWorkflowOperation always throws NotSupportedException for restore
-            await Assert.ThrowsAsync<NotSupportedException>(() =>
-                operation.RestoreAsync("output", foundry.Object));
+            // Act - RestoreAsync returns Task.CompletedTask by default (no-op)
+            var task = operation.RestoreAsync("output", foundry.Object);
+
+            // Assert
+            await task;
+            Assert.True(task.Status == TaskStatus.RanToCompletion);
         }
 
         #endregion Dispose Tests
@@ -399,7 +397,7 @@ namespace WorkflowForge.Tests.Operations
         {
             // Arrange
             var largeData = new byte[1024 * 1024]; // 1MB of data
-            new Random().NextBytes(largeData);
+            ThreadSafeRandom.NextBytes(largeData);
 
             byte[]? capturedData = null;
             Func<object?, IWorkflowFoundry, CancellationToken, Task> action = (input, foundry, ct) =>

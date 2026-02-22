@@ -151,7 +151,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
             var result = validator.Validate(null, options);
 
             Assert.False(result.Succeeded);
-            Assert.NotEmpty(result.Failures);
+            Assert.NotEmpty(result.Failures!);
         }
 
         [Fact]

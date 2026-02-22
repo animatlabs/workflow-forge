@@ -1,8 +1,6 @@
 # WorkflowForge.Extensions.Persistence
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
+![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
 
 Workflow state persistence extension for WorkflowForge with in-memory and SQLite providers for checkpointing and recovery.
 

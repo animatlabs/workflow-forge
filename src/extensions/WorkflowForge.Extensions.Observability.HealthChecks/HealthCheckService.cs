@@ -18,13 +18,31 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         private readonly IWorkflowForgeLogger _logger;
         private readonly ISystemTimeProvider _timeProvider;
         private readonly Timer? _periodicCheckTimer;
-        private readonly TimeSpan _checkInterval;
+        private readonly object _resultsLock = new object();
         private volatile bool _disposed;
 
         /// <summary>
         /// Gets the results of the last health check execution.
         /// </summary>
-        public IReadOnlyDictionary<string, HealthCheckResult> LastResults { get; private set; } =
+        public IReadOnlyDictionary<string, HealthCheckResult> LastResults
+        {
+            get
+            {
+                lock (_resultsLock)
+                {
+                    return _lastResults;
+                }
+            }
+            private set
+            {
+                lock (_resultsLock)
+                {
+                    _lastResults = value;
+                }
+            }
+        }
+
+        private IReadOnlyDictionary<string, HealthCheckResult> _lastResults =
             new Dictionary<string, HealthCheckResult>();
 
         /// <summary>
@@ -34,16 +52,20 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         {
             get
             {
-                if (!LastResults.Any())
+                lock (_resultsLock)
+                {
+                    var results = _lastResults;
+                    if (!results.Any())
+                        return HealthStatus.Healthy;
+
+                    if (results.Values.Any(r => r.Status == HealthStatus.Unhealthy))
+                        return HealthStatus.Unhealthy;
+
+                    if (results.Values.Any(r => r.Status == HealthStatus.Degraded))
+                        return HealthStatus.Degraded;
+
                     return HealthStatus.Healthy;
-
-                if (LastResults.Values.Any(r => r.Status == HealthStatus.Unhealthy))
-                    return HealthStatus.Unhealthy;
-
-                if (LastResults.Values.Any(r => r.Status == HealthStatus.Degraded))
-                    return HealthStatus.Degraded;
-
-                return HealthStatus.Healthy;
+                }
             }
         }
 
@@ -58,7 +80,6 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
-            _checkInterval = checkInterval ?? TimeSpan.FromMinutes(1);
 
             if (registerBuiltInHealthChecks)
             {
@@ -67,12 +88,13 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
 
             if (checkInterval.HasValue)
             {
-                _periodicCheckTimer = new Timer(PeriodicHealthCheck, null, _checkInterval, _checkInterval);
+                var interval = checkInterval.Value;
+                _periodicCheckTimer = new Timer(PeriodicHealthCheck, null, interval, interval);
 
                 var startupProperties = new Dictionary<string, string>
                 {
                     [HealthCheckPropertyNames.HealthStatus] = "ServiceStartup",
-                    [HealthCheckPropertyNames.MonitoringIntervalMs] = _checkInterval.TotalMilliseconds.ToString("F0")
+                    [HealthCheckPropertyNames.MonitoringIntervalMs] = interval.TotalMilliseconds.ToString("F0")
                 };
 
                 _logger.LogInformation(startupProperties, HealthCheckLogMessages.HealthCheckServiceStarted);
@@ -327,6 +349,7 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
             }
 
             _healthChecks.Clear();
+            GC.SuppressFinalize(this);
 
             var serviceDisposalProperties = new Dictionary<string, string>
             {

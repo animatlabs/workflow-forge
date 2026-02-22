@@ -134,15 +134,13 @@ public class ErrorHandlingSample : ISample
     }
 }
 
-public class RetryableExternalServiceOperation : IWorkflowOperation
+public class RetryableExternalServiceOperation : WorkflowOperationBase
 {
     private static int _attemptCount = 0;
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "RetryableExternalService";
-    public bool SupportsRestore => false;
+    public override string Name => "RetryableExternalService";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var maxRetries = (int)foundry.Properties["max_retries"]!;
         var currentAttempt = 0;
@@ -190,25 +188,20 @@ public class RetryableExternalServiceOperation : IWorkflowOperation
         throw new WorkflowExecutionException($"Operation failed after {maxRetries + 1} attempts", lastException!);
     }
 
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("service_response", out _);
         foundry.Properties.TryRemove("response_time", out _);
         foundry.Properties.TryRemove("all_retries_exhausted", out _);
         return Task.CompletedTask;
     }
-
-    public void Dispose()
-    { }
 }
 
-public class TryPrimaryPaymentOperation : IWorkflowOperation
+public class TryPrimaryPaymentOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "TryPrimaryPayment";
-    public bool SupportsRestore => true;
+    public override string Name => "TryPrimaryPayment";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var service = (string)foundry.Properties["primary_service"]!;
         var amount = (decimal)foundry.Properties["amount"]!;
@@ -218,7 +211,7 @@ public class TryPrimaryPaymentOperation : IWorkflowOperation
         await Task.Delay(150, cancellationToken);
 
         // Simulate primary payment failure
-        if (Random.Shared.NextDouble() < 0.7) // 70% chance of failure
+        if (ThreadSafeRandom.NextDouble() < 0.7) // 70% chance of failure
         {
             foundry.Properties["primary_payment_failed"] = true;
             foundry.Properties["primary_failure_reason"] = "Service temporarily unavailable";
@@ -227,7 +220,7 @@ public class TryPrimaryPaymentOperation : IWorkflowOperation
             return "Primary payment failed";
         }
 
-        var transactionId = $"PRI-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+        var transactionId = $"PRI-{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
         foundry.Properties["transaction_id"] = transactionId;
         foundry.Properties["payment_method"] = "Primary";
 
@@ -235,7 +228,7 @@ public class TryPrimaryPaymentOperation : IWorkflowOperation
         return $"Primary payment successful: {transactionId}";
     }
 
-    public async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         if (foundry.Properties.TryGetValue("transaction_id", out var txnId))
         {
@@ -245,18 +238,13 @@ public class TryPrimaryPaymentOperation : IWorkflowOperation
             foundry.Properties.TryRemove("payment_method", out _);
         }
     }
-
-    public void Dispose()
-    { }
 }
 
-public class TryFallbackPaymentOperation : IWorkflowOperation
+public class TryFallbackPaymentOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "TryFallbackPayment";
-    public bool SupportsRestore => true;
+    public override string Name => "TryFallbackPayment";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var service = (string)foundry.Properties["fallback_service"]!;
         var amount = (decimal)foundry.Properties["amount"]!;
@@ -266,7 +254,7 @@ public class TryFallbackPaymentOperation : IWorkflowOperation
         await Task.Delay(200, cancellationToken);
 
         // Fallback has better success rate
-        if (Random.Shared.NextDouble() < 0.2) // 20% chance of failure
+        if (ThreadSafeRandom.NextDouble() < 0.2) // 20% chance of failure
         {
             foundry.Properties["fallback_payment_failed"] = true;
             foundry.Properties["fallback_failure_reason"] = "Insufficient funds";
@@ -275,7 +263,7 @@ public class TryFallbackPaymentOperation : IWorkflowOperation
             return "Fallback payment failed";
         }
 
-        var transactionId = $"BAK-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+        var transactionId = $"BAK-{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
         foundry.Properties["transaction_id"] = transactionId;
         foundry.Properties["payment_method"] = "Fallback";
 
@@ -283,7 +271,7 @@ public class TryFallbackPaymentOperation : IWorkflowOperation
         return $"Fallback payment successful: {transactionId}";
     }
 
-    public async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         if (foundry.Properties.TryGetValue("transaction_id", out var txnId))
         {
@@ -293,25 +281,20 @@ public class TryFallbackPaymentOperation : IWorkflowOperation
             foundry.Properties.TryRemove("payment_method", out _);
         }
     }
-
-    public void Dispose()
-    { }
 }
 
-public class UnstableServiceOperation : IWorkflowOperation
+public class UnstableServiceOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "UnstableService";
-    public bool SupportsRestore => false;
+    public override string Name => "UnstableService";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine($"   [INFO] Calling unstable service...");
 
         await Task.Delay(100, cancellationToken);
 
         // Simulate service instability
-        if (Random.Shared.NextDouble() < 0.6) // 60% chance of failure
+        if (ThreadSafeRandom.NextDouble() < 0.6) // 60% chance of failure
         {
             var failureCount = (int)foundry.Properties["failure_count"]! + 1;
             var threshold = (int)foundry.Properties["failure_threshold"]!;
@@ -330,122 +313,77 @@ public class UnstableServiceOperation : IWorkflowOperation
         Console.WriteLine($"   [SUCCESS] Service call succeeded");
         return "Service call successful";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-    {
-        return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    { }
 }
 
 // Helper operations
-public class InitializeConnectionOperation : IWorkflowOperation
+public class InitializeConnectionOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "InitializeConnection";
-    public bool SupportsRestore => false;
+    public override string Name => "InitializeConnection";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [INFO] Initializing connection...");
         await Task.Delay(50, cancellationToken);
         foundry.Properties["connection_initialized"] = true;
         return "Connection initialized";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-    public void Dispose()
-    { }
 }
 
-public class ValidateResponseOperation : IWorkflowOperation
+public class ValidateResponseOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "ValidateResponse";
-    public bool SupportsRestore => false;
+    public override string Name => "ValidateResponse";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [SUCCESS] Validating service response...");
         await Task.Delay(30, cancellationToken);
         return "Response validated";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-    public void Dispose()
-    { }
 }
 
-public class LogSuccessOperation : IWorkflowOperation
+public class LogSuccessOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "LogSuccess";
-    public bool SupportsRestore => false;
+    public override string Name => "LogSuccess";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [INFO] Logging successful operation");
         await Task.Delay(20, cancellationToken);
         return "Success logged";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-    public void Dispose()
-    { }
 }
 
 // More helper operations with minimal implementation
-public class PreparePaymentOperation : IWorkflowOperation
+public class PreparePaymentOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "PreparePayment";
-    public bool SupportsRestore => false;
+    public override string Name => "PreparePayment";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [INFO] Preparing payment...");
         await Task.Delay(50, cancellationToken);
         return "Payment prepared";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-    public void Dispose()
-    { }
 }
 
-public class RequireManualInterventionOperation : IWorkflowOperation
+public class RequireManualInterventionOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "RequireManualIntervention";
-    public bool SupportsRestore => false;
+    public override string Name => "RequireManualIntervention";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [WARNING] Payment requires manual processing");
         await Task.Delay(30, cancellationToken);
         foundry.Properties["manual_intervention_required"] = true;
         return "Manual intervention flagged";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-    public void Dispose()
-    { }
 }
 
-public class FinalizePaymentOperation : IWorkflowOperation
+public class FinalizePaymentOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "FinalizePayment";
-    public bool SupportsRestore => false;
+    public override string Name => "FinalizePayment";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [INFO] Finalizing payment...");
         await Task.Delay(60, cancellationToken);
@@ -461,59 +399,38 @@ public class FinalizePaymentOperation : IWorkflowOperation
 
         return "Payment finalized";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-    public void Dispose()
-    { }
 }
 
-public class CheckCircuitStateOperation : IWorkflowOperation
+public class CheckCircuitStateOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "CheckCircuitState";
-    public bool SupportsRestore => false;
+    public override string Name => "CheckCircuitState";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var state = (string)foundry.Properties["circuit_state"]!;
         Console.WriteLine($"   [INFO] Circuit breaker state: {state}");
         await Task.Delay(20, cancellationToken);
         return state;
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-    public void Dispose()
-    { }
 }
 
-public class FailFastOperation : IWorkflowOperation
+public class FailFastOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "FailFast";
-    public bool SupportsRestore => false;
+    public override string Name => "FailFast";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [FAST_FAIL] Circuit breaker is open - failing fast");
         await Task.Delay(10, cancellationToken);
         throw new CircuitBreakerOpenException("Circuit breaker is open - service calls are blocked");
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-    public void Dispose()
-    { }
 }
 
-public class ResetCircuitOperation : IWorkflowOperation
+public class ResetCircuitOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "ResetCircuit";
-    public bool SupportsRestore => false;
+    public override string Name => "ResetCircuit";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [RESET] Resetting circuit breaker");
         await Task.Delay(20, cancellationToken);
@@ -521,11 +438,6 @@ public class ResetCircuitOperation : IWorkflowOperation
         foundry.Properties["failure_count"] = 0;
         return "Circuit reset";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-    public void Dispose()
-    { }
 }
 
 // Custom exception types

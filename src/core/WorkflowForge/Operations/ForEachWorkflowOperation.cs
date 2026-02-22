@@ -43,6 +43,8 @@ namespace WorkflowForge.Operations
             ISystemTimeProvider? timeProvider = null)
         {
             if (operations == null) throw new ArgumentNullException(nameof(operations));
+            if (operations.Any(op => op == null))
+                throw new ArgumentException("Operations collection contains null elements.", nameof(operations));
 
             _operations = operations.ToList();
             if (_operations.Count == 0)
@@ -66,9 +68,6 @@ namespace WorkflowForge.Operations
 
         /// <inheritdoc />
         public override string Name { get; }
-
-        /// <inheritdoc />
-        public override bool SupportsRestore => _operations.All(op => op.SupportsRestore);
 
         /// <inheritdoc />
         protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
@@ -123,7 +122,6 @@ namespace WorkflowForge.Operations
         {
             if (_disposed) throw new ObjectDisposedException(nameof(ForEachWorkflowOperation));
             if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (!SupportsRestore) throw new NotSupportedException($"ForEach operation '{Name}' does not support restoration because one or more child operations do not support restoration.");
 
             // Use operation-specific concurrency setting (from constructor)
             var effectiveMaxConcurrency = _maxConcurrency;
@@ -162,27 +160,29 @@ namespace WorkflowForge.Operations
         }
 
         /// <inheritdoc />
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
             if (_disposed) return;
 
-            // Dispose all child operations
-            foreach (var operation in _operations)
+            if (disposing)
             {
-                try
+                foreach (var operation in _operations)
                 {
-                    operation?.Dispose();
+                    try
+                    {
+                        operation?.Dispose();
+                    }
+                    catch
+                    {
+                        // Ignore disposal errors to prevent cascading failures
+                    }
                 }
-                catch
-                {
-                    // Ignore disposal errors to prevent cascading failures
-                }
+
+                _operations.Clear();
             }
 
-            _operations.Clear();
             _disposed = true;
-
-            GC.SuppressFinalize(this);
+            base.Dispose(disposing);
         }
 
         private async Task<object?> ForgeOperationAsync(IWorkflowOperation operation, object? inputData, int index, IWorkflowFoundry foundry, CancellationToken cancellationToken)
@@ -204,12 +204,12 @@ namespace WorkflowForge.Operations
             }
         }
 
-        private async Task RestoreOperationAsync(IWorkflowOperation operation, object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        private static async Task RestoreOperationAsync(IWorkflowOperation operation, object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             await operation.RestoreAsync(outputData, foundry, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task RestoreOperationWithThrottlingAsync(IWorkflowOperation operation, object? outputData, IWorkflowFoundry foundry, SemaphoreSlim semaphore, CancellationToken cancellationToken)
+        private static async Task RestoreOperationWithThrottlingAsync(IWorkflowOperation operation, object? outputData, IWorkflowFoundry foundry, SemaphoreSlim semaphore, CancellationToken cancellationToken)
         {
             await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
@@ -222,16 +222,13 @@ namespace WorkflowForge.Operations
             }
         }
 
-        private object? GetInputForOperation(object? inputData, int index)
+        private object? GetInputForOperation(object? inputData, int index) => _dataStrategy switch
         {
-            return _dataStrategy switch
-            {
-                ForEachDataStrategy.SharedInput => inputData,
-                ForEachDataStrategy.SplitInput => ExtractDataForIndex(inputData, index),
-                ForEachDataStrategy.NoInput => null,
-                _ => throw new ArgumentOutOfRangeException()
-            };
-        }
+            ForEachDataStrategy.SharedInput => inputData,
+            ForEachDataStrategy.SplitInput => ExtractDataForIndex(inputData, index),
+            ForEachDataStrategy.NoInput => null,
+            _ => throw new InvalidOperationException($"Unsupported ForEach data strategy: {_dataStrategy}")
+        };
 
         private object? CombineResults(object?[] results)
         {
@@ -243,7 +240,7 @@ namespace WorkflowForge.Operations
             };
         }
 
-        private object?[] ExtractIndividualResults(object? outputData)
+        private static object?[] ExtractIndividualResults(object? outputData)
         {
             if (outputData is ForEachResults forEachResults)
                 return forEachResults.Results;
@@ -254,12 +251,12 @@ namespace WorkflowForge.Operations
             return new object?[] { outputData };
         }
 
-        private object? GetResultForIndex(object?[] results, int index)
+        private static object? GetResultForIndex(object?[] results, int index)
         {
             return index < results.Length ? results[index] : null;
         }
 
-        private object? ExtractDataForIndex(object? inputData, int index)
+        private static object? ExtractDataForIndex(object? inputData, int index)
         {
             if (inputData == null) return null;
 

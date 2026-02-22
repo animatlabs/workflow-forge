@@ -156,7 +156,7 @@ public class PersistenceMiddlewareTests
             var seq = f2.GetPropertyOrDefault<List<string>>("seq")!;
             // First step should appear once; second shows multiple attempts; third at the end once
             Assert.Equal("First", seq[0]);
-            Assert.Equal("Third", seq[^1]);
+            Assert.Equal("Third", seq[seq.Count - 1]);
         }
     }
 

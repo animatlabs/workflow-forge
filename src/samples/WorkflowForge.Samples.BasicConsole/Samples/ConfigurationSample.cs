@@ -12,6 +12,7 @@ using WorkflowForge.Extensions.Resilience.Polly;
 using WorkflowForge.Extensions.Resilience.Polly.Options;
 using WorkflowForge.Extensions.Validation;
 using WorkflowForge.Extensions.Validation.Options;
+using WorkflowForge.Operations;
 using WF = WorkflowForge;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
@@ -233,7 +234,7 @@ public class ConfigurationSample : ISample
         }
     }
 
-    private sealed class ConfigLogOperation : IWorkflowOperation
+    private sealed class ConfigLogOperation : WorkflowOperationBase
     {
         private readonly string _message;
 
@@ -243,20 +244,12 @@ public class ConfigurationSample : ISample
             _message = message;
         }
 
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name { get; }
-        public bool SupportsRestore => false;
+        public override string Name { get; }
 
-        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             foundry.Logger.LogInformation(_message);
             return Task.FromResult(inputData);
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 }
