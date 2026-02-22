@@ -44,10 +44,10 @@ using WorkflowForge.Extensions;
 
 // Create workflow
 var workflow = WorkflowForge.CreateWorkflow("OrderProcessing")
-    .AddOperation("ValidateOrder", new ValidateOrderOperation())
-    .AddOperation("ChargePayment", new ChargePaymentOperation())
-    .AddOperation("ReserveInventory", new ReserveInventoryOperation())
-    .AddOperation("CreateShipment", new CreateShipmentOperation())
+    .AddOperation(new ValidateOrderOperation())
+    .AddOperation(new ChargePaymentOperation())
+    .AddOperation(new ReserveInventoryOperation())
+    .AddOperation(new CreateShipmentOperation())
     .Build();
 
 // Create execution environment
@@ -186,7 +186,7 @@ var conditionalOp = ConditionalWorkflowOperation.Create(
     falseOperation: new StandardProcessingOperation()
 );
 
-workflow.AddOperation("ProcessByTier", conditionalOp);
+builder.AddOperation(conditionalOp);
 ```
 
 ### 4. ForEachWorkflowOperation
@@ -210,14 +210,14 @@ var splitOp = ForEachWorkflowOperation.CreateSplitInput(
 
 ```csharp
 var delayOp = new DelayOperation(TimeSpan.FromSeconds(5));
-workflow.AddOperation("Wait", delayOp);
+builder.AddOperation(delayOp);
 ```
 
 ### 6. LoggingOperation
 
 ```csharp
-var logOp = new LoggingOperation("Order processing completed", logger);
-workflow.AddOperation("LogCompletion", logOp);
+var logOp = new LoggingOperation("Order processing completed");
+builder.AddOperation(logOp);
 ```
 
 ## Custom Operations

@@ -766,8 +766,7 @@ You can add inline compensation logic directly when defining operations with the
 ### Builder API
 
 ```csharp
-var workflow = WorkflowForge.CreateWorkflow("OrderWorkflow")
-    .WithName("OrderProcessing")
+var workflow = WorkflowForge.CreateWorkflow("OrderProcessing")
     .AddOperation("ProcessPayment", async (foundry, ct) =>
     {
         // Process payment logic

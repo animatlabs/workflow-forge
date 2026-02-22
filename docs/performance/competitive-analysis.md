@@ -49,7 +49,7 @@ WorkflowForge demonstrates **13-522x faster execution** and **6-578x less memory
 | **Max Speed Advantage** | 522x faster (State Machine 25 transitions, .NET 10.0) |
 | **Max Memory Advantage** | 578x less allocation (Parallel 16 ops, .NET 10.0) |
 | **Min Execution Time** | 14μs (Creation Overhead, .NET 10.0) |
-| **Min Memory Footprint** | 3.5KB |
+| **Min Memory Footprint** | 3.3KB |
 
 {% if site.url %}
 <div class="perf-stats">
@@ -66,7 +66,7 @@ WorkflowForge demonstrates **13-522x faster execution** and **6-578x less memory
     <div class="perf-stat-label">Min Execution Time</div>
   </div>
   <div class="perf-stat">
-    <div class="perf-stat-value">3.5KB</div>
+    <div class="perf-stat-value">3.3KB</div>
     <div class="perf-stat-label">Min Memory</div>
   </div>
 </div>
@@ -143,7 +143,7 @@ WorkflowForge demonstrates **13-522x faster execution** and **6-578x less memory
 | .NET 8.0 | Concurrent (8 wf) | 143 KB | 3,232 KB | 19,164 KB | 23-134x |
 | .NET FX 4.8 | Concurrent (8 wf) | 256 KB | 3,880 KB | N/A† | 15x |
 | .NET 10.0 | Parallel (16 ops) | 7.9 KB | 128 KB | 4,571 KB | 16-578x |
-| .NET 8.0 | Parallel (16 ops) | 8.2 KB | 126 KB | 4,644 KB | 15-567x |
+| .NET 8.0 | Parallel (16 ops) | 8.2 KB | 126 KB | 4,644 KB | 15-568x |
 
 <!-- Concurrent Memory Allocation across all runtimes -->
 <div class="perf-vchart">

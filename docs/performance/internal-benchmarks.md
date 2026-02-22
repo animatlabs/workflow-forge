@@ -103,20 +103,6 @@ Tests individual operation types for execution time and memory allocation across
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">14.6μs</div><div class="perf-vchart-fill wf" style="height: 11%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">53.0μs</div><div class="perf-vchart-fill wf" style="height: 39%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">58.4μs</div><div class="perf-vchart-fill wf" style="height: 43%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">64.7μs</div><div class="perf-vchart-fill wf" style="height: 48%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">78.6μs</div><div class="perf-vchart-fill wf" style="height: 58%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">102.9μs</div><div class="perf-vchart-fill wf" style="height: 76%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">127.2μs</div><div class="perf-vchart-fill wf" style="height: 94%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">134.5μs</div><div class="perf-vchart-fill wf" style="height: 100%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">.NET 8.0</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
         <div class="perf-vchart-bar"><div class="perf-vchart-val">14.5μs</div><div class="perf-vchart-fill wf" style="height: 11%;"></div></div>
         <div class="perf-vchart-bar"><div class="perf-vchart-val">55.3μs</div><div class="perf-vchart-fill wf" style="height: 41%;"></div></div>
         <div class="perf-vchart-bar"><div class="perf-vchart-val">54.5μs</div><div class="perf-vchart-fill wf" style="height: 41%;"></div></div>
@@ -127,6 +113,20 @@ Tests individual operation types for execution time and memory allocation across
         <div class="perf-vchart-bar"><div class="perf-vchart-val">94.5μs</div><div class="perf-vchart-fill wf" style="height: 70%;"></div></div>
       </div>
       <div class="perf-vchart-group-label">.NET 10.0</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">14.6μs</div><div class="perf-vchart-fill wf" style="height: 11%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">53.0μs</div><div class="perf-vchart-fill wf" style="height: 39%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">58.4μs</div><div class="perf-vchart-fill wf" style="height: 43%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">64.7μs</div><div class="perf-vchart-fill wf" style="height: 48%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">78.6μs</div><div class="perf-vchart-fill wf" style="height: 58%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">102.9μs</div><div class="perf-vchart-fill wf" style="height: 76%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">127.2μs</div><div class="perf-vchart-fill wf" style="height: 94%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">134.5μs</div><div class="perf-vchart-fill wf" style="height: 100%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">.NET 8.0</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
@@ -194,17 +194,6 @@ Tests complete workflow execution patterns with varying operation counts. Delay-
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">81.6μs</div><div class="perf-vchart-fill wf" style="height: 30%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">77.2μs</div><div class="perf-vchart-fill wf" style="height: 28%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">92.7μs</div><div class="perf-vchart-fill wf" style="height: 34%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">138.2μs</div><div class="perf-vchart-fill wf" style="height: 51%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">236.8μs</div><div class="perf-vchart-fill wf" style="height: 87%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">.NET 8.0</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
         <div class="perf-vchart-bar"><div class="perf-vchart-val">67.4μs</div><div class="perf-vchart-fill wf" style="height: 25%;"></div></div>
         <div class="perf-vchart-bar"><div class="perf-vchart-val">74.1μs</div><div class="perf-vchart-fill wf" style="height: 27%;"></div></div>
         <div class="perf-vchart-bar"><div class="perf-vchart-val">94.2μs</div><div class="perf-vchart-fill wf" style="height: 35%;"></div></div>
@@ -212,6 +201,17 @@ Tests complete workflow execution patterns with varying operation counts. Delay-
         <div class="perf-vchart-bar"><div class="perf-vchart-val">214.3μs</div><div class="perf-vchart-fill wf" style="height: 79%;"></div></div>
       </div>
       <div class="perf-vchart-group-label">.NET 10.0</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">81.6μs</div><div class="perf-vchart-fill wf" style="height: 30%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">77.2μs</div><div class="perf-vchart-fill wf" style="height: 28%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">92.7μs</div><div class="perf-vchart-fill wf" style="height: 34%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">138.2μs</div><div class="perf-vchart-fill wf" style="height: 51%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">236.8μs</div><div class="perf-vchart-fill wf" style="height: 87%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">.NET 8.0</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
@@ -285,7 +285,7 @@ The minimal allocation workflow maintains a **constant footprint** of 3,296 B re
         <div class="perf-vchart-bar"><div class="perf-vchart-val">317KB</div><div class="perf-vchart-fill wc" style="height: 31%;"></div></div>
         <div class="perf-vchart-bar"><div class="perf-vchart-val">1.0MB</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">.NET 8.0</div>
+      <div class="perf-vchart-group-label">.NET 10.0</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
@@ -297,7 +297,7 @@ The minimal allocation workflow maintains a **constant footprint** of 3,296 B re
         <div class="perf-vchart-bar"><div class="perf-vchart-val">317KB</div><div class="perf-vchart-fill wc" style="height: 31%;"></div></div>
         <div class="perf-vchart-bar"><div class="perf-vchart-val">1.0MB</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">.NET 10.0</div>
+      <div class="perf-vchart-group-label">.NET 8.0</div>
     </div>
   </div>
   <div class="perf-vchart-legend">
@@ -350,22 +350,6 @@ Tests concurrent workflow execution patterns across .NET 8.0, .NET 10.0, and .NE
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">628ms</div><div class="perf-vchart-fill wc" style="height: 50%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">79ms</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">.NET 8.0 (8 wf, 7.9x)</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">1.25s</div><div class="perf-vchart-fill wc" style="height: 100%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">79ms</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
-      </div>
-      <div class="perf-vchart-group-label">.NET 8.0 (16 wf, 15.7x)</div>
-    </div>
-    <div class="perf-vchart-divider"></div>
-    <div class="perf-vchart-group">
-      <div class="perf-vchart-bars">
         <div class="perf-vchart-bar"><div class="perf-vchart-val">627ms</div><div class="perf-vchart-fill wc" style="height: 50%;"></div></div>
         <div class="perf-vchart-bar"><div class="perf-vchart-val">79ms</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
       </div>
@@ -378,6 +362,22 @@ Tests concurrent workflow execution patterns across .NET 8.0, .NET 10.0, and .NE
         <div class="perf-vchart-bar"><div class="perf-vchart-val">79ms</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
       </div>
       <div class="perf-vchart-group-label">.NET 10.0 (16 wf, 15.9x)</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">628ms</div><div class="perf-vchart-fill wc" style="height: 50%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">79ms</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">.NET 8.0 (8 wf, 7.9x)</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">1.25s</div><div class="perf-vchart-fill wc" style="height: 100%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">79ms</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">.NET 8.0 (16 wf, 15.7x)</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">

@@ -30,7 +30,7 @@ dotnet test -c Release
 
 ## Coding Standards
 
-- **Target frameworks**: .NET Standard 2.0 for core, .NET 8.0+ for tests/samples
+- **Target frameworks**: .NET Standard 2.0 for core libraries; net48, net8.0, and net10.0 for tests, benchmarks, and samples
 - **Naming**: Use explicit, descriptive names (avoid abbreviations)
 - **XML Documentation**: Add XML docs for all public APIs
 - **Async/await**: Use async patterns for I/O operations

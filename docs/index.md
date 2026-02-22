@@ -190,7 +190,7 @@ Based on BenchmarkDotNet testing (12 scenarios, 50 iterations) against Workflow 
     <div class="perf-stat-label">Min Execution</div>
   </div>
   <div class="perf-stat">
-    <div class="perf-stat-value">3.5KB</div>
+    <div class="perf-stat-value">3.3KB</div>
     <div class="perf-stat-label">Min Memory</div>
   </div>
 </div>

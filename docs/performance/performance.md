@@ -69,11 +69,11 @@ Internal benchmarks validate WorkflowForge's intrinsic performance in isolation 
 
 | Metric | .NET 8.0 | .NET 10.0 | .NET FX 4.8 |
 |--------|----------|-----------|-------------|
-| **Operation Execution** | 14–135μs median | 10–131μs median | 10–116μs median |
-| **Operation Creation** | 1.9–2.5μs | 1.7–2.3μs | 1.3–2.0μs |
-| **Workflow Throughput** | 77–237μs (1–50 ops) | 73–224μs (1–50 ops) | 62–195μs (1–50 ops) |
+| **Operation Execution** | 14–135μs median | 14–122μs median | 10–116μs median |
+| **Operation Creation** | 2.4–2.5μs | 1.9–2.4μs | 1.9–2.1μs |
+| **Workflow Throughput** | 77–237μs (1–50 ops) | 67–214μs (1–50 ops) | 38–272μs (1–50 ops) |
 | **Memory Baseline** | 3.3KB (constant) | 3.3KB (constant) | N/A‡ |
-| **Concurrent Scaling** | 7.9x (8 wf), 15.7x (16 wf) | 8.1x (8 wf), 15.9x (16 wf) | 7.6x (8 wf), 14.8x (16 wf) |
+| **Concurrent Scaling** | 7.9x (8 wf), 15.7x (16 wf) | 7.9x (8 wf), 15.9x (16 wf) | 8.1x (8 wf), 16.2x (16 wf) |
 
 ‡ .NET Framework 4.8 does not report memory allocation metrics in BenchmarkDotNet.
 

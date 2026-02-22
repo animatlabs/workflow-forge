@@ -40,10 +40,12 @@ After generating:
 <AssemblyOriginatorKeyFile>WorkflowForge.snk</AssemblyOriginatorKeyFile>
 ```
 
-2. Update `InternalsVisibleTo` in `src/core/WorkflowForge/WorkflowForge.csproj` with the public key:
+2. Update **all** `InternalsVisibleTo` entries in `src/core/WorkflowForge/WorkflowForge.csproj` with the public key. There are entries for test projects, extension projects, and benchmarks -- each one needs the `PublicKey=` suffix:
 
 ```xml
 <InternalsVisibleTo Include="WorkflowForge.Tests, PublicKey=YOUR_PUBLIC_KEY_HERE" />
+<InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.OpenTelemetry, PublicKey=YOUR_PUBLIC_KEY_HERE" />
+<!-- ... repeat for all other InternalsVisibleTo entries -->
 ```
 
 3. Rebuild and re-run tests to verify everything still works:
@@ -122,8 +124,8 @@ python scripts/publish-packages.py --version 2.1.0 --sign --cert-path cert.pfx -
 **Option B: GitHub Actions (recommended for production)**
 
 1. Push the `release/2.x` branch to GitHub
-2. Navigate to **Actions > Publish Packages** workflow
-3. Trigger the workflow manually (workflow_dispatch)
+2. Navigate to **Actions > Build and Test** workflow
+3. Trigger the workflow manually (workflow_dispatch) with `publish: true`
 4. The CI pipeline will build, test, pack, sign (if secrets configured), and publish
 
 ### 5. Create GitHub Release

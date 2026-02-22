@@ -16,9 +16,9 @@ High-performance, dependency-free workflow orchestration library for .NET. Execu
 ## Performance at a Glance
 
 **Internal Benchmarks** (.NET 8.0.24, .NET 10.0.3, .NET FX 4.8.1, Windows 11, 50 iterations):
-- **Operation Execution**: 15-135μs median latency
-- **Workflow Throughput**: 67-190μs for custom operations
-- **Memory Footprint**: 3.2-146KB across scenarios
+- **Operation Execution**: 14-135μs median latency
+- **Workflow Throughput**: 38-272μs for custom operations (1-50 ops, all runtimes)
+- **Memory Footprint**: 3.3-256KB across scenarios
 - **Concurrent Scaling**: Near-perfect (16x speedup for 16 workflows)
 
 **Competitive Benchmarks** (12 scenarios vs. Workflow Core, Elsa):
@@ -211,16 +211,16 @@ WorkflowForge excels at:
 - Delegate: 53.0μs median
 - Logging: 14.6μs median
 
-**Workflow Throughput** (10 custom operations):
-- Sequential custom: 87.2μs median
-- ForEach loop: 57.6μs median
+**Workflow Throughput** (10 custom operations, .NET 8.0):
+- Sequential custom: 92.7μs median
+- ForEach loop: 82.8μs median
 
-**Concurrency** (8 workflows, 5 ops each):
-- Sequential: 624ms
+**Concurrency** (8 workflows, 5 ops each, .NET 8.0):
+- Sequential: 628ms
 - Concurrent: 79ms (7.9x speedup)
 
 **Memory Allocation**:
-- Minimal workflow: 3.04KB
+- Minimal workflow: 3.3KB (constant across iteration counts)
 - No Gen2 collections in typical workloads
 
 [Internal Benchmarks](docs/performance/performance.md#internal-performance-benchmarks)

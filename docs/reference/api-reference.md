@@ -776,14 +776,14 @@ Logs a message during workflow execution.
 ```csharp
 public class LoggingOperation : WorkflowOperationBase
 {
-    public LoggingOperation(IWorkflowForgeLogger logger, string message);
+    public LoggingOperation(string message, WorkflowForgeLogLevel logLevel = WorkflowForgeLogLevel.Information, string? name = null);
 }
 ```
 
 **Example**:
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow("LoggingWorkflow")
-    .AddOperation(new LoggingOperation(logger, "Starting workflow"))
+    .AddOperation(new LoggingOperation("Starting workflow"))
     .Build();
 ```
 
