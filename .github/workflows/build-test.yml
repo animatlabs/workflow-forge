@@ -62,49 +62,20 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore WorkflowForge.sln
 
-    - name: SonarCloud Begin
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: |
-        dotnet sonarscanner begin `
-          /k:"animatlabs_workflow-forge" `
-          /o:"animatlabs" `
-          /d:sonar.token="$env:SONAR_TOKEN" `
-          /d:sonar.host.url="https://sonarcloud.io" `
-          /d:sonar.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**" `
-          /d:sonar.coverage.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**"
-
     - name: Build
       run: dotnet build WorkflowForge.sln --configuration Release --no-restore
 
-    - name: SonarCloud End (Static Analysis)
+    - name: Test (.NET 8.0/10.0 with Coverage)
+      run: |
+        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-core.trx" --collect:"XPlat Code Coverage" --framework net8.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-core.trx" --collect:"XPlat Code Coverage" --framework net10.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+    - name: Test (.NET Framework 4.8 - No Coverage)
+      run: |
+        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-netfx.trx" --framework net48
+
+    - name: SonarCloud Analysis
       continue-on-error: true
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
-
-    - name: Re-sign assemblies for .NET Framework (net48)
-      run: |
-        $snExe = "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\sn.exe"
-        $snkFile = "${{ github.workspace }}\WorkflowForge.snk"
-        Get-ChildItem -Path . -Include "WorkflowForge*.dll" -Recurse |
-          Where-Object { $_.FullName -match '\\bin\\Release\\' } |
-          ForEach-Object {
-            Write-Host "Re-signing: $($_.FullName)"
-            & $snExe -Ra $_.FullName $snkFile 2>&1
-          }
-
-    - name: Test with Coverage
-      run: |
-        dotnet test WorkflowForge.sln `
-          --configuration Release `
-          --no-build `
-          --verbosity normal `
-          --logger "trx;LogFileName=test-results.trx" `
-          --collect:"XPlat Code Coverage" `
-          -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-
-    - name: SonarCloud Begin (Coverage Import)
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
@@ -116,15 +87,8 @@ jobs:
           /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" `
           /d:sonar.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**" `
           /d:sonar.coverage.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**"
-
-    - name: Build for Coverage Import
-      run: dotnet build WorkflowForge.sln --configuration Release --no-restore
-
-    - name: SonarCloud End (Coverage Import)
-      continue-on-error: true
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
+        dotnet build WorkflowForge.sln --configuration Release --no-restore
+        dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
 
     - name: Upload test results
       uses: actions/upload-artifact@v6
