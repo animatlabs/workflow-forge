@@ -83,6 +83,11 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
 
+    - name: Skip Strong Name Verification (net48)
+      run: |
+        & "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\x64\sn.exe" -Vr *,50cc659aecc59b65
+        & "C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\sn.exe" -Vr *,50cc659aecc59b65
+
     - name: Test with Coverage
       run: |
         dotnet test WorkflowForge.sln `
