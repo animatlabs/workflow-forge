@@ -18,7 +18,6 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         private readonly IWorkflowForgeLogger _logger;
         private readonly ISystemTimeProvider _timeProvider;
         private readonly Timer? _periodicCheckTimer;
-        private readonly object _resultsLock = new object();
         private volatile bool _disposed;
 
         /// <summary>
@@ -26,23 +25,11 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// </summary>
         public IReadOnlyDictionary<string, HealthCheckResult> LastResults
         {
-            get
-            {
-                lock (_resultsLock)
-                {
-                    return _lastResults;
-                }
-            }
-            private set
-            {
-                lock (_resultsLock)
-                {
-                    _lastResults = value;
-                }
-            }
+            get => _lastResults;
+            private set => _lastResults = value;
         }
 
-        private IReadOnlyDictionary<string, HealthCheckResult> _lastResults =
+        private volatile IReadOnlyDictionary<string, HealthCheckResult> _lastResults =
             new Dictionary<string, HealthCheckResult>();
 
         /// <summary>
@@ -52,20 +39,17 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         {
             get
             {
-                lock (_resultsLock)
-                {
-                    var results = _lastResults;
-                    if (!results.Any())
-                        return HealthStatus.Healthy;
-
-                    if (results.Values.Any(r => r.Status == HealthStatus.Unhealthy))
-                        return HealthStatus.Unhealthy;
-
-                    if (results.Values.Any(r => r.Status == HealthStatus.Degraded))
-                        return HealthStatus.Degraded;
-
+                var results = _lastResults;
+                if (!results.Any())
                     return HealthStatus.Healthy;
-                }
+
+                if (results.Values.Any(r => r.Status == HealthStatus.Unhealthy))
+                    return HealthStatus.Unhealthy;
+
+                if (results.Values.Any(r => r.Status == HealthStatus.Degraded))
+                    return HealthStatus.Degraded;
+
+                return HealthStatus.Healthy;
             }
         }
 

@@ -18,6 +18,8 @@ namespace WorkflowForge.Extensions.Persistence
     {
         private readonly IWorkflowPersistenceProvider _provider;
         private readonly PersistenceOptions? _options;
+        private readonly Guid? _precomputedInstanceId;
+        private readonly Guid? _precomputedWorkflowKey;
 
         /// <summary>
         /// Internal property key for the execution counter used to track current operation index.
@@ -48,6 +50,16 @@ namespace WorkflowForge.Extensions.Persistence
         {
             _provider = provider ?? throw new ArgumentNullException(nameof(provider));
             _options = options ?? throw new ArgumentNullException(nameof(options));
+
+            if (!string.IsNullOrWhiteSpace(_options.InstanceId))
+            {
+                _precomputedInstanceId = DeterministicGuid(_options.InstanceId!);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_options.WorkflowKey))
+            {
+                _precomputedWorkflowKey = DeterministicGuid(_options.WorkflowKey!);
+            }
         }
 
         /// <summary>
@@ -158,13 +170,8 @@ namespace WorkflowForge.Extensions.Persistence
                 return (foundry.ExecutionId, workflow.Id);
             }
 
-            var foundryKey = string.IsNullOrWhiteSpace(_options.InstanceId)
-                ? foundry.ExecutionId
-                : DeterministicGuid(_options.InstanceId!);
-
-            var workflowKey = string.IsNullOrWhiteSpace(_options.WorkflowKey)
-                ? workflow.Id
-                : DeterministicGuid(_options.WorkflowKey!);
+            var foundryKey = _precomputedInstanceId ?? foundry.ExecutionId;
+            var workflowKey = _precomputedWorkflowKey ?? workflow.Id;
 
             return (foundryKey, workflowKey);
         }

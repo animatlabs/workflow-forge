@@ -106,6 +106,12 @@ jobs:
         }
         dotnet pack WorkflowForge.sln --configuration Release --no-build --output ./packages @versionArg
 
+    - name: Generate CycloneDX SBOM
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        dotnet tool install --global CycloneDX
+        dotnet cyclonedx WorkflowForge.sln -o ./packages --json
+
     - name: Upload packages
       if: github.event_name == 'workflow_dispatch'
       uses: actions/upload-artifact@v6
@@ -114,12 +120,15 @@ jobs:
         path: |
           ./packages/*.nupkg
           ./packages/*.snupkg
+          ./packages/*.json
 
   publish:
     needs: build
     runs-on: windows-latest
     permissions:
       contents: read
+      id-token: write
+      attestations: write
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true'
 
     steps:
@@ -136,7 +145,7 @@ jobs:
         dotnet-version: 10.0.x
 
     - name: Download packages
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v6
       with:
         name: nuget-packages
         path: ./packages
@@ -156,6 +165,11 @@ jobs:
           dotnet nuget sign $_.FullName --certificate-path cert.pfx --certificate-password $env:SIGNING_CERT_PASSWORD --timestamper http://timestamp.digicert.com
         }
         Remove-Item cert.pfx -Force
+
+    - name: Attest Build Provenance
+      uses: actions/attest-build-provenance@v4
+      with:
+        subject-path: './packages/*.nupkg'
 
     - name: Push to NuGet
       env:

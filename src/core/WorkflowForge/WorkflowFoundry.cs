@@ -24,11 +24,13 @@ namespace WorkflowForge
         private readonly List<IWorkflowOperationMiddleware> _middlewares = new();
         private readonly object _middlewareLock = new();
         private readonly ISystemTimeProvider _timeProvider;
-        private readonly WorkflowForgeOptions _options;
+        private WorkflowForgeOptions _options;
         private volatile bool _disposed;
         private IWorkflow? _currentWorkflow;
         private int _executionState;
         private volatile bool _isFrozen;
+        private IWorkflowOperation[]? _cachedOperations;
+        private IWorkflowOperationMiddleware[]? _cachedMiddlewares;
 
         public event EventHandler<OperationStartedEventArgs>? OperationStarted;
 
@@ -37,7 +39,7 @@ namespace WorkflowForge
         public event EventHandler<OperationFailedEventArgs>? OperationFailed;
 
         /// <inheritdoc />
-        public Guid ExecutionId { get; }
+        public Guid ExecutionId { get; private set; }
 
         /// <inheritdoc />
         public ConcurrentDictionary<string, object?> Properties { get; }
@@ -46,13 +48,13 @@ namespace WorkflowForge
         public IWorkflow? CurrentWorkflow => _currentWorkflow;
 
         /// <inheritdoc />
-        public IWorkflowForgeLogger Logger { get; }
+        public IWorkflowForgeLogger Logger { get; private set; }
 
         /// <inheritdoc />
         public WorkflowForgeOptions Options => _options;
 
         /// <inheritdoc />
-        public IServiceProvider? ServiceProvider { get; }
+        public IServiceProvider? ServiceProvider { get; private set; }
 
         /// <inheritdoc />
         public bool IsFrozen => _isFrozen;
@@ -132,6 +134,7 @@ namespace WorkflowForge
             {
                 _operations.Clear();
                 _operations.AddRange(operations);
+                _cachedOperations = null;
             }
         }
 
@@ -232,7 +235,8 @@ namespace WorkflowForge
                 IWorkflowOperation[] operationsSnapshot;
                 lock (_operations)
                 {
-                    operationsSnapshot = _operations.ToArray();
+                    _cachedOperations ??= _operations.ToArray();
+                    operationsSnapshot = _cachedOperations;
                 }
 
                 var shouldAggregate = Options.ContinueOnError;
@@ -347,7 +351,8 @@ namespace WorkflowForge
             IWorkflowOperationMiddleware[] middlewareSnapshot;
             lock (_middlewareLock)
             {
-                middlewareSnapshot = _middlewares.ToArray();
+                _cachedMiddlewares ??= _middlewares.ToArray();
+                middlewareSnapshot = _cachedMiddlewares;
             }
 
             if (middlewareSnapshot.Length == 0)
@@ -397,10 +402,12 @@ namespace WorkflowForge
                     }
                 }
                 _operations.Clear();
+                _cachedOperations = null;
             }
             lock (_middlewareLock)
             {
                 _middlewares.Clear();
+                _cachedMiddlewares = null;
             }
             // Dispose properties
             Properties.Clear();
@@ -413,6 +420,30 @@ namespace WorkflowForge
             {
                 throw new InvalidOperationException("Foundry pipeline is frozen during execution.");
             }
+        }
+
+        /// <summary>
+        /// Resets the foundry state so it can be reused from a pool.
+        /// </summary>
+        internal void Reset(
+            Guid executionId,
+            IWorkflowForgeLogger logger,
+            IServiceProvider? serviceProvider,
+            WorkflowForgeOptions options,
+            IWorkflow? currentWorkflow = null)
+        {
+            ExecutionId = executionId;
+            Logger = logger;
+            ServiceProvider = serviceProvider;
+            _options = options;
+            _currentWorkflow = currentWorkflow;
+
+            _disposed = false;
+            _executionState = 0;
+            _isFrozen = false;
+
+            // Dispose handles full cleanup of collections/properties,
+            // so this just needs to reset the flags.
         }
     }
 }

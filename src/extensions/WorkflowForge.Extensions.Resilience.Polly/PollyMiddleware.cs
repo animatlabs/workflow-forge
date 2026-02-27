@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Polly;
@@ -46,13 +45,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default)
         {
-            var policyProperties = new Dictionary<string, string>
-            {
-                [ResiliencePropertyNames.PolicyType] = "ResiliencePolicy",
-                [ResiliencePropertyNames.PolicyName] = _name
-            };
-
-            using var policyScope = _logger.BeginScope("ResiliencePolicyExecution", policyProperties);
+            using var policyScope = _logger.BeginScope(_name);
 
             try
             {
@@ -68,25 +61,13 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             }
             catch (BrokenCircuitException ex)
             {
-                var circuitProperties = new Dictionary<string, string>
-                {
-                    [ResiliencePropertyNames.CircuitState] = "Open",
-                    [ResiliencePropertyNames.RetryReason] = nameof(BrokenCircuitException)
-                };
-
-                _logger.LogWarning(circuitProperties, ex, ResilienceLogMessages.CircuitBreakerRejected);
+                _logger.LogWarning(ex, "{Message} (CircuitState: Open, Reason: BrokenCircuitException)", ResilienceLogMessages.CircuitBreakerRejected);
                 throw new BrokenCircuitException(
                     $"Circuit breaker is open for operation '{operation.Name}'", ex);
             }
             catch (TimeoutRejectedException ex)
             {
-                var timeoutProperties = new Dictionary<string, string>
-                {
-                    [ResiliencePropertyNames.TimedOut] = "true",
-                    [ResiliencePropertyNames.RetryReason] = nameof(TimeoutRejectedException)
-                };
-
-                _logger.LogError(timeoutProperties, ex, ResilienceLogMessages.OperationTimedOut);
+                _logger.LogError(ex, "{Message} (TimedOut: true, Reason: TimeoutRejectedException)", ResilienceLogMessages.OperationTimedOut);
                 throw;
             }
             catch (Exception ex)
@@ -127,21 +108,18 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     UseJitter = true,
                     OnRetry = args =>
                     {
-                        var retryProperties = new Dictionary<string, string>
-                        {
-                            [ResiliencePropertyNames.RetryAttempt] = args.AttemptNumber.ToString(),
-                            [ResiliencePropertyNames.MaxRetryAttempts] = maxRetryAttempts.ToString(),
-                            [ResiliencePropertyNames.RetryDelayMs] = args.RetryDelay.TotalMilliseconds.ToString("F0"),
-                            [ResiliencePropertyNames.RetryReason] = args.Outcome.Exception?.GetType().Name ?? "Unknown"
-                        };
+                        var delayMs = args.RetryDelay.TotalMilliseconds.ToString("F0");
+                        var reason = args.Outcome.Exception?.GetType().Name ?? "Unknown";
 
                         if (args.Outcome.Exception is Exception ex)
                         {
-                            logger.LogWarning(retryProperties, ex, ResilienceLogMessages.RetryAttemptStarted);
+                            logger.LogWarning(ex, "{Message} (Attempt {RetryAttempt} of {MaxRetryAttempts} in {RetryDelayMs}ms) due to: {RetryReason}",
+                                ResilienceLogMessages.RetryAttemptStarted, args.AttemptNumber, maxRetryAttempts, delayMs, reason);
                         }
                         else
                         {
-                            logger.LogWarning(retryProperties, ResilienceLogMessages.RetryAttemptStarted);
+                            logger.LogWarning("{Message} (Attempt {RetryAttempt} of {MaxRetryAttempts} in {RetryDelayMs}ms)",
+                                ResilienceLogMessages.RetryAttemptStarted, args.AttemptNumber, maxRetryAttempts, delayMs);
                         }
                         return default;
                     }
@@ -176,34 +154,19 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     BreakDuration = breakDuration,
                     OnOpened = args =>
                     {
-                        var openProperties = new Dictionary<string, string>
-                        {
-                            [ResiliencePropertyNames.CircuitState] = "Open",
-                            [ResiliencePropertyNames.BreakDurationMs] = breakDuration.TotalMilliseconds.ToString("F0"),
-                            [ResiliencePropertyNames.FailureThreshold] = failureThreshold.ToString()
-                        };
-
-                        logger.LogWarning(openProperties, ResilienceLogMessages.CircuitBreakerOpened);
+                        var delayMs = breakDuration.TotalMilliseconds.ToString("F0");
+                        logger.LogWarning("{Message} (State: Open, Threshold: {FailureThreshold}, DurationMs: {BreakDurationMs})",
+                            ResilienceLogMessages.CircuitBreakerOpened, failureThreshold, delayMs);
                         return default;
                     },
                     OnClosed = args =>
                     {
-                        var closedProperties = new Dictionary<string, string>
-                        {
-                            [ResiliencePropertyNames.CircuitState] = "Closed"
-                        };
-
-                        logger.LogInformation(closedProperties, ResilienceLogMessages.CircuitBreakerReset);
+                        logger.LogInformation("{Message} (State: Closed)", ResilienceLogMessages.CircuitBreakerReset);
                         return default;
                     },
                     OnHalfOpened = args =>
                     {
-                        var halfOpenProperties = new Dictionary<string, string>
-                        {
-                            [ResiliencePropertyNames.CircuitState] = "HalfOpen"
-                        };
-
-                        logger.LogInformation(halfOpenProperties, ResilienceLogMessages.CircuitBreakerHalfOpen);
+                        logger.LogInformation("{Message} (State: HalfOpen)", ResilienceLogMessages.CircuitBreakerHalfOpen);
                         return default;
                     }
                 })
@@ -224,13 +187,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             TimeSpan timeout,
             string? name = null)
         {
-            var timeoutProperties = new Dictionary<string, string>
-            {
-                [ResiliencePropertyNames.TimeoutMs] = timeout.TotalMilliseconds.ToString("F0"),
-                [ResiliencePropertyNames.PolicyType] = "Timeout"
-            };
-
-            logger.LogDebug(timeoutProperties, ResilienceLogMessages.TimeoutPolicyApplied);
+            var delayMs = timeout.TotalMilliseconds.ToString("F0");
+            logger.LogDebug("{Message} (PolicyType: Timeout, TimeoutMs: {TimeoutMs})", ResilienceLogMessages.TimeoutPolicyApplied, delayMs);
 
             var pipeline = new ResiliencePipelineBuilder()
                 .AddTimeout(timeout)
@@ -263,16 +221,9 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             var breakDuration = circuitBreakerDuration ?? TimeSpan.FromSeconds(30);
             var timeout = timeoutDuration ?? TimeSpan.FromSeconds(10);
 
-            var comprehensiveProperties = new Dictionary<string, string>
-            {
-                [ResiliencePropertyNames.PolicyType] = "Comprehensive",
-                [ResiliencePropertyNames.MaxRetryAttempts] = maxRetryAttempts.ToString(),
-                [ResiliencePropertyNames.FailureThreshold] = circuitBreakerThreshold.ToString(),
-                [ResiliencePropertyNames.TimeoutMs] = timeout.TotalMilliseconds.ToString("F0"),
-                [ResiliencePropertyNames.PolicyCount] = "3"
-            };
-
-            logger.LogDebug(comprehensiveProperties, ResilienceLogMessages.ResiliencePolicyApplied);
+            var delayStr = timeout.TotalMilliseconds.ToString("F0");
+            logger.LogDebug("{Message} (PolicyType: Comprehensive, MaxRetries: {MaxRetryAttempts}, Threshold: {FailureThreshold}, TimeoutMs: {TimeoutMs})",
+                ResilienceLogMessages.ResiliencePolicyApplied, maxRetryAttempts, circuitBreakerThreshold, delayStr);
 
             var pipeline = new ResiliencePipelineBuilder()
                 .AddTimeout(timeout)
@@ -285,20 +236,18 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     UseJitter = true,
                     OnRetry = args =>
                     {
-                        var retryProperties = new Dictionary<string, string>
-                        {
-                            [ResiliencePropertyNames.RetryAttempt] = args.AttemptNumber.ToString(),
-                            [ResiliencePropertyNames.RetryDelayMs] = args.RetryDelay.TotalMilliseconds.ToString("F0"),
-                            [ResiliencePropertyNames.RetryReason] = args.Outcome.Exception?.GetType().Name ?? "Unknown"
-                        };
+                        var retryDelayMs = args.RetryDelay.TotalMilliseconds.ToString("F0");
+                        var reason = args.Outcome.Exception?.GetType().Name ?? "Unknown";
 
                         if (args.Outcome.Exception is Exception ex)
                         {
-                            logger.LogWarning(retryProperties, ex, ResilienceLogMessages.RetryAttemptStarted);
+                            logger.LogWarning(ex, "{Message} (Attempt {RetryAttempt} of {MaxRetryAttempts} in {RetryDelayMs}ms) due to: {RetryReason}",
+                                ResilienceLogMessages.RetryAttemptStarted, args.AttemptNumber, maxRetryAttempts, retryDelayMs, reason);
                         }
                         else
                         {
-                            logger.LogWarning(retryProperties, ResilienceLogMessages.RetryAttemptStarted);
+                            logger.LogWarning("{Message} (Attempt {RetryAttempt} of {MaxRetryAttempts} in {RetryDelayMs}ms)",
+                                ResilienceLogMessages.RetryAttemptStarted, args.AttemptNumber, maxRetryAttempts, retryDelayMs);
                         }
                         return default;
                     }
@@ -311,23 +260,14 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                     BreakDuration = breakDuration,
                     OnOpened = args =>
                     {
-                        var openProperties = new Dictionary<string, string>
-                        {
-                            [ResiliencePropertyNames.CircuitState] = "Open",
-                            [ResiliencePropertyNames.BreakDurationMs] = breakDuration.TotalMilliseconds.ToString("F0")
-                        };
-
-                        logger.LogWarning(openProperties, ResilienceLogMessages.CircuitBreakerOpened);
+                        var bDuration = breakDuration.TotalMilliseconds.ToString("F0");
+                        logger.LogWarning("{Message} (State: Open, DurationMs: {BreakDurationMs})",
+                            ResilienceLogMessages.CircuitBreakerOpened, bDuration);
                         return default;
                     },
                     OnClosed = args =>
                     {
-                        var closedProperties = new Dictionary<string, string>
-                        {
-                            [ResiliencePropertyNames.CircuitState] = "Closed"
-                        };
-
-                        logger.LogInformation(closedProperties, ResilienceLogMessages.CircuitBreakerReset);
+                        logger.LogInformation("{Message} (State: Closed)", ResilienceLogMessages.CircuitBreakerReset);
                         return default;
                     }
                 })

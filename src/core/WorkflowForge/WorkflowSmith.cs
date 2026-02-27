@@ -28,6 +28,8 @@ namespace WorkflowForge
         private readonly SemaphoreSlim? _concurrencyLimiter;
         private readonly List<IWorkflowMiddleware> _workflowMiddlewares = new();
         private readonly object _workflowMiddlewareLock = new();
+        private readonly ConcurrentBag<IWorkflowFoundry> _foundryPool = new();
+        private static readonly int MaxPoolSize = Environment.ProcessorCount * 2;
         private volatile bool _disposed;
 
         // ==================================================================================
@@ -106,9 +108,28 @@ namespace WorkflowForge
             if (workflow == null)
                 throw new ArgumentNullException(nameof(workflow));
 
-            // Simple pattern: create foundry internally
-            using var foundry = CreateFoundryFor(workflow);
-            await ForgeAsync(workflow, foundry, cancellationToken).ConfigureAwait(false);
+            IWorkflowFoundry? foundry = null;
+            if (!_foundryPool.TryTake(out foundry))
+            {
+                foundry = CreateFoundryFor(workflow);
+            }
+            else
+            {
+                ((WorkflowFoundry)foundry).Reset(Guid.NewGuid(), _logger, _serviceProvider, _options, workflow);
+            }
+
+            try
+            {
+                await ForgeAsync(workflow, foundry, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                foundry.Dispose();
+                if (!_disposed && _foundryPool.Count < MaxPoolSize)
+                {
+                    _foundryPool.Add(foundry);
+                }
+            }
         }
 
         /// <inheritdoc />
@@ -304,7 +325,7 @@ namespace WorkflowForge
                 properties,                                         // Isolated properties
                 logger ?? _logger,                                  // Logger (override or use smith's)
                 serviceProvider ?? _serviceProvider,                // ServiceProvider (override or use smith's)
-                options: _options.CloneTyped());                    // Clone options to avoid mutation
+                options: _options);                                 // Share options reference
         }
 
         /// <inheritdoc />
@@ -327,7 +348,7 @@ namespace WorkflowForge
                 logger ?? _logger,                                  // Logger (override or use smith's)
                 serviceProvider ?? _serviceProvider,                // ServiceProvider (override or use smith's)
                 workflow,
-                options: _options.CloneTyped());                    // Pre-associate + options
+                options: _options);                                 // Pre-associate + options
         }
 
         /// <inheritdoc />
@@ -342,7 +363,7 @@ namespace WorkflowForge
                 data,
                 logger ?? _logger,
                 serviceProvider ?? _serviceProvider,
-                options: _options.CloneTyped());
+                options: _options);
         }
 
         /// <summary>
@@ -497,7 +518,7 @@ namespace WorkflowForge
                 _logger,
                 _serviceProvider,
                 workflow,
-                options: _options.CloneTyped());
+                options: _options);
         }
 
         private IWorkflowFoundry CreateFoundryWithData(ConcurrentDictionary<string, object?> properties)
@@ -507,7 +528,7 @@ namespace WorkflowForge
                 properties,
                 _logger,
                 _serviceProvider,
-                options: _options.CloneTyped());
+                options: _options);
         }
 
         /// <inheritdoc />
