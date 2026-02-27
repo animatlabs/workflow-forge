@@ -148,7 +148,9 @@ namespace WorkflowForge
             {
                 return new WorkflowSmith(logger ?? NullLogger.Instance, serviceProvider, options);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OutOfMemoryException 
+                                       && ex is not StackOverflowException 
+                                       && ex is not System.Threading.ThreadAbortException)
             {
                 throw new WorkflowForgeException("Failed to create workflow smith. Ensure the system has sufficient resources.", ex);
             }

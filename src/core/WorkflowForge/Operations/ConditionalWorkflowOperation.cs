@@ -152,7 +152,7 @@ namespace WorkflowForge.Operations
                 {
                     _trueOperation?.Dispose();
                 }
-                catch
+                catch (Exception)
                 {
                     // Swallow disposal exceptions
                 }
@@ -161,7 +161,7 @@ namespace WorkflowForge.Operations
                 {
                     _falseOperation?.Dispose();
                 }
-                catch
+                catch (Exception)
                 {
                     // Swallow disposal exceptions
                 }

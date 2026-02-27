@@ -500,11 +500,24 @@ public class Program
             Console.WriteLine($"  [PASS] {name}");
             return true;
         }
+        catch (Exception ex) when (IsCriticalException(ex))
+        {
+            throw;
+        }
         catch (Exception ex)
         {
-            Console.WriteLine($"  [FAIL] {name}: {ex.Message}");
+            Console.WriteLine($"  [FAIL] {name}: {ex.GetType().Name}: {ex.Message}");
             return false;
         }
+    }
+
+    private static bool IsCriticalException(Exception ex)
+    {
+        return ex is OutOfMemoryException
+            or StackOverflowException
+            or System.Threading.ThreadAbortException
+            or System.Threading.ThreadInterruptedException
+            or AccessViolationException;
     }
 
     private static IConfig CreateConfig()

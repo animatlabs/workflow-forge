@@ -110,14 +110,35 @@ public class Program
     {
         try
         {
-            action();
-            Console.WriteLine($"  [PASS] {name}");
-            return true;
+            try
+            {
+                action();
+                Console.WriteLine($"  [PASS] {name}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Expected benchmark failure: report and continue with other validations.
+                Console.WriteLine($"  [FAIL] {name}: {ex.GetType().FullName}: {ex.Message}");
+                Console.WriteLine(ex.ToString());
+                return false;
+            }
         }
-        catch (Exception ex)
+        catch (Exception ex) when (!IsCriticalException(ex))
         {
-            Console.WriteLine($"  [FAIL] {name}: {ex.Message}");
+            // Non-critical exception that escaped the inner handler; treat as a benchmark failure.
+            Console.WriteLine($"  [FAIL] {name}: {ex.GetType().FullName}: {ex.Message}");
+            Console.WriteLine(ex.ToString());
             return false;
         }
+    }
+
+    private static bool IsCriticalException(Exception ex)
+    {
+        return ex is OutOfMemoryException
+            or ThreadAbortException
+            or StackOverflowException
+            or ThreadInterruptedException
+            or AccessViolationException;
     }
 }

@@ -178,7 +178,7 @@ namespace WorkflowForge.Operations
                     {
                         operation?.Dispose();
                     }
-                    catch
+                    catch (Exception)
                     {
                         // Ignore disposal errors to prevent cascading failures
                     }
