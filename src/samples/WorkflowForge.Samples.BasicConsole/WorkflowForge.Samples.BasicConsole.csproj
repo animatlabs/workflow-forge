@@ -2,16 +2,22 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net48;net8.0;net10.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <SonarQubeExclude>true</SonarQubeExclude>
     <WarningsAsErrors />
     <WarningsNotAsErrors>CS8981</WarningsNotAsErrors>
     <NoWarn>$(NoWarn);CS1998;CS8601;CS8604</NoWarn>
     <AssemblyName>WorkflowForge.Samples.BasicConsole</AssemblyName>
     <RootNamespace>WorkflowForge.Samples.BasicConsole</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="WorkflowForge.Samples.BasicConsole.Helpers" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\core\WorkflowForge\WorkflowForge.csproj" />
@@ -41,6 +47,19 @@
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <Using Include="System" />
+    <Using Include="System.Collections.Generic" />
+    <Using Include="System.IO" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Net.Http" />
+    <Using Include="System.Threading" />
+    <Using Include="System.Threading.Tasks" />
+    <Using Include="System.Collections.Concurrent" />
   </ItemGroup>
 
 </Project> 

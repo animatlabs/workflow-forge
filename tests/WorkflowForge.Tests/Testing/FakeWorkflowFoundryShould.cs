@@ -4,19 +4,18 @@ using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Operations;
 using WorkflowForge.Testing;
-using Xunit;
 
 namespace WorkflowForge.Tests.Testing
 {
     /// <summary>
     /// Tests for FakeWorkflowFoundry test double.
     /// </summary>
-    public class FakeWorkflowFoundryTests
+    public class FakeWorkflowFoundryShould
     {
         #region Constructor Tests
 
         [Fact]
-        public void Constructor_InitializesWithDefaults()
+        public void InitializeWithDefaults_GivenConstructor()
         {
             // Act
             var foundry = new FakeWorkflowFoundry();
@@ -32,7 +31,7 @@ namespace WorkflowForge.Tests.Testing
         }
 
         [Fact]
-        public void ExecutionId_CanBeSet()
+        public void AllowSetting_GivenExecutionId()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -45,12 +44,12 @@ namespace WorkflowForge.Tests.Testing
             Assert.Equal(newId, foundry.ExecutionId);
         }
 
-        #endregion
+        #endregion Constructor Tests
 
         #region Operation Tracking Tests
 
         [Fact]
-        public void AddOperation_TracksOperation()
+        public void TrackOperation_GivenAddOperation()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -65,7 +64,7 @@ namespace WorkflowForge.Tests.Testing
         }
 
         [Fact]
-        public async Task ForgeAsync_TracksExecutedOperations()
+        public async Task TrackExecutedOperations_GivenForgeAsync()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -84,7 +83,7 @@ namespace WorkflowForge.Tests.Testing
         }
 
         [Fact]
-        public void TrackExecution_ManuallyTracksOperation()
+        public void ManuallyTrackOperation_GivenTrackExecution()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -98,12 +97,12 @@ namespace WorkflowForge.Tests.Testing
             Assert.Same(operation, foundry.ExecutedOperations[0]);
         }
 
-        #endregion
+        #endregion Operation Tracking Tests
 
         #region Properties Tests
 
         [Fact]
-        public async Task Properties_CanBeSetAndRead()
+        public async Task AllowSetAndRead_GivenProperties()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -118,12 +117,12 @@ namespace WorkflowForge.Tests.Testing
             Assert.Equal("myValue", foundry.Properties["myKey"]);
         }
 
-        #endregion
+        #endregion Properties Tests
 
         #region Reset Tests
 
         [Fact]
-        public async Task Reset_ClearsAllState()
+        public async Task ClearAllState_GivenReset()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -142,12 +141,12 @@ namespace WorkflowForge.Tests.Testing
             Assert.False(foundry.IsFrozen);
         }
 
-        #endregion
+        #endregion Reset Tests
 
         #region Event Tests
 
         [Fact]
-        public async Task ForgeAsync_RaisesOperationEvents()
+        public async Task RaiseOperationEvents_GivenForgeAsync()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -169,7 +168,7 @@ namespace WorkflowForge.Tests.Testing
         }
 
         [Fact]
-        public async Task ForgeAsync_RaisesFailedEvent_OnException()
+        public async Task RaiseFailedEvent_GivenForgeAsyncOnException()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -184,12 +183,12 @@ namespace WorkflowForge.Tests.Testing
             Assert.True(failedRaised);
         }
 
-        #endregion
+        #endregion Event Tests
 
         #region Dispose Tests
 
         [Fact]
-        public void Dispose_SetsDisposedState()
+        public void SetDisposedState_GivenDispose()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -201,13 +200,14 @@ namespace WorkflowForge.Tests.Testing
             Assert.Throws<ObjectDisposedException>(() => foundry.AddOperation(new SimpleTestOperation("Test")));
         }
 
-        #endregion
+        #endregion Dispose Tests
 
         #region Test Operations
 
         private class SimpleTestOperation : WorkflowOperationBase
         {
             public SimpleTestOperation(string name) => Name = name;
+
             public override string Name { get; }
 
             protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
@@ -240,6 +240,7 @@ namespace WorkflowForge.Tests.Testing
         private class FailingTestOperation : WorkflowOperationBase
         {
             public FailingTestOperation(string name) => Name = name;
+
             public override string Name { get; }
 
             protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
@@ -248,6 +249,6 @@ namespace WorkflowForge.Tests.Testing
             }
         }
 
-        #endregion
+        #endregion Test Operations
     }
 }

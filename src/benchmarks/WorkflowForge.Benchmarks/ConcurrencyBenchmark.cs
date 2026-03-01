@@ -1,6 +1,7 @@
+using System.Collections.Concurrent;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
-using System.Collections.Concurrent;
+using BenchmarkDotNet.Jobs;
 using WorkflowForge.Extensions;
 
 namespace WorkflowForge.Benchmarks;
@@ -13,7 +14,9 @@ namespace WorkflowForge.Benchmarks;
 /// - Scalability under concurrent load
 /// </summary>
 [MemoryDiagnoser]
-[SimpleJob(RunStrategy.Monitoring, iterationCount: 50)]
+[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net48, iterationCount: 50)]
+[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net80, iterationCount: 50)]
+[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net10_0, iterationCount: 50)]
 [MarkdownExporter]
 [HtmlExporter]
 public class ConcurrencyBenchmark
@@ -27,6 +30,7 @@ public class ConcurrencyBenchmark
     [GlobalSetup]
     public void Setup()
     {
+        // Method intentionally left empty.
     }
 
     [Benchmark(Baseline = true)]
@@ -62,14 +66,34 @@ public class ConcurrencyBenchmark
     public async Task<string> ParallelWorkflows()
     {
         var results = new string[ConcurrentWorkflowCount];
+        var semaphore = new SemaphoreSlim(Environment.ProcessorCount, Environment.ProcessorCount);
+        var tasks = new Task[ConcurrentWorkflowCount];
 
-        await Parallel.ForEachAsync(
-            Enumerable.Range(0, ConcurrentWorkflowCount),
-            new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
-            async (index, cancellationToken) =>
+        for (int i = 0; i < ConcurrentWorkflowCount; i++)
+        {
+            var index = i;
+            tasks[index] = Task.Run(async () =>
             {
-                results[index] = await RunSingleWorkflow($"Parallel_{index}");
+                await semaphore.WaitAsync();
+                try
+                {
+                    results[index] = await RunSingleWorkflow($"Parallel_{index}");
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
             });
+        }
+
+        try
+        {
+            await Task.WhenAll(tasks);
+        }
+        finally
+        {
+            semaphore.Dispose();
+        }
 
         return $"Completed {results.Length} workflows in parallel";
     }
@@ -102,10 +126,15 @@ public class ConcurrencyBenchmark
             tasks.Add(ExecuteWithSemaphore(semaphore, () => RunSingleWorkflow($"Semaphore_{workflowIndex}")));
         }
 
-        var results = await Task.WhenAll(tasks);
-        semaphore.Dispose();
-
-        return $"Completed {results.Length} workflows with semaphore control";
+        try
+        {
+            var results = await Task.WhenAll(tasks);
+            return $"Completed {results.Length} workflows with semaphore control";
+        }
+        finally
+        {
+            semaphore.Dispose();
+        }
     }
 
     [Benchmark]
@@ -244,7 +273,7 @@ public class ConcurrencyBenchmark
         return $"{workflowName} completed with global data";
     }
 
-    private async Task<T> ExecuteWithSemaphore<T>(SemaphoreSlim semaphore, Func<Task<T>> operation)
+    private static async Task<T> ExecuteWithSemaphore<T>(SemaphoreSlim semaphore, Func<Task<T>> operation)
     {
         await semaphore.WaitAsync();
         try
@@ -263,7 +292,7 @@ public class ConcurrencyBenchmark
 /// </summary>
 public class SharedBenchmarkResource
 {
-    private readonly object _lock = new object();
+    private readonly object _lock = new();
     private int _counter;
 
     public int Counter => _counter;
@@ -283,7 +312,7 @@ public class SharedBenchmarkResource
 /// </summary>
 public class HighContentionResource
 {
-    private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
     private int _accessCount;
 
     public int AccessCount => _accessCount;

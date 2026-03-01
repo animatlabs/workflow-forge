@@ -59,7 +59,8 @@ public class Scenario11_ParallelExecution_WorkflowCore : IWorkflowScenario
     public async Task CleanupAsync()
     {
         _workflowHost?.Stop();
-        if (_serviceProvider is IDisposable disposable) disposable.Dispose();
+        if (_serviceProvider is IDisposable disposable)
+            disposable.Dispose();
         await Task.CompletedTask;
     }
 

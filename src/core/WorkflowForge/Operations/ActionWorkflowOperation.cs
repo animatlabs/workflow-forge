@@ -37,23 +37,18 @@ namespace WorkflowForge.Operations
         public override string Name { get; }
 
         /// <summary>
-        /// Gets a value indicating whether this operation supports restoration.
-        /// </summary>
-        public override bool SupportsRestore => _restoreFunc != null;
-
-        /// <summary>
         /// Executes the action and returns the input data unchanged.
         /// </summary>
-        /// <param name="input">The input data to pass through.</param>
+        /// <param name="inputData">The input data to pass through.</param>
         /// <param name="foundry">The workflow foundry providing context and services.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The input data unchanged.</returns>
-        protected override async Task<object?> ForgeAsyncCore(object? input, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             try
             {
-                await _actionFunc(input, foundry, cancellationToken).ConfigureAwait(false);
-                return input; // Pass through the input unchanged
+                await _actionFunc(inputData, foundry, cancellationToken).ConfigureAwait(false);
+                return inputData; // Pass through the input unchanged
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {
@@ -70,18 +65,18 @@ namespace WorkflowForge.Operations
         /// <summary>
         /// Executes the restoration action if supported.
         /// </summary>
-        /// <param name="output">The output data for restoration.</param>
+        /// <param name="outputData">The output data for restoration.</param>
         /// <param name="foundry">The workflow foundry providing context and services.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task representing the restoration operation.</returns>
-        public override async Task RestoreAsync(object? output, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (!SupportsRestore)
-                throw new NotSupportedException($"Action operation '{Name}' does not support restoration.");
+            if (_restoreFunc == null)
+                return;
 
             try
             {
-                await _restoreFunc!(output, foundry, cancellationToken).ConfigureAwait(false);
+                await _restoreFunc(outputData, foundry, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {
@@ -126,23 +121,18 @@ namespace WorkflowForge.Operations
         public override string Name { get; }
 
         /// <summary>
-        /// Gets a value indicating whether this operation supports restoration.
-        /// </summary>
-        public override bool SupportsRestore => _restoreFunc != null;
-
-        /// <summary>
         /// Executes the typed action and returns the input data unchanged.
         /// </summary>
-        /// <param name="input">The typed input data to pass through.</param>
+        /// <param name="inputData">The typed input data to pass through.</param>
         /// <param name="foundry">The workflow foundry providing context and services.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The input data unchanged.</returns>
-        protected override async Task<TInput> ForgeAsyncCore(TInput input, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<TInput> ForgeAsyncCore(TInput inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             try
             {
-                await _actionFunc(input, foundry, cancellationToken).ConfigureAwait(false);
-                return input; // Pass through the input unchanged
+                await _actionFunc(inputData, foundry, cancellationToken).ConfigureAwait(false);
+                return inputData; // Pass through the input unchanged
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {
@@ -153,18 +143,18 @@ namespace WorkflowForge.Operations
         /// <summary>
         /// Executes the typed restoration action if supported.
         /// </summary>
-        /// <param name="output">The typed output data for restoration.</param>
+        /// <param name="outputData">The typed output data for restoration.</param>
         /// <param name="foundry">The workflow foundry providing context and services.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task representing the restoration operation.</returns>
-        public override async Task RestoreAsync(TInput output, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        public override async Task RestoreAsync(TInput outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (!SupportsRestore)
-                throw new NotSupportedException($"Action operation '{Name}' does not support restoration.");
+            if (_restoreFunc == null)
+                return;
 
             try
             {
-                await _restoreFunc!(output, foundry, cancellationToken).ConfigureAwait(false);
+                await _restoreFunc(outputData, foundry, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {

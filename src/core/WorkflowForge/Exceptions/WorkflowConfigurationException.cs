@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 
 namespace WorkflowForge.Exceptions
@@ -8,7 +9,7 @@ namespace WorkflowForge.Exceptions
     /// Helps identify configuration issues during workflow setup and initialization.
     /// </summary>
     [Serializable]
-    public class WorkflowConfigurationException : WorkflowForgeException
+    public sealed class WorkflowConfigurationException : WorkflowForgeException
     {
         /// <summary>Gets the configuration key that caused the error, if applicable.</summary>
         public string? ConfigurationKey { get; }
@@ -27,16 +28,21 @@ namespace WorkflowForge.Exceptions
         }
 
         /// <summary>Initializes a new instance with serialized data.</summary>
-        protected WorkflowConfigurationException(SerializationInfo info, StreamingContext context) : base(info, context)
+        private WorkflowConfigurationException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
             ConfigurationKey = info.GetString(nameof(ConfigurationKey));
         }
 
         /// <summary>Sets serialization info for the exception.</summary>
+#pragma warning disable SYSLIB0051 // Required for .NET Framework 4.8 serialization compatibility
+
+        [SuppressMessage("Usage", "CA2236:Call base class methods on ISerializable types", Justification = "Required for .NET Framework 4.8 binary serialization")]
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);
             info.AddValue(nameof(ConfigurationKey), ConfigurationKey);
         }
+
+#pragma warning restore SYSLIB0051
     }
 }

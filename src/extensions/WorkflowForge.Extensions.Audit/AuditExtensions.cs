@@ -1,5 +1,6 @@
 using System;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 using WorkflowForge.Extensions.Audit.Options;
 
 namespace WorkflowForge.Extensions.Audit
@@ -27,8 +28,10 @@ namespace WorkflowForge.Extensions.Audit
             ISystemTimeProvider? timeProvider = null,
             string? initiatedBy = null)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (auditProvider == null) throw new ArgumentNullException(nameof(auditProvider));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (auditProvider == null)
+                throw new ArgumentNullException(nameof(auditProvider));
 
             options ??= new AuditMiddlewareOptions();
 
@@ -75,15 +78,17 @@ namespace WorkflowForge.Extensions.Audit
             ISystemTimeProvider? timeProvider = null,
             string? initiatedBy = null)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (auditProvider == null) throw new ArgumentNullException(nameof(auditProvider));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (auditProvider == null)
+                throw new ArgumentNullException(nameof(auditProvider));
             if (string.IsNullOrWhiteSpace(operationName))
                 throw new ArgumentException("Operation name cannot be null or empty", nameof(operationName));
 
             var time = timeProvider ?? SystemTimeProvider.Instance;
-            var workflowName = foundry.Properties.TryGetValue("Workflow.Name", out var wfName)
-                ? wfName?.ToString() ?? "Unknown"
-                : "Unknown";
+            var workflowName = foundry.Properties.TryGetValue(FoundryPropertyKeys.WorkflowName, out var wfName)
+                ? wfName?.ToString() ?? FoundryPropertyKeys.UnknownValue
+                : FoundryPropertyKeys.UnknownValue;
 
             var entry = new AuditEntry(
                 foundry.ExecutionId,
@@ -97,7 +102,7 @@ namespace WorkflowForge.Extensions.Audit
                 null,
                 time.UtcNow);
 
-            await auditProvider.WriteAuditEntryAsync(entry);
+            await auditProvider.WriteAuditEntryAsync(entry).ConfigureAwait(false);
         }
     }
 }

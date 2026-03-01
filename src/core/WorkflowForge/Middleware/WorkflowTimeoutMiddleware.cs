@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 
 namespace WorkflowForge.Middleware
 {
@@ -71,13 +72,16 @@ namespace WorkflowForge.Middleware
             Func<Task> next,
             CancellationToken cancellationToken = default)
         {
-            if (workflow == null) throw new ArgumentNullException(nameof(workflow));
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (next == null) throw new ArgumentNullException(nameof(next));
+            if (workflow == null)
+                throw new ArgumentNullException(nameof(workflow));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (next == null)
+                throw new ArgumentNullException(nameof(next));
 
             // Check if workflow has custom timeout
             TimeSpan timeout = _defaultTimeout;
-            if (foundry.Properties.TryGetValue("Workflow.Timeout", out var customTimeout)
+            if (foundry.Properties.TryGetValue(FoundryPropertyKeys.WorkflowTimeout, out var customTimeout)
                 && customTimeout is TimeSpan ts)
             {
                 timeout = ts;
@@ -86,14 +90,15 @@ namespace WorkflowForge.Middleware
             // TimeSpan.Zero = no timeout enforcement
             if (timeout == TimeSpan.Zero)
             {
-                _logger.LogDebug($"Workflow '{workflow.Name}' executing without timeout");
+                _logger.LogDebug("Workflow {WorkflowName} executing without timeout", workflow.Name);
                 await next().ConfigureAwait(false);
                 return;
             }
 
-            _logger.LogDebug($"Workflow '{workflow.Name}' executing with {timeout.TotalSeconds}s timeout");
+            _logger.LogDebug("Workflow {WorkflowName} executing with {TimeoutSeconds}s timeout", workflow.Name, timeout.TotalSeconds);
 
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            foundry.Properties[FoundryPropertyKeys.WorkflowTimeoutCancellationToken] = timeoutCts.Token;
             var executionTask = next();
             var timeoutTask = Task.Delay(timeout, cancellationToken);
 
@@ -110,17 +115,17 @@ namespace WorkflowForge.Middleware
                     throw new OperationCanceledException(cancellationToken);
                 }
 
-                var errorMessage = $"Workflow '{workflow.Name}' execution exceeded the configured timeout of {timeout.TotalSeconds} seconds.";
-                _logger.LogError(errorMessage);
+                var errorMessage = string.Format("Workflow '{0}' execution exceeded the configured timeout of {1} seconds.", workflow.Name, timeout.TotalSeconds);
+                _logger.LogError("Workflow '{WorkflowName}' execution exceeded the configured timeout of {TimeoutSeconds} seconds.", workflow.Name, timeout.TotalSeconds);
 
-                foundry.Properties["Workflow.TimedOut"] = true;
-                foundry.Properties["Workflow.TimeoutDuration"] = timeout;
+                foundry.Properties[FoundryPropertyKeys.WorkflowTimedOut] = true;
+                foundry.Properties[FoundryPropertyKeys.WorkflowTimeoutDuration] = timeout;
 
                 throw new TimeoutException(errorMessage);
             }
 
             await executionTask.ConfigureAwait(false);
-            _logger.LogDebug($"Workflow '{workflow.Name}' completed within timeout ({timeout.TotalSeconds}s)");
+            _logger.LogDebug("Workflow {WorkflowName} completed within timeout ({TimeoutSeconds}s)", workflow.Name, timeout.TotalSeconds);
         }
     }
 }

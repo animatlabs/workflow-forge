@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using BenchmarkDotNet.Running;
 
 namespace WorkflowForge.Benchmarks;
@@ -12,6 +13,12 @@ public class Program
         Console.WriteLine("================================================================");
         Console.WriteLine();
 
+        if (args.Length > 0 && args[0].Equals("--validate", StringComparison.OrdinalIgnoreCase))
+        {
+            RunValidationMode();
+            return;
+        }
+
         if (args.Length == 0)
         {
             Console.WriteLine("Running ALL internal benchmarks...");
@@ -21,12 +28,10 @@ public class Program
             Console.WriteLine("  2. Workflow Throughput Benchmark");
             Console.WriteLine("  3. Memory Allocation Benchmark");
             Console.WriteLine("  4. Concurrency Benchmark");
-            Console.WriteLine("  5. Configuration Profiles Benchmark");
             Console.WriteLine();
-            Console.WriteLine("Running all benchmarks automatically...");
+            Console.WriteLine("To validate all benchmarks: dotnet run --configuration Release -- --validate");
             Console.WriteLine();
 
-            // Run all benchmarks
             BenchmarkRunner.Run<OperationPerformanceBenchmark>();
             BenchmarkRunner.Run<WorkflowThroughputBenchmark>();
             BenchmarkRunner.Run<MemoryAllocationBenchmark>();
@@ -40,9 +45,100 @@ public class Program
         }
         else
         {
-            // Use BenchmarkSwitcher for custom arguments
             var switcher = BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly);
             switcher.Run(args);
         }
+    }
+
+    private static void RunValidationMode()
+    {
+        Console.WriteLine("VALIDATION MODE: Running each benchmark once to verify correctness...");
+        Console.WriteLine($"Runtime: {RuntimeInformation.FrameworkDescription}");
+        Console.WriteLine();
+
+        var allPassed = true;
+
+        allPassed &= ValidateBenchmark("OperationPerformance", () =>
+        {
+            var b = new OperationPerformanceBenchmark();
+            b.Setup();
+            b.DelegateOperationExecution().GetAwaiter().GetResult();
+            b.CustomOperationExecution().GetAwaiter().GetResult();
+            b.ConditionalOperationTrue().GetAwaiter().GetResult();
+            b.ChainedOperationsExecution().GetAwaiter().GetResult();
+            b.Cleanup();
+        });
+
+        allPassed &= ValidateBenchmark("WorkflowThroughput", () =>
+        {
+            var b = new WorkflowThroughputBenchmark { OperationCount = 3 };
+            b.Setup();
+            b.SequentialDelegateOperations().GetAwaiter().GetResult();
+            b.SequentialCustomOperations().GetAwaiter().GetResult();
+            b.DataPassingWorkflow().GetAwaiter().GetResult();
+            b.MemoryIntensiveWorkflow().GetAwaiter().GetResult();
+        });
+
+        allPassed &= ValidateBenchmark("MemoryAllocation", () =>
+        {
+            var b = new MemoryAllocationBenchmark { AllocationCount = 10 };
+            b.Setup();
+            b.MinimalAllocationWorkflow().GetAwaiter().GetResult();
+            b.SmallObjectAllocation().GetAwaiter().GetResult();
+            b.LargeObjectAllocation().GetAwaiter().GetResult();
+            b.ArrayReuseOptimization().GetAwaiter().GetResult();
+        });
+
+        allPassed &= ValidateBenchmark("Concurrency", () =>
+        {
+            var b = new ConcurrencyBenchmark { ConcurrentWorkflowCount = 2, OperationsPerWorkflow = 3 };
+            b.Setup();
+            b.SequentialWorkflows().GetAwaiter().GetResult();
+            b.ConcurrentWorkflows().GetAwaiter().GetResult();
+            b.ParallelWorkflows().GetAwaiter().GetResult();
+            b.TaskBasedConcurrency().GetAwaiter().GetResult();
+        });
+
+        Console.WriteLine();
+        Console.WriteLine(allPassed
+            ? "═══ ALL VALIDATIONS PASSED ═══"
+            : "═══ SOME VALIDATIONS FAILED ═══");
+        Environment.Exit(allPassed ? 0 : 1);
+    }
+
+    private static bool ValidateBenchmark(string name, Action action)
+    {
+        try
+        {
+            try
+            {
+                action();
+                Console.WriteLine($"  [PASS] {name}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Expected benchmark failure: report and continue with other validations.
+                Console.WriteLine($"  [FAIL] {name}: {ex.GetType().FullName}: {ex.Message}");
+                Console.WriteLine(ex.ToString());
+                return false;
+            }
+        }
+        catch (Exception ex) when (!IsCriticalException(ex))
+        {
+            // Non-critical exception that escaped the inner handler; treat as a benchmark failure.
+            Console.WriteLine($"  [FAIL] {name}: {ex.GetType().FullName}: {ex.Message}");
+            Console.WriteLine(ex.ToString());
+            return false;
+        }
+    }
+
+    private static bool IsCriticalException(Exception ex)
+    {
+        return ex is OutOfMemoryException
+            or ThreadAbortException
+            or StackOverflowException
+            or ThreadInterruptedException
+            or AccessViolationException;
     }
 }

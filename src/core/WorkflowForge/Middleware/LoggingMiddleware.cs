@@ -57,16 +57,16 @@ namespace WorkflowForge.Middleware
             // Create middleware scope with operation context using consistent property names
             var middlewareProperties = new Dictionary<string, string>
             {
-                [PropertyNameConstants.ExecutionId] = operation?.Id.ToString() ?? "Unknown",
-                [PropertyNameConstants.ExecutionName] = operation?.Name ?? "Unknown",
-                [PropertyNameConstants.ExecutionType] = operation?.GetType().Name ?? "Unknown"
+                [PropertyNameConstants.ExecutionId] = operation?.Id.ToString() ?? FoundryPropertyKeys.UnknownValue,
+                [PropertyNameConstants.ExecutionName] = operation?.Name ?? FoundryPropertyKeys.UnknownValue,
+                [PropertyNameConstants.ExecutionType] = operation?.GetType().Name ?? FoundryPropertyKeys.UnknownValue
             };
 
             // Optionally include data payloads if configured
             if (_options.LogDataPayloads && inputData != null)
             {
                 middlewareProperties["InputDataType"] = inputData.GetType().Name;
-                middlewareProperties["InputData"] = inputData.ToString() ?? "null";
+                middlewareProperties["InputData"] = inputData.ToString() ?? FoundryPropertyKeys.NullDisplayValue;
             }
 
             using var middlewareScope = _logger.BeginScope("MiddlewareExecution", middlewareProperties);
@@ -83,7 +83,7 @@ namespace WorkflowForge.Middleware
                     var resultProperties = new Dictionary<string, string>
                     {
                         ["ResultType"] = result.GetType().Name,
-                        ["Result"] = result.ToString() ?? "null"
+                        ["Result"] = result.ToString() ?? FoundryPropertyKeys.NullDisplayValue
                     };
                     using var resultScope = _logger.BeginScope("OperationResult", resultProperties);
                     _logger.LogTrace(WorkflowLogMessageConstants.MiddlewareExecutionCompleted);

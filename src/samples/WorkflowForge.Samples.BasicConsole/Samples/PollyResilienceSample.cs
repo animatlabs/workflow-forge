@@ -2,6 +2,7 @@ using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Resilience.Polly;
 using WorkflowForge.Extensions.Resilience.Polly.Options;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -126,15 +127,13 @@ public class PollyResilienceSample : ISample
 /// <summary>
 /// Simulates an unreliable external service that fails initially but eventually succeeds
 /// </summary>
-public class UnreliableServiceOperation : IWorkflowOperation
+public class UnreliableServiceOperation : WorkflowOperationBase
 {
     private static int _attemptCount = 0;
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "UnreliableService";
-    public bool SupportsRestore => true;
+    public override string Name => "UnreliableService";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var scenario = foundry.Properties["scenario"] as string ?? "unknown";
         var maxFailures = (int)(foundry.Properties["max_failures"] ?? 0);
@@ -164,7 +163,7 @@ public class UnreliableServiceOperation : IWorkflowOperation
         // Success after configured failures
         var serviceResponse = new
         {
-            RequestId = Guid.NewGuid().ToString("N")[..8],
+            RequestId = Guid.NewGuid().ToString("N").Substring(0, 8),
             Data = $"Service response for {scenario} scenario",
             Timestamp = DateTime.UtcNow,
             AttemptCount = _attemptCount
@@ -176,7 +175,7 @@ public class UnreliableServiceOperation : IWorkflowOperation
         return serviceResponse;
     }
 
-    public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogWarning("Restoring unreliable service operation due to workflow failure");
 
@@ -186,21 +185,16 @@ public class UnreliableServiceOperation : IWorkflowOperation
         foundry.Properties.TryRemove("service_response", out _);
         foundry.Logger.LogInformation("Service operation restoration completed");
     }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Data processing operation that demonstrates timeout handling
 /// </summary>
-public class DataProcessingOperation : IWorkflowOperation
+public class DataProcessingOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "DataProcessing";
-    public bool SupportsRestore => false;
+    public override string Name => "DataProcessing";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var serviceResponse = inputData as dynamic;
         var scenario = foundry.Properties["scenario"] as string ?? "unknown";
@@ -232,26 +226,16 @@ public class DataProcessingOperation : IWorkflowOperation
 
         return processedData;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException("Data processing does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Completion operation that summarizes the resilience scenario results
 /// </summary>
-public class CompletionOperation : IWorkflowOperation
+public class CompletionOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "Completion";
-    public bool SupportsRestore => false;
+    public override string Name => "Completion";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var processedData = inputData as dynamic;
         var scenario = foundry.Properties["scenario"] as string ?? "unknown";
@@ -286,12 +270,4 @@ public class CompletionOperation : IWorkflowOperation
 
         return summary;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException("Completion operation does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }

@@ -22,6 +22,7 @@ dotnet test -c Release
 
 ## Pull Request Guidelines
 
+- **Target branch**: Please target the `main` branch for all pull requests.
 - **Keep PRs focused**: One logical change per PR
 - **Include tests**: Add or update tests for code changes where applicable
 - **Update documentation**: Modify docs and samples if behavior changes
@@ -30,7 +31,7 @@ dotnet test -c Release
 
 ## Coding Standards
 
-- **Target frameworks**: .NET Standard 2.0 for core, .NET 8.0+ for tests/samples
+- **Target frameworks**: .NET Standard 2.0 for core libraries; net48, net8.0, and net10.0 for tests, benchmarks, and samples
 - **Naming**: Use explicit, descriptive names (avoid abbreviations)
 - **XML Documentation**: Add XML docs for all public APIs
 - **Async/await**: Use async patterns for I/O operations
@@ -54,11 +55,13 @@ dotnet test -c Release
 
 ## Release Process
 
-- Update version in all `.csproj` files
-- Update `README.md`, documentation, and samples for new features
-- Update `publish-packages.ps1` versions
-- Create a GitHub Release with detailed changelog
-- Publish to NuGet using automated script
+1. **Version Bump**: Update `<Version>` and `<PackageReleaseNotes>` in all 13 `.csproj` files
+2. **Documentation**: Update `README.md`, `CHANGELOG.md`, and `docs/` with new version and benchmark data
+3. **Build & Test**: Run `dotnet build` and `dotnet test` across all target frameworks (net48, net8.0, net10.0)
+4. **Pack**: Run `dotnet pack` to generate `.nupkg` and `.snupkg` packages
+5. **Sign** (if configured): Sign packages with `dotnet nuget sign` using code-signing certificate
+6. **Publish**: Trigger the GitHub Actions **Build and Test** workflow via `workflow_dispatch` with `publish: true`
+7. **Tag & Release**: Create a GitHub Release with the tag matching the version and reference the CHANGELOG
 
 ## Code of Conduct
 
@@ -69,5 +72,7 @@ dotnet test -c Release
 ---
 
 By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+
+If this project helps you, consider [supporting on Ko-fi](https://ko-fi.com/animat089).
 
 For questions, open a [GitHub Discussion](https://github.com/animatlabs/workflow-forge/discussions).

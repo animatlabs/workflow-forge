@@ -113,7 +113,6 @@ public interface IWorkflow
     string? Description { get; }
     string Version { get; }
     IReadOnlyList<IWorkflowOperation> Operations { get; }
-    bool SupportsRestore { get; }
 }
 ```
 
@@ -123,7 +122,6 @@ public interface IWorkflow
 - `Description`: Optional description for documentation
 - `Version`: Workflow version string
 - `Operations`: Ordered collection of operations to execute
-- `SupportsRestore`: Whether any operation supports compensation
 
 ---
 
@@ -139,8 +137,8 @@ public sealed class WorkflowBuilder
     WorkflowBuilder WithVersion(string version);
     WorkflowBuilder AddOperation(IWorkflowOperation operation);
     WorkflowBuilder AddOperation<T>() where T : class, IWorkflowOperation;
-    WorkflowBuilder AddOperation(string name, Func<IWorkflowFoundry, CancellationToken, Task> action);
-    WorkflowBuilder AddOperation(string name, Action<IWorkflowFoundry> action);
+    WorkflowBuilder AddOperation(string name, Func<IWorkflowFoundry, CancellationToken, Task> action, Func<IWorkflowFoundry, CancellationToken, Task>? restoreAction = null);
+    WorkflowBuilder AddOperation(string name, Action<IWorkflowFoundry> action, Action<IWorkflowFoundry>? restoreAction = null);
     WorkflowBuilder AddOperations(params IWorkflowOperation[] operations);
     WorkflowBuilder AddOperations(IEnumerable<IWorkflowOperation> operations);
     WorkflowBuilder AddParallelOperations(params IWorkflowOperation[] operations);
@@ -163,12 +161,13 @@ public sealed class WorkflowBuilder
 
 Base interface for all workflow operations.
 
+> **Recommended**: Use `WorkflowOperationBase` as the base class for custom operations instead of implementing this interface directly. The base class provides automatic ID generation, default RestoreAsync/Dispose implementations, lifecycle hooks, and the ForgeAsyncCore pattern.
+
 ```csharp
 public interface IWorkflowOperation : IDisposable
 {
     Guid Id { get; }
     string Name { get; }
-    bool SupportsRestore { get; }
     
     Task<object?> ForgeAsync(
         object? inputData,
@@ -185,7 +184,6 @@ public interface IWorkflowOperation : IDisposable
 **Properties**:
 - `Id`: Unique identifier for the operation instance
 - `Name`: Human-readable operation name
-- `SupportsRestore`: Whether operation implements compensation logic
 
 **Methods**:
 
@@ -223,7 +221,7 @@ Executes compensation logic to undo operation effects.
 - `foundry`: Execution context
 - `cancellationToken`: Cancellation token
 
-**Usage**: Called automatically by WorkflowSmith if workflow fails and `SupportsRestore` is true.
+**Usage**: Called automatically by WorkflowSmith if workflow fails. Operations that override `RestoreAsync` run their compensation logic; operations that use the base class default (no-op) are safely skipped.
 
 ---
 
@@ -236,7 +234,6 @@ public abstract class WorkflowOperationBase : IWorkflowOperation
 {
     public virtual Guid Id { get; } = Guid.NewGuid();
     public abstract string Name { get; }
-    public virtual bool SupportsRestore => false;
     
     // Lifecycle hooks (virtual, override to customize)
     protected virtual Task OnBeforeExecuteAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct)
@@ -268,8 +265,7 @@ public abstract class WorkflowOperationBase : IWorkflowOperation
 
 **Features**:
 - Auto-generates unique `Id` for each operation instance
-- Default `SupportsRestore = false` (override to enable compensation)
-- `RestoreAsync` throws `NotSupportedException` if `SupportsRestore` is false
+- `RestoreAsync` provides a no-op default — override it to implement compensation. Operations that don't override are safely skipped during compensation.
 - Override `Dispose()` if your operation holds unmanaged resources
 
 **Lifecycle Hooks** (new in v2.0):
@@ -363,6 +359,15 @@ public interface IWorkflowFoundry :
 **Notes**:
 - Property helpers like `SetProperty`, `GetPropertyOrDefault`, and `TryGetProperty` are extension methods.
 - Operations and middleware cannot be added/removed while `ForgeAsync` is running.
+
+**Foundry WithOperation Extensions** (from `FoundryPropertyExtensions`):
+
+```csharp
+IWorkflowFoundry WithOperation(this IWorkflowFoundry foundry, string name, Func<IWorkflowFoundry, Task> action, Func<IWorkflowFoundry, Task>? restoreAction = null);
+IWorkflowFoundry WithOperation(this IWorkflowFoundry foundry, string name, Action<IWorkflowFoundry> action, Action<IWorkflowFoundry>? restoreAction = null);
+```
+
+Adds inline operations to the foundry. The optional `restoreAction` provides compensation logic when the workflow fails.
 
 ---
 
@@ -771,14 +776,14 @@ Logs a message during workflow execution.
 ```csharp
 public class LoggingOperation : WorkflowOperationBase
 {
-    public LoggingOperation(IWorkflowForgeLogger logger, string message);
+    public LoggingOperation(string message, WorkflowForgeLogLevel logLevel = WorkflowForgeLogLevel.Information, string? name = null);
 }
 ```
 
 **Example**:
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow("LoggingWorkflow")
-    .AddOperation(new LoggingOperation(logger, "Starting workflow"))
+    .AddOperation(new LoggingOperation("Starting workflow"))
     .Build();
 ```
 
@@ -786,22 +791,40 @@ var workflow = WorkflowForge.CreateWorkflow("LoggingWorkflow")
 
 ### ConditionalWorkflowOperation
 
-Executes different operations based on a predicate.
+Executes different operations based on a condition.
 
 ```csharp
 public class ConditionalWorkflowOperation : WorkflowOperationBase
 {
+    // Async condition with input data
     public ConditionalWorkflowOperation(
-        Func<IWorkflowFoundry, bool> predicate,
+        Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>> condition,
         IWorkflowOperation trueOperation,
-        IWorkflowOperation falseOperation);
+        IWorkflowOperation? falseOperation = null,
+        string? name = null,
+        Guid? id = null);
+
+    // Sync condition with input data
+    public ConditionalWorkflowOperation(
+        Func<object?, IWorkflowFoundry, bool> condition,
+        IWorkflowOperation trueOperation,
+        IWorkflowOperation? falseOperation = null,
+        string? name = null,
+        Guid? id = null);
+
+    // Simple condition (foundry-only) via factory
+    public static ConditionalWorkflowOperation Create(
+        Func<IWorkflowFoundry, bool> condition,
+        IWorkflowOperation trueOperation,
+        IWorkflowOperation? falseOperation = null,
+        string? name = null);
 }
 ```
 
 **Example**:
 ```csharp
 var conditionalOp = new ConditionalWorkflowOperation(
-    predicate: f => f.GetPropertyOrDefault<decimal>("Amount") > 100,
+    condition: (input, f) => f.GetPropertyOrDefault<decimal>("Amount") > 100,
     trueOperation: new HighValueOperation(),
     falseOperation: new StandardOperation());
 ```

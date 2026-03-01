@@ -16,11 +16,11 @@ namespace WorkflowForge.Tests;
 /// Comprehensive tests for WorkflowFoundry covering all core functionality.
 /// Tests property management, data operations, middleware pipeline, lifecycle, and error handling.
 /// </summary>
-public class WorkflowFoundryTests
+public class WorkflowFoundryShould
 {
     private readonly ITestOutputHelper _output;
 
-    public WorkflowFoundryTests(ITestOutputHelper output)
+    public WorkflowFoundryShould(ITestOutputHelper output)
     {
         _output = output;
     }
@@ -28,7 +28,7 @@ public class WorkflowFoundryTests
     #region Constructor and Basic Properties Tests
 
     [Fact]
-    public void Constructor_WithRequiredParameters_CreatesFoundry()
+    public void CreateFoundry_GivenRequiredParameters()
     {
         // Arrange
         var executionId = Guid.NewGuid();
@@ -44,7 +44,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void Constructor_WithConfiguration_UsesProvidedConfiguration()
+    public void UseProvidedConfiguration_GivenConfiguration()
     {
         // Arrange
         var executionId = Guid.NewGuid();
@@ -60,7 +60,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void Constructor_WithNullData_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullData()
     {
         // Arrange
         var executionId = Guid.NewGuid();
@@ -70,7 +70,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void Constructor_WithInitialProperties_SetsProperties()
+    public void SetProperties_GivenInitialProperties()
     {
         // Arrange
         var executionId = Guid.NewGuid();
@@ -89,7 +89,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void Constructor_WithLogger_SetsLoggerCorrectly()
+    public void SetLoggerCorrectly_GivenLogger()
     {
         // Arrange
         var executionId = Guid.NewGuid();
@@ -104,7 +104,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void ExecutionId_ReturnsExecutionId()
+    public void ReturnExecutionId_GivenExecutionId()
     {
         // Arrange
         var executionId = Guid.NewGuid();
@@ -115,7 +115,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void CurrentWorkflow_CanBeSetAndRetrieved()
+    public void AllowSetAndRetrieve_GivenCurrentWorkflow()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -130,7 +130,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void CurrentWorkflow_WithNullValue_SetsToNull()
+    public void SetToNull_GivenCurrentWorkflowNullValue()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -143,7 +143,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void Logger_ReturnsCorrectLogger()
+    public void ReturnCorrectLogger_GivenLogger()
     {
         // Arrange
         var logger = NullLogger.Instance;
@@ -154,7 +154,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void Constructor_WithNullLogger_UsesNullLogger()
+    public void UseNullLogger_GivenNullLogger()
     {
         // Arrange
         var executionId = Guid.NewGuid();
@@ -173,7 +173,7 @@ public class WorkflowFoundryTests
     #region Property Management Tests
 
     [Fact]
-    public void SetProperty_WithValidKeyValue_StoresProperty()
+    public void StoreProperty_GivenValidKeyValue()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -189,7 +189,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void SetProperty_WithNullKey_ThrowsException()
+    public void ThrowException_GivenSetPropertyNullKey()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -199,7 +199,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void SetProperty_WithNullValue_StoresNull()
+    public void StoreNull_GivenNullValue()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -214,7 +214,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void GetProperty_WithNonExistentKey_ReturnsDefault()
+    public void ReturnDefault_GivenNonExistentKey()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -228,7 +228,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void GetProperty_WithWrongType_ReturnsValue()
+    public void ReturnValue_GivenWrongType()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -243,7 +243,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void TryGetProperty_WithExistingKey_ReturnsTrue()
+    public void ReturnTrue_GivenExistingKey()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -260,7 +260,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void TryGetProperty_WithNonExistentKey_ReturnsFalse()
+    public void ReturnFalse_GivenNonExistentKeyForTryGet()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -274,7 +274,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void RemoveProperty_WithExistingKey_RemovesProperty()
+    public void RemoveProperty_GivenExistingKey()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -290,7 +290,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void RemoveProperty_WithNonExistentKey_ReturnsFalse()
+    public void ReturnFalse_GivenNonExistentKeyForRemove()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -303,7 +303,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void GetAllProperties_ReturnsAllProperties()
+    public void ReturnAllProperties_GivenGetAllProperties()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -335,7 +335,7 @@ public class WorkflowFoundryTests
     #region Data Access Tests (using Properties)
 
     [Fact]
-    public void Properties_WithExistingKey_ReturnsValue()
+    public void ReturnValue_GivenPropertiesExistingKey()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -351,7 +351,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void Properties_WithNonExistentKey_ThrowsKeyNotFoundException()
+    public void ThrowKeyNotFoundException_GivenPropertiesNonExistentKey()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -361,7 +361,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void Properties_WithExistingKey_ReturnsValue2()
+    public void ReturnValue_GivenPropertiesExistingKeyInt()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -377,7 +377,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void Properties_WithNonExistentKey_ThrowsException()
+    public void ThrowException_GivenPropertiesNonExistentKey()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -387,7 +387,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void Properties_SetValue_StoresValue()
+    public void StoreValue_GivenPropertiesSetValue()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -403,7 +403,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void Properties_TryGetValue_WithExistingKey_ReturnsTrue()
+    public void ReturnTrue_GivenPropertiesTryGetValueExistingKey()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -420,7 +420,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void Properties_TryGetValue_WithNonExistentKey_ReturnsFalse()
+    public void ReturnFalse_GivenPropertiesTryGetValueNonExistentKey()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -438,7 +438,7 @@ public class WorkflowFoundryTests
     #region Operation Management Tests
 
     [Fact]
-    public void AddOperation_WithValidOperation_AddsToFoundry()
+    public void AddToFoundry_GivenValidOperation()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -452,7 +452,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void AddOperation_WithNullOperation_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullOperation()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -462,7 +462,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void AddOperation_AfterDispose_ThrowsObjectDisposedException()
+    public void ThrowObjectDisposedException_GivenAddOperationAfterDispose()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -474,7 +474,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public async Task ReplaceOperations_ReplacesExistingOperations()
+    public async Task ReplaceExistingOperations_GivenReplaceOperations()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -503,7 +503,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public async Task ForgeAsync_FreezesPipeline_DuringExecution()
+    public async Task FreezePipelineDuringExecution_GivenForgeAsync()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -532,7 +532,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithSingleOperation_ExecutesOperation()
+    public async Task ExecuteOperation_GivenSingleOperation()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -554,7 +554,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WhenOutputChainingDisabled_DoesNotPassResultForward()
+    public async Task NotPassResultForward_GivenOutputChainingDisabled()
     {
         // Arrange
         var options = new WorkflowForgeOptions { EnableOutputChaining = false };
@@ -577,7 +577,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithContinueAndAggregate_ThrowsAggregateException()
+    public async Task ThrowAggregateException_GivenContinueAndAggregate()
     {
         // Arrange
         var options = new WorkflowForgeOptions { ContinueOnError = true };
@@ -596,7 +596,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public async Task ForgeAsync_StoresOperationOutputInProperties()
+    public async Task StoreOperationOutputInProperties_GivenForgeAsync()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -609,7 +609,7 @@ public class WorkflowFoundryTests
         await foundry.ForgeAsync();
 
         // Assert
-        var outputKey = $"Operation.{operation.Id}.Output";
+        var outputKey = $"Operation.0:{operation.Name}.Output";
         Assert.True(foundry.Properties.TryGetValue(outputKey, out var storedOutput));
         Assert.Equal("result", storedOutput);
         Assert.Equal(0, foundry.Properties["Operation.LastCompletedIndex"]);
@@ -617,7 +617,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithMultipleOperations_ExecutesInOrder()
+    public async Task ExecuteInOrder_GivenMultipleOperations()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -647,7 +647,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithCancellation_ThrowsTaskCanceledException()
+    public async Task ThrowTaskCanceledException_GivenCancellation()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -667,7 +667,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public async Task ForgeAsync_AfterDispose_ThrowsObjectDisposedException()
+    public async Task ThrowObjectDisposedException_GivenForgeAsyncAfterDispose()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -682,7 +682,7 @@ public class WorkflowFoundryTests
     #region Middleware Tests
 
     [Fact]
-    public void AddMiddleware_WithValidMiddleware_AddsToFoundry()
+    public void AddToFoundry_GivenValidMiddleware()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -696,7 +696,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void AddMiddleware_WithNullMiddleware_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullMiddleware()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -706,7 +706,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void AddMiddlewares_WithMultipleMiddlewares_AddsAll()
+    public void AddAll_GivenMultipleMiddlewares()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -725,7 +725,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void RemoveMiddleware_WithExistingMiddleware_RemovesAndReturnsTrue()
+    public void RemoveAndReturnTrue_GivenExistingMiddleware()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -741,7 +741,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public void RemoveMiddleware_WithNonExistentMiddleware_ReturnsFalse()
+    public void ReturnFalse_GivenNonExistentMiddleware()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -755,7 +755,7 @@ public class WorkflowFoundryTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithMiddleware_ExecutesMiddlewarePipeline()
+    public async Task ExecuteMiddlewarePipeline_GivenMiddlewareRegistered()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -813,12 +813,10 @@ public class WorkflowFoundryTests
 
     #endregion Disposal Tests
 
-
-
     #region Error Handling Tests
 
     [Fact]
-    public async Task ForgeAsync_WithOperationException_ThrowsWorkflowOperationException()
+    public async Task ThrowWorkflowOperationException_GivenOperationFailure()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -859,7 +857,6 @@ public class WorkflowFoundryTests
         mockWorkflow.Setup(w => w.Description).Returns($"Mock workflow: {name}");
         mockWorkflow.Setup(w => w.Version).Returns("1.0.0");
         mockWorkflow.Setup(w => w.Operations).Returns(new List<IWorkflowOperation>());
-        mockWorkflow.Setup(w => w.SupportsRestore).Returns(true);
         return mockWorkflow.Object;
     }
 
@@ -877,7 +874,6 @@ public class WorkflowFoundryTests
             return Task.FromResult<object?>("TestResult");
         }
     }
-
 
     private class TestMiddleware : IWorkflowOperationMiddleware
     {

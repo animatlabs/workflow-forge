@@ -11,6 +11,11 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
     /// </summary>
     public interface IRecoveryCatalog
     {
+        /// <summary>
+        /// Lists all pending workflow snapshots that are eligible for recovery.
+        /// </summary>
+        /// <param name="cancellationToken">Token to cancel the listing operation.</param>
+        /// <returns>A read-only collection of pending snapshots.</returns>
         Task<IReadOnlyList<WorkflowExecutionSnapshot>> ListPendingAsync(CancellationToken cancellationToken = default);
     }
 }

@@ -1,0 +1,44 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Source code — CRLF on checkout (Windows-native development)
+*.cs text eol=crlf
+*.csproj text eol=crlf
+*.sln text eol=crlf
+*.props text eol=crlf
+*.targets text eol=crlf
+*.config text eol=crlf
+*.json text eol=crlf
+*.xml text eol=crlf
+*.xaml text eol=crlf
+*.resx text eol=crlf
+
+# Documentation — LF (Unix-style, standard for Markdown/Jekyll)
+*.md text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+
+# Scripts
+*.sh text eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.py text eol=lf
+
+# Binary files — no conversion
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.snk binary
+*.pfx binary
+*.nupkg binary
+*.snupkg binary
+*.dll binary
+*.exe binary
+*.pdb binary

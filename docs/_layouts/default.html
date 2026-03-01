@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#2563eb">
+  <title>{{ page.title | default: site.title }}{% if page.title and site.title %} | {{ site.title }}{% endif %}</title>
   <link rel="icon" href="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png">
   {% seo %}
@@ -11,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://www.googletagmanager.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" crossorigin="anonymous">
   <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
   <script>
     // Apply dark mode before first paint to prevent flash

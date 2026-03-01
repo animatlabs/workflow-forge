@@ -31,7 +31,8 @@ namespace WorkflowForge.Tests.Concurrency.MaxConcurrentWorkflowsTests
 
         private static void SafeDeleteDirectory(string path)
         {
-            if (!Directory.Exists(path)) return;
+            if (!Directory.Exists(path))
+                return;
 
             const int maxRetries = 3;
             for (int attempt = 0; attempt < maxRetries; attempt++)
@@ -73,12 +74,13 @@ namespace WorkflowForge.Tests.Concurrency.MaxConcurrentWorkflowsTests
                     .Build())
                 .ToList();
 
-            // Act
-            var tasks = workflows.Select(wf => smith.ForgeAsync(wf));
-            await Task.WhenAll(tasks);
-
-            // Assert - All workflows completed without throttling
-            Assert.True(true); // If we got here, no deadlock occurred
+            // Act & Assert - All workflows completed without deadlock
+            var ex = await Record.ExceptionAsync(async () =>
+            {
+                var tasks = workflows.Select(wf => smith.ForgeAsync(wf));
+                await Task.WhenAll(tasks);
+            });
+            Assert.Null(ex);
         }
 
         [Fact]
@@ -161,12 +163,13 @@ namespace WorkflowForge.Tests.Concurrency.MaxConcurrentWorkflowsTests
                     .Build())
                 .ToList();
 
-            // Act
-            var tasks = workflows.Select(wf => smith.ForgeAsync(wf));
-            await Task.WhenAll(tasks);
-
-            // Assert - All workflows completed without throttling
-            Assert.True(true); // If we got here, no deadlock occurred
+            // Act & Assert - All workflows completed without deadlock
+            var ex = await Record.ExceptionAsync(async () =>
+            {
+                var tasks = workflows.Select(wf => smith.ForgeAsync(wf));
+                await Task.WhenAll(tasks);
+            });
+            Assert.Null(ex);
         }
 
         /// <summary>

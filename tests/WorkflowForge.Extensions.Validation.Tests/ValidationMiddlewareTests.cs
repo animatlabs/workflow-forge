@@ -8,13 +8,13 @@ using WF = WorkflowForge;
 
 namespace WorkflowForge.Extensions.Validation.Tests
 {
-    public class ValidationMiddlewareTests : IDisposable
+    public class ValidationMiddlewareShould : IDisposable
     {
         private readonly IWorkflowFoundry _foundry;
         private readonly TestOperation _operation;
         private readonly ISystemTimeProvider _timeProvider;
 
-        public ValidationMiddlewareTests()
+        public ValidationMiddlewareShould()
         {
             _timeProvider = SystemTimeProvider.Instance;
             _foundry = WF.WorkflowForge.CreateFoundry("ValidationTest");
@@ -27,7 +27,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
         }
 
         [Fact]
-        public async Task ExecuteAsync_WithValidData_ShouldCallNext()
+        public async Task CallNext_GivenValidData()
         {
             var adapter = new DataAnnotationsWorkflowValidator<TestData>();
             var dataExtractor = new Func<IWorkflowFoundry, object?>(f => new TestData { Value = 10 });
@@ -40,7 +40,8 @@ namespace WorkflowForge.Extensions.Validation.Tests
                 options);
 
             var nextCalled = false;
-            Task<object?> Next(CancellationToken _) { nextCalled = true; return Task.FromResult<object?>(null); }
+            Task<object?> Next(CancellationToken _)
+            { nextCalled = true; return Task.FromResult<object?>(null); }
 
             await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
 
@@ -49,7 +50,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
         }
 
         [Fact]
-        public async Task ExecuteAsync_WithInvalidData_ThrowOnFailureTrue_ShouldThrow()
+        public async Task Throw_GivenInvalidDataAndThrowOnFailureTrue()
         {
             var adapter = new DataAnnotationsWorkflowValidator<TestData>();
             var dataExtractor = new Func<IWorkflowFoundry, object?>(f => new TestData { Value = -1 });
@@ -70,7 +71,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
         }
 
         [Fact]
-        public async Task ExecuteAsync_WithInvalidData_ThrowOnFailureFalse_ShouldCallNext()
+        public async Task CallNext_GivenInvalidDataAndThrowOnFailureFalse()
         {
             var adapter = new DataAnnotationsWorkflowValidator<TestData>();
             var dataExtractor = new Func<IWorkflowFoundry, object?>(f => new TestData { Value = -1 });
@@ -83,7 +84,8 @@ namespace WorkflowForge.Extensions.Validation.Tests
                 options);
 
             var nextCalled = false;
-            Task<object?> Next(CancellationToken _) { nextCalled = true; return Task.FromResult<object?>(null); }
+            Task<object?> Next(CancellationToken _)
+            { nextCalled = true; return Task.FromResult<object?>(null); }
 
             await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
 
@@ -92,7 +94,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
         }
 
         [Fact]
-        public async Task ExecuteAsync_WithNullData_ShouldLogWarningAndCallNext()
+        public async Task LogWarningAndCallNext_GivenNullData()
         {
             var adapter = new DataAnnotationsWorkflowValidator<TestData>();
             var dataExtractor = new Func<IWorkflowFoundry, object?>(f => null);
@@ -105,7 +107,8 @@ namespace WorkflowForge.Extensions.Validation.Tests
                 options);
 
             var nextCalled = false;
-            Task<object?> Next(CancellationToken _) { nextCalled = true; return Task.FromResult<object?>(null); }
+            Task<object?> Next(CancellationToken _)
+            { nextCalled = true; return Task.FromResult<object?>(null); }
 
             await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
 
@@ -139,7 +142,6 @@ namespace WorkflowForge.Extensions.Validation.Tests
         {
             public Guid Id { get; } = Guid.NewGuid();
             public string Name => "TestOperation";
-            public bool SupportsRestore => false;
 
             public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
             {

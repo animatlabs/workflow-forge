@@ -4,13 +4,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Extensions.Resilience.Strategies;
+using WorkflowForge.Loggers;
 
 namespace WorkflowForge.Extensions.Resilience.Tests;
 
-public class ExponentialBackoffStrategyTests
+public class ExponentialBackoffStrategyShould
 {
     [Fact]
-    public void Constructor_WithValidParameters_SetsPropertiesCorrectly()
+    public void SetPropertiesCorrectly_GivenValidParameters()
     {
         // Arrange
         var baseDelay = TimeSpan.FromMilliseconds(100);
@@ -26,7 +27,7 @@ public class ExponentialBackoffStrategyTests
     }
 
     [Fact]
-    public void Constructor_WithInvalidBaseDelay_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenInvalidBaseDelay()
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentOutOfRangeException>(() =>
@@ -34,7 +35,7 @@ public class ExponentialBackoffStrategyTests
     }
 
     [Fact]
-    public void Constructor_WithInvalidMaxDelay_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenInvalidMaxDelay()
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentOutOfRangeException>(() =>
@@ -42,7 +43,7 @@ public class ExponentialBackoffStrategyTests
     }
 
     [Fact]
-    public void Constructor_WithInvalidMaxAttempts_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenInvalidMaxAttempts()
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentOutOfRangeException>(() =>
@@ -50,7 +51,7 @@ public class ExponentialBackoffStrategyTests
     }
 
     [Fact]
-    public async Task ShouldRetryAsync_WithNullException_ReturnsTrue()
+    public async Task ReturnTrue_GivenShouldRetryAsyncWithNullException()
     {
         // Arrange
         var strategy = new ExponentialBackoffStrategy(
@@ -66,7 +67,7 @@ public class ExponentialBackoffStrategyTests
     }
 
     [Fact]
-    public async Task ShouldRetryAsync_WithOperationCanceledException_ReturnsFalse()
+    public async Task ReturnFalse_GivenExponentialBackoffShouldRetryAsyncWithOperationCanceledException()
     {
         // Arrange
         var strategy = new ExponentialBackoffStrategy(
@@ -83,7 +84,7 @@ public class ExponentialBackoffStrategyTests
     }
 
     [Fact]
-    public async Task ShouldRetryAsync_WithRegularException_ReturnsTrue()
+    public async Task ReturnTrue_GivenExponentialBackoffShouldRetryAsyncWithRegularException()
     {
         // Arrange
         var strategy = new ExponentialBackoffStrategy(
@@ -100,14 +101,14 @@ public class ExponentialBackoffStrategyTests
     }
 
     [Fact]
-    public void GetRetryDelay_CalculatesExponentialBackoff()
+    public void CalculateExponentialBackoff_GivenGetRetryDelay()
     {
         // Arrange
         var baseDelay = TimeSpan.FromMilliseconds(100);
         var maxDelay = TimeSpan.FromSeconds(10);
         const int maxAttempts = 5;
         const double multiplier = 2.0;
-        var strategy = new ExponentialBackoffStrategy(baseDelay, maxDelay, maxAttempts, multiplier);
+        var strategy = new ExponentialBackoffStrategy(baseDelay, maxDelay, maxAttempts, multiplier, enableJitter: false);
 
         // Act
         var delay1 = strategy.GetRetryDelay(1, null); // Should be 0 for first attempt
@@ -121,7 +122,7 @@ public class ExponentialBackoffStrategyTests
     }
 
     [Fact]
-    public void GetRetryDelay_RespectsMaxDelay()
+    public void RespectMaxDelay_GivenGetRetryDelay()
     {
         // Arrange
         var baseDelay = TimeSpan.FromSeconds(1);
@@ -138,7 +139,7 @@ public class ExponentialBackoffStrategyTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_SuccessfulOperation_ExecutesOnce()
+    public async Task ExecuteOnce_GivenExponentialBackoffExecuteAsyncSuccessfulOperation()
     {
         // Arrange
         var strategy = new ExponentialBackoffStrategy(
@@ -159,7 +160,7 @@ public class ExponentialBackoffStrategyTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_FailingOperationWithRetries_RetriesWithBackoff()
+    public async Task RetryWithBackoff_GivenExecuteAsyncFailingOperationWithRetries()
     {
         // Arrange
         var strategy = new ExponentialBackoffStrategy(
@@ -182,7 +183,7 @@ public class ExponentialBackoffStrategyTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_Generic_SuccessfulOperation_ReturnsValue()
+    public async Task ReturnValue_GivenExponentialBackoffExecuteAsyncGenericSuccessfulOperation()
     {
         // Arrange
         var strategy = new ExponentialBackoffStrategy(
@@ -199,10 +200,10 @@ public class ExponentialBackoffStrategyTests
     }
 }
 
-public class FixedIntervalStrategyTests
+public class FixedIntervalStrategyShould
 {
     [Fact]
-    public void Constructor_WithValidInterval_SetsPropertiesCorrectly()
+    public void SetPropertiesCorrectly_GivenValidInterval()
     {
         // Arrange
         var interval = TimeSpan.FromSeconds(1);
@@ -216,7 +217,7 @@ public class FixedIntervalStrategyTests
     }
 
     [Fact]
-    public void Constructor_WithNegativeInterval_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenNegativeInterval()
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentOutOfRangeException>(() =>
@@ -224,7 +225,7 @@ public class FixedIntervalStrategyTests
     }
 
     [Fact]
-    public void GetRetryDelay_AlwaysReturnsSameInterval()
+    public void ReturnSameInterval_GivenGetRetryDelay()
     {
         // Arrange
         var interval = TimeSpan.FromSeconds(1);
@@ -242,7 +243,7 @@ public class FixedIntervalStrategyTests
     }
 
     [Fact]
-    public async Task ShouldRetryAsync_WithOperationCanceledException_ReturnsFalse()
+    public async Task ReturnFalse_GivenFixedIntervalShouldRetryAsyncWithOperationCanceledException()
     {
         // Arrange
         var strategy = new FixedIntervalStrategy(TimeSpan.FromSeconds(1), 3);
@@ -256,7 +257,7 @@ public class FixedIntervalStrategyTests
     }
 
     [Fact]
-    public async Task ShouldRetryAsync_WithRegularException_ReturnsTrue()
+    public async Task ReturnTrue_GivenFixedIntervalShouldRetryAsyncWithRegularException()
     {
         // Arrange
         var strategy = new FixedIntervalStrategy(TimeSpan.FromSeconds(1), 3);
@@ -270,10 +271,10 @@ public class FixedIntervalStrategyTests
     }
 }
 
-public class RandomIntervalStrategyTests
+public class RandomIntervalStrategyShould
 {
     [Fact]
-    public void Constructor_WithValidParameters_SetsPropertiesCorrectly()
+    public void SetPropertiesCorrectly_GivenRandomIntervalValidParameters()
     {
         // Arrange
         const int maxAttempts = 3;
@@ -288,7 +289,7 @@ public class RandomIntervalStrategyTests
     }
 
     [Fact]
-    public void Constructor_WithInvalidMinDelay_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenRandomIntervalInvalidMinDelay()
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentOutOfRangeException>(() =>
@@ -296,7 +297,7 @@ public class RandomIntervalStrategyTests
     }
 
     [Fact]
-    public void Constructor_WithInvalidMaxDelay_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenRandomIntervalInvalidMaxDelay()
     {
         // Arrange & Act & Assert
         Assert.Throws<ArgumentOutOfRangeException>(() =>
@@ -304,7 +305,7 @@ public class RandomIntervalStrategyTests
     }
 
     [Fact]
-    public void GetRetryDelay_ReturnsRandomValueWithinRange()
+    public void ReturnRandomValueWithinRange_GivenGetRetryDelay()
     {
         // Arrange
         const int maxAttempts = 10;
@@ -332,7 +333,7 @@ public class RandomIntervalStrategyTests
     }
 
     [Fact]
-    public async Task ShouldRetryAsync_WithOperationCanceledException_ReturnsFalse()
+    public async Task ReturnFalse_GivenRandomIntervalShouldRetryAsyncWithOperationCanceledException()
     {
         // Arrange
         var strategy = new RandomIntervalStrategy(
@@ -349,7 +350,7 @@ public class RandomIntervalStrategyTests
     }
 
     [Fact]
-    public async Task ShouldRetryAsync_WithRegularException_ReturnsTrue()
+    public async Task ReturnTrue_GivenRandomIntervalShouldRetryAsyncWithRegularException()
     {
         // Arrange
         var strategy = new RandomIntervalStrategy(
@@ -363,5 +364,169 @@ public class RandomIntervalStrategyTests
 
         // Assert
         Assert.True(result);
+    }
+
+    [Fact]
+    public void ThrowArgumentException_GivenRandomIntervalInvalidMaxAttempts()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new RandomIntervalStrategy(0, TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)));
+    }
+
+    [Fact]
+    public void ReturnZero_GivenGetRetryDelayForFirstAttempt()
+    {
+        var strategy = new RandomIntervalStrategy(3, TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+
+        var delay = strategy.GetRetryDelay(1, null);
+
+        Assert.Equal(TimeSpan.Zero, delay);
+    }
+
+    [Fact]
+    public void ReturnValidStrategy_GivenDefaultWithDefaultParameters()
+    {
+        var strategy = RandomIntervalStrategy.Default();
+
+        Assert.NotNull(strategy);
+        Assert.Contains("RandomInterval", strategy.Name);
+    }
+
+    [Fact]
+    public void ReturnStrategyWithCorrectAttempts_GivenDefaultWithCustomMaxAttempts()
+    {
+        var strategy = RandomIntervalStrategy.Default(maxAttempts: 5);
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public void ReturnStrategyWithLogger_GivenDefaultWithLogger()
+    {
+        var logger = new ConsoleLogger("Test");
+        var strategy = RandomIntervalStrategy.Default(logger: logger);
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public void ReturnValidStrategy_GivenHighThroughput()
+    {
+        var strategy = RandomIntervalStrategy.HighThroughput();
+
+        Assert.NotNull(strategy);
+        Assert.Contains("RandomInterval", strategy.Name);
+    }
+
+    [Fact]
+    public void ReturnStrategy_GivenHighThroughputWithCustomMaxAttempts()
+    {
+        var strategy = RandomIntervalStrategy.HighThroughput(maxAttempts: 7);
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public void ReturnValidStrategy_GivenWithJitterValidParameters()
+    {
+        var baseInterval = TimeSpan.FromMilliseconds(500);
+        var strategy = RandomIntervalStrategy.WithJitter(baseInterval, jitterPercent: 0.2);
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public void ThrowArgumentOutOfRangeException_GivenWithJitterInvalidJitterPercent()
+    {
+        var baseInterval = TimeSpan.FromMilliseconds(500);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            RandomIntervalStrategy.WithJitter(baseInterval, jitterPercent: -0.1));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            RandomIntervalStrategy.WithJitter(baseInterval, jitterPercent: 1.5));
+    }
+
+    [Fact]
+    public void ReturnStrategy_GivenWithJitterZeroJitter()
+    {
+        var baseInterval = TimeSpan.FromMilliseconds(500);
+        var strategy = RandomIntervalStrategy.WithJitter(baseInterval, jitterPercent: 0);
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public void ReturnStrategy_GivenWithJitterFullJitter()
+    {
+        var baseInterval = TimeSpan.FromMilliseconds(500);
+        var strategy = RandomIntervalStrategy.WithJitter(baseInterval, jitterPercent: 1.0);
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public void ReturnValidStrategy_GivenCreateWithValidIntervals()
+    {
+        var minInterval = TimeSpan.FromMilliseconds(50);
+        var maxInterval = TimeSpan.FromMilliseconds(200);
+
+        var strategy = RandomIntervalStrategy.Create(minInterval, maxInterval);
+
+        Assert.NotNull(strategy);
+        Assert.Contains("RandomInterval", strategy.Name);
+    }
+
+    [Fact]
+    public void ReturnStrategy_GivenCreateWithEqualMinMax()
+    {
+        var interval = TimeSpan.FromMilliseconds(100);
+
+        var strategy = RandomIntervalStrategy.Create(interval, interval);
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public async Task ExecuteOnce_GivenRandomIntervalExecuteAsyncSuccessfulOperation()
+    {
+        var strategy = RandomIntervalStrategy.Default(maxAttempts: 3);
+        var executionCount = 0;
+
+        await strategy.ExecuteAsync(() =>
+        {
+            executionCount++;
+            return Task.CompletedTask;
+        }, CancellationToken.None);
+
+        Assert.Equal(1, executionCount);
+    }
+
+    [Fact]
+    public async Task RetryWithRandomDelay_GivenExecuteAsyncFailingOperation()
+    {
+        var strategy = RandomIntervalStrategy.Default(maxAttempts: 3);
+        var executionCount = 0;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await strategy.ExecuteAsync(() =>
+            {
+                executionCount++;
+                throw new InvalidOperationException("Test");
+            }, CancellationToken.None);
+        });
+
+        Assert.Equal(3, executionCount);
+    }
+
+    [Fact]
+    public async Task ReturnValue_GivenRandomIntervalExecuteAsyncGenericSuccessfulOperation()
+    {
+        var strategy = RandomIntervalStrategy.Default(maxAttempts: 3);
+        const string expected = "result";
+
+        var result = await strategy.ExecuteAsync(() => Task.FromResult(expected), CancellationToken.None);
+
+        Assert.Equal(expected, result);
     }
 }

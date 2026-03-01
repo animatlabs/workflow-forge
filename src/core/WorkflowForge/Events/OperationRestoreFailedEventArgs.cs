@@ -7,7 +7,7 @@ namespace WorkflowForge.Events
     /// Event arguments for operation restore failed events.
     /// Fired when an operation's restoration (compensation/rollback) fails with an exception.
     /// </summary>
-    public class OperationRestoreFailedEventArgs : BaseWorkflowForgeEventArgs
+    public sealed class OperationRestoreFailedEventArgs : BaseWorkflowForgeEventArgs
     {
         /// <summary>
         /// Gets the operation that failed to restore.

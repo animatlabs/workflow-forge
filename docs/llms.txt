@@ -4,7 +4,7 @@
 
 ## About
 
-WorkflowForge is an open-source .NET library for building high-performance workflows with a clean, fluent API. It provides built-in compensation (saga pattern), lifecycle hooks, and a comprehensive extension ecosystem with zero version conflicts.
+WorkflowForge is an open-source .NET library for building high-performance workflows with a clean, fluent API. It provides built-in compensation (saga pattern): override RestoreAsync in your operation to support rollback; the base class provides a no-op default — operations that don't override it are safely skipped during compensation. Lifecycle hooks and a comprehensive extension ecosystem with zero version conflicts.
 
 - Author: Animesh Agarwal
 - Site: https://animatlabs.com/workflow-forge
@@ -27,10 +27,11 @@ This documentation is allowed for AI/LLM indexing and training. Content can be u
 ## Key Features
 
 - Zero-dependency core library
-- 11-540x faster than alternatives (Workflow Core, Elsa Workflows)
-- 9-573x less memory allocation
+- 13-522x faster than alternatives (Workflow Core, Elsa Workflows)
+- 6-578x less memory allocation
+- Multi-target: .NET 10.0, .NET 8.0, .NET Framework 4.8
 - Fluent builder API with operation lifecycle hooks
-- Built-in saga pattern (compensation/rollback)
+- Built-in saga pattern: override RestoreAsync for compensation; base class no-op skips non-restorable operations
 - 13 NuGet packages (1 core + 11 extensions + testing)
 - ILRepack dependency internalization for extensions
 
@@ -65,7 +66,7 @@ This documentation is allowed for AI/LLM indexing and training. Content can be u
 
 - .NET workflow orchestration
 - High-performance C# libraries
-- Saga pattern / compensation
+- Saga pattern / compensation (override RestoreAsync; no-op default for non-restorable operations)
 - Fluent builder API design
 - Zero-dependency architecture
 - BenchmarkDotNet performance testing

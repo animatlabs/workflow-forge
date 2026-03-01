@@ -3,6 +3,7 @@ using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Persistence;
 using WorkflowForge.Extensions.Persistence.Recovery;
 using WorkflowForge.Extensions.Persistence.Recovery.Options;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -68,34 +69,24 @@ public class PersistenceSample : ISample
         return new Guid(guidBytes);
     }
 
-    private sealed class Step1Operation : IWorkflowOperation
+    private sealed class Step1Operation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "Step1";
-        public bool SupportsRestore => false;
+        public override string Name => "Step1";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             foundry.Logger.LogInformation("Executing Step 1");
             foundry.SetProperty("progress", 1);
             await Task.Delay(50, cancellationToken);
             return inputData;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
-    private sealed class Step2Operation : IWorkflowOperation
+    private sealed class Step2Operation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "Step2";
-        public bool SupportsRestore => false;
+        public override string Name => "Step2";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             foundry.Logger.LogInformation("Executing Step 2");
             foundry.SetProperty("progress", 2);
@@ -110,33 +101,19 @@ public class PersistenceSample : ISample
 
             return inputData;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
-    private sealed class Step3Operation : IWorkflowOperation
+    private sealed class Step3Operation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "Step3";
-        public bool SupportsRestore => false;
+        public override string Name => "Step3";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             foundry.Logger.LogInformation("Executing Step 3");
             foundry.SetProperty("progress", 3);
             await Task.Delay(50, cancellationToken);
             return inputData;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 }
 

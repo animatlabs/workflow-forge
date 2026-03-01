@@ -4,10 +4,10 @@ using WorkflowForge.Abstractions;
 
 namespace WorkflowForge.Tests;
 
-public class WorkflowForgeTests
+public class WorkflowForgeShould
 {
     [Fact]
-    public void CreateWorkflow_WithoutParameters_ReturnsWorkflowBuilder()
+    public void ReturnWorkflowBuilder_GivenCreateWorkflowWithoutParameters()
     {
         // Act
         var builder = WorkflowForge.CreateWorkflow();
@@ -18,7 +18,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateWorkflow_WithServiceProvider_ReturnsWorkflowBuilder()
+    public void ReturnWorkflowBuilder_GivenServiceProvider()
     {
         // Arrange
         var serviceProvider = new Mock<IServiceProvider>().Object;
@@ -32,7 +32,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateWorkflow_WithName_ReturnsNamedWorkflowBuilder()
+    public void ReturnNamedWorkflowBuilder_GivenName()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -46,21 +46,21 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateWorkflow_WithEmptyString_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenEmptyString()
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => WorkflowForge.CreateWorkflow(""));
     }
 
     [Fact]
-    public void CreateWorkflow_WithWhitespace_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenWhitespace()
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => WorkflowForge.CreateWorkflow(" "));
     }
 
     [Fact]
-    public void CreateWorkflow_WithNull_CreatesBuilder()
+    public void CreateBuilder_GivenNull()
     {
         // Act
         var builder = WorkflowForge.CreateWorkflow(workflowName: null);
@@ -70,7 +70,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateWorkflow_WithNameAndServiceProvider_ReturnsNamedWorkflowBuilder()
+    public void ReturnNamedWorkflowBuilder_GivenNameAndServiceProvider()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -85,7 +85,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithWorkflowName_ReturnsFoundry()
+    public void ReturnFoundry_GivenWorkflowName()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -99,7 +99,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithEmptyWorkflowName_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenEmptyWorkflowName()
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(""));
@@ -108,7 +108,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithLogger_ReturnsFoundryWithLogger()
+    public void ReturnFoundryWithLogger_GivenLogger()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -123,7 +123,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithConfiguration_ReturnsConfiguredFoundry()
+    public void ReturnConfiguredFoundry_GivenConfiguration()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -137,7 +137,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithNullConfiguration_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenNullConfiguration()
     {
         // Arrange
 
@@ -146,7 +146,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithDevelopmentConfiguration_ReturnsFoundry()
+    public void ReturnFoundry_GivenDevelopmentConfiguration()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -160,7 +160,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithDevelopmentConfiguration_ValidatesWorkflowName()
+    public void ValidateWorkflowName_GivenDevelopmentConfiguration()
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(""));
@@ -169,7 +169,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithDevelopmentConfigurationAndLogger_ReturnsFoundryWithLogger()
+    public void ReturnFoundryWithLogger_GivenDevelopmentConfigurationAndLogger()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -184,7 +184,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithProductionConfiguration_ReturnsFoundry()
+    public void ReturnFoundry_GivenProductionConfiguration()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -198,7 +198,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithProductionConfiguration_ValidatesWorkflowName()
+    public void ValidateWorkflowName_GivenProductionConfiguration()
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(""));
@@ -207,7 +207,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithHighPerformanceConfiguration_ReturnsFoundry()
+    public void ReturnFoundry_GivenHighPerformanceConfiguration()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -221,7 +221,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithHighPerformanceConfiguration_ValidatesWorkflowName()
+    public void ValidateWorkflowName_GivenHighPerformanceConfiguration()
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => WorkflowForge.CreateFoundry(""));
@@ -230,7 +230,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithInitialData_ReturnsFoundryWithData()
+    public void ReturnFoundryWithData_GivenInitialData()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -249,7 +249,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithInitialDataAndConfiguration_ReturnsFoundryWithData()
+    public void ReturnFoundryWithData_GivenInitialDataAndConfiguration()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -269,7 +269,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithInitialDataAndEmptyWorkflowName_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenInitialDataAndEmptyWorkflowName()
     {
         // Arrange
         var initialData = new Dictionary<string, object?> { { "key", "value" } };
@@ -281,7 +281,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithNullLogger_CreatesFoundry()
+    public void CreateFoundry_GivenNullLogger()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -296,7 +296,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateFoundry_WithNullInitialProperties_CreatesFoundry()
+    public void CreateFoundry_GivenNullInitialProperties()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -311,7 +311,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateSmith_WithoutParameters_ReturnsSmith()
+    public void ReturnSmith_GivenCreateSmithWithoutParameters()
     {
         // Act
         var smith = WorkflowForge.CreateSmith();
@@ -322,7 +322,7 @@ public class WorkflowForgeTests
     }
 
     [Fact]
-    public void CreateSmith_WithLogger_ReturnsSmithWithLogger()
+    public void ReturnSmithWithLogger_GivenLogger()
     {
         // Arrange
         var logger = new TestLogger();

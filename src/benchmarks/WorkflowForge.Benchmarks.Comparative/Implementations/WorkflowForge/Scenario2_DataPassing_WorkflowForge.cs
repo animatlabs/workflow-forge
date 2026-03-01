@@ -1,5 +1,5 @@
-using WorkflowForge.Abstractions;
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
+using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
 
 namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
@@ -28,7 +28,6 @@ public class Scenario2_DataPassing_WorkflowForge : IWorkflowScenario
     public async Task<ScenarioResult> ExecuteAsync()
     {
         using var foundry = global::WorkflowForge.WorkflowForge.CreateFoundry("DataPassing");
-        IWorkflowOperation? lastOperation = null;
 
         // Add operations that pass output to the next operation
         for (int i = 0; i < _parameters.OperationCount; i++)
@@ -42,17 +41,14 @@ public class Scenario2_DataPassing_WorkflowForge : IWorkflowScenario
             });
 
             foundry.AddOperation(operation);
-            lastOperation = operation;
         }
 
         await foundry.ForgeAsync();
 
-        var outputKey = lastOperation != null ? $"Operation.{lastOperation.Id}.Output" : string.Empty;
-        var finalValue = lastOperation != null
-            && foundry.Properties.TryGetValue(outputKey, out var finalValueObj)
-            && finalValueObj is int finalValueCount
-            ? finalValueCount
-            : 0;
+        // Use the public orchestrator-level API instead of internal constants
+        var lastIndex = _parameters.OperationCount - 1;
+        var lastOperationName = $"DataOp_{lastIndex}";
+        var finalValue = foundry.GetOperationOutput<int>(lastIndex, lastOperationName);
         var success = finalValue == _parameters.OperationCount;
 
         return new ScenarioResult

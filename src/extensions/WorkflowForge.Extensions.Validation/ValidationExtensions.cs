@@ -1,5 +1,6 @@
 using System;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 using WorkflowForge.Extensions.Validation.Options;
 
 namespace WorkflowForge.Extensions.Validation
@@ -23,8 +24,10 @@ namespace WorkflowForge.Extensions.Validation
             Func<IWorkflowFoundry, T?> dataExtractor,
             ValidationMiddlewareOptions? options = null) where T : class
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (dataExtractor == null) throw new ArgumentNullException(nameof(dataExtractor));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (dataExtractor == null)
+                throw new ArgumentNullException(nameof(dataExtractor));
 
             options ??= new ValidationMiddlewareOptions();
 
@@ -60,9 +63,12 @@ namespace WorkflowForge.Extensions.Validation
             Func<IWorkflowFoundry, T?> dataExtractor,
             ValidationMiddlewareOptions? options = null) where T : class
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (validator == null) throw new ArgumentNullException(nameof(validator));
-            if (dataExtractor == null) throw new ArgumentNullException(nameof(dataExtractor));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (validator == null)
+                throw new ArgumentNullException(nameof(validator));
+            if (dataExtractor == null)
+                throw new ArgumentNullException(nameof(dataExtractor));
 
             options ??= new ValidationMiddlewareOptions();
 
@@ -95,9 +101,10 @@ namespace WorkflowForge.Extensions.Validation
             T data,
             string propertyKey = "ValidationResult")
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
-            var result = await new DataAnnotationsWorkflowValidator<T>().ValidateAsync(data);
+            var result = await new DataAnnotationsWorkflowValidator<T>().ValidateAsync(data).ConfigureAwait(false);
 
             foundry.Properties[propertyKey] = result;
             foundry.Properties[$"{propertyKey}.IsValid"] = result.IsValid;
@@ -125,10 +132,12 @@ namespace WorkflowForge.Extensions.Validation
             T data,
             string propertyKey = "ValidationResult")
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (validator == null) throw new ArgumentNullException(nameof(validator));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (validator == null)
+                throw new ArgumentNullException(nameof(validator));
 
-            var result = await validator.ValidateAsync(data);
+            var result = await validator.ValidateAsync(data).ConfigureAwait(false);
 
             foundry.Properties[propertyKey] = result;
             foundry.Properties[$"{propertyKey}.IsValid"] = result.IsValid;
@@ -155,10 +164,10 @@ namespace WorkflowForge.Extensions.Validation
         {
             if (data is T typedData)
             {
-                return await _validator.ValidateAsync(typedData, cancellationToken);
+                return await _validator.ValidateAsync(typedData, cancellationToken).ConfigureAwait(false);
             }
 
-            return ValidationResult.Failure($"Data type mismatch. Expected {typeof(T).Name}, got {data?.GetType().Name ?? "null"}");
+            return ValidationResult.Failure($"Data type mismatch. Expected {typeof(T).Name}, got {data?.GetType().Name ?? FoundryPropertyKeys.NullDisplayValue}");
         }
     }
 }

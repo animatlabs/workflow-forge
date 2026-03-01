@@ -1,4 +1,5 @@
 using WorkflowForge.Abstractions;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -40,7 +41,7 @@ public class HelloWorldSample : ISample
 /// A simple operation that displays a greeting message.
 /// Demonstrates the basic structure of a WorkflowForge operation.
 /// </summary>
-public class GreetingOperation : IWorkflowOperation
+public class GreetingOperation : WorkflowOperationBase
 {
     private readonly string _message;
 
@@ -49,11 +50,9 @@ public class GreetingOperation : IWorkflowOperation
         _message = message;
     }
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "GreetingOperation";
-    public bool SupportsRestore => false;
+    public override string Name => "GreetingOperation";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Executing greeting operation with message: {Message}", _message);
 
@@ -65,12 +64,4 @@ public class GreetingOperation : IWorkflowOperation
 
         return _message;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException("GreetingOperation does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }

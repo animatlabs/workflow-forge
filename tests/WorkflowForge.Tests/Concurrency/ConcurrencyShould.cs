@@ -14,17 +14,17 @@ namespace WorkflowForge.Tests.Concurrency;
 /// Tests for concurrent access to WorkflowFoundry and operations.
 /// Verifies thread safety of core operations.
 /// </summary>
-public class ConcurrencyTests
+public class ConcurrencyShould
 {
     private readonly ITestOutputHelper _output;
 
-    public ConcurrencyTests(ITestOutputHelper output)
+    public ConcurrencyShould(ITestOutputHelper output)
     {
         _output = output;
     }
 
     [Fact]
-    public async Task ParallelOperations_ShouldExecuteSafely()
+    public async Task ExecuteSafely_GivenParallelOperations()
     {
         // Arrange
         const int operationCount = 100;
@@ -81,7 +81,7 @@ public class ConcurrencyTests
     }
 
     [Fact]
-    public async Task WorkflowFoundryDataAccess_ShouldBeThreadSafe()
+    public async Task BeThreadSafe_GivenConcurrentFoundryDataAccess()
     {
         // Arrange
         const int threadCount = 50;
@@ -121,7 +121,7 @@ public class ConcurrencyTests
     }
 
     [Fact]
-    public async Task ConcurrentOperationExecution_ShouldMaintainDataIntegrity()
+    public async Task MaintainDataIntegrity_GivenConcurrentOperationExecution()
     {
         // Arrange
         var data = new ConcurrentDictionary<string, object?>();
@@ -164,7 +164,7 @@ public class ConcurrencyTests
     }
 
     [Fact]
-    public async Task ParallelFoundryCreation_ShouldBeThreadSafe()
+    public async Task BeThreadSafe_GivenParallelFoundryCreation()
     {
         // Arrange
         const int foundryCount = 50;
@@ -208,7 +208,7 @@ public class ConcurrencyTests
     }
 
     [Fact]
-    public async Task ConcurrentPropertyAccess_ShouldBeThreadSafe()
+    public async Task BeThreadSafe_GivenConcurrentPropertyAccess()
     {
         // Arrange
         var data = new ConcurrentDictionary<string, object?>();
@@ -251,7 +251,7 @@ public class ConcurrencyTests
     }
 
     [Fact]
-    public async Task ConcurrentOperationAddition_ShouldMaintainOrder()
+    public async Task MaintainOrder_GivenConcurrentOperationAddition()
     {
         // Arrange
         var data = new ConcurrentDictionary<string, object?>();
@@ -274,7 +274,8 @@ public class ConcurrencyTests
             });
 
             // Small delay to increase concurrency
-            if (i % 2 == 0) await Task.Delay(1);
+            if (i % 2 == 0)
+                await Task.Delay(1);
 
             foundry.AddOperation(operation);
         });
@@ -323,7 +324,7 @@ public class ConcurrencyTests
                         foundryRef.Properties[$"result_{operationIndex}"] = $"processed_{operationIndex}";
                         foundryRef.Properties[$"timestamp_{operationIndex}"] = DateTime.UtcNow;
 
-                        await Task.Delay(Random.Shared.Next(1, 5));
+                        await Task.Delay(ThreadSafeRandom.Next(1, 5));
                         return $"Completed operation {operationIndex}";
                     });
 
@@ -344,7 +345,7 @@ public class ConcurrencyTests
         Assert.Empty(exceptions);
         Assert.All(foundries, foundry =>
         {
-            var expectedCount = (operationsPerFoundry * 3) + 3; // result + timestamp + output per op, plus last-completed keys
+            var expectedCount = (operationsPerFoundry * 3) + 3 + 1; // result + timestamp + output per op, plus last-completed keys, plus current-operation-index
             Assert.Equal(expectedCount, foundry.Properties.Count);
         });
 

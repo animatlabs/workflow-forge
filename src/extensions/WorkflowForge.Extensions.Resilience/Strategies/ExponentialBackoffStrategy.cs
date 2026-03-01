@@ -11,11 +11,10 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
     /// </summary>
     public sealed class ExponentialBackoffStrategy : ResilienceStrategyBase
     {
+        private static readonly Random JitterRandom = new();
         private readonly TimeSpan _baseDelay;
         private readonly TimeSpan _maxDelay;
-        private readonly int _maxAttempts;
         private readonly double _backoffMultiplier;
-        private readonly Func<Exception, bool>? _retryPredicate;
         private readonly bool _enableJitter;
 
         /// <summary>
@@ -36,7 +35,7 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
             Func<Exception, bool>? retryPredicate = null,
             bool enableJitter = true,
             IWorkflowForgeLogger? logger = null)
-            : base("ExponentialBackoff", logger)
+            : base("ExponentialBackoff", maxAttempts, retryPredicate, logger)
         {
             if (baseDelay < TimeSpan.Zero)
                 throw new ArgumentOutOfRangeException(nameof(baseDelay), "Base delay cannot be negative");
@@ -49,40 +48,8 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
 
             _baseDelay = baseDelay;
             _maxDelay = maxDelay;
-            _maxAttempts = maxAttempts;
             _backoffMultiplier = backoffMultiplier;
-            _retryPredicate = retryPredicate;
             _enableJitter = enableJitter;
-        }
-
-        /// <inheritdoc />
-        public override Task<bool> ShouldRetryAsync(int attemptNumber, Exception? exception, CancellationToken cancellationToken)
-        {
-            // Don't retry if we've exceeded max attempts
-            if (attemptNumber >= _maxAttempts)
-            {
-                Logger?.LogDebug("Max attempts ({MaxAttempts}) reached, not retrying", _maxAttempts);
-                return Task.FromResult(false);
-            }
-
-            // Don't retry cancellation
-            if (exception is OperationCanceledException)
-            {
-                Logger?.LogDebug("Operation was cancelled, not retrying");
-                return Task.FromResult(false);
-            }
-
-            // Use custom predicate if provided
-            if (_retryPredicate != null && exception != null)
-            {
-                bool shouldRetry = _retryPredicate(exception);
-                Logger?.LogDebug("Custom retry predicate returned {ShouldRetry} for exception {ExceptionType}",
-                    shouldRetry, exception.GetType().Name);
-                return Task.FromResult(shouldRetry);
-            }
-
-            // By default, retry all exceptions except cancellation
-            return Task.FromResult(true);
         }
 
         /// <inheritdoc />
@@ -99,6 +66,16 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
 
             // Cap at max delay
             var actualDelay = exponentialDelay > _maxDelay ? _maxDelay : exponentialDelay;
+
+            if (_enableJitter)
+            {
+                var jitterFactor = 1.0 + (JitterRandom.NextDouble() - 0.5) * 0.5;
+                actualDelay = TimeSpan.FromMilliseconds(actualDelay.TotalMilliseconds * jitterFactor);
+                if (actualDelay > _maxDelay)
+                    actualDelay = _maxDelay;
+                if (actualDelay < TimeSpan.Zero)
+                    actualDelay = TimeSpan.Zero;
+            }
 
             Logger?.LogDebug("Calculated retry delay for attempt {AttemptNumber}: {DelayMs}ms (exponential: {ExponentialMs}ms, capped: {IsCapped})",
                 attemptNumber, actualDelay.TotalMilliseconds, exponentialDelay.TotalMilliseconds, actualDelay == _maxDelay);
@@ -155,44 +132,9 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
         }
 
         /// <inheritdoc />
-        public override async Task ExecuteAsync(Func<Task> operation, CancellationToken cancellationToken = default)
+        public override Task ExecuteAsync(Func<Task> operation, CancellationToken cancellationToken = default)
         {
-            if (operation == null)
-                throw new ArgumentNullException(nameof(operation));
-
-            var attemptNumber = 0;
-            Exception? lastException = null;
-
-            while (true)
-            {
-                attemptNumber++;
-                cancellationToken.ThrowIfCancellationRequested();
-
-                try
-                {
-                    await operation().ConfigureAwait(false);
-                    return; // Success
-                }
-                catch (Exception ex)
-                {
-                    var shouldRetry = await ShouldRetryAsync(attemptNumber, ex, cancellationToken);
-                    if (!shouldRetry)
-                    {
-                        Logger?.LogError(ex, $"Attempt {attemptNumber} failed and will not be retried");
-                        throw;
-                    }
-
-                    lastException = ex;
-                    var delay = GetRetryDelay(attemptNumber, ex);
-
-                    Logger?.LogWarning($"Attempt {attemptNumber} failed, retrying in {delay.TotalMilliseconds}ms. Error: {ex.Message}");
-
-                    if (delay > TimeSpan.Zero)
-                    {
-                        await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
-                    }
-                }
-            }
+            return ExecuteWithRetryAsync(operation, cancellationToken);
         }
     }
 }

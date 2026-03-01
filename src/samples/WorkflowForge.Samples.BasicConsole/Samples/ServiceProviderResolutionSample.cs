@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Loggers;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -40,13 +41,11 @@ public class ServiceProviderResolutionSample : ISample
         public decimal CalculateTotal(decimal subtotal, decimal taxRate) => subtotal + (subtotal * taxRate);
     }
 
-    private sealed class CalculateTotalOperation : IWorkflowOperation
+    private sealed class CalculateTotalOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "CalculateTotal";
-        public bool SupportsRestore => false;
+        public override string Name => "CalculateTotal";
 
-        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var calculator = foundry.ServiceProvider?.GetRequiredService<IPriceCalculator>()
                 ?? throw new InvalidOperationException("IPriceCalculator not registered.");
@@ -56,11 +55,5 @@ public class ServiceProviderResolutionSample : ISample
             Console.WriteLine($"Subtotal: {subtotal}, Total with tax: {total}");
             return Task.FromResult<object?>(total);
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 }

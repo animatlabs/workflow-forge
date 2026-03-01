@@ -11,10 +11,10 @@ namespace WorkflowForge.Tests.Operations
     /// <summary>
     /// Tests for operation lifecycle hooks (OnBeforeExecuteAsync, OnAfterExecuteAsync).
     /// </summary>
-    public class OperationLifecycleTests
+    public class OperationLifecycleShould
     {
         [Fact]
-        public async Task ForgeAsync_Should_CallOnBeforeExecuteAsync_BeforeCore()
+        public async Task CallOnBeforeExecuteAsyncBeforeCore_GivenForgeAsync()
         {
             // Arrange
             var operation = new TrackingOperation();
@@ -31,7 +31,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task OnBeforeExecuteAsync_Should_ReceiveInputData()
+        public async Task ReceiveInputData_GivenOnBeforeExecuteAsync()
         {
             // Arrange
             var operation = new TrackingOperation();
@@ -46,7 +46,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task OnAfterExecuteAsync_Should_ReceiveInputAndOutputData()
+        public async Task ReceiveInputAndOutputData_GivenOnAfterExecuteAsync()
         {
             // Arrange
             var operation = new TrackingOperation();
@@ -62,7 +62,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task OnAfterExecuteAsync_Should_NotBeCalled_WhenCoreThrows()
+        public async Task NotCallOnAfterExecuteAsync_GivenCoreThrows()
         {
             // Arrange
             var operation = new FailingOperation();
@@ -77,7 +77,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task TypedOperation_Should_CallTypedHooks()
+        public async Task CallTypedHooks_GivenTypedOperation()
         {
             // Arrange
             var operation = new TypedTrackingOperation();
@@ -179,6 +179,6 @@ namespace WorkflowForge.Tests.Operations
             }
         }
 
-        #endregion
+        #endregion Test Operations
     }
 }

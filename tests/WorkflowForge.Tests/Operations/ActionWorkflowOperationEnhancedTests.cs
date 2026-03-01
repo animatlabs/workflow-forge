@@ -12,12 +12,12 @@ namespace WorkflowForge.Tests.Operations
     /// Enhanced comprehensive tests for ActionWorkflowOperation covering edge cases,
     /// error scenarios, and advanced functionality.
     /// </summary>
-    public class ActionWorkflowOperationEnhancedTests
+    public class ActionWorkflowOperationEnhancedShould
     {
         #region Constructor Edge Cases
 
         [Fact]
-        public void Constructor_WithVeryLongName_HandlesLongNames()
+        public void HandleLongNames_GivenVeryLongName()
         {
             // Arrange
             var longName = new string('A', 10000);
@@ -31,7 +31,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public void Constructor_WithSpecialCharactersInName_HandlesSpecialCharacters()
+        public void HandleSpecialCharacters_GivenSpecialCharactersInName()
         {
             // Arrange
             var specialName = "!@#$%^&*()_+-=[]{}|;':\",./<>?`~";
@@ -45,7 +45,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public void Constructor_WithEmptyName_AllowsEmptyName()
+        public void AllowEmptyName_GivenEmptyName()
         {
             // Arrange
             Func<object?, IWorkflowFoundry, CancellationToken, Task> action = (_, _, _) => Task.CompletedTask;
@@ -58,7 +58,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public void Constructor_WithWhitespaceOnlyName_AllowsWhitespace()
+        public void AllowWhitespace_GivenWhitespaceOnlyName()
         {
             // Arrange
             var whitespaceName = "   \t\n\r   ";
@@ -76,7 +76,7 @@ namespace WorkflowForge.Tests.Operations
         #region ForgeAsync Advanced Tests
 
         [Fact]
-        public async Task ForgeAsync_WithComplexInputData_PassesDataCorrectly()
+        public async Task PassDataCorrectly_GivenComplexInputData()
         {
             // Arrange
             var complexInput = new
@@ -105,7 +105,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_WithNullInputData_HandlesNullCorrectly()
+        public async Task HandleNullCorrectly_GivenNullInputData()
         {
             // Arrange
             object? capturedInput = "not null";
@@ -126,7 +126,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_WithCancellationRequested_PropagatesCancellation()
+        public async Task PropagateCancellation_GivenCancellationRequested()
         {
             // Arrange
             var cancellationRequested = false;
@@ -149,7 +149,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_WithActionThatThrows_PropagatesException()
+        public async Task PropagateException_GivenActionThatThrows()
         {
             // Arrange
             Func<object?, IWorkflowFoundry, CancellationToken, Task> action = (_, _, _) =>
@@ -165,7 +165,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_WithAsyncActionThatThrows_PropagatesException()
+        public async Task PropagateException_GivenAsyncActionThatThrows()
         {
             // Arrange
             var expectedException = new TaskCanceledException("Async test exception");
@@ -186,7 +186,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_WithLongRunningAction_CompletesSuccessfully()
+        public async Task CompleteSuccessfully_GivenLongRunningAction()
         {
             // Arrange
             var delay = TimeSpan.FromMilliseconds(100);
@@ -213,7 +213,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_WithFoundryInteraction_CanAccessFoundryProperties()
+        public async Task AccessFoundryProperties_GivenFoundryInteraction()
         {
             // Arrange
             Guid capturedFlowId = Guid.Empty;
@@ -250,29 +250,35 @@ namespace WorkflowForge.Tests.Operations
         #region RestoreAsync Tests
 
         [Fact]
-        public async Task RestoreAsync_Always_ThrowsNotSupportedException()
+        public async Task CompleteSuccessfully_GivenRestoreAsync()
         {
             // Arrange
             Func<object?, IWorkflowFoundry, CancellationToken, Task> action = (_, _, _) => Task.CompletedTask;
             var operation = new ActionWorkflowOperation("RestoreTest", action);
             var foundry = CreateMockFoundry();
 
-            // Act & Assert
-            await Assert.ThrowsAsync<NotSupportedException>(() =>
-                operation.RestoreAsync("output", foundry.Object));
+            // Act
+            var task = operation.RestoreAsync("output", foundry.Object);
+
+            // Assert
+            await task;
+            Assert.True(task.Status == TaskStatus.RanToCompletion);
         }
 
         [Fact]
-        public async Task RestoreAsync_WithNullOutputData_ThrowsNotSupportedException()
+        public async Task CompleteSuccessfully_GivenRestoreAsyncNullOutputData()
         {
             // Arrange
             Func<object?, IWorkflowFoundry, CancellationToken, Task> action = (_, _, _) => Task.CompletedTask;
             var operation = new ActionWorkflowOperation("RestoreNullTest", action);
             var foundry = CreateMockFoundry();
 
-            // Act & Assert
-            await Assert.ThrowsAsync<NotSupportedException>(() =>
-                operation.RestoreAsync(null, foundry.Object));
+            // Act
+            var task = operation.RestoreAsync(null, foundry.Object);
+
+            // Assert
+            await task;
+            Assert.True(task.Status == TaskStatus.RanToCompletion);
         }
 
         #endregion RestoreAsync Tests
@@ -280,18 +286,7 @@ namespace WorkflowForge.Tests.Operations
         #region Properties Tests
 
         [Fact]
-        public void SupportsRestore_Always_ReturnsFalse()
-        {
-            // Arrange
-            Func<object?, IWorkflowFoundry, CancellationToken, Task> action = (_, _, _) => Task.CompletedTask;
-            var operation = new ActionWorkflowOperation("RestorePropertyTest", action);
-
-            // Act & Assert
-            Assert.False(operation.SupportsRestore);
-        }
-
-        [Fact]
-        public void Id_IsUniqueForEachInstance()
+        public void BeUniqueForEachInstance_GivenId()
         {
             // Arrange
             Func<object?, IWorkflowFoundry, CancellationToken, Task> action = (_, _, _) => Task.CompletedTask;
@@ -311,7 +306,7 @@ namespace WorkflowForge.Tests.Operations
         #region Dispose Tests
 
         [Fact]
-        public void Dispose_CanBeCalledMultipleTimes()
+        public void AllowMultipleCalls_GivenDispose()
         {
             // Arrange
             Func<object?, IWorkflowFoundry, CancellationToken, Task> action = (_, _, _) => Task.CompletedTask;
@@ -324,7 +319,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_AfterDispose_StillWorksAsExpected()
+        public async Task StillWorkAsExpected_GivenForgeAsyncAfterDispose()
         {
             // Arrange
             Func<object?, IWorkflowFoundry, CancellationToken, Task> action = (_, _, _) => Task.CompletedTask;
@@ -340,7 +335,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task RestoreAsync_AfterDispose_ThrowsNotSupportedException()
+        public async Task CompleteSuccessfully_GivenRestoreAsyncAfterDispose()
         {
             // Arrange
             Func<object?, IWorkflowFoundry, CancellationToken, Task> action = (_, _, _) => Task.CompletedTask;
@@ -348,9 +343,12 @@ namespace WorkflowForge.Tests.Operations
             var foundry = CreateMockFoundry();
             operation.Dispose();
 
-            // Act & Assert - ActionWorkflowOperation always throws NotSupportedException for restore
-            await Assert.ThrowsAsync<NotSupportedException>(() =>
-                operation.RestoreAsync("output", foundry.Object));
+            // Act - RestoreAsync returns Task.CompletedTask by default (no-op)
+            var task = operation.RestoreAsync("output", foundry.Object);
+
+            // Assert
+            await task;
+            Assert.True(task.Status == TaskStatus.RanToCompletion);
         }
 
         #endregion Dispose Tests
@@ -358,7 +356,7 @@ namespace WorkflowForge.Tests.Operations
         #region Concurrent Execution Tests
 
         [Fact]
-        public async Task ForgeAsync_ConcurrentExecution_HandledCorrectly()
+        public async Task HandleCorrectly_GivenConcurrentExecution()
         {
             // Arrange
             var concurrentExecutions = 10;
@@ -395,11 +393,11 @@ namespace WorkflowForge.Tests.Operations
         #region Memory and Performance Tests
 
         [Fact]
-        public async Task ForgeAsync_WithLargeInputData_HandlesLargeData()
+        public async Task HandleLargeData_GivenLargeInputData()
         {
             // Arrange
             var largeData = new byte[1024 * 1024]; // 1MB of data
-            new Random().NextBytes(largeData);
+            ThreadSafeRandom.NextBytes(largeData);
 
             byte[]? capturedData = null;
             Func<object?, IWorkflowFoundry, CancellationToken, Task> action = (input, foundry, ct) =>

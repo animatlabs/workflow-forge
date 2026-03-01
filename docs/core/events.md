@@ -133,7 +133,7 @@ public interface ICompensationLifecycleEvents
 **When Events Fire**:
 - `CompensationTriggered`: When workflow failure triggers compensation
 - `CompensationCompleted`: After all compensations complete
-- `OperationRestoreStarted`: Before each operation's RestoreAsync executes
+- `OperationRestoreStarted`: Before each completed operation's RestoreAsync executes (all operations are attempted; no-op base class default for non-restorable operations)
 - `OperationRestoreCompleted`: After successful operation restoration
 - `OperationRestoreFailed`: When operation restoration fails
 

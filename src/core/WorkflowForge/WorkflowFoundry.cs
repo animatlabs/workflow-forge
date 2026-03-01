@@ -5,7 +5,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 using WorkflowForge.Events;
+using WorkflowForge.Extensions;
 using WorkflowForge.Loggers;
 using WorkflowForge.Options;
 
@@ -21,13 +23,14 @@ namespace WorkflowForge
         private readonly List<IWorkflowOperation> _operations = new();
         private readonly List<IWorkflowOperationMiddleware> _middlewares = new();
         private readonly object _middlewareLock = new();
-        private readonly object _executionLock = new();
         private readonly ISystemTimeProvider _timeProvider;
-        private readonly WorkflowForgeOptions _options;
+        private WorkflowForgeOptions _options;
         private volatile bool _disposed;
         private IWorkflow? _currentWorkflow;
         private int _executionState;
         private volatile bool _isFrozen;
+        private IWorkflowOperation[]? _cachedOperations;
+        private IWorkflowOperationMiddleware[]? _cachedMiddlewares;
 
         public event EventHandler<OperationStartedEventArgs>? OperationStarted;
 
@@ -36,7 +39,7 @@ namespace WorkflowForge
         public event EventHandler<OperationFailedEventArgs>? OperationFailed;
 
         /// <inheritdoc />
-        public Guid ExecutionId { get; }
+        public Guid ExecutionId { get; private set; }
 
         /// <inheritdoc />
         public ConcurrentDictionary<string, object?> Properties { get; }
@@ -45,13 +48,13 @@ namespace WorkflowForge
         public IWorkflow? CurrentWorkflow => _currentWorkflow;
 
         /// <inheritdoc />
-        public IWorkflowForgeLogger Logger { get; }
+        public IWorkflowForgeLogger Logger { get; private set; }
 
         /// <inheritdoc />
         public WorkflowForgeOptions Options => _options;
 
         /// <inheritdoc />
-        public IServiceProvider? ServiceProvider { get; }
+        public IServiceProvider? ServiceProvider { get; private set; }
 
         /// <inheritdoc />
         public bool IsFrozen => _isFrozen;
@@ -88,7 +91,8 @@ namespace WorkflowForge
         /// <inheritdoc />
         public void SetCurrentWorkflow(IWorkflow? workflow)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(WorkflowFoundry));
             _currentWorkflow = workflow;
         }
 
@@ -100,8 +104,10 @@ namespace WorkflowForge
         /// <exception cref="ObjectDisposedException">Thrown when the foundry has been disposed.</exception>
         public void AddOperation(IWorkflowOperation operation)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
-            if (operation == null) throw new ArgumentNullException(nameof(operation));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(WorkflowFoundry));
+            if (operation == null)
+                throw new ArgumentNullException(nameof(operation));
             ThrowIfFrozen();
 
             lock (_operations)
@@ -118,14 +124,17 @@ namespace WorkflowForge
         /// <exception cref="ObjectDisposedException">Thrown when the foundry has been disposed.</exception>
         public void ReplaceOperations(IEnumerable<IWorkflowOperation> operations)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
-            if (operations == null) throw new ArgumentNullException(nameof(operations));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(WorkflowFoundry));
+            if (operations == null)
+                throw new ArgumentNullException(nameof(operations));
             ThrowIfFrozen();
 
             lock (_operations)
             {
                 _operations.Clear();
                 _operations.AddRange(operations);
+                _cachedOperations = null;
             }
         }
 
@@ -137,8 +146,10 @@ namespace WorkflowForge
         /// <exception cref="ObjectDisposedException">Thrown when the foundry has been disposed.</exception>
         public void AddMiddleware(IWorkflowOperationMiddleware middleware)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
-            if (middleware == null) throw new ArgumentNullException(nameof(middleware));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(WorkflowFoundry));
+            if (middleware == null)
+                throw new ArgumentNullException(nameof(middleware));
             ThrowIfFrozen();
 
             lock (_middlewareLock)
@@ -155,8 +166,10 @@ namespace WorkflowForge
         /// <exception cref="ObjectDisposedException">Thrown when the foundry has been disposed.</exception>
         public void AddMiddlewares(IEnumerable<IWorkflowOperationMiddleware> middlewares)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
-            if (middlewares == null) throw new ArgumentNullException(nameof(middlewares));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(WorkflowFoundry));
+            if (middlewares == null)
+                throw new ArgumentNullException(nameof(middlewares));
             ThrowIfFrozen();
 
             lock (_middlewareLock)
@@ -173,7 +186,8 @@ namespace WorkflowForge
         /// <exception cref="ObjectDisposedException">Thrown when the foundry has been disposed.</exception>
         public bool RemoveMiddleware(IWorkflowOperationMiddleware middleware)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(WorkflowFoundry));
             ThrowIfFrozen();
             lock (_middlewareLock)
             {
@@ -189,7 +203,8 @@ namespace WorkflowForge
         {
             get
             {
-                if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
+                if (_disposed)
+                    throw new ObjectDisposedException(nameof(WorkflowFoundry));
                 lock (_middlewareLock)
                 {
                     return _middlewares.Count;
@@ -206,7 +221,8 @@ namespace WorkflowForge
         /// <exception cref="ObjectDisposedException">Thrown when the foundry has been disposed.</exception>
         public async Task ForgeAsync(CancellationToken cancellationToken = default)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(WorkflowFoundry));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(WorkflowFoundry));
             if (Interlocked.Exchange(ref _executionState, 1) == 1)
             {
                 throw new InvalidOperationException("Foundry is already executing.");
@@ -219,7 +235,8 @@ namespace WorkflowForge
                 IWorkflowOperation[] operationsSnapshot;
                 lock (_operations)
                 {
-                    operationsSnapshot = _operations.ToArray();
+                    _cachedOperations ??= _operations.ToArray();
+                    operationsSnapshot = _cachedOperations;
                 }
 
                 var shouldAggregate = Options.ContinueOnError;
@@ -231,66 +248,9 @@ namespace WorkflowForge
 
                 for (int i = 0; i < operationsSnapshot.Length; i++)
                 {
-                    var operation = operationsSnapshot[i];
                     cancellationToken.ThrowIfCancellationRequested();
-
-                    var operationStartTime = _timeProvider.UtcNow;
-
-                    try
-                    {
-                        // FIRE: OperationStarted event
-                        OperationStarted?.Invoke(this, new OperationStartedEventArgs(operation, this, null));
-
-                        var result = await ExecuteOperationWithMiddleware(operation, inputData, cancellationToken).ConfigureAwait(false);
-                        if (Options.EnableOutputChaining)
-                        {
-                            inputData = result;
-                        }
-
-                        Properties[$"Operation.{operation.Id}.Output"] = result;
-                        Properties["Operation.LastCompletedIndex"] = i;
-                        Properties["Operation.LastCompletedName"] = operation.Name;
-                        Properties["Operation.LastCompletedId"] = operation.Id;
-
-                        var operationDuration = _timeProvider.UtcNow - operationStartTime;
-
-                        // FIRE: OperationCompleted event
-                        OperationCompleted?.Invoke(this, new OperationCompletedEventArgs(
-                            operation,
-                            this,
-                            null,
-                            result,
-                            TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
-                    }
-                    catch (Exception ex)
-                    {
-                        Properties["Operation.LastFailedIndex"] = i;
-                        Properties["Operation.LastFailedName"] = operation.Name;
-                        Properties["Operation.LastFailedId"] = operation.Id;
-
-                        var operationDuration = _timeProvider.UtcNow - operationStartTime;
-
-                        // FIRE: OperationFailed event
-                        OperationFailed?.Invoke(this, new OperationFailedEventArgs(
-                            operation,
-                            this,
-                            null,
-                            ex,
-                            TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
-
-                        if (ex is OperationCanceledException)
-                        {
-                            throw;
-                        }
-
-                        if (errors != null)
-                        {
-                            errors.Add(ex);
-                            continue;
-                        }
-
-                        throw;
-                    }
+                    inputData = await ExecuteOperationAtIndexAsync(
+                        operationsSnapshot[i], i, inputData, errors, cancellationToken).ConfigureAwait(false);
                 }
 
                 if (errors != null && errors.Count > 0)
@@ -303,6 +263,109 @@ namespace WorkflowForge
                 _isFrozen = false;
                 Interlocked.Exchange(ref _executionState, 0);
             }
+        }
+
+        /// <summary>
+        /// Executes a single operation at the given index, handling events, property tracking, and error aggregation.
+        /// Returns the (potentially chained) input data for the next operation.
+        /// </summary>
+        private async Task<object?> ExecuteOperationAtIndexAsync(
+            IWorkflowOperation operation,
+            int index,
+            object? inputData,
+            List<Exception>? errors,
+            CancellationToken cancellationToken)
+        {
+            var operationStartTime = _timeProvider.UtcNow;
+
+            try
+            {
+                InvokeOperationStarted(operation);
+                Properties[FoundryPropertyKeys.CurrentOperationIndex] = index;
+
+                var result = await ExecuteOperationWithMiddleware(operation, inputData, cancellationToken).ConfigureAwait(false);
+                inputData = ApplyOutputChaining(inputData, result);
+
+                ApplyOperationSuccessProperties(operation, index, result);
+                InvokeOperationCompleted(operation, result, operationStartTime);
+
+                return inputData;
+            }
+            catch (Exception ex)
+            {
+                return await HandleOperationFailureAsync(operation, index, inputData, ex, operationStartTime, errors).ConfigureAwait(false);
+            }
+        }
+
+        private object? ApplyOutputChaining(object? inputData, object? result)
+        {
+            return Options.EnableOutputChaining ? result : inputData;
+        }
+
+        private void ApplyOperationSuccessProperties(IWorkflowOperation operation, int index, object? result)
+        {
+            Properties[string.Format(FoundryPropertyKeys.OperationOutputFormat, index, operation.Name)] = result;
+            Properties[FoundryPropertyKeys.LastCompletedIndex] = index;
+            Properties[FoundryPropertyKeys.LastCompletedName] = operation.Name;
+            Properties[FoundryPropertyKeys.LastCompletedId] = operation.Id;
+        }
+
+        private void InvokeOperationStarted(IWorkflowOperation operation)
+        {
+            try
+            {
+                OperationStarted?.Invoke(this, new OperationStartedEventArgs(operation, this, null));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(Logger.CreateErrorProperties(ex, "OperationStarted"), ex, "OperationStarted event handler error");
+            }
+        }
+
+        private void InvokeOperationCompleted(IWorkflowOperation operation, object? result, DateTimeOffset operationStartTime)
+        {
+            var operationDuration = _timeProvider.UtcNow - operationStartTime;
+            try
+            {
+                OperationCompleted?.Invoke(this, new OperationCompletedEventArgs(
+                    operation, this, null, result,
+                    TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(Logger.CreateErrorProperties(ex, "OperationCompleted"), ex, "OperationCompleted event handler error");
+            }
+        }
+
+        private Task<object?> HandleOperationFailureAsync(
+            IWorkflowOperation operation,
+            int index,
+            object? inputData,
+            Exception ex,
+            DateTimeOffset operationStartTime,
+            List<Exception>? errors)
+        {
+            Properties[FoundryPropertyKeys.LastFailedIndex] = index;
+            Properties[FoundryPropertyKeys.LastFailedName] = operation.Name;
+            Properties[FoundryPropertyKeys.LastFailedId] = operation.Id;
+
+            var operationDuration = _timeProvider.UtcNow - operationStartTime;
+            OperationFailed?.Invoke(this, new OperationFailedEventArgs(
+                operation, this, null, ex,
+                TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
+
+            if (ex is OperationCanceledException)
+            {
+                throw ex;
+            }
+
+            if (errors != null)
+            {
+                errors.Add(ex);
+                return Task.FromResult(inputData);
+            }
+
+            throw ex;
         }
 
         /// <summary>
@@ -320,7 +383,8 @@ namespace WorkflowForge
             IWorkflowOperationMiddleware[] middlewareSnapshot;
             lock (_middlewareLock)
             {
-                middlewareSnapshot = _middlewares.ToArray();
+                _cachedMiddlewares ??= _middlewares.ToArray();
+                middlewareSnapshot = _cachedMiddlewares;
             }
 
             if (middlewareSnapshot.Length == 0)
@@ -347,7 +411,13 @@ namespace WorkflowForge
         /// <inheritdoc />
         public void Dispose()
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
+
+            OperationStarted = null;
+            OperationCompleted = null;
+            OperationFailed = null;
+
             _disposed = true;
             // Dispose operations
             lock (_operations)
@@ -358,16 +428,19 @@ namespace WorkflowForge
                     {
                         operation.Dispose();
                     }
-                    catch
+                    catch (Exception)
                     {
-                        // Best effort disposal
+                        // Intentionally swallowed: disposal must not prevent remaining
+                        // operations from being cleaned up.
                     }
                 }
                 _operations.Clear();
+                _cachedOperations = null;
             }
             lock (_middlewareLock)
             {
                 _middlewares.Clear();
+                _cachedMiddlewares = null;
             }
             // Dispose properties
             Properties.Clear();
@@ -382,5 +455,28 @@ namespace WorkflowForge
             }
         }
 
+        /// <summary>
+        /// Resets the foundry state so it can be reused from a pool.
+        /// </summary>
+        internal void Reset(
+            Guid executionId,
+            IWorkflowForgeLogger logger,
+            IServiceProvider? serviceProvider,
+            WorkflowForgeOptions options,
+            IWorkflow? currentWorkflow = null)
+        {
+            ExecutionId = executionId;
+            Logger = logger;
+            ServiceProvider = serviceProvider;
+            _options = options;
+            _currentWorkflow = currentWorkflow;
+
+            _disposed = false;
+            _executionState = 0;
+            _isFrozen = false;
+
+            // Dispose handles full cleanup of collections/properties,
+            // so this just needs to reset the flags.
+        }
     }
 }

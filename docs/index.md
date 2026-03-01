@@ -10,9 +10,16 @@ description: Build high-performance workflows in .NET with zero dependencies, mi
     <h1>WorkflowForge Documentation</h1>
     <p>Build high-performance workflows in .NET with clear guidance, focused examples, and a zero-dependency core.</p>
     <p class="wf-badges">
+      <a href="https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml"><img src="https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml/badge.svg?branch=main" alt="Build and Test"></a>
       <a href="https://www.nuget.org/packages/WorkflowForge/"><img src="https://img.shields.io/nuget/v/WorkflowForge.svg" alt="NuGet"></a>
       <a href="https://www.nuget.org/packages/WorkflowForge/"><img src="https://img.shields.io/nuget/dt/WorkflowForge.svg" alt="NuGet Downloads"></a>
       <a href="https://github.com/animatlabs/workflow-forge/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+      <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status" alt="Quality Gate Status"></a>
+      <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage" alt="Coverage"></a>
+      <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating" alt="Reliability Rating"></a>
+      <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating" alt="Security Rating"></a>
+      <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating" alt="Maintainability Rating"></a>
+      <a href="https://ko-fi.com/animat089"><img src="https://img.shields.io/badge/Ko--fi-support-ff5e5b?logo=ko-fi" alt="Ko-fi"></a>
     </p>
     <div class="wf-hero-actions">
       <a href="{{ "/getting-started/getting-started/" | relative_url }}">Get started</a>
@@ -44,8 +51,8 @@ WorkflowForge is a **zero-dependency workflow orchestration framework** for .NET
 
 ### Key Features
 
-- **High Performance**: 11-540x faster than alternatives in benchmarks
-- **Minimal Memory**: 9-573x less memory usage
+- **High Performance**: 13-522x faster than alternatives in benchmarks
+- **Minimal Memory**: 6-578x less memory usage
 - **Zero Dependencies**: Core package with no external dependencies
 - **Production Ready**: Built-in compensation (saga pattern), comprehensive testing
 - **Extension Ecosystem**: 13 packages (11 extensions + Testing) with zero version conflicts
@@ -99,7 +106,6 @@ public interface IWorkflow : IDisposable
     string? Description { get; }
     string Version { get; }
     IReadOnlyList<IWorkflowOperation> Operations { get; }
-    bool SupportsRestore { get; }
 }
 ```
 
@@ -139,12 +145,13 @@ public interface IWorkflowOperation : IDisposable
 {
     Guid Id { get; }
     string Name { get; }
-    bool SupportsRestore { get; }
     
     Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
     Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
 }
 ```
+
+Override `RestoreAsync` in your operation to support compensation. The base class provides a no-op default — operations that don't override it are safely skipped during compensation.
 
 ---
 
@@ -178,19 +185,19 @@ Based on BenchmarkDotNet testing (12 scenarios, 50 iterations) against Workflow 
 {% if site.url %}
 <div class="perf-stats">
   <div class="perf-stat">
-    <div class="perf-stat-value">540x</div>
+    <div class="perf-stat-value">522x</div>
     <div class="perf-stat-label">Faster (State Machine)</div>
   </div>
   <div class="perf-stat">
-    <div class="perf-stat-value">573x</div>
+    <div class="perf-stat-value">578x</div>
     <div class="perf-stat-label">Less Memory</div>
   </div>
   <div class="perf-stat">
-    <div class="perf-stat-value">13μs</div>
+    <div class="perf-stat-value">14μs</div>
     <div class="perf-stat-label">Min Execution</div>
   </div>
   <div class="perf-stat">
-    <div class="perf-stat-value">3.5KB</div>
+    <div class="perf-stat-value">3.3KB</div>
     <div class="perf-stat-label">Min Memory</div>
   </div>
 </div>
@@ -198,25 +205,46 @@ Based on BenchmarkDotNet testing (12 scenarios, 50 iterations) against Workflow 
 
 ### Benchmark Comparison
 
-| Scenario | vs WorkflowCore | vs Elsa | Memory Advantage |
-|----------|-----------------|---------|------------------|
-| **Simple Sequential** | 26-71x faster | 48-117x faster | 26-183x less |
-| **State Machine** | 126-303x faster | 307-540x faster | 47-284x less |
-| **Conditional Branching** | 32-68x faster | 80-132x faster | 21-149x less |
-| **Concurrent Execution** | 26-109x faster | 71-264x faster | 27-158x less |
+| Runtime | Scenario | vs WorkflowCore | vs Elsa | Memory Advantage |
+|---------|----------|-----------------|---------|------------------|
+| .NET 10.0 | **State Machine** | 508x faster | 522x faster | 46-249x less |
+| .NET 8.0 | **State Machine** | 356x faster | 412x faster | 46-248x less |
+| .NET FX 4.8 | **State Machine** | 256x faster | N/A† | 57x less |
+| .NET 10.0 | **Concurrent (8 wf)** | 139x faster | 263x faster | 22-134x less |
+| .NET 8.0 | **Concurrent (8 wf)** | 123x faster | 285x faster | 23-134x less |
+| .NET FX 4.8 | **Concurrent (8 wf)** | 285x faster | N/A† | 15x less |
+
+† Elsa does not support .NET Framework 4.8. See [Competitive Analysis](performance/competitive-analysis.md) for all 12 scenarios.
 
 {% if site.url %}
 <div class="perf-vchart">
   <div class="perf-vchart-title">State Machine Execution (25 Transitions)</div>
-  <div class="perf-vchart-subtitle">Up to 540x faster than alternatives</div>
+  <div class="perf-vchart-subtitle">Up to 522x faster than alternatives (.NET 10.0)</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">68μs</div><div class="perf-vchart-fill wf" style="height: 40%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">20.6ms</div><div class="perf-vchart-fill wc" style="height: 95%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">36.7ms</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">83μs</div><div class="perf-vchart-fill wf" style="height: 37%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">42.2ms</div><div class="perf-vchart-fill wc" style="height: 95%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">43.3ms</div><div class="perf-vchart-fill elsa" style="height: 97%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">Execution Time</div>
+      <div class="perf-vchart-group-label">.NET 10.0</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">111μs</div><div class="perf-vchart-fill wf" style="height: 40%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">39.5ms</div><div class="perf-vchart-fill wc" style="height: 92%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">45.7ms</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">.NET 8.0</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">101μs</div><div class="perf-vchart-fill wf" style="height: 39%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">25.9ms</div><div class="perf-vchart-fill wc" style="height: 87%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">.NET FX 4.8</div>
     </div>
   </div>
   <div class="perf-vchart-legend">
@@ -227,7 +255,7 @@ Based on BenchmarkDotNet testing (12 scenarios, 50 iterations) against Workflow 
 </div>
 {% endif %}
 
-**Test System**: Windows 11 (25H2), .NET 8.0.23, BenchmarkDotNet v0.15.8, 50 iterations
+**Test System**: Windows 11 (25H2), .NET 8.0.24 / .NET 10.0.3 / .NET FX 4.8.1, BenchmarkDotNet v0.15.8, 50 iterations
 
 ---
 
@@ -237,3 +265,4 @@ Based on BenchmarkDotNet testing (12 scenarios, 50 iterations) against Workflow 
 - **Issues**: [GitHub Issues](https://github.com/animatlabs/workflow-forge/issues)
 - **License**: MIT License
 - **Contributing**: [Contributing Guidelines](https://github.com/animatlabs/workflow-forge/blob/main/CONTRIBUTING.md)
+- **Ko-fi**: If this project helps you, consider [supporting on Ko-fi](https://ko-fi.com/animat089)

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace WorkflowForge.Options.Middleware
 {
     /// <summary>
@@ -5,7 +7,7 @@ namespace WorkflowForge.Options.Middleware
     /// Controls exception handling behavior.
     /// Zero-dependency POCO for configuration binding.
     /// </summary>
-    public sealed class ErrorHandlingMiddlewareOptions
+    public sealed class ErrorHandlingMiddlewareOptions : WorkflowForgeOptionsBase
     {
         /// <summary>
         /// Default configuration section name for binding from appsettings.json.
@@ -14,14 +16,9 @@ namespace WorkflowForge.Options.Middleware
         public const string DefaultSectionName = "WorkflowForge:Middleware:ErrorHandling";
 
         /// <summary>
-        /// Gets the configuration section name for this instance.
-        /// </summary>
-        public string SectionName { get; }
-
-        /// <summary>
         /// Initializes a new instance with default section name.
         /// </summary>
-        public ErrorHandlingMiddlewareOptions() : this(DefaultSectionName)
+        public ErrorHandlingMiddlewareOptions() : base(null, DefaultSectionName)
         {
         }
 
@@ -29,18 +26,9 @@ namespace WorkflowForge.Options.Middleware
         /// Initializes a new instance with custom section name.
         /// </summary>
         /// <param name="sectionName">Custom configuration section name.</param>
-        public ErrorHandlingMiddlewareOptions(string sectionName)
+        public ErrorHandlingMiddlewareOptions(string sectionName) : base(sectionName, DefaultSectionName)
         {
-            SectionName = sectionName ?? DefaultSectionName;
         }
-
-        /// <summary>
-        /// Gets or sets whether error handling middleware is enabled.
-        /// When true, exceptions will be centrally handled and logged.
-        /// Disabling is not recommended for production environments.
-        /// Default is true.
-        /// </summary>
-        public bool Enabled { get; set; } = true;
 
         /// <summary>
         /// Gets or sets whether to rethrow exceptions after handling.
@@ -57,5 +45,16 @@ namespace WorkflowForge.Options.Middleware
         /// Default is true.
         /// </summary>
         public bool IncludeStackTraces { get; set; } = true;
+
+        /// <inheritdoc />
+        public override IList<string> Validate() => new List<string>();
+
+        /// <inheritdoc />
+        public override object Clone() => new ErrorHandlingMiddlewareOptions(SectionName)
+        {
+            Enabled = Enabled,
+            RethrowExceptions = RethrowExceptions,
+            IncludeStackTraces = IncludeStackTraces
+        };
     }
 }

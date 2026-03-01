@@ -3,6 +3,7 @@ using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Validation;
 using WorkflowForge.Extensions.Validation.Options;
+using WorkflowForge.Operations;
 using WF = WorkflowForge;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
@@ -254,13 +255,11 @@ public class ValidationSample : ISample
     }
 
     // Operations
-    public class ValidateOrderOperation : IWorkflowOperation
+    public class ValidateOrderOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "ValidateOrder";
-        public bool SupportsRestore => false;
+        public override string Name => "ValidateOrder";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var order = foundry.GetPropertyOrDefault<Order>("Order");
             if (order == null)
@@ -277,44 +276,24 @@ public class ValidationSample : ISample
 
             return null;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        public void Dispose()
-        { }
     }
 
-    public class ProcessOrderOperation : IWorkflowOperation
+    public class ProcessOrderOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "ProcessOrder";
-        public bool SupportsRestore => false;
+        public override string Name => "ProcessOrder";
 
-        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             // Processing logic would go here
             return Task.FromResult<object?>("Order processed successfully");
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        public void Dispose()
-        { }
     }
 
-    public class CheckValidationOperation : IWorkflowOperation
+    public class CheckValidationOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "CheckValidation";
-        public bool SupportsRestore => false;
+        public override string Name => "CheckValidation";
 
-        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var status = foundry.GetPropertyOrDefault<string>("Validation.CheckValidation.Status");
 
@@ -326,13 +305,5 @@ public class ValidationSample : ISample
 
             return Task.FromResult<object?>("Validation check completed");
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        public void Dispose()
-        { }
     }
 }

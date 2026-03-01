@@ -27,11 +27,7 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
             RecoveryMiddlewareOptions? options = null,
             CancellationToken cancellationToken = default)
         {
-            if (smith == null) throw new ArgumentNullException(nameof(smith));
-            if (workflow == null) throw new ArgumentNullException(nameof(workflow));
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (provider == null) throw new ArgumentNullException(nameof(provider));
-
+            ValidateForgeWithRecoveryArgs(smith, workflow, foundry, provider);
             options ??= new RecoveryMiddlewareOptions();
 
             if (!options.Enabled)
@@ -41,9 +37,34 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
                 return;
             }
 
-            // Try recovery first
-            var coordinator = new RecoveryCoordinator(provider, options);
-            // Phase 1: attempt resume (best-effort). If it throws, swallow here and move to fresh execution retries.
+            if (await TryResumeFromSnapshotAsync(coordinator: new RecoveryCoordinator(provider, options), foundry, workflow, foundryKey, workflowKey, cancellationToken).ConfigureAwait(false))
+            {
+                return;
+            }
+
+            await ExecuteWithRetriesAsync(smith, workflow, foundry, options, cancellationToken).ConfigureAwait(false);
+        }
+
+        private static void ValidateForgeWithRecoveryArgs(IWorkflowSmith? smith, IWorkflow? workflow, IWorkflowFoundry? foundry, IWorkflowPersistenceProvider? provider)
+        {
+            if (smith == null)
+                throw new ArgumentNullException(nameof(smith));
+            if (workflow == null)
+                throw new ArgumentNullException(nameof(workflow));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (provider == null)
+                throw new ArgumentNullException(nameof(provider));
+        }
+
+        private static async Task<bool> TryResumeFromSnapshotAsync(
+            RecoveryCoordinator coordinator,
+            IWorkflowFoundry foundry,
+            IWorkflow workflow,
+            Guid foundryKey,
+            Guid workflowKey,
+            CancellationToken cancellationToken)
+        {
             try
             {
                 await coordinator.ResumeAsync(
@@ -52,16 +73,25 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
                     foundryKey: foundryKey,
                     workflowKey: workflowKey,
                     cancellationToken: cancellationToken).ConfigureAwait(false);
-                return; // Success
+                return true;
             }
-            catch
+            catch (Exception ex)
             {
-                // ignore and proceed to fresh execution attempts
+                foundry.Logger.LogWarning(ex, "Recovery resume failed, proceeding to fresh execution attempts");
+                return false;
             }
+        }
 
-            // Phase 2: attempt a fresh execution with retry options
+        private static async Task ExecuteWithRetriesAsync(
+            IWorkflowSmith smith,
+            IWorkflow workflow,
+            IWorkflowFoundry foundry,
+            RecoveryMiddlewareOptions options,
+            CancellationToken cancellationToken)
+        {
             var attempts = 0;
             Exception? lastEx = null;
+
             while (attempts < options.MaxRetryAttempts)
             {
                 try
@@ -77,19 +107,27 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
                 {
                     lastEx = ex;
                     attempts++;
-                    if (attempts >= options.MaxRetryAttempts) break;
+                    if (attempts >= options.MaxRetryAttempts)
+                        break;
 
-                    var delay = options.BaseDelay;
-                    if (options.UseExponentialBackoff)
-                    {
-                        var factor = Math.Pow(2, attempts - 1);
-                        delay = TimeSpan.FromMilliseconds(options.BaseDelay.TotalMilliseconds * factor);
-                    }
+                    var delay = GetRetryDelay(options, attempts);
                     await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                 }
             }
 
-            if (lastEx != null) throw lastEx;
+            if (lastEx != null)
+                throw lastEx;
+        }
+
+        private static TimeSpan GetRetryDelay(RecoveryMiddlewareOptions options, int attempts)
+        {
+            if (!options.UseExponentialBackoff)
+            {
+                return options.BaseDelay;
+            }
+
+            var factor = Math.Pow(2, attempts - 1);
+            return TimeSpan.FromMilliseconds(options.BaseDelay.TotalMilliseconds * factor);
         }
     }
 }

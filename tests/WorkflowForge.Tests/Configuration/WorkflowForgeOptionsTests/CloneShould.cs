@@ -50,7 +50,7 @@ namespace WorkflowForge.Tests.Configuration.WorkflowForgeOptionsTests
         }
 
         [Fact]
-        public void NotAffectOriginal_WhenCloneIsModified()
+        public void NotAffectOriginal_GivenCloneIsModified()
         {
             // Arrange
             var original = new WorkflowForgeOptions
@@ -68,7 +68,7 @@ namespace WorkflowForge.Tests.Configuration.WorkflowForgeOptionsTests
         }
 
         [Fact]
-        public void CloneTyped_ShouldReturnStronglyTypedCopy()
+        public void ReturnStronglyTypedCopy_GivenCloneTyped()
         {
             // Arrange
             var original = new WorkflowForgeOptions

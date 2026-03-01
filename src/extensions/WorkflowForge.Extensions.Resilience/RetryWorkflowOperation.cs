@@ -45,12 +45,10 @@ namespace WorkflowForge.Extensions.Resilience
         public override string Name { get; }
 
         /// <inheritdoc />
-        public override bool SupportsRestore => _operation.SupportsRestore;
-
-        /// <inheritdoc />
         protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             // Use the resilience strategy to execute the operation with retry logic
             return await _retryStrategy.ExecuteAsync(async () =>
@@ -63,25 +61,27 @@ namespace WorkflowForge.Extensions.Resilience
         /// <inheritdoc />
         public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (!SupportsRestore)
-                throw new NotSupportedException($"Operation '{_operation.Name}' does not support restoration.");
-
             // Don't retry restore operations - they should be idempotent
             // Pass the output data through for restoration
             await _operation.RestoreAsync(outputData, foundry, cancellationToken).ConfigureAwait(false);
         }
 
         /// <inheritdoc />
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            try
+            if (disposing)
             {
-                _operation?.Dispose();
+                try
+                {
+                    _operation?.Dispose();
+                }
+                catch (Exception)
+                {
+                    // Intentionally swallowed: disposal exceptions must not propagate
+                    // to prevent cascading failures during cleanup.
+                }
             }
-            catch
-            {
-                // Swallow disposal exceptions
-            }
+            base.Dispose(disposing);
         }
 
         /// <summary>
@@ -179,8 +179,10 @@ namespace WorkflowForge.Extensions.Resilience
             string? name = null,
             IWorkflowForgeLogger? logger = null)
         {
-            if (operation == null) throw new ArgumentNullException(nameof(operation));
-            if (settings == null) throw new ArgumentNullException(nameof(settings));
+            if (operation == null)
+                throw new ArgumentNullException(nameof(operation));
+            if (settings == null)
+                throw new ArgumentNullException(nameof(settings));
 
             IWorkflowResilienceStrategy strategy = settings.StrategyType switch
             {

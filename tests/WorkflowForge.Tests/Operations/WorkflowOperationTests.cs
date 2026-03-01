@@ -7,10 +7,10 @@ using WorkflowForge.Operations;
 
 namespace WorkflowForge.Tests.Operations;
 
-public class WorkflowOperationBaseTests
+public class WorkflowOperationBaseShould
 {
     [Fact]
-    public void Id_GeneratesUniqueGuid()
+    public void GenerateUniqueGuid_GivenId()
     {
         // Arrange & Act
         var operation1 = new TestOperation("Test1");
@@ -23,7 +23,7 @@ public class WorkflowOperationBaseTests
     }
 
     [Fact]
-    public void Name_ReturnsCorrectName()
+    public void ReturnCorrectName_GivenName()
     {
         // Arrange
         const string expectedName = "TestOperation";
@@ -34,7 +34,7 @@ public class WorkflowOperationBaseTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithNullFoundry_ThrowsArgumentNullException()
+    public async Task ThrowArgumentNullException_GivenNullFoundry()
     {
         // Arrange
         var operation = new TestOperation("Test");
@@ -45,7 +45,7 @@ public class WorkflowOperationBaseTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithCancellationToken_CanBeCancelled()
+    public async Task BeCancellable_GivenCancellationToken()
     {
         // Arrange
         var operation = new DelayedTestOperation("Test", TimeSpan.FromSeconds(5));
@@ -61,7 +61,7 @@ public class WorkflowOperationBaseTests
     }
 
     [Fact]
-    public async Task ForgeAsync_ExecutesSuccessfully()
+    public async Task ExecuteSuccessfully_GivenForgeAsync()
     {
         // Arrange
         var operation = new TestOperation("Test");
@@ -75,29 +75,22 @@ public class WorkflowOperationBaseTests
     }
 
     [Fact]
-    public void SupportsRestore_DefaultImplementation_ReturnsFalse()
-    {
-        // Arrange
-        var operation = new TestOperation("Test");
-
-        // Act & Assert
-        Assert.False(operation.SupportsRestore);
-    }
-
-    [Fact]
-    public async Task RestoreAsync_DefaultImplementation_ThrowsNotSupportedException()
+    public async Task ReturnCompletedTask_GivenRestoreAsyncDefaultImplementation()
     {
         // Arrange
         var operation = new TestOperation("Test");
         var foundry = new Mock<IWorkflowFoundry>().Object;
 
-        // Act & Assert
-        await Assert.ThrowsAsync<NotSupportedException>(() =>
-            operation.RestoreAsync("output", foundry, CancellationToken.None));
+        // Act
+        var task = operation.RestoreAsync("output", foundry, CancellationToken.None);
+
+        // Assert
+        await task;
+        Assert.True(task.Status == TaskStatus.RanToCompletion);
     }
 
     [Fact]
-    public void Dispose_CanBeCalledMultipleTimes()
+    public void AllowMultipleCalls_GivenDispose()
     {
         // Arrange
         var operation = new TestOperation("Test");
@@ -120,7 +113,8 @@ public class WorkflowOperationBaseTests
 
         protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             var result = inputData?.ToString()?.ToUpper() ?? "";
             return Task.FromResult<object?>(result);
@@ -142,7 +136,8 @@ public class WorkflowOperationBaseTests
 
         protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             await Task.Delay(_delay, cancellationToken);
             return inputData;
@@ -150,10 +145,10 @@ public class WorkflowOperationBaseTests
     }
 }
 
-public class ActionWorkflowOperationTests
+public class ActionWorkflowOperationShould
 {
     [Fact]
-    public void Constructor_WithValidParameters_SetsProperties()
+    public void SetProperties_GivenValidParameters()
     {
         // Arrange
         const string name = "TestAction";
@@ -168,7 +163,7 @@ public class ActionWorkflowOperationTests
     }
 
     [Fact]
-    public void Constructor_WithNullName_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullName()
     {
         // Arrange
         var action = new Func<object?, IWorkflowFoundry, CancellationToken, Task>((input, foundry, ct) => Task.CompletedTask);
@@ -178,14 +173,14 @@ public class ActionWorkflowOperationTests
     }
 
     [Fact]
-    public void Constructor_WithNullAction_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullAction()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => new ActionWorkflowOperation("Test", (Func<object?, IWorkflowFoundry, CancellationToken, Task>)null!));
     }
 
     [Fact]
-    public async Task ForgeAsync_ExecutesActionAndReturnsInput()
+    public async Task ExecuteActionAndReturnInput_GivenForgeAsync()
     {
         // Arrange
         var executed = false;
@@ -208,7 +203,7 @@ public class ActionWorkflowOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithException_ThrowsWorkflowOperationException()
+    public async Task ThrowWorkflowOperationException_GivenException()
     {
         // Arrange
         var action = new Func<object?, IWorkflowFoundry, CancellationToken, Task>((input, foundry, ct) =>
@@ -225,10 +220,10 @@ public class ActionWorkflowOperationTests
     }
 }
 
-public class ConditionalWorkflowOperationTests
+public class ConditionalWorkflowOperationShould
 {
     [Fact]
-    public void Constructor_WithValidParameters_SetsProperties()
+    public void SetProperties_GivenValidParameters()
     {
         // Arrange
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((input, foundry, ct) => Task.FromResult(true));
@@ -243,7 +238,7 @@ public class ConditionalWorkflowOperationTests
     }
 
     [Fact]
-    public void Constructor_WithNullCondition_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullCondition()
     {
         // Arrange
         var trueOperation = new Mock<IWorkflowOperation>().Object;
@@ -254,7 +249,7 @@ public class ConditionalWorkflowOperationTests
     }
 
     [Fact]
-    public void Constructor_WithNullTrueOperation_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullTrueOperation()
     {
         // Arrange
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((input, foundry, ct) => Task.FromResult(true));
@@ -265,7 +260,7 @@ public class ConditionalWorkflowOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WhenConditionTrue_ExecutesTrueOperation()
+    public async Task ExecuteTrueOperation_GivenConditionTrue()
     {
         // Arrange
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((input, foundry, ct) => Task.FromResult(true));
@@ -285,7 +280,7 @@ public class ConditionalWorkflowOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WhenConditionFalse_ReturnsNull()
+    public async Task ReturnNull_GivenConditionFalse()
     {
         // Arrange
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((input, foundry, ct) => Task.FromResult(false));
@@ -302,7 +297,7 @@ public class ConditionalWorkflowOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WhenConditionFalseWithFalseOperation_ExecutesFalseOperation()
+    public async Task ExecuteFalseOperation_GivenConditionFalseWithFalseOperation()
     {
         // Arrange
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((input, foundry, ct) => Task.FromResult(false));
@@ -324,10 +319,10 @@ public class ConditionalWorkflowOperationTests
     }
 }
 
-public class DelegateWorkflowOperationTests
+public class DelegateWorkflowOperationShould
 {
     [Fact]
-    public void Constructor_WithValidParameters_SetsProperties()
+    public void SetProperties_GivenValidParameters()
     {
         // Arrange
         const string name = "TestDelegate";
@@ -342,7 +337,7 @@ public class DelegateWorkflowOperationTests
     }
 
     [Fact]
-    public void Constructor_WithNullName_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullName()
     {
         // Arrange
         var executeFunc = new Func<object?, IWorkflowFoundry, CancellationToken, Task<object?>>((input, foundry, ct) => Task.FromResult<object?>("result"));
@@ -352,14 +347,14 @@ public class DelegateWorkflowOperationTests
     }
 
     [Fact]
-    public void Constructor_WithNullExecuteFunc_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullExecuteFunc()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => new DelegateWorkflowOperation("Test", null!));
     }
 
     [Fact]
-    public async Task ForgeAsync_ExecutesFunctionAndReturnsResult()
+    public async Task ExecuteFunctionAndReturnResult_GivenForgeAsync()
     {
         // Arrange
         var executeFunc = new Func<object?, IWorkflowFoundry, CancellationToken, Task<object?>>((input, foundry, ct) =>
@@ -377,7 +372,7 @@ public class DelegateWorkflowOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithException_ThrowsWorkflowOperationException()
+    public async Task ThrowWorkflowOperationException_GivenException()
     {
         // Arrange
         var executeFunc = new Func<object?, IWorkflowFoundry, CancellationToken, Task<object?>>((input, foundry, ct) =>

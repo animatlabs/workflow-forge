@@ -1,5 +1,5 @@
 using BenchmarkDotNet.Attributes;
-using WorkflowForge.Benchmarks.Comparative.Implementations.Elsa;
+using BenchmarkDotNet.Jobs;
 using WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowCore;
 using WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
@@ -11,7 +11,9 @@ namespace WorkflowForge.Benchmarks.Comparative.Benchmarks;
 /// Compares WorkflowForge vs Workflow Core vs Elsa for basic sequential execution
 /// </summary>
 [MemoryDiagnoser]
-[SimpleJob(warmupCount: 5, iterationCount: 50)]
+[SimpleJob(RuntimeMoniker.Net48, warmupCount: 5, iterationCount: 50)]
+[SimpleJob(RuntimeMoniker.Net80, warmupCount: 5, iterationCount: 50)]
+[SimpleJob(RuntimeMoniker.Net10_0, warmupCount: 5, iterationCount: 50)]
 [MarkdownExporter]
 [HtmlExporter]
 public class Scenario1Benchmark
@@ -35,7 +37,7 @@ public class Scenario1Benchmark
         _workflowCoreScenario = new Scenario1_SimpleSequential_WorkflowCore(parameters);
         _workflowCoreScenario.SetupAsync().GetAwaiter().GetResult();
 
-        _elsaScenario = new Scenario1_SimpleSequential_Elsa(parameters);
+        _elsaScenario = ElsaScenarioFactory.Create(1, parameters);
         _elsaScenario.SetupAsync().GetAwaiter().GetResult();
     }
 

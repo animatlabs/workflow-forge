@@ -72,7 +72,7 @@ public class HealthChecksSample : ISample
             .WithOperation(LoggingOperation.Info("Periodic health monitoring demonstration completed"));
 
         // Monitor health status during execution
-        var healthMonitoringTask = MonitorHealthStatusAsync(healthCheckService, foundry);
+        _ = MonitorHealthStatusAsync(healthCheckService, foundry);
 
         await foundry.ForgeAsync();
 
@@ -103,7 +103,7 @@ public class HealthChecksSample : ISample
         // Final health summary
         var finalHealth = await foundry.CheckFoundryHealthAsync(healthCheckService);
         Console.WriteLine($"   Final workflow health status: {finalHealth}");
-        Console.WriteLine($"   Health checks performed: {foundry.Properties.GetValueOrDefault("health_checks_performed", 0)}");
+        Console.WriteLine($"   Health checks performed: {(foundry.Properties.TryGetValue("health_checks_performed", out var hcp) ? hcp : 0)}");
     }
 
     private static async Task MonitorHealthStatusAsync(HealthCheckService healthCheckService, IWorkflowFoundry foundry)
@@ -133,7 +133,7 @@ public class HealthChecksSample : ISample
 /// <summary>
 /// Operation that represents a healthy system component
 /// </summary>
-public class HealthyOperation : IWorkflowOperation
+public class HealthyOperation : WorkflowOperationBase
 {
     private readonly string _componentName;
 
@@ -142,11 +142,9 @@ public class HealthyOperation : IWorkflowOperation
         _componentName = componentName;
     }
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => $"Healthy_{_componentName}";
-    public bool SupportsRestore => false;
+    public override string Name => $"Healthy_{_componentName}";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Health check for component: {ComponentName}", _componentName);
 
@@ -167,20 +165,12 @@ public class HealthyOperation : IWorkflowOperation
 
         return healthInfo;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException($"Health check operation {_componentName} does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Operation that performs health checks during execution
 /// </summary>
-public class HealthAwareOperation : IWorkflowOperation
+public class HealthAwareOperation : WorkflowOperationBase
 {
     private readonly string _operationName;
 
@@ -189,11 +179,9 @@ public class HealthAwareOperation : IWorkflowOperation
         _operationName = operationName;
     }
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => _operationName;
-    public bool SupportsRestore => false;
+    public override string Name => _operationName;
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Starting health-aware operation: {OperationName}", _operationName);
 
@@ -233,12 +221,4 @@ public class HealthAwareOperation : IWorkflowOperation
 
         return result;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException($"Operation {_operationName} does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }

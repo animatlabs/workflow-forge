@@ -1,6 +1,7 @@
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.Audit;
 using WorkflowForge.Extensions.Audit.Options;
+using WorkflowForge.Operations;
 using WF = WorkflowForge;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
@@ -111,7 +112,7 @@ public class AuditSample : ISample
         using var foundry = WF.WorkflowForge.CreateFoundry("MetadataAudit");
         foundry.Properties["Workflow.Name"] = "AccountCreation";
         foundry.Properties["UserId"] = "USER-12345";
-        foundry.Properties["IPAddress"] = "192.168.1.100";
+        foundry.Properties["IPAddress"] = "198.51.100.1"; // NOSONAR - RFC 5737 documentation IP range
         foundry.Properties["UserAgent"] = "Mozilla/5.0";
 
         // Enable audit with metadata
@@ -134,8 +135,8 @@ public class AuditSample : ISample
 
         var firstEntry = auditProvider.Entries.First();
         Console.WriteLine($"   Metadata Captured:");
-        Console.WriteLine($"     - UserId: {firstEntry.Metadata.GetValueOrDefault("UserId")}");
-        Console.WriteLine($"     - IPAddress: {firstEntry.Metadata.GetValueOrDefault("IPAddress")}");
+        Console.WriteLine($"     - UserId: {(firstEntry.Metadata.TryGetValue("UserId", out var uid) ? uid : null)}");
+        Console.WriteLine($"     - IPAddress: {(firstEntry.Metadata.TryGetValue("IPAddress", out var ip) ? ip : null)}");
         Console.WriteLine($"     - Total Metadata Fields: {firstEntry.Metadata.Count}");
     }
 
@@ -190,153 +191,83 @@ public class AuditSample : ISample
     }
 
     // Sample Operations
-    public class ValidateOperation : IWorkflowOperation
+    public class ValidateOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "Validate";
-        public bool SupportsRestore => false;
+        public override string Name => "Validate";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             await Task.Delay(10, cancellationToken); // Simulate work
             foundry.Logger.LogInformation("Validation completed");
             return "Validated";
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        public void Dispose()
-        { }
     }
 
-    public class ProcessOperation : IWorkflowOperation
+    public class ProcessOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "Process";
-        public bool SupportsRestore => false;
+        public override string Name => "Process";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             await Task.Delay(20, cancellationToken); // Simulate work
             foundry.Logger.LogInformation("Processing completed");
             return "Processed";
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        public void Dispose()
-        { }
     }
 
-    public class CompleteOperation : IWorkflowOperation
+    public class CompleteOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "Complete";
-        public bool SupportsRestore => false;
+        public override string Name => "Complete";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             await Task.Delay(5, cancellationToken); // Simulate work
             foundry.Logger.LogInformation("Completion confirmed");
             return "Completed";
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        public void Dispose()
-        { }
     }
 
-    public class ValidatePaymentOperation : IWorkflowOperation
+    public class ValidatePaymentOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "ValidatePayment";
-        public bool SupportsRestore => false;
+        public override string Name => "ValidatePayment";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             await Task.Delay(15, cancellationToken);
             return "Payment validated";
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        public void Dispose()
-        { }
     }
 
-    public class ChargePaymentOperation : IWorkflowOperation
+    public class ChargePaymentOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "ChargePayment";
-        public bool SupportsRestore => false;
+        public override string Name => "ChargePayment";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             await Task.Delay(25, cancellationToken);
             return "Payment charged";
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        public void Dispose()
-        { }
     }
 
-    public class CreateAccountOperation : IWorkflowOperation
+    public class CreateAccountOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "CreateAccount";
-        public bool SupportsRestore => false;
+        public override string Name => "CreateAccount";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             await Task.Delay(30, cancellationToken);
             return "Account created";
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        public void Dispose()
-        { }
     }
 
-    public class ProcessDataOperation : IWorkflowOperation
+    public class ProcessDataOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "ProcessData";
-        public bool SupportsRestore => false;
+        public override string Name => "ProcessData";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             await Task.Delay(20, cancellationToken);
             return "Data processed";
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        public void Dispose()
-        { }
     }
 }

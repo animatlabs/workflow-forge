@@ -1,9 +1,5 @@
 # WorkflowForge.Extensions.Logging.Serilog
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
 Structured logging extension for WorkflowForge with Serilog integration for rich, queryable logs.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Logging.Serilog.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Logging.Serilog/)

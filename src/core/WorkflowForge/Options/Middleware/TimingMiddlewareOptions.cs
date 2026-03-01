@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace WorkflowForge.Options.Middleware
 {
     /// <summary>
@@ -5,7 +7,7 @@ namespace WorkflowForge.Options.Middleware
     /// Controls timing data collection behavior.
     /// Zero-dependency POCO for configuration binding.
     /// </summary>
-    public sealed class TimingMiddlewareOptions
+    public sealed class TimingMiddlewareOptions : WorkflowForgeOptionsBase
     {
         /// <summary>
         /// Default configuration section name for binding from appsettings.json.
@@ -14,14 +16,9 @@ namespace WorkflowForge.Options.Middleware
         public const string DefaultSectionName = "WorkflowForge:Middleware:Timing";
 
         /// <summary>
-        /// Gets the configuration section name for this instance.
-        /// </summary>
-        public string SectionName { get; }
-
-        /// <summary>
         /// Initializes a new instance with default section name.
         /// </summary>
-        public TimingMiddlewareOptions() : this(DefaultSectionName)
+        public TimingMiddlewareOptions() : base(null, DefaultSectionName)
         {
         }
 
@@ -29,18 +26,9 @@ namespace WorkflowForge.Options.Middleware
         /// Initializes a new instance with custom section name.
         /// </summary>
         /// <param name="sectionName">Custom configuration section name.</param>
-        public TimingMiddlewareOptions(string sectionName)
+        public TimingMiddlewareOptions(string sectionName) : base(sectionName, DefaultSectionName)
         {
-            SectionName = sectionName ?? DefaultSectionName;
         }
-
-        /// <summary>
-        /// Gets or sets whether timing middleware is enabled.
-        /// When true, operation timing data will be collected and stored in foundry properties.
-        /// Disable in production to reduce overhead if timing metrics are not needed.
-        /// Default is true.
-        /// </summary>
-        public bool Enabled { get; set; } = true;
 
         /// <summary>
         /// Gets or sets whether to include detailed timing breakdowns.
@@ -49,5 +37,15 @@ namespace WorkflowForge.Options.Middleware
         /// Default is false.
         /// </summary>
         public bool IncludeDetailedTimings { get; set; } = false;
+
+        /// <inheritdoc />
+        public override IList<string> Validate() => new List<string>();
+
+        /// <inheritdoc />
+        public override object Clone() => new TimingMiddlewareOptions(SectionName)
+        {
+            Enabled = Enabled,
+            IncludeDetailedTimings = IncludeDetailedTimings
+        };
     }
 }

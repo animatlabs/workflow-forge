@@ -1,5 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
+using BenchmarkDotNet.Jobs;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
@@ -14,7 +15,9 @@ namespace WorkflowForge.Benchmarks;
 /// - Restoration/compensation performance
 /// </summary>
 [MemoryDiagnoser]
-[SimpleJob(RunStrategy.Monitoring, iterationCount: 50)]
+[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net48, iterationCount: 50)]
+[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net80, iterationCount: 50)]
+[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net10_0, iterationCount: 50)]
 [MarkdownExporter]
 [HtmlExporter]
 public class OperationPerformanceBenchmark
@@ -225,72 +228,53 @@ public class OperationPerformanceBenchmark
 /// <summary>
 /// Fast benchmark operation with minimal overhead
 /// </summary>
-public class FastBenchmarkOperation : IWorkflowOperation
+public class FastBenchmarkOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "FastBenchmark";
-    public bool SupportsRestore => false;
+    public override string Name => "FastBenchmark";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         await Task.Yield();
         return "Fast result";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-    {
-        return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Operation that tests restoration performance
 /// </summary>
-public class RestorationTestOperation : IWorkflowOperation
+public class RestorationTestOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "RestorationTest";
-    public bool SupportsRestore => true;
+    public override string Name => "RestorationTest";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         await Task.Yield();
         foundry.Properties["restoration_test"] = "executed";
         return "Executed";
     }
 
-    public async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         await Task.Yield();
         foundry.Properties.TryRemove("restoration_test", out _);
     }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Operation that performs data manipulation
 /// </summary>
-public class DataManipulationOperation : IWorkflowOperation
+public class DataManipulationOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "DataManipulation";
-    public bool SupportsRestore => false;
+    public override string Name => "DataManipulation";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         await Task.Yield();
 
-        // Simulate data manipulation
         foundry.Properties["data_timestamp"] = DateTime.UtcNow;
         foundry.Properties["data_size"] = 1024;
         foundry.Properties["data_processed"] = true;
 
-        // Simulate some processing time
         for (int i = 0; i < 100; i++)
         {
             foundry.Properties[$"item_{i}"] = $"value_{i}";
@@ -298,36 +282,18 @@ public class DataManipulationOperation : IWorkflowOperation
 
         return "Data processed";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-    {
-        return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Operation that throws exceptions for testing exception handling performance
 /// </summary>
-public class ExceptionTestOperation : IWorkflowOperation
+public class ExceptionTestOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "ExceptionTest";
-    public bool SupportsRestore => false;
+    public override string Name => "ExceptionTest";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         await Task.Yield();
         throw new InvalidOperationException("Benchmark exception");
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-    {
-        return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    { }
 }

@@ -45,7 +45,7 @@ public class OperationCreationPatternsSample : ISample
             .AddOperation("Calculate", (foundry, ct) =>
             {
                 var number = foundry.GetPropertyOrDefault<int>("numberInput");
-                var result = number * 42 * 1.5;
+                var result = number * 42.0 * 1.5;
                 foundry.Logger.LogInformation("Calculating {Number} * 42 * 1.5 = {Result}", number, result);
                 foundry.SetProperty("mathResult", result);
                 return Task.CompletedTask;
@@ -218,7 +218,7 @@ public class OperationCreationPatternsSample : ISample
             .AddOperation("ComplexProcessing", async (foundry, ct) =>
             {
                 var input = foundry.GetPropertyOrDefault<object>("input");
-                var processId = Guid.NewGuid().ToString("N")[..8];
+                var processId = Guid.NewGuid().ToString("N").Substring(0, 8);
                 var properties = new Dictionary<string, string>
                 {
                     ["ProcessId"] = processId,
@@ -381,7 +381,7 @@ public class TypedMathOperation : WorkflowOperationBase<int, double>
         foundry.Logger.LogInformation(properties, "Calculating {Input} * {Multiplier}", inputData, _multiplier);
         await Task.Delay(50, cancellationToken);
 
-        var result = inputData * _multiplier * 1.5;
+        var result = (double)inputData * _multiplier * 1.5;
         foundry.Properties["mathResult"] = result;
         return result;
     }
@@ -400,11 +400,10 @@ public class PaymentOperation : WorkflowOperationBase
     }
 
     public override string Name => "PaymentProcessor";
-    public override bool SupportsRestore => true;
 
     protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        var transactionId = $"PAY_{Guid.NewGuid():N}"[..10];
+        var transactionId = $"PAY_{Guid.NewGuid():N}".Substring(0, 10);
         var properties = new Dictionary<string, string>
         {
             ["Amount"] = _amount.ToString("F2"),
@@ -424,8 +423,8 @@ public class PaymentOperation : WorkflowOperationBase
 
     public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        var transactionId = foundry.Properties.GetValueOrDefault("paymentTransactionId");
-        var amount = foundry.Properties.GetValueOrDefault("paymentAmount");
+        var transactionId = foundry.Properties.TryGetValue("paymentTransactionId", out var pt) ? pt : null;
+        var amount = foundry.Properties.TryGetValue("paymentAmount", out var amt) ? amt : null;
 
         var properties = new Dictionary<string, string>
         {
@@ -489,12 +488,11 @@ public class NotificationOperation : WorkflowOperationBase
     }
 
     public override string Name => $"EmailNotification_{_templateName}";
-    public override bool SupportsRestore => true; // Can send cancellation emails
 
     protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        var emailId = $"EMAIL_{Guid.NewGuid():N}"[..12];
-        var recipient = _parameters.GetValueOrDefault("recipient", "customer@example.com");
+        var emailId = $"EMAIL_{Guid.NewGuid():N}".Substring(0, 12);
+        var recipient = _parameters.TryGetValue("recipient", out var r) ? r : (object)"customer@example.com";
 
         var properties = new Dictionary<string, string>
         {
@@ -526,8 +524,8 @@ public class NotificationOperation : WorkflowOperationBase
 
     public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        var emailId = foundry.Properties.GetValueOrDefault("emailId");
-        var recipient = foundry.Properties.GetValueOrDefault("emailRecipient");
+        var emailId = foundry.Properties.TryGetValue("emailId", out var eid) ? eid : null;
+        var recipient = foundry.Properties.TryGetValue("emailRecipient", out var rec) ? rec : null;
 
         var properties = new Dictionary<string, string>
         {
@@ -577,7 +575,7 @@ public class ExternalApiDataProcessor : WorkflowOperationBase<string, ApiRespons
             {
                 Success = true,
                 Data = $"API_PROCESSED_{inputData}_{DateTime.Now:HHmmss}",
-                RequestId = Guid.NewGuid().ToString("N")[..8],
+                RequestId = Guid.NewGuid().ToString("N").Substring(0, 8),
                 ProcessedAt = DateTime.UtcNow
             };
 

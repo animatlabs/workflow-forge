@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 using WorkflowForge.Options.Middleware;
 
 namespace WorkflowForge.Middleware
@@ -64,15 +65,15 @@ namespace WorkflowForge.Middleware
                 // Use static property names - operation name is in logging context
                 if (_options.IncludeDetailedTimings)
                 {
-                    foundry.Properties["Timing.StartTime"] = startTime;
-                    foundry.Properties["Timing.EndTime"] = _timeProvider.UtcNow;
-                    foundry.Properties["Timing.Duration"] = elapsedMs;
-                    foundry.Properties["Timing.DurationTicks"] = stopwatch.ElapsedTicks;
+                    foundry.Properties[FoundryPropertyKeys.TimingStartTime] = startTime;
+                    foundry.Properties[FoundryPropertyKeys.TimingEndTime] = _timeProvider.UtcNow;
+                    foundry.Properties[FoundryPropertyKeys.TimingDuration] = elapsedMs;
+                    foundry.Properties[FoundryPropertyKeys.TimingDurationTicks] = stopwatch.ElapsedTicks;
                 }
                 else
                 {
                     // Basic timing - just duration
-                    foundry.Properties["Timing.Duration"] = elapsedMs;
+                    foundry.Properties[FoundryPropertyKeys.TimingDuration] = elapsedMs;
                 }
 
                 return result;
@@ -83,11 +84,11 @@ namespace WorkflowForge.Middleware
                 var elapsedMs = stopwatch.ElapsedMilliseconds;
 
                 // Store timing even on failure (helps identify slow failing operations)
-                foundry.Properties["Timing.Duration"] = elapsedMs;
+                foundry.Properties[FoundryPropertyKeys.TimingDuration] = elapsedMs;
                 if (_options.IncludeDetailedTimings)
                 {
-                    foundry.Properties["Timing.StartTime"] = startTime;
-                    foundry.Properties["Timing.Failed"] = true;
+                    foundry.Properties[FoundryPropertyKeys.TimingStartTime] = startTime;
+                    foundry.Properties[FoundryPropertyKeys.TimingFailed] = true;
                 }
 
                 throw;

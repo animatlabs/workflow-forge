@@ -1,5 +1,6 @@
 using WorkflowForge.Abstractions;
 using WorkflowForge.Loggers;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -34,10 +35,10 @@ public class WorkflowMiddlewareSample : ISample
         public async Task ExecuteAsync(IWorkflow workflow, IWorkflowFoundry foundry, Func<Task> next, CancellationToken cancellationToken)
         {
             var start = DateTimeOffset.UtcNow;
-            foundry.Logger.LogInformation($"[WorkflowTiming] Starting {workflow.Name}");
+            foundry.Logger.LogInformation("[WorkflowTiming] Starting {WorkflowName}", workflow.Name);
             await next().ConfigureAwait(false);
             var duration = DateTimeOffset.UtcNow - start;
-            foundry.Logger.LogInformation($"[WorkflowTiming] Completed {workflow.Name} in {duration.TotalMilliseconds:F0}ms");
+            foundry.Logger.LogInformation("[WorkflowTiming] Completed {WorkflowName} in {DurationMs}ms", workflow.Name, duration.TotalMilliseconds);
         }
     }
 
@@ -45,31 +46,23 @@ public class WorkflowMiddlewareSample : ISample
     {
         public async Task ExecuteAsync(IWorkflow workflow, IWorkflowFoundry foundry, Func<Task> next, CancellationToken cancellationToken)
         {
-            foundry.Logger.LogInformation($"[WorkflowAudit] Audit start for {workflow.Name}");
+            foundry.Logger.LogInformation("[WorkflowAudit] Audit start for {WorkflowName}", workflow.Name);
             await next().ConfigureAwait(false);
-            foundry.Logger.LogInformation($"[WorkflowAudit] Audit end for {workflow.Name}");
+            foundry.Logger.LogInformation("[WorkflowAudit] Audit end for {WorkflowName}", workflow.Name);
         }
     }
 
-    private sealed class StepOperation : IWorkflowOperation
+    private sealed class StepOperation : WorkflowOperationBase
     {
         public StepOperation(string name) => Name = name;
 
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name { get; }
-        public bool SupportsRestore => false;
+        public override string Name { get; }
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
-            foundry.Logger.LogInformation($"Executing {Name}");
+            foundry.Logger.LogInformation("Executing {OperationName}", Name);
             await Task.Delay(50, cancellationToken);
             return inputData;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 }

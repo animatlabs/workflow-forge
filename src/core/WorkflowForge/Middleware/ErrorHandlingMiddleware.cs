@@ -92,15 +92,15 @@ namespace WorkflowForge.Middleware
 
                 // Store error information in foundry properties for potential recovery
                 // Note: Operation name is already in logging context via ExecutionName property
-                foundry.Properties["Error.Message"] = ex.Message;
-                foundry.Properties["Error.OccurredAt"] = _timeProvider.UtcNow;
-                foundry.Properties["Error.Type"] = ex.GetType().Name;
-                foundry.Properties["Error.Exception"] = ex;
+                foundry.Properties[FoundryPropertyKeys.ErrorMessage] = ex.Message;
+                foundry.Properties[FoundryPropertyKeys.ErrorTimestamp] = _timeProvider.UtcNow;
+                foundry.Properties[FoundryPropertyKeys.ErrorType] = ex.GetType().Name;
+                foundry.Properties[FoundryPropertyKeys.ErrorException] = ex;
 
                 // Include stack trace based on configuration
                 if (_options.IncludeStackTraces)
                 {
-                    foundry.Properties["Error.StackTrace"] = ex.StackTrace;
+                    foundry.Properties[FoundryPropertyKeys.ErrorStackTrace] = ex.StackTrace;
                 }
 
                 if (_options.RethrowExceptions)
@@ -111,7 +111,7 @@ namespace WorkflowForge.Middleware
                 var recoveryProperties = new Dictionary<string, string>
                 {
                     ["RecoveryAction"] = "ExceptionSwallowed",
-                    ["DefaultReturnValue"] = _defaultReturnValue?.ToString() ?? "null"
+                    ["DefaultReturnValue"] = _defaultReturnValue?.ToString() ?? FoundryPropertyKeys.NullDisplayValue
                 };
 
                 _logger.LogWarning(recoveryProperties, WorkflowLogMessageConstants.ErrorRecoveryAttempted);

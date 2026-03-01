@@ -1,9 +1,5 @@
 # WorkflowForge.Extensions.Resilience
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
 Base resilience patterns extension for WorkflowForge with fundamental retry logic and resilience strategies.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Resilience.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Resilience/)

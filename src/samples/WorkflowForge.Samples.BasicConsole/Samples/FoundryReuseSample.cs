@@ -1,5 +1,6 @@
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -33,17 +34,15 @@ public class FoundryReuseSample : ISample
         Console.WriteLine($"Runs recorded in foundry: {string.Join(", ", runs)}");
     }
 
-    private sealed class RecordRunOperation : IWorkflowOperation
+    private sealed class RecordRunOperation : WorkflowOperationBase
     {
         private readonly string _label;
 
         public RecordRunOperation(string label) => _label = label;
 
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => $"Record:{_label}";
-        public bool SupportsRestore => false;
+        public override string Name => $"Record:{_label}";
 
-        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var runs = foundry.GetPropertyOrDefault("runs", new List<string>());
             runs.Add(_label);
@@ -51,11 +50,5 @@ public class FoundryReuseSample : ISample
             Console.WriteLine($"Recorded run: {_label}");
             return Task.FromResult(inputData);
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 }

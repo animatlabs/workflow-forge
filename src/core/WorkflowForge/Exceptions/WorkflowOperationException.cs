@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 
 namespace WorkflowForge.Exceptions
@@ -9,7 +9,7 @@ namespace WorkflowForge.Exceptions
     /// Provides detailed context about the failing operation for debugging and monitoring.
     /// </summary>
     [Serializable]
-    public class WorkflowOperationException : WorkflowForgeException
+    public sealed class WorkflowOperationException : WorkflowForgeException
     {
         /// <summary>Gets the name of the operation that failed.</summary>
         public string? OperationName { get; }
@@ -56,7 +56,7 @@ namespace WorkflowForge.Exceptions
             Guid? workflowId,
             string? operationName,
             Guid? operationId = null)
-            : base(FormatMessage(message, executionId, workflowId, operationName), innerException)
+            : base(FormatContextMessage(message, executionId, workflowId, operationName), innerException)
         {
             ExecutionId = executionId;
             WorkflowId = workflowId;
@@ -65,7 +65,7 @@ namespace WorkflowForge.Exceptions
         }
 
         /// <summary>Initializes a new instance with serialized data.</summary>
-        protected WorkflowOperationException(SerializationInfo info, StreamingContext context) : base(info, context)
+        private WorkflowOperationException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
             OperationName = info.GetString(nameof(OperationName));
             OperationId = (Guid?)info.GetValue(nameof(OperationId), typeof(Guid?));
@@ -74,6 +74,9 @@ namespace WorkflowForge.Exceptions
         }
 
         /// <summary>Sets serialization info for the exception.</summary>
+#pragma warning disable SYSLIB0051 // Required for .NET Framework 4.8 serialization compatibility
+
+        [SuppressMessage("Usage", "CA2236:Call base class methods on ISerializable types", Justification = "Required for .NET Framework 4.8 binary serialization")]
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);
@@ -83,16 +86,6 @@ namespace WorkflowForge.Exceptions
             info.AddValue(nameof(WorkflowId), WorkflowId);
         }
 
-        private static string FormatMessage(string message, Guid? executionId, Guid? workflowId, string? operationName)
-        {
-            var context = new List<string>();
-            if (executionId.HasValue) context.Add($"ExecutionId={executionId}");
-            if (workflowId.HasValue) context.Add($"WorkflowId={workflowId}");
-            if (!string.IsNullOrEmpty(operationName)) context.Add($"Operation={operationName}");
-
-            return context.Count > 0
-                ? $"{message} [{string.Join(", ", context)}]"
-                : message;
-        }
+#pragma warning restore SYSLIB0051
     }
 }

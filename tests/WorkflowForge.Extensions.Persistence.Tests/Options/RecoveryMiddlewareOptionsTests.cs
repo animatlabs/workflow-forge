@@ -1,20 +1,20 @@
 using System;
-using System.Linq;
 using WorkflowForge.Extensions.Persistence.Recovery.Options;
+using Xunit;
 
-namespace WorkflowForge.Extensions.Persistence.Recovery.Tests.Options
+namespace WorkflowForge.Extensions.Persistence.Tests.Options
 {
-    public class RecoveryMiddlewareOptionsTests
+    public class RecoveryMiddlewareOptionsShould
     {
         [Fact]
-        public void Constructor_WithDefaultSectionName_ShouldSetDefaultSectionName()
+        public void SetDefaultSectionName_GivenDefaultSectionName()
         {
             var options = new RecoveryMiddlewareOptions();
             Assert.Equal(RecoveryMiddlewareOptions.DefaultSectionName, options.SectionName);
         }
 
         [Fact]
-        public void Constructor_WithCustomSectionName_ShouldSetCustomSectionName()
+        public void SetCustomSectionName_GivenCustomSectionName()
         {
             var customSection = "MyApp:Recovery";
             var options = new RecoveryMiddlewareOptions(customSection);
@@ -22,7 +22,7 @@ namespace WorkflowForge.Extensions.Persistence.Recovery.Tests.Options
         }
 
         [Fact]
-        public void DefaultValues_ShouldBeCorrect()
+        public void BeCorrect_GivenDefaultValues()
         {
             var options = new RecoveryMiddlewareOptions();
             Assert.True(options.Enabled);
@@ -34,7 +34,7 @@ namespace WorkflowForge.Extensions.Persistence.Recovery.Tests.Options
         }
 
         [Fact]
-        public void Validate_WithValidConfiguration_ShouldReturnEmptyErrors()
+        public void ReturnEmptyErrors_GivenValidConfiguration()
         {
             var options = new RecoveryMiddlewareOptions { MaxRetryAttempts = 5, BaseDelay = TimeSpan.FromSeconds(2) };
             var errors = options.Validate();
@@ -42,7 +42,7 @@ namespace WorkflowForge.Extensions.Persistence.Recovery.Tests.Options
         }
 
         [Fact]
-        public void Validate_WithMaxRetryAttemptsBelowMinimum_ShouldReturnError()
+        public void ReturnError_GivenMaxRetryAttemptsBelowMinimum()
         {
             var options = new RecoveryMiddlewareOptions { MaxRetryAttempts = 0 };
             var errors = options.Validate();
@@ -51,7 +51,7 @@ namespace WorkflowForge.Extensions.Persistence.Recovery.Tests.Options
         }
 
         [Fact]
-        public void Validate_WithMaxRetryAttemptsAboveMaximum_ShouldReturnError()
+        public void ReturnError_GivenMaxRetryAttemptsAboveMaximum()
         {
             var options = new RecoveryMiddlewareOptions { MaxRetryAttempts = 101 };
             var errors = options.Validate();
@@ -60,7 +60,7 @@ namespace WorkflowForge.Extensions.Persistence.Recovery.Tests.Options
         }
 
         [Fact]
-        public void Validate_WithBaseDelayTooLarge_ShouldReturnError()
+        public void ReturnError_GivenBaseDelayTooLarge()
         {
             var options = new RecoveryMiddlewareOptions { BaseDelay = TimeSpan.FromMinutes(11) };
             var errors = options.Validate();
@@ -69,7 +69,7 @@ namespace WorkflowForge.Extensions.Persistence.Recovery.Tests.Options
         }
 
         [Fact]
-        public void Validate_WithNegativeBaseDelay_ShouldReturnError()
+        public void ReturnError_GivenNegativeBaseDelay()
         {
             var options = new RecoveryMiddlewareOptions { BaseDelay = TimeSpan.FromSeconds(-1) };
             var errors = options.Validate();
@@ -78,7 +78,7 @@ namespace WorkflowForge.Extensions.Persistence.Recovery.Tests.Options
         }
 
         [Fact]
-        public void Validate_ErrorShouldIncludeSectionName()
+        public void IncludeSectionNameInError_GivenInvalidConfiguration()
         {
             var customSection = "Custom:Section";
             var options = new RecoveryMiddlewareOptions(customSection) { MaxRetryAttempts = 0 };
@@ -88,5 +88,3 @@ namespace WorkflowForge.Extensions.Persistence.Recovery.Tests.Options
         }
     }
 }
-
-

@@ -1,13 +1,20 @@
 # WorkflowForge
 
+[![Build and Test](https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml/badge.svg?branch=main)](https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml)
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.svg)](https://www.nuget.org/packages/WorkflowForge/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/WorkflowForge.svg)](https://www.nuget.org/packages/WorkflowForge/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![.NET Standard](https://img.shields.io/badge/.NET%20Standard-2.0-blueviolet.svg)](https://docs.microsoft.com/en-us/dotnet/standard/net-standard)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-support-ff5e5b?logo=ko-fi)](https://ko-fi.com/animat089)
 
 High-performance, dependency-free workflow orchestration library for .NET. Execute thousands of workflows per second with microsecond-level operation latency and minimal memory footprint.
 
-**Version**: 2.0.0  
+**Version**: 2.1.0  
 **License**: MIT  
 **Compatibility**: .NET Standard 2.0
 
@@ -15,15 +22,15 @@ High-performance, dependency-free workflow orchestration library for .NET. Execu
 
 ## Performance at a Glance
 
-**Internal Benchmarks** (.NET 8.0.23, Windows 11, 50 iterations):
-- **Operation Execution**: 12-45μs median latency
-- **Workflow Throughput**: 39-178μs for typical operations
-- **Memory Footprint**: 3.2-121KB across scenarios
+**Internal Benchmarks** (.NET 8.0.24, .NET 10.0.3, .NET FX 4.8.1, Windows 11, 50 iterations):
+- **Operation Execution**: 14-135μs median latency
+- **Workflow Throughput**: 38-272μs for custom operations (1-50 ops, all runtimes)
+- **Memory Footprint**: 3.3-256KB across scenarios
 - **Concurrent Scaling**: Near-perfect (16x speedup for 16 workflows)
 
 **Competitive Benchmarks** (12 scenarios vs. Workflow Core, Elsa):
-- **11-540x faster** execution (State Machine: up to 540x)
-- **9-573x less** memory allocation
+- **13-522x faster** execution (State Machine: up to 522x on .NET 10.0)
+- **6-578x less** memory allocation
 - **Microsecond-scale** execution vs. millisecond-scale competitors
 
 [Full Performance Details](docs/performance/performance.md) | [Competitive Analysis](docs/performance/competitive-analysis.md)
@@ -39,7 +46,7 @@ High-performance, dependency-free workflow orchestration library for .NET. Execu
 - **Minimal Memory**: Linear memory scaling, no memory leaks
 - **Thread-Safe**: Concurrent workflow execution via `ConcurrentDictionary`
 - **Fluent API**: Clean, readable workflow definition with `AddOperations()` and `AddParallelOperations()`
-- **Saga Pattern**: Built-in compensation/rollback via `RestoreAsync()`
+- **Saga Pattern**: Built-in compensation — override `RestoreAsync` in your operation; base class no-op skips non-restorable operations
 - **Lifecycle Hooks**: `OnBeforeExecuteAsync`/`OnAfterExecuteAsync` for setup/teardown without middleware
 - **Middleware Pipeline**: Russian Doll pattern for cross-cutting concerns
 - **Event System**: SRP-compliant lifecycle events for workflows, operations, and compensation
@@ -137,7 +144,7 @@ WorkflowForge follows **production-grade design patterns**:
 
 - **Factory Pattern**: `WorkflowForge.CreateWorkflow()`, `CreateSmith()`, `CreateFoundry()`
 - **Builder Pattern**: Fluent API for workflow construction
-- **Saga Pattern**: Compensation via `RestoreAsync()`
+- **Saga Pattern**: Override `RestoreAsync` for compensation; operations that don't override are safely skipped
 - **Middleware Pattern**: Russian Doll pipeline for operations
 - **Event-Driven**: Lifecycle events for monitoring and integration
 - **Dependency Injection**: Full support for `IServiceProvider`
@@ -206,41 +213,44 @@ WorkflowForge excels at:
 
 ### Internal Performance
 
-**Operation Performance**:
-- Custom: 26.1μs median
-- Delegate: 37.8μs median
-- Logging: 9.8μs median
+**Operation Performance** (.NET 8.0 medians):
+- Custom: 58.4μs median
+- Delegate: 53.0μs median
+- Logging: 14.6μs median
 
-**Workflow Throughput** (10 operations):
-- Sequential custom: 96.9μs median
-- High-performance config: 635.2μs mean
+**Workflow Throughput** (10 custom operations, .NET 8.0):
+- Sequential custom: 92.7μs median
+- ForEach loop: 82.8μs median
 
-**Concurrency** (8 workflows, 5 ops each):
-- Sequential: 631.75ms
-- Concurrent: 78.88ms (8x speedup)
+**Concurrency** (8 workflows, 5 ops each, .NET 8.0):
+- Sequential: 628ms
+- Concurrent: 79ms (7.9x speedup)
 
-**Memory Allocation** (100 iterations):
-- Minimal workflow: 2.65KB
-- No Gen2 collections
+**Memory Allocation**:
+- Minimal workflow: 3.3KB (constant across iteration counts)
+- No Gen2 collections in typical workloads
 
 [Internal Benchmarks](docs/performance/performance.md#internal-performance-benchmarks)
 
 ### Competitive Performance
 
-**Sequential Workflow** (10 operations):
-- WorkflowForge: 247μs median
-- Workflow Core: 6,531μs median (26x slower)
-- Elsa: 17,617μs median (71x slower)
-
 **State Machine** (25 transitions):
-- WorkflowForge: 68μs median
-- Workflow Core: 20,624μs median (303x slower)
-- Elsa: 36,695μs median (540x slower)
 
-**Creation Overhead**:
-- WorkflowForge: 13μs median
-- Workflow Core: 814μs median (63x slower)
-- Elsa: 2,107μs median (162x slower)
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 83μs | 42,205μs (508x) | 43,328μs (522x) |
+| .NET 8.0 | 111μs | 39,500μs (356x) | 45,714μs (412x) |
+| .NET FX 4.8 | 101μs | 25,884μs (256x) | N/A |
+
+**Sequential Workflow** (10 operations):
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 290μs | 15,428μs (53x) | 26,595μs (92x) |
+| .NET 8.0 | 314μs | 15,997μs (51x) | 26,881μs (86x) |
+| .NET FX 4.8 | 179μs | 10,325μs (58x) | N/A |
+
+On **.NET 10.0**, State Machine advantage reaches **522x** vs Elsa.
 
 [Competitive Benchmarks](docs/performance/competitive-analysis.md)
 
@@ -264,6 +274,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 - **GitHub Issues**: Bug reports and feature requests
 - **Discussions**: Questions and community support
 - **Documentation**: Comprehensive guides and API reference
+- **Ko-fi**: If this project helps you, consider [supporting on Ko-fi](https://ko-fi.com/animat089)
 
 ---
 

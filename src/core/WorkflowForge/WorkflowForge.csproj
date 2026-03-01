@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>2.0.0</Version>
-    <PackageVersion>2.0.0</PackageVersion>
+    <Version>2.1.0</Version>
+    <PackageVersion>2.1.0</PackageVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -41,24 +41,28 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
-Major release v2.0.0:
-- NEW: Validation extension using DataAnnotations
-- NEW: Audit extension for compliance and operational monitoring
-- BREAKING: Events system refactored for SRP (3 focused interfaces)
-- ISystemTimeProvider injected via DI for testability
-- 446 comprehensive tests, 100% passing
-- Enterprise-ready production workflows
+v2.1.0: BREAKING: Removed SupportsRestore property from IWorkflowOperation and IWorkflow interfaces. Compensation now always attempts RestoreAsync (no-op default). Added optional restoreAction on WorkflowBuilder.AddOperation. Added FoundryPropertyKeys constants. Sealed EventArgs and Exception classes. Fixed event handler memory leaks, dispose race conditions, PersistenceMiddleware O(n²) indexing, and thread safety issues. Added CI/CD pipeline and cross-platform publish script.
     </PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.OpenTelemetry" />
-    <InternalsVisibleTo Include="WorkflowForge.Tests" />
-	<InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
-    <InternalsVisibleTo Include="WorkflowForge.Extensions.Resilience.Tests" />
-    <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.Performance.Tests" />
-    <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.HealthChecks.Tests" />
-    <InternalsVisibleTo Include="WorkflowForge.Extensions.Resilience.Polly.Tests" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.OpenTelemetry, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.Performance, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Persistence, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Audit, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Validation, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
+    <InternalsVisibleTo Include="WorkflowForge.Tests, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2, PublicKey=0024000004800000940000000602000000240000525341310004000001000100c547cac37abd99c8db225ef2f6c8a3602f3b3606cc9891605d02baa56104f4cfc0734aa39b93bf7852f7d9266654753cc297e7d2edfe0bac1cdcf9f717241550e0a7b191195b7667bb4f64bcb8e2121380fd1d9d46ad2d92d2d15605093924cceaf74c4861eff62abf69b9291ed0a340e113be11e6a7d3113e92484cf7045cc7" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Resilience.Tests, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.Performance.Tests, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Observability.HealthChecks.Tests, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Resilience.Polly.Tests, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Persistence.Tests, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Validation.Tests, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Audit.Tests, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.DependencyInjection.Tests, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
+    <InternalsVisibleTo Include="WorkflowForge.Benchmarks, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
+    <InternalsVisibleTo Include="WorkflowForge.Benchmarks.Comparative, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -66,8 +70,11 @@ Major release v2.0.0:
     <None Include="../../../icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.102" PrivateAssets="All" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.19.0.132793">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 
 </Project> 

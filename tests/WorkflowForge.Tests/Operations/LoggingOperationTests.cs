@@ -11,12 +11,12 @@ namespace WorkflowForge.Tests.Operations;
 /// <summary>
 /// Comprehensive tests for LoggingOperation covering all logging levels, message formatting, and edge cases.
 /// </summary>
-public class LoggingOperationTests
+public class LoggingOperationShould
 {
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithMessage_SetsProperties()
+    public void SetProperties_GivenMessage()
     {
         // Arrange
         const string message = "Test log message";
@@ -27,11 +27,10 @@ public class LoggingOperationTests
         // Assert
         Assert.NotEqual(Guid.Empty, operation.Id);
         Assert.Equal("Log: Test log message", operation.Name);
-        Assert.False(operation.SupportsRestore);
     }
 
     [Fact]
-    public void Constructor_WithMessageAndLevel_SetsProperties()
+    public void SetProperties_GivenMessageAndLevel()
     {
         // Arrange
         const string message = "Debug message";
@@ -43,11 +42,10 @@ public class LoggingOperationTests
         // Assert
         Assert.NotEqual(Guid.Empty, operation.Id);
         Assert.Equal("Log: Debug message", operation.Name);
-        Assert.False(operation.SupportsRestore);
     }
 
     [Fact]
-    public void Constructor_WithMessageLevelAndName_SetsCustomName()
+    public void SetCustomName_GivenMessageLevelAndName()
     {
         // Arrange
         const string message = "Custom message";
@@ -60,18 +58,17 @@ public class LoggingOperationTests
         // Assert
         Assert.NotEqual(Guid.Empty, operation.Id);
         Assert.Equal(customName, operation.Name);
-        Assert.False(operation.SupportsRestore);
     }
 
     [Fact]
-    public void Constructor_WithNullMessage_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenNullMessage()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => new LoggingOperation(null!, WorkflowForgeLogLevel.Information, "Test"));
     }
 
     [Fact]
-    public void Constructor_WithNullName_UsesDefaultName()
+    public void UseDefaultName_GivenNullName()
     {
         // Act
         var operation1 = new LoggingOperation("message", WorkflowForgeLogLevel.Information, null);
@@ -89,7 +86,7 @@ public class LoggingOperationTests
     #region ForgeAsync Tests
 
     [Fact]
-    public async Task ForgeAsync_WithNullFoundry_ThrowsArgumentNullException()
+    public async Task ThrowArgumentNullException_GivenNullFoundry()
     {
         // Arrange
         var operation = new LoggingOperation("Test message");
@@ -100,7 +97,7 @@ public class LoggingOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithValidFoundry_ReturnsInputData()
+    public async Task ReturnInputData_GivenValidFoundry()
     {
         // Arrange
         var operation = new LoggingOperation("Test message");
@@ -115,7 +112,7 @@ public class LoggingOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithNullInputData_ReturnsNull()
+    public async Task ReturnNull_GivenNullInputData()
     {
         // Arrange
         var operation = new LoggingOperation("Test message");
@@ -129,7 +126,7 @@ public class LoggingOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithComplexInputData_ReturnsInputData()
+    public async Task ReturnInputData_GivenComplexInputData()
     {
         // Arrange
         var operation = new LoggingOperation("Test message");
@@ -148,7 +145,7 @@ public class LoggingOperationTests
     #region Logging Level Tests
 
     [Fact]
-    public async Task ForgeAsync_WithDebugLevel_LogsDebugMessage()
+    public async Task LogDebugMessage_GivenDebugLevel()
     {
         // Arrange
         const string message = "Debug test message";
@@ -166,7 +163,7 @@ public class LoggingOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithInformationLevel_LogsInfoMessage()
+    public async Task LogInfoMessage_GivenInformationLevel()
     {
         // Arrange
         const string message = "Information test message";
@@ -184,7 +181,7 @@ public class LoggingOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithWarningLevel_LogsWarningMessage()
+    public async Task LogWarningMessage_GivenWarningLevel()
     {
         // Arrange
         const string message = "Warning test message";
@@ -202,7 +199,7 @@ public class LoggingOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithErrorLevel_LogsErrorMessage()
+    public async Task LogErrorMessage_GivenErrorLevel()
     {
         // Arrange
         const string message = "Error test message";
@@ -220,7 +217,7 @@ public class LoggingOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithDefaultLevel_LogsInfoMessage()
+    public async Task LogInfoMessage_GivenDefaultLevel()
     {
         // Arrange
         const string message = "Default level message";
@@ -239,7 +236,7 @@ public class LoggingOperationTests
     #region Properties Logging Tests
 
     [Fact]
-    public async Task ForgeAsync_LogsCorrectProperties()
+    public async Task LogCorrectProperties_GivenForgeAsync()
     {
         // Arrange
         const string message = "Test message with properties";
@@ -270,7 +267,7 @@ public class LoggingOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithNullInput_LogsNullInputType()
+    public async Task LogNullInputType_GivenNullInput()
     {
         // Arrange
         var operation = new LoggingOperation("Test message");
@@ -289,7 +286,7 @@ public class LoggingOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithComplexInput_LogsCorrectInputType()
+    public async Task LogCorrectInputType_GivenComplexInput()
     {
         // Arrange
         var operation = new LoggingOperation("Test message");
@@ -313,7 +310,7 @@ public class LoggingOperationTests
     #region Cancellation Tests
 
     [Fact]
-    public async Task ForgeAsync_WithCancellation_StillCompletes()
+    public async Task StillComplete_GivenCancellation()
     {
         // Arrange
         var operation = new LoggingOperation("Test message");
@@ -330,7 +327,7 @@ public class LoggingOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithPreCancelledToken_StillCompletes()
+    public async Task StillComplete_GivenPreCancelledToken()
     {
         // Arrange
         var operation = new LoggingOperation("Test message");
@@ -351,26 +348,32 @@ public class LoggingOperationTests
     #region RestoreAsync Tests
 
     [Fact]
-    public async Task RestoreAsync_ThrowsNotSupportedException()
+    public async Task CompleteSuccessfully_GivenRestoreAsync()
     {
         // Arrange
         var operation = new LoggingOperation("Test message");
         var foundry = CreateMockFoundry();
 
-        // Act & Assert
-        await Assert.ThrowsAsync<NotSupportedException>(() =>
-            operation.RestoreAsync("output", foundry.Object));
+        // Act
+        var task = operation.RestoreAsync("output", foundry.Object);
+
+        // Assert
+        await task;
+        Assert.True(task.Status == TaskStatus.RanToCompletion);
     }
 
     [Fact]
-    public async Task RestoreAsync_WithNullFoundry_ThrowsNotSupportedException()
+    public async Task CompleteSuccessfully_GivenRestoreAsyncWithNullFoundry()
     {
-        // Arrange
+        // Arrange - Base implementation returns Task.CompletedTask (no-op), does not validate foundry
         var operation = new LoggingOperation("Test message");
 
-        // Act & Assert
-        await Assert.ThrowsAsync<NotSupportedException>(() =>
-            operation.RestoreAsync("output", null!));
+        // Act
+        var task = operation.RestoreAsync("output", null!);
+
+        // Assert
+        await task;
+        Assert.True(task.Status == TaskStatus.RanToCompletion);
     }
 
     #endregion RestoreAsync Tests
@@ -378,7 +381,7 @@ public class LoggingOperationTests
     #region Dispose Tests
 
     [Fact]
-    public void Dispose_DoesNotThrow()
+    public void NotThrow_GivenDispose()
     {
         // Arrange
         var operation = new LoggingOperation("Test message");
@@ -388,7 +391,7 @@ public class LoggingOperationTests
     }
 
     [Fact]
-    public void Dispose_CanBeCalledMultipleTimes()
+    public void AllowMultipleCalls_GivenDispose()
     {
         // Arrange
         var operation = new LoggingOperation("Test message");
@@ -400,7 +403,7 @@ public class LoggingOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_AfterDispose_StillWorks()
+    public async Task StillWork_GivenForgeAsyncAfterDispose()
     {
         // Arrange
         var operation = new LoggingOperation("Test message");
@@ -420,7 +423,7 @@ public class LoggingOperationTests
     #region Edge Cases and Performance Tests
 
     [Fact]
-    public async Task ForgeAsync_WithVeryLongMessage_LogsSuccessfully()
+    public async Task LogSuccessfully_GivenVeryLongMessage()
     {
         // Arrange
         var longMessage = new string('A', 10000);
@@ -436,7 +439,7 @@ public class LoggingOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithSpecialCharacters_LogsSuccessfully()
+    public async Task LogSuccessfully_GivenSpecialCharacters()
     {
         // Arrange
         const string specialMessage = "Test message with special chars: !@#$%^&*()_+-=[]{}|;':\",./<>?";
@@ -452,7 +455,7 @@ public class LoggingOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_MultipleInstancesConcurrently()
+    public async Task RunMultipleInstancesConcurrently_GivenForgeAsync()
     {
         // Arrange
         var operations = new[]
@@ -478,7 +481,7 @@ public class LoggingOperationTests
     }
 
     [Fact]
-    public void Id_GeneratesUniqueValues()
+    public void GenerateUniqueValues_GivenId()
     {
         // Arrange & Act
         var operation1 = new LoggingOperation("Message 1");
@@ -495,7 +498,7 @@ public class LoggingOperationTests
     [InlineData(WorkflowForgeLogLevel.Information)]
     [InlineData(WorkflowForgeLogLevel.Warning)]
     [InlineData(WorkflowForgeLogLevel.Error)]
-    public async Task ForgeAsync_AllLogLevels_LogCorrectly(WorkflowForgeLogLevel level)
+    public async Task LogCorrectly_GivenAllLogLevels(WorkflowForgeLogLevel level)
     {
         // Arrange
         var message = $"Test message for {level}";

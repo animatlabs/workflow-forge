@@ -46,10 +46,9 @@ public class Scenario5_ConcurrentExecution_WorkflowCore : IWorkflowScenario
         }
 
         // Wait for all workflows to complete or timeout
-        var allCompleted = await Task.WhenAny(
-            Task.WhenAll(completionTasks),
-            Task.Delay(TimeSpan.FromSeconds(5))
-        ) == Task.WhenAll(completionTasks);
+        var allTask = Task.WhenAll(completionTasks);
+        var completedTask = await Task.WhenAny(allTask, Task.Delay(TimeSpan.FromSeconds(10)));
+        var allCompleted = completedTask == allTask;
 
         var completed = dataList.Count(d => d.IsComplete);
         return new ScenarioResult
@@ -64,7 +63,8 @@ public class Scenario5_ConcurrentExecution_WorkflowCore : IWorkflowScenario
     public async Task CleanupAsync()
     {
         _workflowHost?.Stop();
-        if (_serviceProvider is IDisposable disposable) disposable.Dispose();
+        if (_serviceProvider is IDisposable disposable)
+            disposable.Dispose();
         await Task.CompletedTask;
     }
 

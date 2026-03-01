@@ -160,7 +160,7 @@ public class PerformanceMonitoringSample : ISample
 /// <summary>
 /// Operation for testing performance monitoring
 /// </summary>
-public class PerformanceTestOperation : IWorkflowOperation
+public class PerformanceTestOperation : WorkflowOperationBase
 {
     private readonly string _operationName;
     private readonly TimeSpan _executionTime;
@@ -171,11 +171,9 @@ public class PerformanceTestOperation : IWorkflowOperation
         _executionTime = executionTime;
     }
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => _operationName;
-    public bool SupportsRestore => false;
+    public override string Name => _operationName;
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Starting performance test: {OperationName} (Expected: {ExecutionTime}ms)",
             _operationName, _executionTime.TotalMilliseconds);
@@ -201,20 +199,12 @@ public class PerformanceTestOperation : IWorkflowOperation
 
         return result;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException($"Operation {_operationName} does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Operation that collects and reports on performance statistics
 /// </summary>
-public class StatisticsAwareOperation : IWorkflowOperation
+public class StatisticsAwareOperation : WorkflowOperationBase
 {
     private readonly string _operationName;
 
@@ -223,11 +213,9 @@ public class StatisticsAwareOperation : IWorkflowOperation
         _operationName = operationName;
     }
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => _operationName;
-    public bool SupportsRestore => false;
+    public override string Name => _operationName;
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Starting statistics-aware operation: {OperationName}", _operationName);
 
@@ -269,20 +257,12 @@ public class StatisticsAwareOperation : IWorkflowOperation
 
         return result;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException($"Operation {_operationName} does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Operation that optimizes its behavior based on performance metrics
 /// </summary>
-public class PerformanceOptimizedOperation : IWorkflowOperation
+public class PerformanceOptimizedOperation : WorkflowOperationBase
 {
     private readonly string _operationName;
     private readonly TimeSpan _baseExecutionTime;
@@ -293,11 +273,9 @@ public class PerformanceOptimizedOperation : IWorkflowOperation
         _baseExecutionTime = baseExecutionTime;
     }
 
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => _operationName;
-    public bool SupportsRestore => false;
+    public override string Name => _operationName;
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Logger.LogInformation("Starting performance-optimized operation: {OperationName}", _operationName);
 
@@ -349,12 +327,4 @@ public class PerformanceOptimizedOperation : IWorkflowOperation
 
         return result;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException($"Operation {_operationName} does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }

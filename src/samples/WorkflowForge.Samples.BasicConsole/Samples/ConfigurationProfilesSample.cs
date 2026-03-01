@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
+using WorkflowForge.Operations;
 using WorkflowForge.Options;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
@@ -108,7 +109,7 @@ public class ConfigurationProfilesSample : ISample
         foundry.Properties["config_type"] = "Production";
         foundry.Properties["start_time"] = DateTime.UtcNow;
         foundry.Properties["environment"] = "prod";
-        foundry.Properties["correlation_id"] = Guid.NewGuid().ToString("N")[..8];
+        foundry.Properties["correlation_id"] = Guid.NewGuid().ToString("N").Substring(0, 8);
 
         foundry
             .WithOperation(new ConfigInitOperation(
@@ -308,7 +309,7 @@ public class ConfigurationProfilesSample : ISample
         public string Key { get; }
     }
 
-    private sealed class ConfigInitOperation : IWorkflowOperation
+    private sealed class ConfigInitOperation : WorkflowOperationBase
     {
         private readonly string _label;
         private readonly string[] _infoLines;
@@ -336,11 +337,9 @@ public class ConfigurationProfilesSample : ISample
             _listLabel = listLabel;
         }
 
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "InitConfig";
-        public bool SupportsRestore => false;
+        public override string Name => "InitConfig";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var headerSuffix = BuildHeader(foundry, _headerKey, _headerLabel);
             Console.WriteLine($"   [CONFIG] {_label} configuration initialized{headerSuffix}");
@@ -360,15 +359,9 @@ public class ConfigurationProfilesSample : ISample
             await Task.Delay(_delayMs, cancellationToken);
             return inputData;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
-    private sealed class ConfigProcessOperation : IWorkflowOperation
+    private sealed class ConfigProcessOperation : WorkflowOperationBase
     {
         private readonly string _message;
         private readonly string[] _infoLines;
@@ -396,11 +389,9 @@ public class ConfigurationProfilesSample : ISample
             _headerLabel = headerLabel;
         }
 
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "ProcessData";
-        public bool SupportsRestore => false;
+        public override string Name => "ProcessData";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var headerSuffix = BuildHeader(foundry, _headerKey, _headerLabel);
             Console.WriteLine($"   [INFO] {_message}{headerSuffix}");
@@ -429,15 +420,9 @@ public class ConfigurationProfilesSample : ISample
 
             return inputData;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
-    private sealed class ConfigCompleteOperation : IWorkflowOperation
+    private sealed class ConfigCompleteOperation : WorkflowOperationBase
     {
         private readonly string _label;
         private readonly string[] _infoLines;
@@ -462,11 +447,9 @@ public class ConfigurationProfilesSample : ISample
             _propertyDisplays = propertyDisplays;
         }
 
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "Complete";
-        public bool SupportsRestore => false;
+        public override string Name => "Complete";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var duration = DateTime.UtcNow - (DateTime)foundry.Properties["start_time"]!;
             var headerSuffix = BuildHeader(foundry, _headerKey, _headerLabel);
@@ -491,12 +474,6 @@ public class ConfigurationProfilesSample : ISample
             await Task.Delay(_delayMs, cancellationToken);
             return inputData;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
     private static string BuildHeader(IWorkflowFoundry foundry, string? headerKey, string? headerLabel)

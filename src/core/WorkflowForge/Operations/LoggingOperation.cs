@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 
 namespace WorkflowForge.Operations
 {
@@ -42,12 +43,12 @@ namespace WorkflowForge.Operations
             {
                 ["WorkflowForgeLogLevel"] = _logLevel.ToString(),
                 ["UserMessage"] = _message,
-                ["InputDataType"] = inputData?.GetType().Name ?? "null",
+                ["InputDataType"] = inputData?.GetType().Name ?? FoundryPropertyKeys.NullDisplayValue,
                 ["OperationId"] = Id.ToString(),
                 ["OperationName"] = Name,
                 ["WorkflowId"] = foundry.ExecutionId.ToString(),
-                ["WorkflowName"] = foundry.CurrentWorkflow?.Name ?? "Unknown",
-                ["InputType"] = inputData?.GetType().Name ?? "null"
+                ["WorkflowName"] = foundry.CurrentWorkflow?.Name ?? FoundryPropertyKeys.UnknownValue,
+                ["InputType"] = inputData?.GetType().Name ?? FoundryPropertyKeys.NullDisplayValue
             };
 
             using var loggingScope = foundry.Logger.BeginScope("LoggingOperation", loggingProperties);
@@ -87,7 +88,7 @@ namespace WorkflowForge.Operations
             return Task.FromResult(inputData);
         }
 
-        // Uses base RestoreAsync behavior which throws when SupportsRestore is false
+        // Inherits base no-op RestoreAsync — logging has no state to restore
 
         /// <summary>
         /// Creates a trace-level logging operation.

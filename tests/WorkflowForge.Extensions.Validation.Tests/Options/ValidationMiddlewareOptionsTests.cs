@@ -2,17 +2,17 @@ using WorkflowForge.Extensions.Validation.Options;
 
 namespace WorkflowForge.Extensions.Validation.Tests.Options
 {
-    public class ValidationMiddlewareOptionsTests
+    public class ValidationMiddlewareOptionsShould
     {
         [Fact]
-        public void Constructor_WithDefaultSectionName_ShouldSetDefaultSectionName()
+        public void SetDefaultSectionName_GivenDefaultSectionName()
         {
             var options = new ValidationMiddlewareOptions();
             Assert.Equal(ValidationMiddlewareOptions.DefaultSectionName, options.SectionName);
         }
 
         [Fact]
-        public void Constructor_WithCustomSectionName_ShouldSetCustomSectionName()
+        public void SetCustomSectionName_GivenCustomSectionName()
         {
             var customSection = "MyApp:Validation";
             var options = new ValidationMiddlewareOptions(customSection);
@@ -20,14 +20,14 @@ namespace WorkflowForge.Extensions.Validation.Tests.Options
         }
 
         [Fact]
-        public void Constructor_WithNullSectionName_ShouldUseDefaultSectionName()
+        public void UseDefaultSectionName_GivenNullSectionName()
         {
             var options = new ValidationMiddlewareOptions(null!);
             Assert.Equal(ValidationMiddlewareOptions.DefaultSectionName, options.SectionName);
         }
 
         [Fact]
-        public void DefaultValues_ShouldBeCorrect()
+        public void BeCorrect_GivenDefaultValues()
         {
             var options = new ValidationMiddlewareOptions();
             Assert.True(options.Enabled);
@@ -38,7 +38,7 @@ namespace WorkflowForge.Extensions.Validation.Tests.Options
         }
 
         [Fact]
-        public void Validate_WithValidConfiguration_ShouldReturnEmptyErrors()
+        public void ReturnEmptyErrors_GivenValidConfiguration()
         {
             var options = new ValidationMiddlewareOptions { Enabled = true, IgnoreValidationFailures = false, ThrowOnValidationError = true };
             var errors = options.Validate();
@@ -46,7 +46,7 @@ namespace WorkflowForge.Extensions.Validation.Tests.Options
         }
 
         [Fact]
-        public void Validate_WithIgnoreFailuresAndThrowOnError_ShouldReturnError()
+        public void ReturnError_GivenIgnoreFailuresAndThrowOnError()
         {
             var options = new ValidationMiddlewareOptions { IgnoreValidationFailures = true, ThrowOnValidationError = true };
             var errors = options.Validate();
@@ -55,7 +55,7 @@ namespace WorkflowForge.Extensions.Validation.Tests.Options
         }
 
         [Fact]
-        public void Validate_WithIgnoreFailuresAndNoThrow_ShouldReturnEmptyErrors()
+        public void ReturnEmptyErrors_GivenIgnoreFailuresAndNoThrow()
         {
             var options = new ValidationMiddlewareOptions { IgnoreValidationFailures = true, ThrowOnValidationError = false };
             var errors = options.Validate();
@@ -63,7 +63,7 @@ namespace WorkflowForge.Extensions.Validation.Tests.Options
         }
 
         [Fact]
-        public void Validate_WithThrowOnErrorAndNoIgnore_ShouldReturnEmptyErrors()
+        public void ReturnEmptyErrors_GivenThrowOnErrorAndNoIgnore()
         {
             var options = new ValidationMiddlewareOptions { IgnoreValidationFailures = false, ThrowOnValidationError = true };
             var errors = options.Validate();
@@ -71,7 +71,7 @@ namespace WorkflowForge.Extensions.Validation.Tests.Options
         }
 
         [Fact]
-        public void Validate_ErrorShouldIncludeSectionName()
+        public void IncludeSectionNameInError_GivenInvalidConfiguration()
         {
             var customSection = "Custom:Section";
             var options = new ValidationMiddlewareOptions(customSection) { IgnoreValidationFailures = true, ThrowOnValidationError = true };

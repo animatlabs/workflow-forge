@@ -66,13 +66,11 @@ public class MultipleOutcomesSample : ISample
     }
 }
 
-public class CreditCheckOperation : IWorkflowOperation
+public class CreditCheckOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "CreditCheck";
-    public bool SupportsRestore => false;
+    public override string Name => "CreditCheck";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [INFO] Performing credit check...");
 
@@ -122,25 +120,20 @@ public class CreditCheckOperation : IWorkflowOperation
         return decision;
     }
 
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         foundry.Properties.TryRemove("credit_decision", out _);
         foundry.Properties.TryRemove("decline_reason", out _);
         foundry.Properties.TryRemove("credit_check_date", out _);
         return Task.CompletedTask;
     }
-
-    public void Dispose()
-    { }
 }
 
-public class LoanProcessingOperation : IWorkflowOperation
+public class LoanProcessingOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "LoanProcessing";
-    public bool SupportsRestore => false;
+    public override string Name => "LoanProcessing";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [INFO] Processing loan application...");
 
@@ -196,7 +189,7 @@ public class LoanProcessingOperation : IWorkflowOperation
         return loanDecision;
     }
 
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("loan_decision", out _);
         foundry.Properties.TryRemove("max_loan_amount", out _);
@@ -204,18 +197,13 @@ public class LoanProcessingOperation : IWorkflowOperation
         foundry.Properties.TryRemove("loan_processing_date", out _);
         return Task.CompletedTask;
     }
-
-    public void Dispose()
-    { }
 }
 
-public class GenerateLoanDocumentsOperation : IWorkflowOperation
+public class GenerateLoanDocumentsOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "GenerateLoanDocuments";
-    public bool SupportsRestore => false;
+    public override string Name => "GenerateLoanDocuments";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [INFO] Generating loan documents...");
 
@@ -224,7 +212,7 @@ public class GenerateLoanDocumentsOperation : IWorkflowOperation
         var loanAmount = (decimal)foundry.Properties["max_loan_amount"]!;
         var interestRate = (decimal)foundry.Properties["interest_rate"]!;
 
-        var documentId = $"LOAN-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+        var documentId = $"LOAN-{Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper()}";
         foundry.Properties["loan_document_id"] = documentId;
         foundry.Properties["final_status"] = "APPROVED_WITH_DOCUMENTS";
 
@@ -234,24 +222,19 @@ public class GenerateLoanDocumentsOperation : IWorkflowOperation
         return $"Documents generated: {documentId}";
     }
 
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("loan_document_id", out _);
         foundry.Properties.TryRemove("final_status", out _);
         return Task.CompletedTask;
     }
-
-    public void Dispose()
-    { }
 }
 
-public class OfferAlternativesOperation : IWorkflowOperation
+public class OfferAlternativesOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "OfferAlternatives";
-    public bool SupportsRestore => false;
+    public override string Name => "OfferAlternatives";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [INFO] Generating alternative offers...");
 
@@ -279,24 +262,19 @@ public class OfferAlternativesOperation : IWorkflowOperation
         return "Alternatives offered";
     }
 
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("alternatives_offered", out _);
         foundry.Properties.TryRemove("final_status", out _);
         return Task.CompletedTask;
     }
-
-    public void Dispose()
-    { }
 }
 
-public class NotifyApplicantOperation : IWorkflowOperation
+public class NotifyApplicantOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "NotifyApplicant";
-    public bool SupportsRestore => false;
+    public override string Name => "NotifyApplicant";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine("   [INFO] Sending notification to applicant...");
 
@@ -319,13 +297,10 @@ public class NotifyApplicantOperation : IWorkflowOperation
         return "Notification sent";
     }
 
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("notification_sent", out _);
         foundry.Properties.TryRemove("notification_date", out _);
         return Task.CompletedTask;
     }
-
-    public void Dispose()
-    { }
 }

@@ -15,7 +15,7 @@ namespace WorkflowForge.Operations
         private readonly IWorkflowOperation _trueOperation;
         private readonly IWorkflowOperation? _falseOperation;
         private volatile bool _disposed;
-        private bool _lastConditionResult;
+        private volatile bool _lastConditionResult;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ConditionalWorkflowOperation"/> class.
@@ -55,7 +55,8 @@ namespace WorkflowForge.Operations
             string? name = null,
             Guid? id = null)
         {
-            if (condition == null) throw new ArgumentNullException(nameof(condition));
+            if (condition == null)
+                throw new ArgumentNullException(nameof(condition));
 
             _condition = (inputData, foundry, cancellationToken) => condition(foundry, cancellationToken);
             _trueOperation = trueOperation ?? throw new ArgumentNullException(nameof(trueOperation));
@@ -80,7 +81,8 @@ namespace WorkflowForge.Operations
             string? name = null,
             Guid? id = null)
         {
-            if (condition == null) throw new ArgumentNullException(nameof(condition));
+            if (condition == null)
+                throw new ArgumentNullException(nameof(condition));
 
             _condition = (inputData, foundry, cancellationToken) => Task.FromResult(condition(inputData, foundry));
             _trueOperation = trueOperation ?? throw new ArgumentNullException(nameof(trueOperation));
@@ -97,13 +99,12 @@ namespace WorkflowForge.Operations
         public override string Name { get; }
 
         /// <inheritdoc />
-        public override bool SupportsRestore => _trueOperation?.SupportsRestore == true || _falseOperation?.SupportsRestore == true;
-
-        /// <inheritdoc />
         protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(ConditionalWorkflowOperation));
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(ConditionalWorkflowOperation));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             // Evaluate condition with input data
             _lastConditionResult = await _condition(inputData, foundry, cancellationToken).ConfigureAwait(false);
@@ -123,9 +124,10 @@ namespace WorkflowForge.Operations
         /// <inheritdoc />
         public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(ConditionalWorkflowOperation));
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (!SupportsRestore) throw new NotSupportedException($"Conditional operation '{Name}' does not support restoration");
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(ConditionalWorkflowOperation));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             // Restore based on the last condition result
             if (_lastConditionResult)
@@ -139,30 +141,36 @@ namespace WorkflowForge.Operations
         }
 
         /// <inheritdoc />
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
 
-            try
+            if (disposing)
             {
-                _trueOperation?.Dispose();
-            }
-            catch
-            {
-                // Swallow disposal exceptions
-            }
+                try
+                {
+                    _trueOperation?.Dispose();
+                }
+                catch (Exception)
+                {
+                    // Intentionally swallowed: disposal exceptions must not propagate
+                    // to prevent cascading failures during cleanup.
+                }
 
-            try
-            {
-                _falseOperation?.Dispose();
-            }
-            catch
-            {
-                // Swallow disposal exceptions
+                try
+                {
+                    _falseOperation?.Dispose();
+                }
+                catch (Exception)
+                {
+                    // Intentionally swallowed: disposal exceptions must not propagate
+                    // to prevent cascading failures during cleanup.
+                }
             }
 
             _disposed = true;
-            GC.SuppressFinalize(this);
+            base.Dispose(disposing);
         }
 
         /// <summary>

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Operations;
+using WorkflowForge.Testing;
 
 namespace WorkflowForge.Tests;
 
@@ -12,12 +13,12 @@ namespace WorkflowForge.Tests;
 /// Comprehensive tests for WorkflowBuilder covering fluent API, validation,
 /// complex scenarios, and edge cases.
 /// </summary>
-public class WorkflowBuilderTests
+public class WorkflowBuilderShould
 {
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithoutServiceProvider_CreatesBuilder()
+    public void CreateBuilder_GivenNoServiceProvider()
     {
         // Act
         var builder = WorkflowForge.CreateWorkflow();
@@ -29,7 +30,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void Constructor_WithServiceProvider_CreatesBuilder()
+    public void CreateBuilder_GivenServiceProvider()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -44,7 +45,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void Constructor_WithNullServiceProvider_CreatesBuilder()
+    public void CreateBuilder_GivenNullServiceProvider()
     {
         // Act
         var builder = WorkflowForge.CreateWorkflow(null);
@@ -56,7 +57,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void Create_WithNameAndServiceProvider_SetsNameCorrectly()
+    public void SetNameCorrectly_GivenNameAndServiceProvider()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -72,7 +73,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void Create_WithNameOnly_SetsNameCorrectly()
+    public void SetNameCorrectly_GivenNameOnly()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -91,7 +92,7 @@ public class WorkflowBuilderTests
     #region WithName Tests
 
     [Fact]
-    public void WithName_SetsWorkflowName()
+    public void SetWorkflowName_GivenWithName()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -106,7 +107,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void WithName_WithNullName_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenNullName()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -118,7 +119,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void WithName_WithNameAndServiceProvider_ReturnsNamedWorkflowBuilder()
+    public void ReturnNamedWorkflowBuilder_GivenNameAndServiceProvider()
     {
         // Arrange
         const string workflowName = "TestWorkflow";
@@ -134,7 +135,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void WithName_CalledMultipleTimes_UsesLastName()
+    public void UseLastName_GivenWithNameCalledMultipleTimes()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -155,7 +156,7 @@ public class WorkflowBuilderTests
     #region WithDescription Tests
 
     [Fact]
-    public void WithDescription_SetsWorkflowDescription()
+    public void SetWorkflowDescription_GivenWithDescription()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -170,7 +171,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void WithDescription_WithNullDescription_SetsNull()
+    public void SetNull_GivenNullDescription()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -184,7 +185,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void WithDescription_CalledMultipleTimes_UsesLastDescription()
+    public void UseLastDescription_GivenWithDescriptionCalledMultipleTimes()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -204,7 +205,7 @@ public class WorkflowBuilderTests
     #region WithVersion Tests
 
     [Fact]
-    public void WithVersion_SetsWorkflowVersion()
+    public void SetWorkflowVersion_GivenWithVersion()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -219,7 +220,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void WithVersion_WithNullOrEmptyVersion_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenNullOrEmptyVersion()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -231,7 +232,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void WithVersion_CalledMultipleTimes_UsesLastVersion()
+    public void UseLastVersion_GivenWithVersionCalledMultipleTimes()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -251,7 +252,7 @@ public class WorkflowBuilderTests
     #region AddOperation Tests
 
     [Fact]
-    public void AddOperation_WithOperation_AddsOperation()
+    public void AddOperation_GivenOperation()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -267,7 +268,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void AddOperation_WithNullOperation_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullOperation()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -277,7 +278,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void AddOperation_WithAction_AddsActionOperation()
+    public void AddActionOperation_GivenAction()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -295,7 +296,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void AddOperation_WithAsyncAction_AddsActionOperation()
+    public void AddActionOperation_GivenAsyncAction()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -313,7 +314,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void AddOperation_WithNullActionName_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenNullActionName()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -326,7 +327,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void AddOperation_WithNullAction_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullAction()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -338,7 +339,72 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void AddOperation_WithMultipleOperations_AddsAllOperations()
+    public async Task InvokeRestoreDelegate_GivenNameActionAndRestoreActionWhenRestoreAsyncCalled()
+    {
+        // Arrange
+        var restoreInvoked = false;
+        var restoreAction = new Func<IWorkflowFoundry, CancellationToken, Task>((foundry, ct) =>
+        {
+            restoreInvoked = true;
+            return Task.CompletedTask;
+        });
+
+        var workflow = WorkflowForge.CreateWorkflow("RestoreTest")
+            .AddOperation("RestorableOp", (foundry, ct) => Task.CompletedTask, restoreAction)
+            .Build();
+
+        var operation = workflow.Operations[0];
+        var foundry = new FakeWorkflowFoundry();
+
+        // Act
+        await operation.RestoreAsync("output", foundry, CancellationToken.None);
+
+        // Assert
+        Assert.True(restoreInvoked);
+    }
+
+    [Fact]
+    public async Task InvokeRestoreDelegate_GivenAsyncRestoreActionWhenRestoreAsyncCalled()
+    {
+        // Arrange
+        var restoreInvoked = false;
+        var restoreAction = new Func<IWorkflowFoundry, CancellationToken, Task>(async (foundry, ct) =>
+        {
+            await Task.Yield();
+            restoreInvoked = true;
+        });
+
+        var workflow = WorkflowForge.CreateWorkflow("RestoreTest")
+            .AddOperation("RestorableOp", (foundry, ct) => Task.CompletedTask, restoreAction)
+            .Build();
+
+        var operation = workflow.Operations[0];
+        var foundry = new FakeWorkflowFoundry();
+
+        // Act
+        await operation.RestoreAsync("output", foundry, CancellationToken.None);
+
+        // Assert
+        Assert.True(restoreInvoked);
+    }
+
+    [Fact]
+    public async Task NotThrow_GivenOperationWithoutRestoreActionWhenRestoreAsyncCalled()
+    {
+        // Arrange - ActionWorkflowOperation without restoreAction has no-op RestoreAsync
+        var workflow = WorkflowForge.CreateWorkflow("NoRestoreTest")
+            .AddOperation("NoRestoreOp", (foundry, ct) => Task.CompletedTask)
+            .Build();
+
+        var operation = Assert.IsType<ActionWorkflowOperation>(workflow.Operations[0]);
+        var foundry = new FakeWorkflowFoundry();
+
+        // Act & Assert - Should not throw
+        await operation.RestoreAsync("output", foundry, CancellationToken.None);
+    }
+
+    [Fact]
+    public void AddAllOperations_GivenMultipleOperations()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -361,7 +427,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void AddOperation_WithMixedOperationTypes_AddsAllOperations()
+    public void AddAllOperations_GivenMixedOperationTypes()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -383,7 +449,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void AddOperation_Generic_WithServiceProvider_CreatesOperationFromDI()
+    public void CreateOperationFromDI_GivenGenericWithServiceProvider()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -400,7 +466,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void AddOperation_Generic_WithoutServiceProvider_ThrowsInvalidOperationException()
+    public void ThrowInvalidOperationException_GivenGenericWithoutServiceProvider()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
@@ -414,7 +480,7 @@ public class WorkflowBuilderTests
     #region Build Tests
 
     [Fact]
-    public void Build_WithNameAndOperations_ReturnsWorkflow()
+    public void ReturnWorkflow_GivenNameAndOperations()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow()
@@ -431,7 +497,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void Build_WithCompleteConfiguration_ReturnsWorkflowWithAllProperties()
+    public void ReturnWorkflowWithAllProperties_GivenCompleteConfiguration()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow()
@@ -452,7 +518,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void Build_WithoutName_ThrowsInvalidOperationException()
+    public void ThrowInvalidOperationException_GivenBuildWithoutName()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow()
@@ -463,7 +529,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void Build_WithoutOperations_ThrowsInvalidOperationException()
+    public void ThrowInvalidOperationException_GivenBuildWithoutOperations()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow()
@@ -474,7 +540,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void Build_WithServiceProvider_PassesServiceProviderToWorkflow()
+    public void PassServiceProviderToWorkflow_GivenServiceProvider()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -491,7 +557,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void Build_CalledMultipleTimes_ReturnsNewWorkflowInstances()
+    public void ReturnNewWorkflowInstances_GivenBuildCalledMultipleTimes()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow()
@@ -514,7 +580,7 @@ public class WorkflowBuilderTests
     #region Sequential and Parallel Tests
 
     [Fact]
-    public void Sequential_WithOperations_CreatesSequentialWorkflow()
+    public void CreateSequentialWorkflow_GivenSequentialOperations()
     {
         // Arrange
         var operation1 = new TestOperation("Op1");
@@ -531,21 +597,21 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void Sequential_WithNullOperations_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenSequentialNullOperations()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => WorkflowBuilder.Sequential(null!));
     }
 
     [Fact]
-    public void Sequential_WithEmptyOperations_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenSequentialEmptyOperations()
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => WorkflowBuilder.Sequential());
     }
 
     [Fact]
-    public void Parallel_WithOperations_CreatesParallelWorkflow()
+    public void CreateParallelWorkflow_GivenParallelOperations()
     {
         // Arrange
         var operation1 = new TestOperation("Op1");
@@ -561,14 +627,14 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void Parallel_WithNullOperations_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenParallelNullOperations()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => WorkflowBuilder.Parallel(null!));
     }
 
     [Fact]
-    public void Parallel_WithEmptyOperations_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenParallelEmptyOperations()
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => WorkflowBuilder.Parallel());
@@ -579,7 +645,7 @@ public class WorkflowBuilderTests
     #region Fluent API Tests
 
     [Fact]
-    public void FluentAPI_CanChainMultipleOperations()
+    public void ChainMultipleOperations_GivenFluentAPI()
     {
         // Arrange & Act
         var workflow = WorkflowForge.CreateWorkflow()
@@ -608,7 +674,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void FluentAPI_WithServiceProvider_MaintainsServiceProvider()
+    public void MaintainServiceProvider_GivenFluentAPIWithServiceProvider()
     {
         // Arrange
         var serviceProvider = new TestServiceProvider();
@@ -631,7 +697,7 @@ public class WorkflowBuilderTests
     #region Edge Cases
 
     [Fact]
-    public void Builder_WithVeryLongWorkflowName_HandlesCorrectly()
+    public void HandleCorrectly_GivenVeryLongWorkflowName()
     {
         // Arrange
         var longName = new string('A', 500);
@@ -646,7 +712,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void Builder_WithSpecialCharactersInName_HandlesCorrectly()
+    public void HandleCorrectly_GivenSpecialCharactersInName()
     {
         // Arrange
         const string specialName = "Special-Workflow_Name@2023!";
@@ -661,7 +727,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void Builder_WithManyOperations_HandlesCorrectly()
+    public void HandleCorrectly_GivenManyOperations()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow().WithName("ManyOperationsWorkflow");
@@ -680,7 +746,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void Builder_AfterBuild_CanBeReused()
+    public void BeReusable_GivenBuilderAfterBuild()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow()
@@ -705,7 +771,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void Builder_StateIsolation_InternalPropertiesAreReadOnly()
+    public void HaveReadOnlyInternalProperties_GivenStateIsolation()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow()
@@ -726,7 +792,7 @@ public class WorkflowBuilderTests
     #region AddOperations Tests
 
     [Fact]
-    public void AddOperations_Params_AddsAllOperations()
+    public void AddAllOperations_GivenParams()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow().WithName("Test");
@@ -746,7 +812,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void AddOperations_IEnumerable_AddsAllOperations()
+    public void AddAllOperations_GivenIEnumerable()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow().WithName("Test");
@@ -765,7 +831,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void AddOperations_Params_NullThrows()
+    public void Throw_GivenParamsNull()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow().WithName("Test");
@@ -775,7 +841,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void AddOperations_IEnumerable_NullThrows()
+    public void Throw_GivenIEnumerableNull()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow().WithName("Test");
@@ -785,7 +851,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void AddOperations_ReturnsSameBuilder()
+    public void ReturnSameBuilder_GivenAddOperations()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow().WithName("Test");
@@ -802,7 +868,7 @@ public class WorkflowBuilderTests
     #region AddParallelOperations Tests
 
     [Fact]
-    public void AddParallelOperations_Params_CreatesForEachOperation()
+    public void CreateForEachOperation_GivenParams()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow().WithName("Test");
@@ -819,7 +885,7 @@ public class WorkflowBuilderTests
     }
 
     [Fact]
-    public void AddParallelOperations_IEnumerable_WithOptions()
+    public void AddParallelOperationsFromEnumerable_GivenOptions()
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow().WithName("Test");
@@ -831,9 +897,9 @@ public class WorkflowBuilderTests
 
         // Act
         builder.AddParallelOperations(
-            operations, 
-            maxConcurrency: 2, 
-            timeout: TimeSpan.FromSeconds(30), 
+            operations,
+            maxConcurrency: 2,
+            timeout: TimeSpan.FromSeconds(30),
             name: "ParallelGroup");
         var workflow = builder.Build();
 
@@ -860,7 +926,7 @@ public class WorkflowBuilderTests
         var builder = WorkflowForge.CreateWorkflow().WithName("Test");
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => 
+        Assert.Throws<ArgumentException>(() =>
             builder.AddParallelOperations(new List<IWorkflowOperation>()));
     }
 

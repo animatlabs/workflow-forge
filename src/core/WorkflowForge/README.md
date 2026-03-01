@@ -1,9 +1,5 @@
 # WorkflowForge Core
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
 **Zero-dependency workflow orchestration framework for .NET**
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.svg)](https://www.nuget.org/packages/WorkflowForge/)
@@ -44,10 +40,10 @@ using WorkflowForge.Extensions;
 
 // Create workflow
 var workflow = WorkflowForge.CreateWorkflow("OrderProcessing")
-    .AddOperation("ValidateOrder", new ValidateOrderOperation())
-    .AddOperation("ChargePayment", new ChargePaymentOperation())
-    .AddOperation("ReserveInventory", new ReserveInventoryOperation())
-    .AddOperation("CreateShipment", new CreateShipmentOperation())
+    .AddOperation(new ValidateOrderOperation())
+    .AddOperation(new ChargePaymentOperation())
+    .AddOperation(new ReserveInventoryOperation())
+    .AddOperation(new CreateShipmentOperation())
     .Build();
 
 // Create execution environment
@@ -142,7 +138,6 @@ public interface IWorkflowOperation : IDisposable
 {
     Guid Id { get; }
     string Name { get; }
-    bool SupportsRestore { get; }
     
     Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken);
     Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken);
@@ -187,7 +182,7 @@ var conditionalOp = ConditionalWorkflowOperation.Create(
     falseOperation: new StandardProcessingOperation()
 );
 
-workflow.AddOperation("ProcessByTier", conditionalOp);
+builder.AddOperation(conditionalOp);
 ```
 
 ### 4. ForEachWorkflowOperation
@@ -211,14 +206,14 @@ var splitOp = ForEachWorkflowOperation.CreateSplitInput(
 
 ```csharp
 var delayOp = new DelayOperation(TimeSpan.FromSeconds(5));
-workflow.AddOperation("Wait", delayOp);
+builder.AddOperation(delayOp);
 ```
 
 ### 6. LoggingOperation
 
 ```csharp
-var logOp = new LoggingOperation("Order processing completed", logger);
-workflow.AddOperation("LogCompletion", logOp);
+var logOp = new LoggingOperation("Order processing completed");
+builder.AddOperation(logOp);
 ```
 
 ## Custom Operations
@@ -229,7 +224,6 @@ workflow.AddOperation("LogCompletion", logOp);
 public class CalculateTotalOperation : WorkflowOperationBase
 {
     public override string Name => "CalculateTotal";
-    public override bool SupportsRestore => false;
 
     protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
@@ -277,7 +271,6 @@ Implement `RestoreAsync` for rollback capabilities:
 public class ChargePaymentOperation : WorkflowOperationBase
 {
     public override string Name => "ChargePayment";
-    public override bool SupportsRestore => true;
 
     protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
@@ -425,16 +418,18 @@ var smith = services.BuildServiceProvider().GetRequiredService<IWorkflowSmith>()
 
 WorkflowForge Core is optimized for production workloads (12 scenarios benchmarked, 50 iterations):
 
-- **Execution Speed**: 11-540x faster than competitors
-- **State Machine**: Up to 540x faster (highest advantage)
-- **Memory**: 9-573x less allocation than competitors
+- **Execution Speed**: 13-522x faster than competitors
+- **State Machine**: Up to 522x faster (highest advantage, .NET 10.0)
+- **Memory**: 6-578x less allocation than competitors
 - **Concurrency**: Near-perfect linear scaling (16x speedup for 16 workflows)
 
 | Scenario | WorkflowForge | Workflow Core | Elsa | Advantage |
 |----------|---------------|---------------|------|-----------|
-| Sequential (10 ops) | 247μs | 6,531μs | 17,617μs | 26-71x |
-| State Machine (25) | 68μs | 20,624μs | 36,695μs | 303-540x |
-| Concurrent (8 workers) | 356μs | 38,833μs | 94,018μs | 109-264x |
+| Sequential (10 ops) | 314μs | 15,997μs | 26,881μs | 51-86x |
+| State Machine (25) | 111μs | 39,500μs | 45,714μs | 356-412x |
+| Concurrent (8 workers) | 482μs | 59,141μs | 137,342μs | 123-285x |
+
+*Benchmark data from .NET 8.0; up to 522x faster on .NET 10.0 (State Machine).*
 
 See [Performance Documentation](../../../docs/performance/performance.md) for all 12 scenarios.
 
@@ -455,9 +450,9 @@ public class WorkflowTests
         var executionOrder = new List<string>();
         
         var workflow = WorkflowForge.CreateWorkflow("Test")
-            .WithOperation("Step1", async (foundry) => executionOrder.Add("Step1"))
-            .WithOperation("Step2", async (foundry) => executionOrder.Add("Step2"))
-            .WithOperation("Step3", async (foundry) => executionOrder.Add("Step3"))
+            .AddOperation("Step1", (foundry) => executionOrder.Add("Step1"))
+            .AddOperation("Step2", (foundry) => executionOrder.Add("Step2"))
+            .AddOperation("Step3", (foundry) => executionOrder.Add("Step3"))
             .Build();
         
         using var foundry = WorkflowForge.CreateFoundry("Test");
