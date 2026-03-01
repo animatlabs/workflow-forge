@@ -188,7 +188,7 @@ public class RetryableExternalServiceOperation : WorkflowOperationBase
         throw new WorkflowExecutionException($"Operation failed after {maxRetries + 1} attempts", lastException!);
     }
 
-    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("service_response", out _);
         foundry.Properties.TryRemove("response_time", out _);
@@ -228,7 +228,7 @@ public class TryPrimaryPaymentOperation : WorkflowOperationBase
         return $"Primary payment successful: {transactionId}";
     }
 
-    public override async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         if (foundry.Properties.TryGetValue("transaction_id", out var txnId))
         {
@@ -271,7 +271,7 @@ public class TryFallbackPaymentOperation : WorkflowOperationBase
         return $"Fallback payment successful: {transactionId}";
     }
 
-    public override async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         if (foundry.Properties.TryGetValue("transaction_id", out var txnId))
         {

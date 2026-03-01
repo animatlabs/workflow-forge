@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
@@ -100,10 +99,10 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
                     await ResumeAsync(foundryFactory, workflowFactory, s.FoundryExecutionId, s.WorkflowId, cancellationToken).ConfigureAwait(false);
                     success++;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    // best-effort resume; continue others. No logger available in this static catalog loop.
-                    Debug.WriteLine($"RecoveryCoordinator.ResumeAllAsync: resume failed for snapshot: {ex}");
+                    // Intentionally swallowed: best-effort resume must not fail
+                    // remaining snapshots. No logger available in this static context.
                 }
             }
             return success;

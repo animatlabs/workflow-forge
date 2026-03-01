@@ -1,6 +1,6 @@
 # WorkflowForge
 
-[![Build and Test](https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml/badge.svg?branch=release/2.x)](https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml)
+[![Build and Test](https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml/badge.svg?branch=main)](https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml)
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.svg)](https://www.nuget.org/packages/WorkflowForge/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/WorkflowForge.svg)](https://www.nuget.org/packages/WorkflowForge/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -10,6 +10,7 @@
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-support-ff5e5b?logo=ko-fi)](https://ko-fi.com/animat089)
 
 High-performance, dependency-free workflow orchestration library for .NET. Execute thousands of workflows per second with microsecond-level operation latency and minimal memory footprint.
 
@@ -273,6 +274,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 - **GitHub Issues**: Bug reports and feature requests
 - **Discussions**: Questions and community support
 - **Documentation**: Comprehensive guides and API reference
+- **Ko-fi**: If this project helps you, consider [supporting on Ko-fi](https://ko-fi.com/animat089)
 
 ---
 

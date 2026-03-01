@@ -21,9 +21,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - XML doc `<remarks>` on `IWorkflowOperation` recommending `WorkflowOperationBase`
 - `.gitattributes` for consistent line endings and binary file handling
 - `.sonarlint/WorkflowForge.json` local SonarLint configuration
-- `RELEASE.md` detailed release procedures and checklist
 - `tests/Directory.Build.props` for centralized test project settings (SonarCloud exclusion, strong-name signing)
 - `MixedCompensationTests` and `WorkflowSmithDisposeTests` integration test classes
+- `SerilogLoggerFactory.CreateLogger(SerilogLoggerOptions?, ILogEventSink?)` overload for custom sink injection
+- `.github/CODEOWNERS`, PR template, and issue templates for governance
+- Cloudflare CDN cache purge step in GitHub Pages deployment workflow
+- `FoundryPropertyKeys.UnknownValue` and `FoundryPropertyKeys.NullDisplayValue` string literal constants
 
 ### Changed
 - CI/CD pipeline integrated with SonarCloud for continuous code quality analysis (with caching)
@@ -33,7 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - SonarAnalyzer.CSharp added to all source projects; removed from test/benchmark/sample projects (no value with rules suppressed)
 - GitHub Actions updated to latest versions (checkout@v6, setup-dotnet@v5, upload-artifact@v6, download-artifact@v7)
 - CI/CD pipeline hardened: permissions moved to job level, secrets moved to `env:` blocks, SonarCloud quality gate made non-blocking
-- NuGet README logos converted from HTML `<img>` to Markdown syntax for reliable rendering
+- NuGet README logos removed (NuGet.org CommonMark renderer has no image size control)
 - SonarCloud quality badges (Quality Gate, Coverage, Reliability, Security, Maintainability) and GitHub Actions build badge added to `README.md` and `docs/index.md`
 - Publish scripts (`scripts/`) removed in favor of GitHub Actions CI/CD pipeline
 - `.editorconfig` added for consistent code style enforcement
@@ -74,7 +77,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **BREAKING**: `SupportsRestore` property removed from `IWorkflowOperation` interface
 - **BREAKING**: `SupportsRestore` property removed from `IWorkflow` interface
 - **BREAKING**: `SupportsRestore` property removed from `WorkflowOperationBase` and all operation implementations
+- **BREAKING**: `RestoreAsync` parameter renamed from `context` to `outputData` across all operation implementations
 - All `if (!SupportsRestore) throw NotSupportedException` guards removed from `RestoreAsync` methods
+- `RELEASE.md` removed (all release procedures are in the CI/CD pipeline)
 
 ### Fixed
 - `ConsoleLogger.FormatMessage` now converts named placeholders (`{Name}`) to positional (`{0}`) before `string.Format`
@@ -89,6 +94,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Event handler memory leaks: WorkflowSmith and WorkflowFoundry clear events on Dispose
 - Recovery extension now logs exceptions instead of silently swallowing them
 - WorkflowSmith Dispose race condition with concurrency limiter
+- **Critical**: WorkflowSmith foundry pool dispose-then-reuse bug (disposed foundries returned to consumers)
+- **Critical**: WorkflowSmith foundry pool resource leak (pooled foundries not disposed on WorkflowSmith.Dispose)
+- **Critical**: WorkflowSmith foundry pool TOCTOU race condition replaced with atomic `Interlocked` counter
+- InMemoryAuditProvider `_entries` field missing `volatile` keyword for cross-thread visibility
+- ConditionalWorkflowOperation silently swallowed disposal exceptions (now logs via `Debug.WriteLine`)
+- Assertionless tests across OpenTelemetry, Serilog, core, and Polly test projects replaced with `Record.Exception` assertions
+- Incorrect `[SuppressMessage("S4487")]` on `ExponentialBackoffStrategy._enableJitter` field (field is used)
 - Event handler exceptions no longer conflated with operation failures in WorkflowFoundry
 - PersistenceMiddleware: same-instance-added-twice no longer causes silent property key collision (index-based tracking)
 - PersistenceMiddleware: removed dead `#if NETSTANDARD2_0` preprocessor code

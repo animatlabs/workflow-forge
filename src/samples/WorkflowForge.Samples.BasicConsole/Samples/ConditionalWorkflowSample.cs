@@ -95,7 +95,7 @@ public class InitializeOrderOperation : WorkflowOperationBase
         return "Order initialized";
     }
 
-    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("order_status", out _);
         foundry.Properties.TryRemove("processing_start", out _);
@@ -121,7 +121,7 @@ public class PremiumOrderProcessingOperation : WorkflowOperationBase
         return "Premium processing assigned";
     }
 
-    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("processing_type", out _);
         foundry.Properties.TryRemove("priority_level", out _);
@@ -148,7 +148,7 @@ public class StandardOrderProcessingOperation : WorkflowOperationBase
         return "Standard processing assigned";
     }
 
-    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("processing_type", out _);
         foundry.Properties.TryRemove("priority_level", out _);
@@ -176,7 +176,7 @@ public class CreditCardPaymentOperation : WorkflowOperationBase
         return $"Credit card payment: {transactionId}";
     }
 
-    public override async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var transactionId = foundry.GetPropertyOrDefault<string>("transaction_id", "Unknown");
         Console.WriteLine($"   [REFUND] Refunding credit card transaction {transactionId}...");
@@ -210,7 +210,7 @@ public class BankTransferPaymentOperation : WorkflowOperationBase
         return $"Bank transfer: {transferId}";
     }
 
-    public override async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var transferId = foundry.GetPropertyOrDefault<string>("transfer_id", "Unknown");
         Console.WriteLine($"   [REVERSAL] Reversing bank transfer {transferId}...");
@@ -248,7 +248,7 @@ public class FinalizeOrderOperation : WorkflowOperationBase
         return "Order finalized";
     }
 
-    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("order_status", out _);
         foundry.Properties.TryRemove("completion_time", out _);

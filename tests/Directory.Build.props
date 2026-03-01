@@ -1,6 +1,5 @@
 <Project>
   <PropertyGroup>
-    <MicrosoftNETTestSdkVersion>17.14.1</MicrosoftNETTestSdkVersion>
     <SonarQubeExclude>true</SonarQubeExclude>
     <SonarQubeTestProject>true</SonarQubeTestProject>
     <SignAssembly>true</SignAssembly>

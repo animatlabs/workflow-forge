@@ -2,9 +2,9 @@ name: Build and Test
 
 on:
   push:
-    branches: [ main, release/2.x ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, release/2.x ]
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       publish:
@@ -84,9 +84,10 @@ jobs:
           /o:"animatlabs" `
           /d:sonar.token="$env:SONAR_TOKEN" `
           /d:sonar.host.url="https://sonarcloud.io" `
-          /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" `
-          /d:sonar.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**" `
-          /d:sonar.coverage.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**"
+          /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml" `
+          /d:sonar.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**,**/docs/**,**/*.js,**/*.css" `
+          /d:sonar.coverage.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**" `
+          /d:sonar.cpd.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**"
         dotnet build WorkflowForge.sln --configuration Release --no-restore
         dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
 
@@ -95,7 +96,7 @@ jobs:
       if: always()
       with:
         name: test-results
-        path: '**/test-results.trx'
+        path: '**/*.trx'
 
     - name: Pack
       if: github.event_name == 'workflow_dispatch'

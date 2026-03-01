@@ -75,9 +75,10 @@ namespace WorkflowForge.Extensions.Resilience
                 {
                     _operation?.Dispose();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    System.Diagnostics.Debug.WriteLine($"RetryWorkflowOperation.Dispose: Exception while disposing operation '{Name}': {ex}");
+                    // Intentionally swallowed: disposal exceptions must not propagate
+                    // to prevent cascading failures during cleanup.
                 }
             }
             base.Dispose(disposing);

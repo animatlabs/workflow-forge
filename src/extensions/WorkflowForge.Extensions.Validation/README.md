@@ -1,7 +1,5 @@
 # WorkflowForge.Extensions.Validation
 
-![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
-
 Validation extension for WorkflowForge with DataAnnotations-based validation for comprehensive input validation.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Validation.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Validation/)

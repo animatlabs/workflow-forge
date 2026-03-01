@@ -72,7 +72,7 @@ public class ValidateCustomerOperation : WorkflowOperationBase
         return "Customer validated";
     }
 
-    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         foundry.Properties.TryRemove("customer_name", out _);
         foundry.Properties.TryRemove("customer_tier", out _);
@@ -113,7 +113,7 @@ public class CalculateDiscountOperation : WorkflowOperationBase
         return $"Discount calculated: {discount * 100}%";
     }
 
-    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("discount_percent", out _);
         foundry.Properties.TryRemove("discount_amount", out _);
@@ -144,7 +144,7 @@ public class ProcessPaymentOperation : WorkflowOperationBase
         return $"Payment processed: {transactionId}";
     }
 
-    public override async Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var transactionId = foundry.GetPropertyOrDefault<string>("transaction_id", "Unknown");
         Console.WriteLine($"   [REFUND] Refunding transaction {transactionId}...");
@@ -179,7 +179,7 @@ public class GenerateReceiptOperation : WorkflowOperationBase
         return $"Receipt: {receiptNumber}";
     }
 
-    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("receipt_number", out _);
         return Task.CompletedTask;

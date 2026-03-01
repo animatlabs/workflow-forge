@@ -87,62 +87,89 @@ namespace WorkflowForge.Extensions.Persistence
                 return await next(cancellationToken).ConfigureAwait(false);
             }
 
-            // Read current operation index from foundry (set by WorkflowFoundry before middleware invocation)
-            int currentIndex;
-            if (foundry.Properties.TryGetValue(FoundryPropertyKeys.CurrentOperationIndex, out var indexObj) && indexObj is int idx)
-            {
-                currentIndex = idx;
-            }
-            else
-            {
-                // Fallback: use an internal counter if the foundry didn't set the index
-                // (e.g., older foundry versions or custom foundry implementations)
-                if (foundry.Properties.TryGetValue(ExecutionCounterKey, out var counterObj) && counterObj is int counter)
-                {
-                    currentIndex = counter;
-                }
-                else
-                {
-                    currentIndex = 0;
-                }
-
-                foundry.Properties[ExecutionCounterKey] = currentIndex + 1;
-            }
-
-            // Resolve stable keys once
+            var currentIndex = GetCurrentOperationIndex(foundry);
             var (foundryKey, workflowKey) = ResolveKeys(foundry, workflow);
 
-            // Restore + skip logic
             var snapshot = await _provider.TryLoadAsync(foundryKey, workflowKey, cancellationToken).ConfigureAwait(false);
-            if (snapshot != null)
+            var (shouldSkip, skippedOutput) = TryGetSkippedOperationOutput(snapshot, foundry, operation, currentIndex, inputData);
+            if (shouldSkip)
             {
-                if (!foundry.Properties.ContainsKey(RestoredFlagKey))
-                {
-                    foreach (var kv in snapshot.Properties)
-                    {
-                        foundry.Properties[kv.Key] = kv.Value;
-                    }
-                    foundry.Properties[RestoredFlagKey] = true;
-                }
-
-                if (snapshot.NextOperationIndex > currentIndex)
-                {
-                    // Return the stored output from the restored snapshot so the foundry
-                    // preserves the correct value for output chaining and compensation.
-                    var outputKey = string.Format(FoundryPropertyKeys.OperationOutputFormat, currentIndex, operation.Name);
-                    if (foundry.Properties.TryGetValue(outputKey, out var storedOutput))
-                    {
-                        return storedOutput;
-                    }
-
-                    return inputData;
-                }
+                return skippedOutput;
             }
 
             var result = await next(cancellationToken).ConfigureAwait(false);
 
-            // Checkpoint after successful execution
-            var operationCount = workflow.Operations.Count;
+            await CheckpointAndCleanupAsync(foundryKey, workflowKey, workflow, foundry, currentIndex, cancellationToken).ConfigureAwait(false);
+
+            return result;
+        }
+
+        private static int GetCurrentOperationIndex(IWorkflowFoundry foundry)
+        {
+            if (foundry.Properties.TryGetValue(FoundryPropertyKeys.CurrentOperationIndex, out var indexObj) && indexObj is int idx)
+            {
+                return idx;
+            }
+
+            int currentIndex;
+            if (foundry.Properties.TryGetValue(ExecutionCounterKey, out var counterObj) && counterObj is int counter)
+            {
+                currentIndex = counter;
+            }
+            else
+            {
+                currentIndex = 0;
+            }
+
+            foundry.Properties[ExecutionCounterKey] = currentIndex + 1;
+            return currentIndex;
+        }
+
+        private static (bool shouldSkip, object? output) TryGetSkippedOperationOutput(
+            WorkflowExecutionSnapshot? snapshot,
+            IWorkflowFoundry foundry,
+            IWorkflowOperation operation,
+            int currentIndex,
+            object? inputData)
+        {
+            if (snapshot == null || snapshot.NextOperationIndex <= currentIndex)
+            {
+                return (false, null);
+            }
+
+            ApplyRestoredSnapshotIfNeeded(foundry, snapshot);
+
+            var outputKey = string.Format(FoundryPropertyKeys.OperationOutputFormat, currentIndex, operation.Name);
+            if (foundry.Properties.TryGetValue(outputKey, out var storedOutput))
+            {
+                return (true, storedOutput);
+            }
+
+            return (true, inputData);
+        }
+
+        private static void ApplyRestoredSnapshotIfNeeded(IWorkflowFoundry foundry, WorkflowExecutionSnapshot snapshot)
+        {
+            if (foundry.Properties.ContainsKey(RestoredFlagKey))
+            {
+                return;
+            }
+
+            foreach (var kv in snapshot.Properties)
+            {
+                foundry.Properties[kv.Key] = kv.Value;
+            }
+            foundry.Properties[RestoredFlagKey] = true;
+        }
+
+        private async Task CheckpointAndCleanupAsync(
+            Guid foundryKey,
+            Guid workflowKey,
+            IWorkflow workflow,
+            IWorkflowFoundry foundry,
+            int currentIndex,
+            CancellationToken cancellationToken)
+        {
             var newSnapshot = new WorkflowExecutionSnapshot
             {
                 FoundryExecutionId = foundryKey,
@@ -154,13 +181,11 @@ namespace WorkflowForge.Extensions.Persistence
 
             await _provider.SaveAsync(newSnapshot, cancellationToken).ConfigureAwait(false);
 
-            // Clean up snapshot when all operations are done
+            var operationCount = workflow.Operations.Count;
             if (newSnapshot.NextOperationIndex >= operationCount)
             {
                 await _provider.DeleteAsync(foundryKey, workflowKey, cancellationToken).ConfigureAwait(false);
             }
-
-            return result;
         }
 
         private (Guid foundryKey, Guid workflowKey) ResolveKeys(IWorkflowFoundry foundry, IWorkflow workflow)
@@ -178,8 +203,7 @@ namespace WorkflowForge.Extensions.Persistence
 
         private static Guid DeterministicGuid(string input)
         {
-            // Stable GUID derived from SHA1 hash of input
-            using var sha1 = System.Security.Cryptography.SHA1.Create();
+            using var sha1 = System.Security.Cryptography.SHA1.Create(); // NOSONAR - SHA1 used for deterministic GUID derivation, not for cryptographic security
             var bytes = System.Text.Encoding.UTF8.GetBytes(input);
             var hash = sha1.ComputeHash(bytes);
             var guidBytes = new byte[16];

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Extensions.Resilience.Strategies;
+using WorkflowForge.Loggers;
 
 namespace WorkflowForge.Extensions.Resilience.Tests;
 
@@ -363,5 +364,169 @@ public class RandomIntervalStrategyTests
 
         // Assert
         Assert.True(result);
+    }
+
+    [Fact]
+    public void Constructor_WithInvalidMaxAttempts_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new RandomIntervalStrategy(0, TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)));
+    }
+
+    [Fact]
+    public void GetRetryDelay_ForFirstAttempt_ReturnsZero()
+    {
+        var strategy = new RandomIntervalStrategy(3, TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(1));
+
+        var delay = strategy.GetRetryDelay(1, null);
+
+        Assert.Equal(TimeSpan.Zero, delay);
+    }
+
+    [Fact]
+    public void Default_WithDefaultParameters_ReturnsValidStrategy()
+    {
+        var strategy = RandomIntervalStrategy.Default();
+
+        Assert.NotNull(strategy);
+        Assert.Contains("RandomInterval", strategy.Name);
+    }
+
+    [Fact]
+    public void Default_WithCustomMaxAttempts_ReturnsStrategyWithCorrectAttempts()
+    {
+        var strategy = RandomIntervalStrategy.Default(maxAttempts: 5);
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public void Default_WithLogger_ReturnsStrategyWithLogger()
+    {
+        var logger = new ConsoleLogger("Test");
+        var strategy = RandomIntervalStrategy.Default(logger: logger);
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public void HighThroughput_ReturnsValidStrategy()
+    {
+        var strategy = RandomIntervalStrategy.HighThroughput();
+
+        Assert.NotNull(strategy);
+        Assert.Contains("RandomInterval", strategy.Name);
+    }
+
+    [Fact]
+    public void HighThroughput_WithCustomMaxAttempts_ReturnsStrategy()
+    {
+        var strategy = RandomIntervalStrategy.HighThroughput(maxAttempts: 7);
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public void WithJitter_WithValidParameters_ReturnsValidStrategy()
+    {
+        var baseInterval = TimeSpan.FromMilliseconds(500);
+        var strategy = RandomIntervalStrategy.WithJitter(baseInterval, jitterPercent: 0.2);
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public void WithJitter_WithInvalidJitterPercent_ThrowsArgumentOutOfRangeException()
+    {
+        var baseInterval = TimeSpan.FromMilliseconds(500);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            RandomIntervalStrategy.WithJitter(baseInterval, jitterPercent: -0.1));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            RandomIntervalStrategy.WithJitter(baseInterval, jitterPercent: 1.5));
+    }
+
+    [Fact]
+    public void WithJitter_WithZeroJitter_ReturnsStrategy()
+    {
+        var baseInterval = TimeSpan.FromMilliseconds(500);
+        var strategy = RandomIntervalStrategy.WithJitter(baseInterval, jitterPercent: 0);
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public void WithJitter_WithFullJitter_ReturnsStrategy()
+    {
+        var baseInterval = TimeSpan.FromMilliseconds(500);
+        var strategy = RandomIntervalStrategy.WithJitter(baseInterval, jitterPercent: 1.0);
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public void Create_WithValidIntervals_ReturnsValidStrategy()
+    {
+        var minInterval = TimeSpan.FromMilliseconds(50);
+        var maxInterval = TimeSpan.FromMilliseconds(200);
+
+        var strategy = RandomIntervalStrategy.Create(minInterval, maxInterval);
+
+        Assert.NotNull(strategy);
+        Assert.Contains("RandomInterval", strategy.Name);
+    }
+
+    [Fact]
+    public void Create_WithEqualMinMax_ReturnsStrategy()
+    {
+        var interval = TimeSpan.FromMilliseconds(100);
+
+        var strategy = RandomIntervalStrategy.Create(interval, interval);
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_SuccessfulOperation_ExecutesOnce()
+    {
+        var strategy = RandomIntervalStrategy.Default(maxAttempts: 3);
+        var executionCount = 0;
+
+        await strategy.ExecuteAsync(() =>
+        {
+            executionCount++;
+            return Task.CompletedTask;
+        }, CancellationToken.None);
+
+        Assert.Equal(1, executionCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_FailingOperation_RetriesWithRandomDelay()
+    {
+        var strategy = RandomIntervalStrategy.Default(maxAttempts: 3);
+        var executionCount = 0;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await strategy.ExecuteAsync(() =>
+            {
+                executionCount++;
+                throw new InvalidOperationException("Test");
+            }, CancellationToken.None);
+        });
+
+        Assert.Equal(3, executionCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Generic_SuccessfulOperation_ReturnsValue()
+    {
+        var strategy = RandomIntervalStrategy.Default(maxAttempts: 3);
+        const string expected = "result";
+
+        var result = await strategy.ExecuteAsync(() => Task.FromResult(expected), CancellationToken.None);
+
+        Assert.Equal(expected, result);
     }
 }

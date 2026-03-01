@@ -433,12 +433,13 @@ namespace WorkflowForge.Tests.Operations
             var operations = new[] { CreateMockOperation("Op1").Object };
             var foreachOp = new ForEachWorkflowOperation(operations);
 
-            // Act
-            foreachOp.Dispose();
-            foreachOp.Dispose(); // Should not throw
-
-            // Assert - Just verifying no exception is thrown
-            Assert.True(true);
+            // Act & Assert - Should not throw
+            var ex = Record.Exception(() =>
+            {
+                foreachOp.Dispose();
+                foreachOp.Dispose();
+            });
+            Assert.Null(ex);
         }
 
         #endregion Dispose Tests

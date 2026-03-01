@@ -280,60 +280,92 @@ namespace WorkflowForge
 
             try
             {
-                try
-                { OperationStarted?.Invoke(this, new OperationStartedEventArgs(operation, this, null)); }
-                catch (Exception ex) { Logger.LogError(Logger.CreateErrorProperties(ex, "OperationStarted"), ex, "OperationStarted event handler error"); }
-
+                InvokeOperationStarted(operation);
                 Properties[FoundryPropertyKeys.CurrentOperationIndex] = index;
 
                 var result = await ExecuteOperationWithMiddleware(operation, inputData, cancellationToken).ConfigureAwait(false);
-                if (Options.EnableOutputChaining)
-                {
-                    inputData = result;
-                }
+                inputData = ApplyOutputChaining(inputData, result);
 
-                Properties[string.Format(FoundryPropertyKeys.OperationOutputFormat, index, operation.Name)] = result;
-                Properties[FoundryPropertyKeys.LastCompletedIndex] = index;
-                Properties[FoundryPropertyKeys.LastCompletedName] = operation.Name;
-                Properties[FoundryPropertyKeys.LastCompletedId] = operation.Id;
+                ApplyOperationSuccessProperties(operation, index, result);
+                InvokeOperationCompleted(operation, result, operationStartTime);
 
-                var operationDuration = _timeProvider.UtcNow - operationStartTime;
-
-                try
-                {
-                    OperationCompleted?.Invoke(this, new OperationCompletedEventArgs(
-                        operation, this, null, result,
-                        TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
-                }
-                catch (Exception ex) { Logger.LogError(Logger.CreateErrorProperties(ex, "OperationCompleted"), ex, "OperationCompleted event handler error"); }
+                return inputData;
             }
             catch (Exception ex)
             {
-                Properties[FoundryPropertyKeys.LastFailedIndex] = index;
-                Properties[FoundryPropertyKeys.LastFailedName] = operation.Name;
-                Properties[FoundryPropertyKeys.LastFailedId] = operation.Id;
+                return await HandleOperationFailureAsync(operation, index, inputData, ex, operationStartTime, errors).ConfigureAwait(false);
+            }
+        }
 
-                var operationDuration = _timeProvider.UtcNow - operationStartTime;
+        private object? ApplyOutputChaining(object? inputData, object? result)
+        {
+            return Options.EnableOutputChaining ? result : inputData;
+        }
 
-                OperationFailed?.Invoke(this, new OperationFailedEventArgs(
-                    operation, this, null, ex,
+        private void ApplyOperationSuccessProperties(IWorkflowOperation operation, int index, object? result)
+        {
+            Properties[string.Format(FoundryPropertyKeys.OperationOutputFormat, index, operation.Name)] = result;
+            Properties[FoundryPropertyKeys.LastCompletedIndex] = index;
+            Properties[FoundryPropertyKeys.LastCompletedName] = operation.Name;
+            Properties[FoundryPropertyKeys.LastCompletedId] = operation.Id;
+        }
+
+        private void InvokeOperationStarted(IWorkflowOperation operation)
+        {
+            try
+            {
+                OperationStarted?.Invoke(this, new OperationStartedEventArgs(operation, this, null));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(Logger.CreateErrorProperties(ex, "OperationStarted"), ex, "OperationStarted event handler error");
+            }
+        }
+
+        private void InvokeOperationCompleted(IWorkflowOperation operation, object? result, DateTimeOffset operationStartTime)
+        {
+            var operationDuration = _timeProvider.UtcNow - operationStartTime;
+            try
+            {
+                OperationCompleted?.Invoke(this, new OperationCompletedEventArgs(
+                    operation, this, null, result,
                     TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(Logger.CreateErrorProperties(ex, "OperationCompleted"), ex, "OperationCompleted event handler error");
+            }
+        }
 
-                if (ex is OperationCanceledException)
-                {
-                    throw;
-                }
+        private Task<object?> HandleOperationFailureAsync(
+            IWorkflowOperation operation,
+            int index,
+            object? inputData,
+            Exception ex,
+            DateTimeOffset operationStartTime,
+            List<Exception>? errors)
+        {
+            Properties[FoundryPropertyKeys.LastFailedIndex] = index;
+            Properties[FoundryPropertyKeys.LastFailedName] = operation.Name;
+            Properties[FoundryPropertyKeys.LastFailedId] = operation.Id;
 
-                if (errors != null)
-                {
-                    errors.Add(ex);
-                    return inputData;
-                }
+            var operationDuration = _timeProvider.UtcNow - operationStartTime;
+            OperationFailed?.Invoke(this, new OperationFailedEventArgs(
+                operation, this, null, ex,
+                TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
 
-                throw;
+            if (ex is OperationCanceledException)
+            {
+                throw ex;
             }
 
-            return inputData;
+            if (errors != null)
+            {
+                errors.Add(ex);
+                return Task.FromResult(inputData);
+            }
+
+            throw ex;
         }
 
         /// <summary>

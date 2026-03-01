@@ -1,7 +1,5 @@
 # WorkflowForge.Extensions.Audit
 
-![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
-
 Comprehensive audit logging extension for WorkflowForge with pluggable storage providers for compliance and observability.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Audit.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Audit/)

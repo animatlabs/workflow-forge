@@ -1,7 +1,5 @@
 # WorkflowForge.Extensions.Persistence
 
-![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
-
 Workflow state persistence extension for WorkflowForge with in-memory and SQLite providers for checkpointing and recovery.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Persistence.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Persistence/)

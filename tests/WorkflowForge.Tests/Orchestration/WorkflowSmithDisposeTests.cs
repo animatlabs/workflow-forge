@@ -66,8 +66,12 @@ public class WorkflowSmithDisposeTests
         var smith = WorkflowForge.CreateSmith();
 
         // Act & Assert
-        smith.Dispose();
-        smith.Dispose();
-        smith.Dispose();
+        var ex = Record.Exception(() =>
+        {
+            smith.Dispose();
+            smith.Dispose();
+            smith.Dispose();
+        });
+        Assert.Null(ex);
     }
 }

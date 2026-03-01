@@ -1,7 +1,5 @@
 # WorkflowForge.Extensions.Observability.OpenTelemetry
 
-![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
-
 Distributed tracing extension for WorkflowForge with OpenTelemetry integration for comprehensive observability.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Observability.OpenTelemetry.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Observability.OpenTelemetry/)

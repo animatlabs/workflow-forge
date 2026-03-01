@@ -87,8 +87,8 @@ namespace WorkflowForge.Extensions.Audit
 
             var time = timeProvider ?? SystemTimeProvider.Instance;
             var workflowName = foundry.Properties.TryGetValue(FoundryPropertyKeys.WorkflowName, out var wfName)
-                ? wfName?.ToString() ?? "Unknown"
-                : "Unknown";
+                ? wfName?.ToString() ?? FoundryPropertyKeys.UnknownValue
+                : FoundryPropertyKeys.UnknownValue;
 
             var entry = new AuditEntry(
                 foundry.ExecutionId,

@@ -55,7 +55,7 @@ v2.1.0: Updated for WorkflowForge v2.1.0 compatibility. Removed SupportsRestore 
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.2" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.3" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
   </ItemGroup>
 

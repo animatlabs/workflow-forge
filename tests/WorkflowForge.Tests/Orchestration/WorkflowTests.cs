@@ -222,7 +222,8 @@ namespace WorkflowForge.Tests.Orchestration
             var workflow = CreateWorkflow(operations: new List<IWorkflowOperation>());
 
             // Act & Assert - Should not throw
-            workflow.Dispose();
+            var ex = Record.Exception(() => workflow.Dispose());
+            Assert.Null(ex);
         }
 
         #endregion Dispose Tests

@@ -1,5 +1,6 @@
 using System;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 using WorkflowForge.Extensions.Validation.Options;
 
 namespace WorkflowForge.Extensions.Validation
@@ -166,7 +167,7 @@ namespace WorkflowForge.Extensions.Validation
                 return await _validator.ValidateAsync(typedData, cancellationToken).ConfigureAwait(false);
             }
 
-            return ValidationResult.Failure($"Data type mismatch. Expected {typeof(T).Name}, got {data?.GetType().Name ?? "null"}");
+            return ValidationResult.Failure($"Data type mismatch. Expected {typeof(T).Name}, got {data?.GetType().Name ?? FoundryPropertyKeys.NullDisplayValue}");
         }
     }
 }

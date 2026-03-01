@@ -30,6 +30,7 @@ namespace WorkflowForge
         private readonly object _workflowMiddlewareLock = new();
         private readonly ConcurrentBag<IWorkflowFoundry> _foundryPool = new();
         private static readonly int MaxPoolSize = Environment.ProcessorCount * 2;
+        private int _poolCount;
         private volatile bool _disposed;
 
         // ==================================================================================
@@ -124,10 +125,15 @@ namespace WorkflowForge
             }
             finally
             {
-                foundry.Dispose();
-                if (!_disposed && _foundryPool.Count < MaxPoolSize)
+                if (!_disposed && Interlocked.Increment(ref _poolCount) <= MaxPoolSize)
                 {
+                    ((WorkflowFoundry)foundry).Reset(Guid.NewGuid(), _logger, _serviceProvider, _options, null);
                     _foundryPool.Add(foundry);
+                }
+                else
+                {
+                    Interlocked.Decrement(ref _poolCount);
+                    foundry.Dispose();
                 }
             }
         }
@@ -275,8 +281,8 @@ namespace WorkflowForge
             // FIRE: WorkflowFailed event
             var duration = _timeProvider.UtcNow - startTime;
             var failedOperationName = foundry.Properties.TryGetValue(FoundryPropertyKeys.LastFailedName, out var failedNameValue)
-                ? failedNameValue?.ToString() ?? "Unknown"
-                : "Unknown";
+                ? failedNameValue?.ToString() ?? FoundryPropertyKeys.UnknownValue
+                : FoundryPropertyKeys.UnknownValue;
             WorkflowFailed?.Invoke(this, new WorkflowFailedEventArgs(
                 foundry,
                 _timeProvider.UtcNow,
@@ -395,7 +401,7 @@ namespace WorkflowForge
                 foundry,
                 _timeProvider.UtcNow,
                 "Operation failed, initiating compensation",
-                lastForgedIndex < operations.Count ? operations[lastForgedIndex].Name : "Unknown",
+                lastForgedIndex < operations.Count ? operations[lastForgedIndex].Name : FoundryPropertyKeys.UnknownValue,
                 null));
 
             int successCount = 0;
@@ -550,10 +556,16 @@ namespace WorkflowForge
         {
             if (_disposed)
                 return;
+            _disposed = true;
             _logger.LogTrace("WorkflowSmith disposal initiated");
 
-            // Dispose concurrency limiter if it was created
             _concurrencyLimiter?.Dispose();
+
+            while (_foundryPool.TryTake(out var pooledFoundry))
+            {
+                try { pooledFoundry.Dispose(); }
+                catch (Exception ex) { _logger.LogWarning(ex, "Pooled foundry disposal failed"); }
+            }
 
             WorkflowStarted = null;
             WorkflowCompleted = null;
@@ -567,7 +579,6 @@ namespace WorkflowForge
             foreach (var middleware in _workflowMiddlewares)
                 (middleware as IDisposable)?.Dispose();
 
-            _disposed = true;
             GC.SuppressFinalize(this);
         }
 

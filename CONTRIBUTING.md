@@ -22,6 +22,7 @@ dotnet test -c Release
 
 ## Pull Request Guidelines
 
+- **Target branch**: Please target the `main` branch for all pull requests.
 - **Keep PRs focused**: One logical change per PR
 - **Include tests**: Add or update tests for code changes where applicable
 - **Update documentation**: Modify docs and samples if behavior changes
@@ -62,8 +63,6 @@ dotnet test -c Release
 6. **Publish**: Trigger the GitHub Actions **Build and Test** workflow via `workflow_dispatch` with `publish: true`
 7. **Tag & Release**: Create a GitHub Release with the tag matching the version and reference the CHANGELOG
 
-See [`RELEASE.md`](RELEASE.md) for detailed instructions on strong-name signing (SNK), NuGet package signing (PFX), and GitHub Actions secrets setup.
-
 ## Code of Conduct
 
 - Be respectful and collaborative
@@ -73,5 +72,7 @@ See [`RELEASE.md`](RELEASE.md) for detailed instructions on strong-name signing 
 ---
 
 By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+
+If this project helps you, consider [supporting on Ko-fi](https://ko-fi.com/animat089).
 
 For questions, open a [GitHub Discussion](https://github.com/animatlabs/workflow-forge/discussions).

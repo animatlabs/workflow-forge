@@ -12,7 +12,7 @@ namespace WorkflowForge.Extensions.Audit
     /// </summary>
     public sealed class InMemoryAuditProvider : IAuditProvider
     {
-        private ConcurrentBag<AuditEntry> _entries = new ConcurrentBag<AuditEntry>();
+        private volatile ConcurrentBag<AuditEntry> _entries = new ConcurrentBag<AuditEntry>();
 
         /// <summary>
         /// Gets all audit entries.
@@ -20,7 +20,7 @@ namespace WorkflowForge.Extensions.Audit
         /// <summary>
         /// Gets a snapshot of all audit entries.
         /// </summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "S2365:Properties should not make collection copies", Justification = "Intentional snapshot semantics for thread-safe read access")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "S2365", Justification = "Intentional snapshot semantics for thread-safe read access; changing to GetEntries() would break consumers")]
         public IReadOnlyList<AuditEntry> Entries => _entries.ToList();
 
         /// <summary>

@@ -1,7 +1,5 @@
 # WorkflowForge Internal Benchmarks
 
-![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
-
 **Internal performance benchmarks for WorkflowForge core**
 
 **Last Updated**: February 2026  

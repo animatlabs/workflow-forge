@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 
 namespace WorkflowForge.Exceptions
@@ -38,7 +38,7 @@ namespace WorkflowForge.Exceptions
             Guid? executionId,
             Guid? workflowId,
             string? operationName)
-            : base(FormatMessage(message, executionId, workflowId, operationName), innerException)
+            : base(FormatContextMessage(message, executionId, workflowId, operationName), innerException)
         {
             ExecutionId = executionId;
             WorkflowId = workflowId;
@@ -56,7 +56,7 @@ namespace WorkflowForge.Exceptions
         /// <summary>Sets serialization info for the exception.</summary>
 #pragma warning disable SYSLIB0051 // Required for .NET Framework 4.8 serialization compatibility
 
-        // Uses obsolete binary serialization APIs intentionally for .NET Framework 4.8 compatibility.
+        [SuppressMessage("Usage", "CA2236:Call base class methods on ISerializable types", Justification = "Required for .NET Framework 4.8 binary serialization")]
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);
@@ -66,20 +66,5 @@ namespace WorkflowForge.Exceptions
         }
 
 #pragma warning restore SYSLIB0051
-
-        private static string FormatMessage(string message, Guid? executionId, Guid? workflowId, string? operationName)
-        {
-            var context = new List<string>();
-            if (executionId.HasValue)
-                context.Add($"ExecutionId={executionId}");
-            if (workflowId.HasValue)
-                context.Add($"WorkflowId={workflowId}");
-            if (!string.IsNullOrEmpty(operationName))
-                context.Add($"Operation={operationName}");
-
-            return context.Count > 0
-                ? $"{message} [{string.Join(", ", context)}]"
-                : message;
-        }
     }
 }

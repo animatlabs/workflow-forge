@@ -176,15 +176,15 @@ namespace WorkflowForge.Operations
         /// <summary>
         /// Executes the strongly-typed operation logic.
         /// </summary>
-        /// <param name="input">The typed input data.</param>
+        /// <param name="inputData">The typed input data.</param>
         /// <param name="foundry">The workflow foundry providing context and services.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The typed output data.</returns>
-        protected override async Task<TOutput> ForgeAsyncCore(TInput input, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        protected override async Task<TOutput> ForgeAsyncCore(TInput inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             try
             {
-                return await _executeFunc(input, foundry, cancellationToken).ConfigureAwait(false);
+                return await _executeFunc(inputData, foundry, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {
@@ -195,18 +195,18 @@ namespace WorkflowForge.Operations
         /// <summary>
         /// Restores the strongly-typed operation effects if supported.
         /// </summary>
-        /// <param name="output">The typed output data to restore.</param>
+        /// <param name="outputData">The typed output data to restore.</param>
         /// <param name="foundry">The workflow foundry providing context and services.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task representing the restoration operation.</returns>
-        public override async Task RestoreAsync(TOutput output, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        public override async Task RestoreAsync(TOutput outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             if (_restoreFunc == null)
                 return;
 
             try
             {
-                await _restoreFunc(output, foundry, cancellationToken).ConfigureAwait(false);
+                await _restoreFunc(outputData, foundry, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {

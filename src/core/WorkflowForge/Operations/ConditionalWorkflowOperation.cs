@@ -154,7 +154,8 @@ namespace WorkflowForge.Operations
                 }
                 catch (Exception)
                 {
-                    // Swallow disposal exceptions
+                    // Intentionally swallowed: disposal exceptions must not propagate
+                    // to prevent cascading failures during cleanup.
                 }
 
                 try
@@ -163,7 +164,8 @@ namespace WorkflowForge.Operations
                 }
                 catch (Exception)
                 {
-                    // Swallow disposal exceptions
+                    // Intentionally swallowed: disposal exceptions must not propagate
+                    // to prevent cascading failures during cleanup.
                 }
             }
 

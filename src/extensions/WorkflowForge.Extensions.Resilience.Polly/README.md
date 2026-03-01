@@ -1,7 +1,5 @@
 # WorkflowForge.Extensions.Resilience.Polly
 
-![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
-
 Advanced resilience extension for WorkflowForge with Polly integration for retry, circuit breaker, timeout, and rate limiting policies.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Resilience.Polly.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Resilience.Polly/)

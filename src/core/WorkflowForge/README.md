@@ -1,7 +1,5 @@
 # WorkflowForge Core
 
-![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
-
 **Zero-dependency workflow orchestration framework for .NET**
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.svg)](https://www.nuget.org/packages/WorkflowForge/)

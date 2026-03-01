@@ -48,7 +48,7 @@ namespace WorkflowForge.Extensions.Resilience
             {
                 await _policy.ExecuteAsync(async () =>
                 {
-                    foundry.Logger.LogDebug("Executing operation '{OperationName}' through circuit breaker", operationName);
+                    foundry.Logger.LogDebug("Executing operation {OperationName} through circuit breaker", operationName);
                     result = await next(cancellationToken).ConfigureAwait(false);
                 }, cancellationToken).ConfigureAwait(false);
 

@@ -1,8 +1,8 @@
 using System;
-using System.Linq;
 using WorkflowForge.Extensions.Persistence.Recovery.Options;
+using Xunit;
 
-namespace WorkflowForge.Extensions.Persistence.Recovery.Tests.Options
+namespace WorkflowForge.Extensions.Persistence.Tests.Options
 {
     public class RecoveryMiddlewareOptionsTests
     {
@@ -88,5 +88,3 @@ namespace WorkflowForge.Extensions.Persistence.Recovery.Tests.Options
         }
     }
 }
-
-

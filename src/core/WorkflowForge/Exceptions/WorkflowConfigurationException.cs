@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 
 namespace WorkflowForge.Exceptions
@@ -35,7 +36,7 @@ namespace WorkflowForge.Exceptions
         /// <summary>Sets serialization info for the exception.</summary>
 #pragma warning disable SYSLIB0051 // Required for .NET Framework 4.8 serialization compatibility
 
-        // Uses obsolete binary serialization APIs intentionally for .NET Framework 4.8 compatibility.
+        [SuppressMessage("Usage", "CA2236:Call base class methods on ISerializable types", Justification = "Required for .NET Framework 4.8 binary serialization")]
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);

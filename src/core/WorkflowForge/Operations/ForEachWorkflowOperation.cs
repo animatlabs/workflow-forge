@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 
 namespace WorkflowForge.Operations
 {
@@ -82,7 +83,7 @@ namespace WorkflowForge.Operations
             var effectiveMaxConcurrency = _maxConcurrency;
 
             var workflowId = foundry.CurrentWorkflow?.Id ?? Guid.Empty;
-            var workflowName = foundry.CurrentWorkflow?.Name ?? "Unknown";
+            var workflowName = foundry.CurrentWorkflow?.Name ?? FoundryPropertyKeys.UnknownValue;
 
             foundry.Logger.LogInformation(
                 "Starting ForEach operation {OperationName} for workflow {WorkflowName} ({WorkflowId}) with {ChildOperationCount} operations, max concurrency: {EffectiveMaxConcurrency}",
@@ -132,7 +133,7 @@ namespace WorkflowForge.Operations
             var effectiveMaxConcurrency = _maxConcurrency;
 
             var workflowId = foundry.CurrentWorkflow?.Id ?? Guid.Empty;
-            var workflowName = foundry.CurrentWorkflow?.Name ?? "Unknown";
+            var workflowName = foundry.CurrentWorkflow?.Name ?? FoundryPropertyKeys.UnknownValue;
 
             foundry.Logger.LogInformation(
                 "Starting restoration for ForEach operation {OperationName} in workflow {WorkflowName} ({WorkflowId})",
@@ -180,7 +181,8 @@ namespace WorkflowForge.Operations
                     }
                     catch (Exception)
                     {
-                        // Ignore disposal errors to prevent cascading failures
+                        // Intentionally swallowed: disposal exceptions must not propagate
+                        // to prevent cascading failures during cleanup.
                     }
                 }
 

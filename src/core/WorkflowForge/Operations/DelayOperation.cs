@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 
 namespace WorkflowForge.Operations
 {
@@ -41,11 +42,11 @@ namespace WorkflowForge.Operations
             var loggingProperties = new Dictionary<string, string>
             {
                 ["DelayMs"] = _delay.TotalMilliseconds.ToString(),
-                ["InputType"] = inputData?.GetType().Name ?? "null",
+                ["InputType"] = inputData?.GetType().Name ?? FoundryPropertyKeys.NullDisplayValue,
                 ["OperationId"] = Id.ToString(),
                 ["OperationName"] = Name,
                 ["WorkflowId"] = foundry.ExecutionId.ToString(),
-                ["WorkflowName"] = foundry.CurrentWorkflow?.Name ?? "Unknown"
+                ["WorkflowName"] = foundry.CurrentWorkflow?.Name ?? FoundryPropertyKeys.UnknownValue
             };
 
             foundry.Logger.LogDebug(loggingProperties, "Starting delay operation");

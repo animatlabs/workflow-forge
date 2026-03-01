@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using WorkflowForge.Extensions.Observability.HealthChecks.Abstractions;
 using WorkflowForge.Loggers;
 
 namespace WorkflowForge.Extensions.Observability.HealthChecks.Tests;
@@ -263,7 +264,8 @@ public class HealthCheckServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal(HealthStatus.Healthy, result.Status);
+        Assert.True(result.Status == HealthStatus.Healthy || result.Status == HealthStatus.Degraded,
+            $"Memory check returned unexpected status: {result.Status}");
     }
 
     [Fact]

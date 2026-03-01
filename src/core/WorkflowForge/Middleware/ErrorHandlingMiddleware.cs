@@ -111,7 +111,7 @@ namespace WorkflowForge.Middleware
                 var recoveryProperties = new Dictionary<string, string>
                 {
                     ["RecoveryAction"] = "ExceptionSwallowed",
-                    ["DefaultReturnValue"] = _defaultReturnValue?.ToString() ?? "null"
+                    ["DefaultReturnValue"] = _defaultReturnValue?.ToString() ?? FoundryPropertyKeys.NullDisplayValue
                 };
 
                 _logger.LogWarning(recoveryProperties, WorkflowLogMessageConstants.ErrorRecoveryAttempted);

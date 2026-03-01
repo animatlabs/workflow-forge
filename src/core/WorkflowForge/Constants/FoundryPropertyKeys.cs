@@ -124,6 +124,16 @@ namespace WorkflowForge.Constants
 
         #endregion Workflow Metadata
 
+        #region Display Values
+
+        /// <summary>Display value used when the actual value is unknown.</summary>
+        internal const string UnknownValue = "Unknown";
+
+        /// <summary>Display value used when the actual value is null.</summary>
+        internal const string NullDisplayValue = "null";
+
+        #endregion Display Values
+
         #region Validation
 
         /// <summary>Validation status</summary>

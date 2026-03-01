@@ -69,23 +69,23 @@ namespace WorkflowForge.Abstractions
         /// <summary>
         /// Forges (executes) the operation with strongly-typed input and output.
         /// </summary>
-        /// <param name="input">The typed input data for this operation.</param>
+        /// <param name="inputData">The typed input data for this operation.</param>
         /// <param name="foundry">The workflow foundry providing execution context and shared services.</param>
         /// <param name="cancellationToken">The cancellation token for cooperative cancellation.</param>
         /// <returns>A task representing the asynchronous operation with typed output data.</returns>
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
         /// <exception cref="ObjectDisposedException">Thrown when the operation has been disposed.</exception>
-        Task<TOutput> ForgeAsync(TInput input, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
+        Task<TOutput> ForgeAsync(TInput inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Restores (compensates) the operation's effects with typed output data.
         /// </summary>
-        /// <param name="output">The typed output data that was produced by this operation.</param>
+        /// <param name="outputData">The typed output data that was produced by this operation.</param>
         /// <param name="foundry">The workflow foundry providing execution context and shared services.</param>
         /// <param name="cancellationToken">The cancellation token for cooperative cancellation.</param>
         /// <returns>A task representing the asynchronous restoration.</returns>
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
         /// <exception cref="ObjectDisposedException">Thrown when the operation has been disposed.</exception>
-        Task RestoreAsync(TOutput output, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
+        Task RestoreAsync(TOutput outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default);
     }
 }

@@ -1,7 +1,5 @@
 # WorkflowForge.Extensions.Persistence.Recovery
 
-![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
-
 Recovery orchestration extension for WorkflowForge to resume persisted workflows from the last checkpoint with configurable retry and backoff.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Persistence.Recovery.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Persistence.Recovery/)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
 using System.Threading;
 using WorkflowForge.Abstractions;
@@ -28,11 +29,12 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
 
         // System metrics -- fields are assigned by the Meter SDK and must be kept alive
         // to prevent the observable gauges from being garbage collected.
-#pragma warning disable S4487
+        [SuppressMessage("CodeQuality", "S4487", Justification = "Observable instruments must be held by reference to prevent garbage collection")]
         private readonly ObservableGauge<long> _memoryUsage;
+        [SuppressMessage("CodeQuality", "S4487", Justification = "Observable instruments must be held by reference to prevent garbage collection")]
         private readonly ObservableGauge<long> _gcCollections;
+        [SuppressMessage("CodeQuality", "S4487", Justification = "Observable instruments must be held by reference to prevent garbage collection")]
         private readonly ObservableGauge<int> _threadPoolAvailable;
-#pragma warning restore S4487
 
         private volatile bool _disposed;
 

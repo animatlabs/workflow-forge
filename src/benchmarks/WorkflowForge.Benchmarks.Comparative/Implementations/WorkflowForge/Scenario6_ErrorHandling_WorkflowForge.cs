@@ -63,7 +63,7 @@ public class Scenario6_ErrorHandling_WorkflowForge : IWorkflowScenario
             throw new InvalidOperationException("Benchmark error");
         }
 
-        public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             foundry.Properties["compensated"] = true;
             return Task.CompletedTask;

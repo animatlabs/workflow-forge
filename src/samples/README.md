@@ -1,7 +1,5 @@
 # WorkflowForge Samples
 
-![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
-
 **Interactive examples demonstrating WorkflowForge capabilities**
 
 ## Available Sample Projects

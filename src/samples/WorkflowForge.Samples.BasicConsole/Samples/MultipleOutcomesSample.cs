@@ -120,7 +120,7 @@ public class CreditCheckOperation : WorkflowOperationBase
         return decision;
     }
 
-    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
     {
         foundry.Properties.TryRemove("credit_decision", out _);
         foundry.Properties.TryRemove("decline_reason", out _);
@@ -189,7 +189,7 @@ public class LoanProcessingOperation : WorkflowOperationBase
         return loanDecision;
     }
 
-    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("loan_decision", out _);
         foundry.Properties.TryRemove("max_loan_amount", out _);
@@ -222,7 +222,7 @@ public class GenerateLoanDocumentsOperation : WorkflowOperationBase
         return $"Documents generated: {documentId}";
     }
 
-    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("loan_document_id", out _);
         foundry.Properties.TryRemove("final_status", out _);
@@ -262,7 +262,7 @@ public class OfferAlternativesOperation : WorkflowOperationBase
         return "Alternatives offered";
     }
 
-    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("alternatives_offered", out _);
         foundry.Properties.TryRemove("final_status", out _);
@@ -297,7 +297,7 @@ public class NotifyApplicantOperation : WorkflowOperationBase
         return "Notification sent";
     }
 
-    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("notification_sent", out _);
         foundry.Properties.TryRemove("notification_date", out _);

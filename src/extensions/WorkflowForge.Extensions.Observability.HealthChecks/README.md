@@ -1,7 +1,5 @@
 # WorkflowForge.Extensions.Observability.HealthChecks
 
-![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
-
 Health check integration extension for WorkflowForge compatible with Microsoft.Extensions.Diagnostics.HealthChecks.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Observability.HealthChecks.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Observability.HealthChecks/)

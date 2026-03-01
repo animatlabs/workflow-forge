@@ -71,11 +71,22 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
             if (!Retry.IsEnabled)
                 return;
 
-            if (Retry.MaxRetryAttempts < 0 || Retry.MaxRetryAttempts > 100)
-                errors.Add($"{SectionName}:Retry:MaxRetryAttempts must be between 0 and 100 (current value: {Retry.MaxRetryAttempts})");
+            AddRetryMaxAttemptsErrorIfInvalid(errors);
+            AddRetryBaseDelayErrorIfInvalid(errors);
+        }
 
-            if (Retry.BaseDelay < TimeSpan.Zero || Retry.BaseDelay > TimeSpan.FromMinutes(10))
-                errors.Add($"{SectionName}:Retry:BaseDelay must be between 0 and 10 minutes (current value: {Retry.BaseDelay})");
+        private void AddRetryMaxAttemptsErrorIfInvalid(IList<string> errors)
+        {
+            if (Retry.MaxRetryAttempts >= 0 && Retry.MaxRetryAttempts <= 100)
+                return;
+            errors.Add($"{SectionName}:Retry:MaxRetryAttempts must be between 0 and 100 (current value: {Retry.MaxRetryAttempts})");
+        }
+
+        private void AddRetryBaseDelayErrorIfInvalid(IList<string> errors)
+        {
+            if (Retry.BaseDelay >= TimeSpan.Zero && Retry.BaseDelay <= TimeSpan.FromMinutes(10))
+                return;
+            errors.Add($"{SectionName}:Retry:BaseDelay must be between 0 and 10 minutes (current value: {Retry.BaseDelay})");
         }
 
         private void ValidateCircuitBreaker(IList<string> errors)
@@ -83,11 +94,22 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
             if (!CircuitBreaker.IsEnabled)
                 return;
 
-            if (CircuitBreaker.FailureThreshold < 1 || CircuitBreaker.FailureThreshold > 1000)
-                errors.Add($"{SectionName}:CircuitBreaker:FailureThreshold must be between 1 and 1000 (current value: {CircuitBreaker.FailureThreshold})");
+            AddCircuitBreakerFailureThresholdErrorIfInvalid(errors);
+            AddCircuitBreakerBreakDurationErrorIfInvalid(errors);
+        }
 
-            if (CircuitBreaker.BreakDuration < TimeSpan.Zero || CircuitBreaker.BreakDuration > TimeSpan.FromHours(1))
-                errors.Add($"{SectionName}:CircuitBreaker:BreakDuration must be between 0 and 1 hour (current value: {CircuitBreaker.BreakDuration})");
+        private void AddCircuitBreakerFailureThresholdErrorIfInvalid(IList<string> errors)
+        {
+            if (CircuitBreaker.FailureThreshold >= 1 && CircuitBreaker.FailureThreshold <= 1000)
+                return;
+            errors.Add($"{SectionName}:CircuitBreaker:FailureThreshold must be between 1 and 1000 (current value: {CircuitBreaker.FailureThreshold})");
+        }
+
+        private void AddCircuitBreakerBreakDurationErrorIfInvalid(IList<string> errors)
+        {
+            if (CircuitBreaker.BreakDuration >= TimeSpan.Zero && CircuitBreaker.BreakDuration <= TimeSpan.FromHours(1))
+                return;
+            errors.Add($"{SectionName}:CircuitBreaker:BreakDuration must be between 0 and 1 hour (current value: {CircuitBreaker.BreakDuration})");
         }
 
         private void ValidateTimeout(IList<string> errors)
@@ -95,8 +117,14 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
             if (!Timeout.IsEnabled)
                 return;
 
-            if (Timeout.DefaultTimeout <= TimeSpan.Zero || Timeout.DefaultTimeout > TimeSpan.FromHours(24))
-                errors.Add($"{SectionName}:Timeout:DefaultTimeout must be between 0 and 24 hours (current value: {Timeout.DefaultTimeout})");
+            AddTimeoutDefaultTimeoutErrorIfInvalid(errors);
+        }
+
+        private void AddTimeoutDefaultTimeoutErrorIfInvalid(IList<string> errors)
+        {
+            if (Timeout.DefaultTimeout > TimeSpan.Zero && Timeout.DefaultTimeout <= TimeSpan.FromHours(24))
+                return;
+            errors.Add($"{SectionName}:Timeout:DefaultTimeout must be between 0 and 24 hours (current value: {Timeout.DefaultTimeout})");
         }
 
         private void ValidateRateLimiter(IList<string> errors)
@@ -104,8 +132,14 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
             if (!RateLimiter.IsEnabled)
                 return;
 
-            if (RateLimiter.PermitLimit < 1 || RateLimiter.PermitLimit > 1000000)
-                errors.Add($"{SectionName}:RateLimiter:PermitLimit must be between 1 and 1000000 (current value: {RateLimiter.PermitLimit})");
+            AddRateLimiterPermitLimitErrorIfInvalid(errors);
+        }
+
+        private void AddRateLimiterPermitLimitErrorIfInvalid(IList<string> errors)
+        {
+            if (RateLimiter.PermitLimit >= 1 && RateLimiter.PermitLimit <= 1000000)
+                return;
+            errors.Add($"{SectionName}:RateLimiter:PermitLimit must be between 1 and 1000000 (current value: {RateLimiter.PermitLimit})");
         }
 
         /// <summary>

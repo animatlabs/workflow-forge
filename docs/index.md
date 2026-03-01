@@ -10,7 +10,7 @@ description: Build high-performance workflows in .NET with zero dependencies, mi
     <h1>WorkflowForge Documentation</h1>
     <p>Build high-performance workflows in .NET with clear guidance, focused examples, and a zero-dependency core.</p>
     <p class="wf-badges">
-      <a href="https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml"><img src="https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml/badge.svg?branch=release/2.x" alt="Build and Test"></a>
+      <a href="https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml"><img src="https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml/badge.svg?branch=main" alt="Build and Test"></a>
       <a href="https://www.nuget.org/packages/WorkflowForge/"><img src="https://img.shields.io/nuget/v/WorkflowForge.svg" alt="NuGet"></a>
       <a href="https://www.nuget.org/packages/WorkflowForge/"><img src="https://img.shields.io/nuget/dt/WorkflowForge.svg" alt="NuGet Downloads"></a>
       <a href="https://github.com/animatlabs/workflow-forge/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
@@ -19,6 +19,7 @@ description: Build high-performance workflows in .NET with zero dependencies, mi
       <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating" alt="Reliability Rating"></a>
       <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating" alt="Security Rating"></a>
       <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating" alt="Maintainability Rating"></a>
+      <a href="https://ko-fi.com/animat089"><img src="https://img.shields.io/badge/Ko--fi-support-ff5e5b?logo=ko-fi" alt="Ko-fi"></a>
     </p>
     <div class="wf-hero-actions">
       <a href="{{ "/getting-started/getting-started/" | relative_url }}">Get started</a>
@@ -264,3 +265,4 @@ Based on BenchmarkDotNet testing (12 scenarios, 50 iterations) against Workflow 
 - **Issues**: [GitHub Issues](https://github.com/animatlabs/workflow-forge/issues)
 - **License**: MIT License
 - **Contributing**: [Contributing Guidelines](https://github.com/animatlabs/workflow-forge/blob/main/CONTRIBUTING.md)
+- **Ko-fi**: If this project helps you, consider [supporting on Ko-fi](https://ko-fi.com/animat089)

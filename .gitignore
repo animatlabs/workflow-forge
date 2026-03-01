@@ -400,3 +400,10 @@ docs/.sass-cache/
 docs/.jekyll-cache/
 docs/.jekyll-metadata
 docs/Gemfile.lock
+
+# Sensitive files
+.env
+.env.*
+*.key
+secrets.json
+appsettings.*.local.json

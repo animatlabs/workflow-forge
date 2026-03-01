@@ -1,7 +1,5 @@
 # WorkflowForge.Extensions.Observability.Performance
 
-![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
-
 Performance monitoring extension for WorkflowForge with operation timing and metrics collection.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Observability.Performance.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Observability.Performance/)

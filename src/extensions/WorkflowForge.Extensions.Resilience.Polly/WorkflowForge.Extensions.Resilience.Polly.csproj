@@ -7,7 +7,7 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
     <AssemblyName>WorkflowForge.Extensions.Resilience.Polly</AssemblyName>
     <RootNamespace>WorkflowForge.Extensions.Resilience.Polly</RootNamespace>
     
@@ -66,5 +66,5 @@ v2.1.0: Updated for WorkflowForge v2.1.0 compatibility. Removed SupportsRestore 
     <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="../../../icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-
+  
 </Project>

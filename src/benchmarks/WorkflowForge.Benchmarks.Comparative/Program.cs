@@ -152,27 +152,27 @@ public class Program
             var b = new Scenario1Benchmark { OperationCount = 3 };
             b.Setup();
             var r = b.WorkflowForge_SimpleSequential().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario1 - WorkflowCore", () =>
         {
             var b = new Scenario1Benchmark { OperationCount = 3 };
             b.Setup();
             var r = b.WorkflowCore_SimpleSequential().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario1 - Elsa", () =>
         {
             var b = new Scenario1Benchmark { OperationCount = 3 };
             b.Setup();
             var r = b.Elsa_SimpleSequential().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
 
         // Scenario 2: Data Passing
@@ -181,27 +181,27 @@ public class Program
             var b = new Scenario2Benchmark { OperationCount = 3 };
             b.Setup();
             var r = b.WorkflowForge_DataPassing().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario2 - WorkflowCore", () =>
         {
             var b = new Scenario2Benchmark { OperationCount = 3 };
             b.Setup();
             var r = b.WorkflowCore_DataPassing().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario2 - Elsa", () =>
         {
             var b = new Scenario2Benchmark { OperationCount = 3 };
             b.Setup();
             var r = b.Elsa_DataPassing().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
 
         // Scenario 3: Conditional Branching
@@ -210,27 +210,27 @@ public class Program
             var b = new Scenario3Benchmark { OperationCount = 10 };
             b.Setup();
             var r = b.WorkflowForge_ConditionalBranching().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario3 - WorkflowCore", () =>
         {
             var b = new Scenario3Benchmark { OperationCount = 10 };
             b.Setup();
             var r = b.WorkflowCore_ConditionalBranching().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario3 - Elsa", () =>
         {
             var b = new Scenario3Benchmark { OperationCount = 10 };
             b.Setup();
             var r = b.Elsa_ConditionalBranching().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
 
         // Scenario 4: Loop Processing
@@ -239,27 +239,27 @@ public class Program
             var b = new Scenario4Benchmark { ItemCount = 10 };
             b.Setup();
             var r = b.WorkflowForge_LoopProcessing().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario4 - WorkflowCore", () =>
         {
             var b = new Scenario4Benchmark { ItemCount = 10 };
             b.Setup();
             var r = b.WorkflowCore_LoopProcessing().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario4 - Elsa", () =>
         {
             var b = new Scenario4Benchmark { ItemCount = 10 };
             b.Setup();
             var r = b.Elsa_LoopProcessing().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
 
         // Scenario 5: Concurrent Execution
@@ -268,27 +268,27 @@ public class Program
             var b = new Scenario5Benchmark { ConcurrencyLevel = 2 };
             b.Setup();
             var r = b.WorkflowForge_ConcurrentExecution().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario5 - WorkflowCore", () =>
         {
             var b = new Scenario5Benchmark { ConcurrencyLevel = 2 };
             b.Setup();
             var r = b.WorkflowCore_ConcurrentExecution().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario5 - Elsa", () =>
         {
             var b = new Scenario5Benchmark { ConcurrencyLevel = 2 };
             b.Setup();
             var r = b.Elsa_ConcurrentExecution().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
 
         // Scenario 6: Error Handling
@@ -297,27 +297,27 @@ public class Program
             var b = new Scenario6Benchmark();
             b.Setup();
             var r = b.WorkflowForge_ErrorHandling().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario6 - WorkflowCore", () =>
         {
             var b = new Scenario6Benchmark();
             b.Setup();
             var r = b.WorkflowCore_ErrorHandling().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario6 - Elsa", () =>
         {
             var b = new Scenario6Benchmark();
             b.Setup();
             var r = b.Elsa_ErrorHandling().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
 
         // Scenario 7: Creation Overhead
@@ -326,27 +326,27 @@ public class Program
             var b = new Scenario7Benchmark();
             b.Setup();
             var r = b.WorkflowForge_CreationOverhead().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario7 - WorkflowCore", () =>
         {
             var b = new Scenario7Benchmark();
             b.Setup();
             var r = b.WorkflowCore_CreationOverhead().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario7 - Elsa", () =>
         {
             var b = new Scenario7Benchmark();
             b.Setup();
             var r = b.Elsa_CreationOverhead().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
 
         // Scenario 8: Complete Lifecycle (no WorkflowCore)
@@ -355,18 +355,18 @@ public class Program
             var b = new Scenario8Benchmark();
             b.Setup();
             var r = b.WorkflowForge_CompleteLifecycle().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario8 - Elsa", () =>
         {
             var b = new Scenario8Benchmark();
             b.Setup();
             var r = b.Elsa_CompleteLifecycle().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
 
         // Scenario 9: State Machine
@@ -375,27 +375,27 @@ public class Program
             var b = new Scenario9Benchmark { TransitionCount = 5 };
             b.Setup();
             var r = b.WorkflowForge_StateMachine().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario9 - WorkflowCore", () =>
         {
             var b = new Scenario9Benchmark { TransitionCount = 5 };
             b.Setup();
             var r = b.WorkflowCore_StateMachine().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario9 - Elsa", () =>
         {
             var b = new Scenario9Benchmark { TransitionCount = 5 };
             b.Setup();
             var r = b.Elsa_StateMachine().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
 
         // Scenario 10: Long Running
@@ -404,27 +404,27 @@ public class Program
             var b = new Scenario10Benchmark { OperationCount = 3, DelayMilliseconds = 1 };
             b.Setup();
             var r = b.WorkflowForge_LongRunning().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario10 - WorkflowCore", () =>
         {
             var b = new Scenario10Benchmark { OperationCount = 3, DelayMilliseconds = 1 };
             b.Setup();
             var r = b.WorkflowCore_LongRunning().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario10 - Elsa", () =>
         {
             var b = new Scenario10Benchmark { OperationCount = 3, DelayMilliseconds = 1 };
             b.Setup();
             var r = b.Elsa_LongRunning().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
 
         // Scenario 11: Parallel Execution
@@ -433,27 +433,27 @@ public class Program
             var b = new Scenario11Benchmark { OperationCount = 4, ConcurrencyLevel = 2 };
             b.Setup();
             var r = b.WorkflowForge_ParallelExecution().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario11 - WorkflowCore", () =>
         {
             var b = new Scenario11Benchmark { OperationCount = 4, ConcurrencyLevel = 2 };
             b.Setup();
             var r = b.WorkflowCore_ParallelExecution().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario11 - Elsa", () =>
         {
             var b = new Scenario11Benchmark { OperationCount = 4, ConcurrencyLevel = 2 };
             b.Setup();
             var r = b.Elsa_ParallelExecution().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
 
         // Scenario 12: Event-Driven
@@ -462,27 +462,27 @@ public class Program
             var b = new Scenario12Benchmark { DelayMilliseconds = 1 };
             b.Setup();
             var r = b.WorkflowForge_EventDriven().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario12 - WorkflowCore", () =>
         {
             var b = new Scenario12Benchmark { DelayMilliseconds = 1 };
             b.Setup();
             var r = b.WorkflowCore_EventDriven().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
         allPassed &= ValidateScenario("Scenario12 - Elsa", () =>
         {
             var b = new Scenario12Benchmark { DelayMilliseconds = 1 };
             b.Setup();
             var r = b.Elsa_EventDriven().GetAwaiter().GetResult();
-            b.Cleanup();
             if (!r.Success)
                 throw new Exception("Scenario did not succeed");
+            b.Cleanup();
         });
 
         Console.WriteLine();

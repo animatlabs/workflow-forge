@@ -175,17 +175,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             if (service == null)
                 return;
 
-            KeyValuePair<string, object?>[]? tagArray = null;
-            if (tags?.Length > 0)
-            {
-                tagArray = new KeyValuePair<string, object?>[tags.Length];
-                for (int i = 0; i < tags.Length; i++)
-                {
-                    tagArray[i] = new KeyValuePair<string, object?>(tags[i].Key, tags[i].Value);
-                }
-            }
-
-            service.RecordOperation(operationName, duration, success, memoryAllocated, tagArray);
+            service.RecordOperation(operationName, duration, success, memoryAllocated, ToTagArray(tags));
         }
 
         /// <summary>
@@ -207,17 +197,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             if (service == null)
                 return;
 
-            KeyValuePair<string, object?>[]? tagArray = null;
-            if (tags?.Length > 0)
-            {
-                tagArray = new KeyValuePair<string, object?>[tags.Length];
-                for (int i = 0; i < tags.Length; i++)
-                {
-                    tagArray[i] = new KeyValuePair<string, object?>(tags[i].Key, tags[i].Value);
-                }
-            }
-
-            service.IncrementActiveOperations(operationName, tagArray);
+            service.IncrementActiveOperations(operationName, ToTagArray(tags));
         }
 
         /// <summary>
@@ -239,17 +219,20 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             if (service == null)
                 return;
 
-            KeyValuePair<string, object?>[]? tagArray = null;
-            if (tags?.Length > 0)
-            {
-                tagArray = new KeyValuePair<string, object?>[tags.Length];
-                for (int i = 0; i < tags.Length; i++)
-                {
-                    tagArray[i] = new KeyValuePair<string, object?>(tags[i].Key, tags[i].Value);
-                }
-            }
+            service.DecrementActiveOperations(operationName, ToTagArray(tags));
+        }
 
-            service.DecrementActiveOperations(operationName, tagArray);
+        private static KeyValuePair<string, object?>[]? ToTagArray((string Key, object? Value)[]? tags)
+        {
+            if (tags == null || tags.Length == 0)
+                return null;
+
+            var result = new KeyValuePair<string, object?>[tags.Length];
+            for (int i = 0; i < tags.Length; i++)
+            {
+                result[i] = new KeyValuePair<string, object?>(tags[i].Key, tags[i].Value);
+            }
+            return result;
         }
 
         /// <summary>

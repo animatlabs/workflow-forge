@@ -1,7 +1,5 @@
 # WorkflowForge Comparative Benchmarks
 
-![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
-
 **Head-to-head performance comparison: WorkflowForge vs Workflow Core vs Elsa Workflows**
 
 **Last Updated**: February 2026

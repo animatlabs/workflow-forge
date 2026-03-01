@@ -112,7 +112,7 @@ public class AuditSample : ISample
         using var foundry = WF.WorkflowForge.CreateFoundry("MetadataAudit");
         foundry.Properties["Workflow.Name"] = "AccountCreation";
         foundry.Properties["UserId"] = "USER-12345";
-        foundry.Properties["IPAddress"] = "192.168.1.100";
+        foundry.Properties["IPAddress"] = "198.51.100.1"; // NOSONAR - RFC 5737 documentation IP range
         foundry.Properties["UserAgent"] = "Mozilla/5.0";
 
         // Enable audit with metadata

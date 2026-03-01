@@ -125,7 +125,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                 }
                 catch (Exception ex)
                 {
-                    _logger?.LogWarning(ex, "Error disposing inner operation {OperationName}", _innerOperation?.Name ?? "Unknown");
+                    _logger?.LogWarning(ex, "Error disposing inner operation {OperationName}", _innerOperation.Name ?? "Unknown");
                 }
             }
 

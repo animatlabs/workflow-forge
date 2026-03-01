@@ -208,7 +208,7 @@ public class ValidateDataItemOperation : WorkflowOperationBase
         return isValid;
     }
 
-    public override Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("last_validation_result", out _);
         return Task.CompletedTask;
