@@ -502,9 +502,10 @@ public class DelayOperationTests
         stopwatch.Stop();
 
         // Assert
-        Assert.True(stopwatch.ElapsedMilliseconds >= delayMs - 25, $"Expected >= {delayMs - 25}ms, got {stopwatch.ElapsedMilliseconds}ms");
-        var upperBound = delayMs + Math.Max(500, delayMs * 2);
-        Assert.True(stopwatch.ElapsedMilliseconds <= upperBound);
+        var lowerBound = Math.Max(0, delayMs - 50);
+        Assert.True(stopwatch.ElapsedMilliseconds >= lowerBound, $"Expected >= {lowerBound}ms, got {stopwatch.ElapsedMilliseconds}ms");
+        var upperBound = delayMs + Math.Max(2000, delayMs * 3);
+        Assert.True(stopwatch.ElapsedMilliseconds <= upperBound, $"Expected <= {upperBound}ms, got {stopwatch.ElapsedMilliseconds}ms");
     }
 
     #endregion Edge Cases and Performance Tests

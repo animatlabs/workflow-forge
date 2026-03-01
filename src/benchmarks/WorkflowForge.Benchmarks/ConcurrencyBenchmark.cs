@@ -28,7 +28,7 @@ public class ConcurrencyBenchmark
     public int OperationsPerWorkflow { get; set; }
 
     [GlobalSetup]
-    public static void Setup()
+    public void Setup()
     {
         // Method intentionally left empty.
     }
@@ -86,8 +86,14 @@ public class ConcurrencyBenchmark
             });
         }
 
-        await Task.WhenAll(tasks);
-        semaphore.Dispose();
+        try
+        {
+            await Task.WhenAll(tasks);
+        }
+        finally
+        {
+            semaphore.Dispose();
+        }
 
         return $"Completed {results.Length} workflows in parallel";
     }
@@ -120,10 +126,15 @@ public class ConcurrencyBenchmark
             tasks.Add(ExecuteWithSemaphore(semaphore, () => RunSingleWorkflow($"Semaphore_{workflowIndex}")));
         }
 
-        var results = await Task.WhenAll(tasks);
-        semaphore.Dispose();
-
-        return $"Completed {results.Length} workflows with semaphore control";
+        try
+        {
+            var results = await Task.WhenAll(tasks);
+            return $"Completed {results.Length} workflows with semaphore control";
+        }
+        finally
+        {
+            semaphore.Dispose();
+        }
     }
 
     [Benchmark]

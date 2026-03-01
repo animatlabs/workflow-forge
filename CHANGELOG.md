@@ -23,10 +23,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `.sonarlint/WorkflowForge.json` local SonarLint configuration
 - `tests/Directory.Build.props` for centralized test project settings (SonarCloud exclusion, strong-name signing)
 - `MixedCompensationTests` and `WorkflowSmithDisposeTests` integration test classes
-- `SerilogLoggerFactory.CreateLogger(SerilogLoggerOptions?, ILogEventSink?)` overload for custom sink injection
+- `SerilogLoggerFactory.CreateLogger(ILoggerFactory)` overload bridging WorkflowForge logs into the application's `Microsoft.Extensions.Logging` pipeline (Serilog, NLog, or any provider configured via `Host.UseSerilog()` / `appsettings.json`)
 - `.github/CODEOWNERS`, PR template, and issue templates for governance
 - Cloudflare CDN cache purge step in GitHub Pages deployment workflow
 - `FoundryPropertyKeys.UnknownValue` and `FoundryPropertyKeys.NullDisplayValue` string literal constants
+- Ko-fi support badge and links in README, docs, and CONTRIBUTING
+- `Microsoft.Extensions.Logging.Abstractions` as public dependency on Serilog extension (enables `ILoggerFactory` bridge)
 
 ### Changed
 - CI/CD pipeline integrated with SonarCloud for continuous code quality analysis (with caching)
@@ -34,10 +36,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Resilience strategy common retry logic extracted into `ResilienceStrategyBase` to eliminate code duplication
 - `IDisposable` pattern corrected across all operation base classes (proper `Dispose(bool)` virtual method)
 - SonarAnalyzer.CSharp added to all source projects; removed from test/benchmark/sample projects (no value with rules suppressed)
-- GitHub Actions updated to latest versions (checkout@v6, setup-dotnet@v5, upload-artifact@v6, download-artifact@v7)
+- GitHub Actions updated to latest versions (checkout@v6, setup-dotnet@v5, upload-artifact@v6, download-artifact@v6)
 - CI/CD pipeline hardened: permissions moved to job level, secrets moved to `env:` blocks, SonarCloud quality gate made non-blocking
 - NuGet README logos removed (NuGet.org CommonMark renderer has no image size control)
 - SonarCloud quality badges (Quality Gate, Coverage, Reliability, Security, Maintainability) and GitHub Actions build badge added to `README.md` and `docs/index.md`
+- Badge branch references changed from `release/2.x` to `main`
+- **BREAKING**: `SerilogLoggerFactory.CreateLogger(SerilogLoggerOptions?, ILogEventSink?)` overload replaced with `CreateLogger(ILoggerFactory)` bridge (ILRepack internalizes Serilog types, making `ILogEventSink` unusable across assembly boundaries)
 - Publish scripts (`scripts/`) removed in favor of GitHub Actions CI/CD pipeline
 - `.editorconfig` added for consistent code style enforcement
 - All build warnings eliminated (zero-warning build across net48/net8.0/net10.0)
@@ -122,6 +126,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - PersistenceMiddleware uses `.Count` property instead of LINQ `Count()` extension on `IReadOnlyList`
 - CI/CD `version` input now passed to `dotnet pack` as `-p:PackageVersion` (was previously ignored)
 - Publish script summary tracker uses `startswith` matching instead of substring `in` to prevent false attribution across package names
+- `DataAnnotationsWorkflowValidator` `default(T)` check incorrectly rejected valid value-type defaults (0, false); replaced with `data is null`
+- WorkflowSmith foundry pool counter never decremented on TryTake, causing pool to permanently disable after `MaxPoolSize` forge calls
+- `MelWorkflowForgeLogger.PushScope` null-forgiving operator on `ILogger.BeginScope` replaced with null-coalescing fallback
+- `ConditionalWorkflowOperation.Dispose` replaced `Debug.WriteLine` with silent swallow pattern (no logger context in disposal)
+- Duplicate XML `<summary>` block on `InMemoryAuditProvider.Entries` property
 
 ## [2.0.0] - 2026-01-01
 

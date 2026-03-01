@@ -38,7 +38,7 @@ public class WorkflowMiddlewareSample : ISample
             foundry.Logger.LogInformation("[WorkflowTiming] Starting {WorkflowName}", workflow.Name);
             await next().ConfigureAwait(false);
             var duration = DateTimeOffset.UtcNow - start;
-            foundry.Logger.LogInformation("[WorkflowTiming] Completed {WorkflowName} in {DurationMs}ms", workflow.Name, duration.TotalMilliseconds.ToString("F0"));
+            foundry.Logger.LogInformation("[WorkflowTiming] Completed {WorkflowName} in {DurationMs}ms", workflow.Name, duration.TotalMilliseconds);
         }
     }
 

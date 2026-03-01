@@ -401,6 +401,10 @@ docs/.jekyll-cache/
 docs/.jekyll-metadata
 docs/Gemfile.lock
 
+# Derived artifacts
+WorkflowForge.pub
+build-analysis.txt
+
 # Sensitive files
 .env
 .env.*

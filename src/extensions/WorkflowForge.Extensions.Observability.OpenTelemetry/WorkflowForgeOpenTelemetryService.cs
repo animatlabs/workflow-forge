@@ -31,8 +31,10 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         // to prevent the observable gauges from being garbage collected.
         [SuppressMessage("CodeQuality", "S4487", Justification = "Observable instruments must be held by reference to prevent garbage collection")]
         private readonly ObservableGauge<long> _memoryUsage;
+
         [SuppressMessage("CodeQuality", "S4487", Justification = "Observable instruments must be held by reference to prevent garbage collection")]
         private readonly ObservableGauge<long> _gcCollections;
+
         [SuppressMessage("CodeQuality", "S4487", Justification = "Observable instruments must be held by reference to prevent garbage collection")]
         private readonly ObservableGauge<int> _threadPoolAvailable;
 
@@ -285,6 +287,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             }
             catch
             {
+                // Platform API may throw on restricted environments; return zero as safe default
                 return 0;
             }
         }
@@ -297,6 +300,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             }
             catch
             {
+                // Platform API may throw on restricted environments; return zero as safe default
                 return 0;
             }
         }
@@ -310,6 +314,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             }
             catch
             {
+                // Platform API may throw on restricted environments; return zero as safe default
                 return 0;
             }
         }

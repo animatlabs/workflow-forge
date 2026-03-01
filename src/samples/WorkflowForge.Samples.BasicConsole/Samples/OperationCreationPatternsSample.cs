@@ -45,7 +45,7 @@ public class OperationCreationPatternsSample : ISample
             .AddOperation("Calculate", (foundry, ct) =>
             {
                 var number = foundry.GetPropertyOrDefault<int>("numberInput");
-                var result = number * 42 * 1.5;
+                var result = number * 42.0 * 1.5;
                 foundry.Logger.LogInformation("Calculating {Number} * 42 * 1.5 = {Result}", number, result);
                 foundry.SetProperty("mathResult", result);
                 return Task.CompletedTask;
@@ -381,7 +381,7 @@ public class TypedMathOperation : WorkflowOperationBase<int, double>
         foundry.Logger.LogInformation(properties, "Calculating {Input} * {Multiplier}", inputData, _multiplier);
         await Task.Delay(50, cancellationToken);
 
-        var result = inputData * _multiplier * 1.5;
+        var result = (double)inputData * _multiplier * 1.5;
         foundry.Properties["mathResult"] = result;
         return result;
     }

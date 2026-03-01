@@ -165,7 +165,6 @@ public class GenerateReceiptOperation : WorkflowOperationBase
     protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var customerName = foundry.GetPropertyOrDefault<string>("customer_name", string.Empty);
-        var transactionId = foundry.GetPropertyOrDefault<string>("transaction_id", string.Empty);
 
         Console.WriteLine($"   [INFO] Generating receipt for {customerName}...");
 

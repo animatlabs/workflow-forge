@@ -33,14 +33,10 @@ public class WorkflowSmithDisposeTests
 
         foreach (var eventName in eventNames)
         {
-            // Compiler-generated backing field: <EventName>k__BackingField
-            var backingFieldName = $"<{eventName}>k__BackingField";
-            var field = smithType.GetField(backingFieldName, BindingFlags.Instance | BindingFlags.NonPublic);
-            if (field != null)
-            {
-                var value = field.GetValue(smith);
-                Assert.True(value == null, $"Event {eventName} backing field should be null after Dispose");
-            }
+            var field = smithType.GetField(eventName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.True(field != null, $"Expected backing field '{eventName}' not found on {smithType.Name}");
+            var value = field.GetValue(smith);
+            Assert.True(value == null, $"Event {eventName} backing field should be null after Dispose");
         }
     }
 

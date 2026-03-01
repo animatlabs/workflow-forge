@@ -15,9 +15,6 @@ namespace WorkflowForge.Extensions.Audit
         private volatile ConcurrentBag<AuditEntry> _entries = new ConcurrentBag<AuditEntry>();
 
         /// <summary>
-        /// Gets all audit entries.
-        /// </summary>
-        /// <summary>
         /// Gets a snapshot of all audit entries.
         /// </summary>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("CodeQuality", "S2365", Justification = "Intentional snapshot semantics for thread-safe read access; changing to GetEntries() would break consumers")]

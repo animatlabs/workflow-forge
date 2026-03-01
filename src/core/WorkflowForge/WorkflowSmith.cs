@@ -116,6 +116,7 @@ namespace WorkflowForge
             }
             else
             {
+                Interlocked.Decrement(ref _poolCount);
                 ((WorkflowFoundry)foundry).Reset(Guid.NewGuid(), _logger, _serviceProvider, _options, workflow);
             }
 
@@ -563,7 +564,8 @@ namespace WorkflowForge
 
             while (_foundryPool.TryTake(out var pooledFoundry))
             {
-                try { pooledFoundry.Dispose(); }
+                try
+                { pooledFoundry.Dispose(); }
                 catch (Exception ex) { _logger.LogWarning(ex, "Pooled foundry disposal failed"); }
             }
 

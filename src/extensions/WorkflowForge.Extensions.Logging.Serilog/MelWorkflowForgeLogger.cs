@@ -136,13 +136,15 @@ namespace WorkflowForge.Extensions.Logging.Serilog
             if (properties == null || properties.Count == 0)
                 return NoOpDisposable.Instance;
 
-            return _logger.BeginScope(properties)!;
+            return _logger.BeginScope(properties) ?? NoOpDisposable.Instance;
         }
 
         private sealed class NoOpDisposable : IDisposable
         {
             internal static readonly NoOpDisposable Instance = new NoOpDisposable();
-            public void Dispose() { }
+
+            public void Dispose()
+            { }
         }
     }
 }

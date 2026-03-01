@@ -172,9 +172,9 @@ namespace WorkflowForge.Tests.Operations
         public async Task ForgeAsync_WithTimeout_ThrowsOperationCanceledException()
         {
             // Arrange
-            var operations = new[] { CreateSlowMockOperation("Op1", TimeSpan.FromMilliseconds(200)).Object };
+            var operations = new[] { CreateSlowMockOperation("Op1", TimeSpan.FromSeconds(10)).Object };
             var foundry = CreateMockFoundry();
-            var foreachOp = new ForEachWorkflowOperation(operations, timeout: TimeSpan.FromMilliseconds(50));
+            var foreachOp = new ForEachWorkflowOperation(operations, timeout: TimeSpan.FromMilliseconds(500));
 
             // Act & Assert
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
