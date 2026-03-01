@@ -11,12 +11,12 @@ namespace WorkflowForge.Tests.Operations;
 /// Tests for ActionWorkflowOperation&lt;TInput&gt; generic variant, RestoreAsync with restoreFunc,
 /// and error paths not covered by ActionWorkflowOperationEnhancedTests.
 /// </summary>
-public class ActionWorkflowOperationGenericTests
+public class ActionWorkflowOperationGenericShould
 {
     #region ActionWorkflowOperation<TInput> - Constructor and ForgeAsync
 
     [Fact]
-    public void Generic_Constructor_WithValidParams_SetsName()
+    public void SetName_GivenGenericValidParams()
     {
         var action = new Func<string, IWorkflowFoundry, CancellationToken, Task>((_, _, _) => Task.CompletedTask);
         var operation = new ActionWorkflowOperation<string>("TypedAction", action);
@@ -25,7 +25,7 @@ public class ActionWorkflowOperationGenericTests
     }
 
     [Fact]
-    public void Generic_Constructor_WithNullName_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenGenericNullName()
     {
         var action = new Func<string, IWorkflowFoundry, CancellationToken, Task>((_, _, _) => Task.CompletedTask);
 
@@ -34,14 +34,14 @@ public class ActionWorkflowOperationGenericTests
     }
 
     [Fact]
-    public void Generic_Constructor_WithNullAction_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenGenericNullAction()
     {
         Assert.Throws<ArgumentNullException>(() =>
             new ActionWorkflowOperation<string>("Test", null!));
     }
 
     [Fact]
-    public async Task Generic_ForgeAsync_ExecutesActionAndReturnsInput()
+    public async Task ExecuteActionAndReturnInput_GivenGenericForgeAsync()
     {
         var captured = "";
         var action = new Func<string, IWorkflowFoundry, CancellationToken, Task>((input, _, _) =>
@@ -60,7 +60,7 @@ public class ActionWorkflowOperationGenericTests
     }
 
     [Fact]
-    public async Task Generic_ForgeAsync_WhenActionThrows_WrapsInWorkflowOperationException()
+    public async Task WrapInWorkflowOperationException_GivenGenericActionThrows()
     {
         var action = new Func<string, IWorkflowFoundry, CancellationToken, Task>((_, _, _) =>
             throw new InvalidOperationException("Action failed"));
@@ -75,7 +75,7 @@ public class ActionWorkflowOperationGenericTests
     }
 
     [Fact]
-    public async Task Generic_ForgeAsync_WhenOperationCanceled_PropagatesWithoutWrapping()
+    public async Task PropagateWithoutWrapping_GivenGenericOperationCanceled()
     {
         var action = new Func<string, IWorkflowFoundry, CancellationToken, Task>((_, _, ct) =>
             throw new OperationCanceledException(ct));
@@ -92,7 +92,7 @@ public class ActionWorkflowOperationGenericTests
     #region ActionWorkflowOperation<TInput> - RestoreAsync
 
     [Fact]
-    public async Task Generic_RestoreAsync_WithNullRestoreFunc_ReturnsImmediately()
+    public async Task ReturnImmediately_GivenGenericNullRestoreFunc()
     {
         var action = new Func<string, IWorkflowFoundry, CancellationToken, Task>((_, _, _) => Task.CompletedTask);
         var operation = new ActionWorkflowOperation<string>("Test", action);
@@ -102,7 +102,7 @@ public class ActionWorkflowOperationGenericTests
     }
 
     [Fact]
-    public async Task Generic_RestoreAsync_WithRestoreFunc_InvokesRestore()
+    public async Task InvokeRestore_GivenGenericRestoreFunc()
     {
         var restored = false;
         var action = new Func<string, IWorkflowFoundry, CancellationToken, Task>((_, _, _) => Task.CompletedTask);
@@ -122,7 +122,7 @@ public class ActionWorkflowOperationGenericTests
     }
 
     [Fact]
-    public async Task Generic_RestoreAsync_WhenRestoreThrows_ThrowsWorkflowRestoreException()
+    public async Task ThrowWorkflowRestoreException_GivenGenericRestoreThrows()
     {
         var action = new Func<string, IWorkflowFoundry, CancellationToken, Task>((_, _, _) => Task.CompletedTask);
         var restoreAction = new Func<string, IWorkflowFoundry, CancellationToken, Task>((_, _, _) =>
@@ -142,7 +142,7 @@ public class ActionWorkflowOperationGenericTests
     #region ActionWorkflowOperation (non-generic) - RestoreAsync with restoreFunc
 
     [Fact]
-    public async Task RestoreAsync_WithRestoreFunc_InvokesRestore()
+    public async Task InvokeRestore_GivenRestoreAsyncWithRestoreFunc()
     {
         var restored = false;
         var action = new Func<object?, IWorkflowFoundry, CancellationToken, Task>((_, _, _) => Task.CompletedTask);
@@ -162,7 +162,7 @@ public class ActionWorkflowOperationGenericTests
     }
 
     [Fact]
-    public async Task RestoreAsync_WhenRestoreThrows_ThrowsWorkflowRestoreException()
+    public async Task ThrowWorkflowRestoreException_GivenRestoreThrows()
     {
         var action = new Func<object?, IWorkflowFoundry, CancellationToken, Task>((_, _, _) => Task.CompletedTask);
         var restoreAction = new Func<object?, IWorkflowFoundry, CancellationToken, Task>((_, _, _) =>
@@ -180,7 +180,7 @@ public class ActionWorkflowOperationGenericTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WhenActionThrows_IncludesFoundryContextInException()
+    public async Task IncludeFoundryContextInException_GivenActionThrows()
     {
         var action = new Func<object?, IWorkflowFoundry, CancellationToken, Task>((_, _, _) =>
             throw new InvalidOperationException("Fail"));

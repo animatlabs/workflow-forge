@@ -7,10 +7,10 @@ using WorkflowForge.Loggers;
 
 namespace WorkflowForge.Extensions.Observability.HealthChecks.Tests;
 
-public class MemoryHealthCheckTests
+public class MemoryHealthCheckShould
 {
     [Fact]
-    public void Constructor_SetsNameCorrectly()
+    public void SetNameCorrectly_GivenConstruction()
     {
         // Arrange & Act
         var healthCheck = new MemoryHealthCheck();
@@ -20,7 +20,7 @@ public class MemoryHealthCheckTests
     }
 
     [Fact]
-    public async Task CheckHealthAsync_ReturnsHealthyWithMemoryUsage()
+    public async Task ReturnHealthyWithMemoryUsage_GivenCheckHealthAsync()
     {
         // Arrange
         var healthCheck = new MemoryHealthCheck();
@@ -39,7 +39,7 @@ public class MemoryHealthCheckTests
     }
 
     [Fact]
-    public async Task CheckHealthAsync_WithCancellation_ThrowsOperationCanceledException()
+    public async Task ThrowOperationCanceledException_GivenCheckHealthAsyncWithCancellation()
     {
         // Arrange
         var healthCheck = new MemoryHealthCheck();
@@ -52,10 +52,10 @@ public class MemoryHealthCheckTests
     }
 }
 
-public class GarbageCollectorHealthCheckTests
+public class GarbageCollectorHealthCheckShould
 {
     [Fact]
-    public void Constructor_SetsNameCorrectly()
+    public void SetNameCorrectly_GivenConstruction()
     {
         // Arrange & Act
         var healthCheck = new GarbageCollectorHealthCheck();
@@ -65,7 +65,7 @@ public class GarbageCollectorHealthCheckTests
     }
 
     [Fact]
-    public async Task CheckHealthAsync_ReturnsHealthyWithGCInfo()
+    public async Task ReturnHealthyWithGCInfo_GivenCheckHealthAsync()
     {
         // Arrange
         var healthCheck = new GarbageCollectorHealthCheck();
@@ -86,7 +86,7 @@ public class GarbageCollectorHealthCheckTests
     }
 
     [Fact]
-    public async Task CheckHealthAsync_WithCancellation_ThrowsOperationCanceledException()
+    public async Task ThrowOperationCanceledException_GivenCheckHealthAsyncWithCancellation()
     {
         // Arrange
         var healthCheck = new GarbageCollectorHealthCheck();
@@ -99,10 +99,10 @@ public class GarbageCollectorHealthCheckTests
     }
 }
 
-public class ThreadPoolHealthCheckTests
+public class ThreadPoolHealthCheckShould
 {
     [Fact]
-    public void Constructor_SetsNameCorrectly()
+    public void SetNameCorrectly_GivenConstruction()
     {
         // Arrange & Act
         var healthCheck = new ThreadPoolHealthCheck();
@@ -112,7 +112,7 @@ public class ThreadPoolHealthCheckTests
     }
 
     [Fact]
-    public async Task CheckHealthAsync_ReturnsHealthyWithThreadPoolInfo()
+    public async Task ReturnHealthyWithThreadPoolInfo_GivenCheckHealthAsync()
     {
         // Arrange
         var healthCheck = new ThreadPoolHealthCheck();
@@ -133,7 +133,7 @@ public class ThreadPoolHealthCheckTests
     }
 
     [Fact]
-    public async Task CheckHealthAsync_WithCancellation_ThrowsOperationCanceledException()
+    public async Task ThrowOperationCanceledException_GivenCheckHealthAsyncWithCancellation()
     {
         // Arrange
         var healthCheck = new ThreadPoolHealthCheck();
@@ -146,10 +146,10 @@ public class ThreadPoolHealthCheckTests
     }
 }
 
-public class HealthCheckServiceTests
+public class HealthCheckServiceShould
 {
     [Fact]
-    public void Constructor_WithValidLogger_SetsPropertiesCorrectly()
+    public void SetPropertiesCorrectly_GivenConstructorWithValidLogger()
     {
         // Arrange
         var logger = new ConsoleLogger();
@@ -162,14 +162,14 @@ public class HealthCheckServiceTests
     }
 
     [Fact]
-    public void Constructor_WithNullLogger_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenConstructorWithNullLogger()
     {
         // Arrange, Act & Assert
         Assert.Throws<ArgumentNullException>(() => new HealthCheckService(null!, registerBuiltInHealthChecks: false));
     }
 
     [Fact]
-    public void RegisterHealthCheck_WithValidHealthCheck_AddsToCollection()
+    public void AddToCollection_GivenRegisterHealthCheckWithValidHealthCheck()
     {
         // Arrange
         var logger = new ConsoleLogger();
@@ -184,7 +184,7 @@ public class HealthCheckServiceTests
     }
 
     [Fact]
-    public void RegisterHealthCheck_WithNullHealthCheck_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenRegisterHealthCheckWithNullHealthCheck()
     {
         // Arrange
         var logger = new ConsoleLogger();
@@ -195,7 +195,7 @@ public class HealthCheckServiceTests
     }
 
     [Fact]
-    public async Task CheckHealthAsync_WithSingleHealthCheck_ReturnsResult()
+    public async Task ReturnResult_GivenCheckHealthAsyncWithSingleHealthCheck()
     {
         // Arrange
         var logger = new ConsoleLogger();
@@ -215,7 +215,7 @@ public class HealthCheckServiceTests
     }
 
     [Fact]
-    public async Task CheckHealthAsync_WithMultipleHealthChecks_ReturnsAllResults()
+    public async Task ReturnAllResults_GivenCheckHealthAsyncWithMultipleHealthChecks()
     {
         // Arrange
         var logger = new ConsoleLogger();
@@ -248,7 +248,7 @@ public class HealthCheckServiceTests
     }
 
     [Fact]
-    public async Task CheckHealthAsync_WithSpecificHealthCheck_ReturnsOnlyThatResult()
+    public async Task ReturnOnlyThatResult_GivenCheckHealthAsyncWithSpecificHealthCheck()
     {
         // Arrange
         var logger = new ConsoleLogger();
@@ -269,7 +269,7 @@ public class HealthCheckServiceTests
     }
 
     [Fact]
-    public async Task CheckHealthAsync_WithNonExistentHealthCheck_ReturnsNull()
+    public async Task ReturnNull_GivenCheckHealthAsyncWithNonExistentHealthCheck()
     {
         // Arrange
         var logger = new ConsoleLogger();
@@ -283,7 +283,7 @@ public class HealthCheckServiceTests
     }
 
     [Fact]
-    public async Task CheckHealthAsync_WithCancellation_ThrowsOperationCanceledException()
+    public async Task ThrowOperationCanceledException_GivenCheckHealthAsyncWithCancellation()
     {
         // Arrange
         var logger = new ConsoleLogger();
@@ -300,10 +300,10 @@ public class HealthCheckServiceTests
     }
 }
 
-public class HealthCheckResultTests
+public class HealthCheckResultShould
 {
     [Fact]
-    public void Constructor_WithValidParameters_SetsPropertiesCorrectly()
+    public void SetPropertiesCorrectly_GivenHealthCheckResultConstructorWithValidParameters()
     {
         // Arrange
         const HealthStatus status = HealthStatus.Healthy;
@@ -324,7 +324,7 @@ public class HealthCheckResultTests
     }
 
     [Fact]
-    public void Constructor_WithNullData_CreatesEmptyDictionary()
+    public void CreateEmptyDictionary_GivenConstructorWithNullData()
     {
         // Arrange & Act
         var result = new HealthCheckResult(HealthStatus.Healthy, "Test");
@@ -338,7 +338,7 @@ public class HealthCheckResultTests
     [InlineData(HealthStatus.Healthy)]
     [InlineData(HealthStatus.Degraded)]
     [InlineData(HealthStatus.Unhealthy)]
-    public void Status_WithValidValues_SetsCorrectly(HealthStatus status)
+    public void SetCorrectly_GivenStatusWithValidValues(HealthStatus status)
     {
         // Arrange & Act
         var result = new HealthCheckResult(status, "Test");
@@ -348,7 +348,7 @@ public class HealthCheckResultTests
     }
 
     [Fact]
-    public void HealthyFactory_ReturnsHealthyResult()
+    public void ReturnHealthyResult_GivenHealthyFactory()
     {
         // Arrange & Act
         var result = HealthCheckResult.Healthy("All good");

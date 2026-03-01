@@ -8,12 +8,12 @@ using WF = WorkflowForge;
 
 namespace WorkflowForge.Extensions.Resilience.Tests;
 
-public class CircuitBreakerMiddlewareTests : IDisposable
+public class CircuitBreakerMiddlewareShould : IDisposable
 {
     private readonly IWorkflowFoundry _foundry;
     private readonly TestOperation _operation;
 
-    public CircuitBreakerMiddlewareTests()
+        public CircuitBreakerMiddlewareShould()
     {
         _foundry = WF.WorkflowForge.CreateFoundry("CircuitBreakerTest");
         _operation = new TestOperation();
@@ -25,14 +25,14 @@ public class CircuitBreakerMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public void Constructor_WithNullPolicy_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullPolicy()
     {
         Assert.Throws<ArgumentNullException>(() =>
             new CircuitBreakerMiddleware(null!, null, null));
     }
 
     [Fact]
-    public void Constructor_WithValidPolicy_SetsDefaultName()
+    public void SetDefaultName_GivenValidPolicy()
     {
         var policy = new FakeCircuitBreakerPolicy();
         var middleware = new CircuitBreakerMiddleware(policy);
@@ -42,7 +42,7 @@ public class CircuitBreakerMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public void Constructor_WithCustomName_SetsName()
+    public void SetName_GivenCustomName()
     {
         var policy = new FakeCircuitBreakerPolicy();
         var middleware = new CircuitBreakerMiddleware(policy, null, "CustomCircuitBreaker");
@@ -52,7 +52,7 @@ public class CircuitBreakerMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_SuccessfulExecution_ReturnsResult()
+    public async Task ReturnResult_GivenExecuteAsyncSuccessfulExecution()
     {
         var policy = new FakeCircuitBreakerPolicy();
         var middleware = new CircuitBreakerMiddleware(policy);
@@ -68,7 +68,7 @@ public class CircuitBreakerMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_SuccessfulExecution_InvokesNextDelegate()
+    public async Task InvokeNextDelegate_GivenExecuteAsyncSuccessfulExecution()
     {
         var policy = new FakeCircuitBreakerPolicy();
         var middleware = new CircuitBreakerMiddleware(policy);
@@ -87,7 +87,7 @@ public class CircuitBreakerMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPolicyThrowsCircuitBreakerOpenException_RethrowsException()
+    public async Task RethrowException_GivenExecuteAsyncWhenPolicyThrowsCircuitBreakerOpenException()
     {
         var policy = new FakeCircuitBreakerPolicy { ThrowCircuitBreakerOpen = true };
         var middleware = new CircuitBreakerMiddleware(policy);
@@ -102,7 +102,7 @@ public class CircuitBreakerMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPolicyThrowsGeneralException_RethrowsException()
+    public async Task RethrowException_GivenExecuteAsyncWhenPolicyThrowsGeneralException()
     {
         var policy = new FakeCircuitBreakerPolicy { ThrowGenericException = true };
         var middleware = new CircuitBreakerMiddleware(policy);
@@ -117,7 +117,7 @@ public class CircuitBreakerMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPolicyThrowsCircuitBreakerOpenException_WithLogger_LogsWarning()
+    public async Task LogWarning_GivenExecuteAsyncWhenPolicyThrowsCircuitBreakerOpenExceptionWithLogger()
     {
         var policy = new FakeCircuitBreakerPolicy { ThrowCircuitBreakerOpen = true };
         var logger = new Mock<IWorkflowForgeLogger>();
@@ -134,7 +134,7 @@ public class CircuitBreakerMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenPolicyThrowsGeneralException_WithLogger_LogsError()
+    public async Task LogError_GivenExecuteAsyncWhenPolicyThrowsGeneralExceptionWithLogger()
     {
         var policy = new FakeCircuitBreakerPolicy { ThrowGenericException = true };
         var logger = new Mock<IWorkflowForgeLogger>();
@@ -151,7 +151,7 @@ public class CircuitBreakerMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public void Dispose_DisposesPolicy()
+    public void DisposePolicy_GivenDispose()
     {
         var policy = new FakeCircuitBreakerPolicy();
         var middleware = new CircuitBreakerMiddleware(policy);
@@ -162,7 +162,7 @@ public class CircuitBreakerMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public void Dispose_CanBeCalledMultipleTimes_DoesNotThrow()
+    public void NotThrow_GivenDisposeCanBeCalledMultipleTimes()
     {
         var policy = new FakeCircuitBreakerPolicy();
         var middleware = new CircuitBreakerMiddleware(policy);
@@ -172,7 +172,7 @@ public class CircuitBreakerMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithCancellationToken_PassesTokenToPolicy()
+    public async Task PassTokenToPolicy_GivenExecuteAsyncWithCancellationToken()
     {
         var policy = new FakeCircuitBreakerPolicy();
         var middleware = new CircuitBreakerMiddleware(policy);

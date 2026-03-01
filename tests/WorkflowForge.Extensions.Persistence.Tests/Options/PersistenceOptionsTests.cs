@@ -2,17 +2,17 @@ using Xunit;
 
 namespace WorkflowForge.Extensions.Persistence.Tests.Options
 {
-    public class PersistenceOptionsTests
+    public class PersistenceOptionsShould
     {
         [Fact]
-        public void Constructor_WithDefaultSectionName_ShouldSetDefaultSectionName()
+        public void SetDefaultSectionName_GivenDefaultSectionName()
         {
             var options = new PersistenceOptions();
             Assert.Equal(PersistenceOptions.DefaultSectionName, options.SectionName);
         }
 
         [Fact]
-        public void Constructor_WithCustomSectionName_ShouldSetCustomSectionName()
+        public void SetCustomSectionName_GivenCustomSectionName()
         {
             var customSection = "MyApp:Persistence";
             var options = new PersistenceOptions(customSection);
@@ -20,7 +20,7 @@ namespace WorkflowForge.Extensions.Persistence.Tests.Options
         }
 
         [Fact]
-        public void DefaultValues_ShouldBeCorrect()
+        public void BeCorrect_GivenDefaultValues()
         {
             var options = new PersistenceOptions();
             Assert.True(options.Enabled);
@@ -31,7 +31,7 @@ namespace WorkflowForge.Extensions.Persistence.Tests.Options
         }
 
         [Fact]
-        public void Validate_WithValidConfiguration_ShouldReturnEmptyErrors()
+        public void ReturnEmptyErrors_GivenValidConfiguration()
         {
             var options = new PersistenceOptions { MaxVersions = 10 };
             var errors = options.Validate();
@@ -39,7 +39,7 @@ namespace WorkflowForge.Extensions.Persistence.Tests.Options
         }
 
         [Fact]
-        public void Validate_WithNegativeMaxVersions_ShouldReturnError()
+        public void ReturnError_GivenNegativeMaxVersions()
         {
             var options = new PersistenceOptions { MaxVersions = -1 };
             var errors = options.Validate();
@@ -48,7 +48,7 @@ namespace WorkflowForge.Extensions.Persistence.Tests.Options
         }
 
         [Fact]
-        public void Validate_WithZeroMaxVersions_ShouldReturnEmptyErrors()
+        public void ReturnEmptyErrors_GivenZeroMaxVersions()
         {
             var options = new PersistenceOptions { MaxVersions = 0 };
             var errors = options.Validate();
@@ -56,7 +56,7 @@ namespace WorkflowForge.Extensions.Persistence.Tests.Options
         }
 
         [Fact]
-        public void Validate_ErrorShouldIncludeSectionName()
+        public void IncludeSectionNameInError_GivenInvalidConfiguration()
         {
             var customSection = "Custom:Section";
             var options = new PersistenceOptions(customSection) { MaxVersions = -5 };

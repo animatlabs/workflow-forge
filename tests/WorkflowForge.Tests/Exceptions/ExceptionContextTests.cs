@@ -6,12 +6,12 @@ namespace WorkflowForge.Tests.Exceptions
     /// <summary>
     /// Tests for exception context properties (ExecutionId, WorkflowId, OperationName).
     /// </summary>
-    public class ExceptionContextTests
+    public class ExceptionContextShould
     {
         #region WorkflowOperationException Tests
 
         [Fact]
-        public void WorkflowOperationException_WithContext_IncludesInMessage()
+        public void IncludeContextInMessage_GivenWorkflowOperationExceptionWithContext()
         {
             // Arrange
             var executionId = Guid.NewGuid();
@@ -37,7 +37,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void WorkflowOperationException_WithNullContext_NoContextInMessage()
+        public void NotIncludeContextInMessage_GivenNullContext()
         {
             // Arrange
             var innerException = new InvalidOperationException("Inner error");
@@ -58,7 +58,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void WorkflowOperationException_LegacyConstructor_StillWorks()
+        public void StillWork_GivenLegacyConstructor()
         {
             // Arrange & Act
             var exception = new WorkflowOperationException(
@@ -72,7 +72,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void WorkflowOperationException_WithPartialContext_OnlyIncludesProvided()
+        public void IncludeOnlyProvided_GivenPartialContext()
         {
             // Arrange
             var executionId = Guid.NewGuid();
@@ -97,7 +97,7 @@ namespace WorkflowForge.Tests.Exceptions
         #region WorkflowRestoreException Tests
 
         [Fact]
-        public void WorkflowRestoreException_WithContext_IncludesInMessage()
+        public void IncludeContextInMessage_GivenWorkflowRestoreExceptionWithContext()
         {
             // Arrange
             var executionId = Guid.NewGuid();
@@ -123,7 +123,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void WorkflowRestoreException_LegacyConstructor_StillWorks()
+        public void StillWork_GivenWorkflowRestoreLegacyConstructor()
         {
             // Arrange & Act
             var exception = new WorkflowRestoreException("Restore failed");
@@ -133,7 +133,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void WorkflowRestoreException_LegacyWithInner_StillWorks()
+        public void StillWork_GivenWorkflowRestoreLegacyWithInner()
         {
             // Arrange
             var innerException = new InvalidOperationException("Inner error");

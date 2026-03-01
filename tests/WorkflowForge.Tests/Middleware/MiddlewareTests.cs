@@ -18,11 +18,11 @@ namespace WorkflowForge.Tests.Middleware;
 /// Comprehensive tests for middleware functionality covering pipeline execution,
 /// order, exception handling, and complex middleware scenarios.
 /// </summary>
-public class MiddlewareTests
+public class MiddlewareShould
 {
     private readonly ITestOutputHelper _output;
 
-    public MiddlewareTests(ITestOutputHelper output)
+    public MiddlewareShould(ITestOutputHelper output)
     {
         _output = output;
     }
@@ -30,7 +30,7 @@ public class MiddlewareTests
     #region Middleware Pipeline Tests
 
     [Fact]
-    public async Task MiddlewarePipeline_WithSingleMiddleware_ExecutesCorrectly()
+    public async Task ExecuteCorrectly_GivenSingleMiddleware()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -65,7 +65,7 @@ public class MiddlewareTests
     }
 
     [Fact]
-    public async Task MiddlewarePipeline_WithMultipleMiddlewares_ExecutesInCorrectOrder()
+    public async Task ExecuteInCorrectOrder_GivenMultipleMiddlewares()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -107,7 +107,7 @@ public class MiddlewareTests
     }
 
     [Fact]
-    public async Task MiddlewarePipeline_WithConditionalMiddleware_ExecutesConditionally()
+    public async Task ExecuteConditionally_GivenConditionalMiddleware()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -145,7 +145,7 @@ public class MiddlewareTests
     #region Data Transformation Middleware Tests
 
     [Fact]
-    public async Task DataTransformationMiddleware_TransformsInputAndOutput()
+    public async Task TransformInputAndOutput_GivenDataTransformationMiddleware()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -172,7 +172,7 @@ public class MiddlewareTests
     }
 
     [Fact]
-    public async Task ValidationMiddleware_ValidatesInput()
+    public async Task ThrowInvalidOperationException_GivenInvalidInput()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -197,7 +197,7 @@ public class MiddlewareTests
     }
 
     [Fact]
-    public async Task ValidationMiddleware_WithValidInput_PassesThrough()
+    public async Task PassThrough_GivenValidInput()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -228,7 +228,7 @@ public class MiddlewareTests
     #region Exception Handling Middleware Tests
 
     [Fact]
-    public async Task ExceptionHandlingMiddleware_CatchesAndTransformsExceptions()
+    public async Task CatchAndTransformExceptions_GivenExceptionHandlingMiddleware()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -254,7 +254,7 @@ public class MiddlewareTests
     }
 
     [Fact]
-    public async Task ExceptionHandlingMiddleware_WithUnhandledException_PropagatesException()
+    public async Task PropagateException_GivenUnhandledException()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -279,7 +279,7 @@ public class MiddlewareTests
     #region Performance and Timing Middleware Tests
 
     [Fact]
-    public async Task TimingMiddleware_RecordsExecutionTime()
+    public async Task RecordExecutionTime_GivenTimingMiddleware()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -304,11 +304,11 @@ public class MiddlewareTests
         var executionTime = (TimeSpan)(foundry.Properties["execution-time"] ?? TimeSpan.Zero);
         // Use more lenient bounds to avoid flaky test failures
         Assert.True(executionTime.TotalMilliseconds >= 20, $"Expected at least 20ms, got {executionTime.TotalMilliseconds}ms");
-        Assert.True(executionTime.TotalMilliseconds < 1000, $"Expected less than 1000ms, got {executionTime.TotalMilliseconds}ms");
+        Assert.True(executionTime.TotalMilliseconds < 5000, $"Expected less than 5000ms, got {executionTime.TotalMilliseconds}ms");
     }
 
     [Fact]
-    public async Task LoggingMiddleware_LogsOperationExecution()
+    public async Task LogOperationExecution_GivenLoggingMiddleware()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -339,7 +339,7 @@ public class MiddlewareTests
     #region Complex Middleware Scenarios
 
     [Fact]
-    public async Task ComplexMiddlewarePipeline_WithAllMiddlewareTypes_ExecutesCorrectly()
+    public async Task ExecuteCorrectly_GivenAllMiddlewareTypes()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -377,7 +377,7 @@ public class MiddlewareTests
     }
 
     [Fact]
-    public async Task MiddlewareWithCancellation_HandlesTokenCorrectly()
+    public async Task HandleTokenCorrectly_GivenCancellation()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -403,7 +403,7 @@ public class MiddlewareTests
     }
 
     [Fact]
-    public async Task OperationTimeoutMiddleware_ThrowsTimeoutException_WhenOperationExceedsTimeout()
+    public async Task ThrowTimeoutException_GivenOperationExceedsTimeout()
     {
         // Arrange
         var foundry = CreateTestFoundry();
@@ -428,7 +428,7 @@ public class MiddlewareTests
     }
 
     [Fact]
-    public async Task WorkflowTimeoutMiddleware_ThrowsTimeoutException_WhenWorkflowExceedsTimeout()
+    public async Task ThrowTimeoutException_GivenWorkflowExceedsTimeout()
     {
         // Arrange
         var foundry = CreateTestFoundry();

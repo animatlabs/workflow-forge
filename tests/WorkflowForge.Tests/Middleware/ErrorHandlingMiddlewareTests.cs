@@ -13,12 +13,12 @@ namespace WorkflowForge.Tests.Middleware;
 /// <summary>
 /// Unit tests for ErrorHandlingMiddleware - error wrapping, rethrow, and swallow behavior.
 /// </summary>
-public class ErrorHandlingMiddlewareTests
+public class ErrorHandlingMiddlewareShould
 {
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithNullLogger_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullLogger()
     {
         // Arrange
         var options = new ErrorHandlingMiddlewareOptions();
@@ -29,7 +29,7 @@ public class ErrorHandlingMiddlewareTests
     }
 
     [Fact]
-    public void Constructor_WithNullOptions_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullOptions()
     {
         // Arrange
         var logger = TestNullLogger.Instance;
@@ -40,7 +40,7 @@ public class ErrorHandlingMiddlewareTests
     }
 
     [Fact]
-    public void Constructor_WithValidArgs_Initializes()
+    public void Initialize_GivenValidArgs()
     {
         // Arrange
         var logger = TestNullLogger.Instance;
@@ -54,7 +54,7 @@ public class ErrorHandlingMiddlewareTests
     }
 
     [Fact]
-    public void Constructor_BackwardCompatibility_WithRethrowFlag_Initializes()
+    public void Initialize_GivenRethrowFlag_BackwardCompatibility()
     {
         // Arrange
         var logger = TestNullLogger.Instance;
@@ -71,7 +71,7 @@ public class ErrorHandlingMiddlewareTests
     #region ExecuteAsync_Success
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextSucceeds_ReturnsResult()
+    public async Task ReturnResult_GivenNextSucceeds()
     {
         // Arrange
         var logger = TestNullLogger.Instance;
@@ -97,7 +97,7 @@ public class ErrorHandlingMiddlewareTests
     #region ExecuteAsync_Exception_Rethrow
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextThrows_AndRethrowTrue_PropagatesException()
+    public async Task PropagateException_GivenNextThrowsAndRethrowTrue()
     {
         // Arrange
         var logger = TestNullLogger.Instance;
@@ -119,7 +119,7 @@ public class ErrorHandlingMiddlewareTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextThrows_AndRethrowTrue_StoresErrorPropertiesInFoundry()
+    public async Task StoreErrorPropertiesInFoundry_GivenNextThrowsAndRethrowTrue()
     {
         // Arrange
         var logger = TestNullLogger.Instance;
@@ -148,7 +148,7 @@ public class ErrorHandlingMiddlewareTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextThrows_AndIncludeStackTracesTrue_StoresStackTrace()
+    public async Task StoreStackTrace_GivenNextThrowsAndIncludeStackTracesTrue()
     {
         // Arrange
         var logger = TestNullLogger.Instance;
@@ -171,7 +171,7 @@ public class ErrorHandlingMiddlewareTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextThrows_AndIncludeStackTracesFalse_DoesNotStoreStackTrace()
+    public async Task NotStoreStackTrace_GivenNextThrowsAndIncludeStackTracesFalse()
     {
         // Arrange
         var logger = TestNullLogger.Instance;
@@ -197,7 +197,7 @@ public class ErrorHandlingMiddlewareTests
     #region ExecuteAsync_Exception_Swallow
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextThrows_AndRethrowFalse_ReturnsDefaultValue()
+    public async Task ReturnDefaultValue_GivenNextThrowsAndRethrowFalse()
     {
         // Arrange
         var logger = TestNullLogger.Instance;
@@ -218,7 +218,7 @@ public class ErrorHandlingMiddlewareTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextThrows_AndRethrowFalse_WithCustomDefaultReturnValue_ReturnsCustomValue()
+    public async Task ReturnCustomValue_GivenNextThrowsRethrowFalseAndCustomDefaultReturnValue()
     {
         // Arrange
         var logger = TestNullLogger.Instance;
@@ -240,7 +240,7 @@ public class ErrorHandlingMiddlewareTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextThrows_AndRethrowFalse_StillStoresErrorProperties()
+    public async Task StoreErrorProperties_GivenNextThrowsAndRethrowFalse()
     {
         // Arrange
         var logger = TestNullLogger.Instance;
@@ -268,7 +268,7 @@ public class ErrorHandlingMiddlewareTests
     #region ExecuteAsync_Cancellation
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextThrowsOperationCanceledException_PropagatesWithoutLogging()
+    public async Task PropagateWithoutLogging_GivenNextThrowsOperationCanceledException()
     {
         // Arrange
         var logger = TestNullLogger.Instance;
@@ -294,7 +294,7 @@ public class ErrorHandlingMiddlewareTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextThrowsTaskCanceledException_PropagatesWithoutLogging()
+    public async Task PropagateWithoutLogging_GivenNextThrowsTaskCanceledException()
     {
         // Arrange
         var logger = TestNullLogger.Instance;
@@ -315,7 +315,7 @@ public class ErrorHandlingMiddlewareTests
     // Note: OperationCanceledException and TaskCanceledException are re-thrown without
     // storing error properties - they propagate immediately for cancellation flow
     [Fact]
-    public async Task ExecuteAsync_WhenNextThrowsOperationCanceledException_DoesNotStoreErrorProperties()
+    public async Task NotStoreErrorProperties_GivenNextThrowsOperationCanceledException()
     {
         // Arrange
         var logger = TestNullLogger.Instance;

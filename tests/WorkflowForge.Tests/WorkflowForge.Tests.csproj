@@ -28,6 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\core\WorkflowForge.Testing\WorkflowForge.Testing.csproj" />
     <ProjectReference Include="..\..\src\core\WorkflowForge\WorkflowForge.csproj" />
+    <ProjectReference Include="..\..\src\extensions\WorkflowForge.Extensions.Observability.Performance\WorkflowForge.Extensions.Observability.Performance.csproj" />
   </ItemGroup>
 
   <ItemGroup>

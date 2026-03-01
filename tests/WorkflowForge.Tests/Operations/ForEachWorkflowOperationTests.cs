@@ -12,12 +12,12 @@ namespace WorkflowForge.Tests.Operations
     /// Comprehensive tests for ForEachWorkflowOperation covering different data strategies,
     /// concurrency controls, timeout scenarios, and error handling.
     /// </summary>
-    public class ForEachWorkflowOperationTests
+    public class ForEachWorkflowOperationShould
     {
         #region Constructor Tests
 
         [Fact]
-        public void Constructor_WithValidOperations_CreatesOperation()
+        public void CreateOperation_GivenValidOperations()
         {
             // Arrange
             var operations = new[] { CreateMockOperation("Op1").Object, CreateMockOperation("Op2").Object };
@@ -32,7 +32,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public void Constructor_WithCustomNameAndId_UsesProvidedValues()
+        public void UseProvidedValues_GivenCustomNameAndId()
         {
             // Arrange
             var operations = new[] { CreateMockOperation("Op1").Object };
@@ -48,14 +48,14 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public void Constructor_WithNullOperations_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenNullOperations()
         {
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() => new ForEachWorkflowOperation(null!));
         }
 
         [Fact]
-        public void Constructor_WithEmptyOperations_ThrowsArgumentException()
+        public void ThrowArgumentException_GivenEmptyOperations()
         {
             // Arrange
             var operations = Array.Empty<IWorkflowOperation>();
@@ -65,7 +65,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public void Constructor_WithInvalidMaxConcurrency_ThrowsArgumentException()
+        public void ThrowArgumentException_GivenInvalidMaxConcurrency()
         {
             // Arrange
             var operations = new[] { CreateMockOperation("Op1").Object };
@@ -80,7 +80,7 @@ namespace WorkflowForge.Tests.Operations
         #region ForgeAsync Tests
 
         [Fact]
-        public async Task ForgeAsync_WithSharedInputStrategy_PassesSameInputToAllOperations()
+        public async Task PassSameInputToAllOperations_GivenSharedInputStrategy()
         {
             // Arrange
             var inputData = "shared input";
@@ -89,7 +89,7 @@ namespace WorkflowForge.Tests.Operations
             var foreachOp = new ForEachWorkflowOperation(operations, dataStrategy: ForEachDataStrategy.SharedInput);
 
             // Act
-            var result = await foreachOp.ForgeAsync(inputData, foundry.Object);
+            _ = await foreachOp.ForgeAsync(inputData, foundry.Object);
 
             // Assert
             Mock.Get(operations[0]).Verify(op => op.ForgeAsync(inputData, foundry.Object, It.IsAny<CancellationToken>()), Times.Once);
@@ -97,7 +97,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_WithSplitInputStrategy_DistributesInputData()
+        public async Task DistributeInputData_GivenSplitInputStrategy()
         {
             // Arrange
             var inputData = new[] { "item1", "item2", "item3" };
@@ -114,7 +114,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_WithNoInputStrategy_PassesNullToAllOperations()
+        public async Task PassNullToAllOperations_GivenNoInputStrategy()
         {
             // Arrange
             var inputData = "some input";
@@ -131,7 +131,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_WithMaxConcurrency_LimitsParallelExecution()
+        public async Task LimitParallelExecution_GivenMaxConcurrency()
         {
             // Arrange
             var operationCount = 10;
@@ -154,7 +154,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_WithTimeout_CompletesWithoutTimeout()
+        public async Task CompleteWithoutTimeout_GivenTimeout()
         {
             // Arrange
             var operations = new[] { CreateSlowMockOperation("Op1", TimeSpan.FromMilliseconds(50)).Object };
@@ -169,7 +169,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_WithTimeout_ThrowsOperationCanceledException()
+        public async Task ThrowOperationCanceledException_GivenTimeout()
         {
             // Arrange
             var operations = new[] { CreateSlowMockOperation("Op1", TimeSpan.FromSeconds(10)).Object };
@@ -182,7 +182,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_CombinesResults_ReturnsForEachResults()
+        public async Task ReturnForEachResults_GivenCombinedResults()
         {
             // Arrange
             var operations = new[]
@@ -205,7 +205,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_WithNullFoundry_ThrowsArgumentNullException()
+        public async Task ThrowArgumentNullException_GivenNullFoundry()
         {
             // Arrange
             var operations = new[] { CreateMockOperation("Op1").Object };
@@ -217,7 +217,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_WithCancellationToken_CompletesIfNotCancelled()
+        public async Task CompleteIfNotCancelled_GivenCancellationToken()
         {
             // Arrange
             var operations = new[] { CreateMockOperation("Op1").Object };
@@ -234,7 +234,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_WithFoundryMaxConcurrencyProperty_RespectsFrameworkLimit()
+        public async Task RespectFrameworkLimit_GivenFoundryMaxConcurrencyProperty()
         {
             // Arrange
             var operations = Enumerable.Range(0, 10)
@@ -264,7 +264,7 @@ namespace WorkflowForge.Tests.Operations
         #region RestoreAsync Tests
 
         [Fact]
-        public async Task RestoreAsync_WithValidOperations_CallsRestoreOnAllOperations()
+        public async Task CallRestoreOnAllOperations_GivenValidOperations()
         {
             // Arrange
             var operations = new[] { CreateMockOperation("Op1").Object, CreateMockOperation("Op2").Object };
@@ -281,7 +281,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task RestoreAsync_WithMaxConcurrency_LimitsParallelRestoration()
+        public async Task LimitParallelRestoration_GivenMaxConcurrency()
         {
             // Arrange
             var operationCount = 6;
@@ -308,7 +308,7 @@ namespace WorkflowForge.Tests.Operations
         #region Static Factory Method Tests
 
         [Fact]
-        public void CreateSharedInput_CreatesOperationWithSharedInputStrategy()
+        public void CreateOperationWithSharedInputStrategy_GivenSharedInput()
         {
             // Arrange
             var operations = new[] { CreateMockOperation("Op1").Object };
@@ -322,7 +322,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public void CreateSplitInput_CreatesOperationWithSplitInputStrategy()
+        public void CreateOperationWithSplitInputStrategy_GivenSplitInput()
         {
             // Arrange
             var operations = new[] { CreateMockOperation("Op1").Object };
@@ -336,7 +336,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public void CreateNoInput_CreatesOperationWithNoInputStrategy()
+        public void CreateOperationWithNoInputStrategy_GivenNoInput()
         {
             // Arrange
             var operations = new[] { CreateMockOperation("Op1").Object };
@@ -350,7 +350,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public void Create_WithParams_CreatesOperationFromArray()
+        public void CreateOperationFromArray_GivenParams()
         {
             // Arrange
             var op1 = CreateMockOperation("Op1").Object;
@@ -365,7 +365,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public void CreateWithThrottling_CreatesOperationWithMaxConcurrency()
+        public void CreateOperationWithMaxConcurrency_GivenThrottling()
         {
             // Arrange
             var operations = new[] { CreateMockOperation("Op1").Object, CreateMockOperation("Op2").Object };
@@ -384,7 +384,7 @@ namespace WorkflowForge.Tests.Operations
         #region Dispose Tests
 
         [Fact]
-        public void Dispose_DisposesAllChildOperations()
+        public void DisposeAllChildOperations_GivenDispose()
         {
             // Arrange
             var operations = new[] { CreateMockOperation("Op1").Object, CreateMockOperation("Op2").Object };
@@ -399,7 +399,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task ForgeAsync_AfterDispose_ThrowsObjectDisposedException()
+        public async Task ThrowObjectDisposedException_GivenForgeAsyncAfterDispose()
         {
             // Arrange
             var operations = new[] { CreateMockOperation("Op1").Object };
@@ -413,7 +413,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public async Task RestoreAsync_AfterDispose_ThrowsObjectDisposedException()
+        public async Task ThrowObjectDisposedException_GivenRestoreAsyncAfterDispose()
         {
             // Arrange
             var operations = new[] { CreateMockOperation("Op1").Object };
@@ -427,7 +427,7 @@ namespace WorkflowForge.Tests.Operations
         }
 
         [Fact]
-        public void Dispose_CalledMultipleTimes_HandledGracefully()
+        public void HandleGracefully_GivenDisposeCalledMultipleTimes()
         {
             // Arrange
             var operations = new[] { CreateMockOperation("Op1").Object };
@@ -447,7 +447,7 @@ namespace WorkflowForge.Tests.Operations
         #region Edge Cases and Error Handling
 
         [Fact]
-        public async Task ForgeAsync_WithOperationThatThrows_PropagatesException()
+        public async Task PropagateException_GivenOperationThatThrows()
         {
             // Arrange
             var failingOp = CreateMockOperation("FailingOp");

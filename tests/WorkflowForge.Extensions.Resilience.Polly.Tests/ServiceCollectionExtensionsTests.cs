@@ -12,10 +12,10 @@ using Xunit;
 
 namespace WorkflowForge.Extensions.Resilience.Polly.Tests;
 
-public class ServiceCollectionExtensionsTests
+public class ServiceCollectionExtensionsShould
 {
     [Fact]
-    public void AddWorkflowForgePolly_RegistersPollyMiddlewareOptions()
+    public void RegisterPollyMiddlewareOptions_GivenAddWorkflowForgePolly()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IWorkflowForgeLogger>(TestNullLogger.Instance);
@@ -29,7 +29,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForgePolly_WithConfigureAction_AppliesConfiguration()
+    public void ApplyConfiguration_GivenAddWorkflowForgePollyWithConfigureAction()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IWorkflowForgeLogger>(TestNullLogger.Instance);
@@ -47,7 +47,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForgePolly_RegistersPollyMiddleware()
+    public void RegisterPollyMiddleware_GivenAddWorkflowForgePolly()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IWorkflowForgeLogger>(TestNullLogger.Instance);
@@ -60,7 +60,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForgePolly_RegistersIWorkflowResilienceStrategy()
+    public void RegisterIWorkflowResilienceStrategy_GivenAddWorkflowForgePolly()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IWorkflowForgeLogger>(TestNullLogger.Instance);
@@ -73,7 +73,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public async Task AddWorkflowForgePolly_ResolvedStrategy_ExecutesSuccessfully()
+    public async Task ExecuteSuccessfully_GivenAddWorkflowForgePollyResolvedStrategy()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IWorkflowForgeLogger>(TestNullLogger.Instance);
@@ -89,7 +89,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForgePolly_ResolvedMiddleware_HasCorrectName()
+    public void HaveCorrectName_GivenAddWorkflowForgePollyResolvedMiddleware()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IWorkflowForgeLogger>(TestNullLogger.Instance);
@@ -104,7 +104,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForgePolly_WithConfiguration_BindsSettings()
+    public void BindSettings_GivenAddWorkflowForgePollyWithConfiguration()
     {
         var configData = new Dictionary<string, string?>
         {
@@ -129,7 +129,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForgePolly_WithConfiguration_CustomSectionName_BindsCorrectly()
+    public void BindCorrectly_GivenAddWorkflowForgePollyWithCustomSectionName()
     {
         var configData = new Dictionary<string, string?>
         {
@@ -150,7 +150,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForgePolly_CalledMultipleTimes_DoesNotThrow()
+    public void NotThrow_GivenAddWorkflowForgePollyCalledMultipleTimes()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IWorkflowForgeLogger>(TestNullLogger.Instance);
@@ -165,7 +165,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForgePolly_WithEnableComprehensivePolicies_ResolvesComprehensiveMiddleware()
+    public void ResolveComprehensiveMiddleware_GivenAddWorkflowForgePollyWithEnableComprehensivePolicies()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IWorkflowForgeLogger>(TestNullLogger.Instance);
@@ -185,7 +185,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForgePolly_WithNullConfigureAction_DoesNotThrow()
+    public void NotThrow_GivenAddWorkflowForgePollyWithNullConfigureAction()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IWorkflowForgeLogger>(TestNullLogger.Instance);

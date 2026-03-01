@@ -4,10 +4,10 @@ using System.Threading.Tasks;
 
 namespace WorkflowForge.Extensions.Validation.Tests
 {
-    public class DataAnnotationsWorkflowValidatorTests
+    public class DataAnnotationsWorkflowValidatorShould
     {
         [Fact]
-        public async Task ValidateAsync_WithValidData_ShouldReturnSuccess()
+        public async Task ReturnSuccess_GivenValidData()
         {
             var validator = new DataAnnotationsWorkflowValidator<TestModel>();
 
@@ -18,7 +18,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
         }
 
         [Fact]
-        public async Task ValidateAsync_WithInvalidData_ShouldReturnFailure()
+        public async Task ReturnFailure_GivenInvalidData()
         {
             var validator = new DataAnnotationsWorkflowValidator<TestModel>();
 
@@ -31,7 +31,7 @@ namespace WorkflowForge.Extensions.Validation.Tests
         }
 
         [Fact]
-        public async Task ValidateAsync_WithPartiallyInvalidData_ShouldReturnOnlyFailedRules()
+        public async Task ReturnOnlyFailedRules_GivenPartiallyInvalidData()
         {
             var validator = new DataAnnotationsWorkflowValidator<TestModel>();
 

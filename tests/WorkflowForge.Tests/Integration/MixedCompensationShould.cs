@@ -10,10 +10,10 @@ namespace WorkflowForge.Tests.Integration;
 /// Integration tests for mixed compensation scenarios: LoggingOperation (no-op RestoreAsync)
 /// plus restorable operations plus failing operations.
 /// </summary>
-public class MixedCompensationTests
+public class MixedCompensationShould
 {
     [Fact]
-    public async Task ForgeAsync_GivenLoggingPlusRestorablePlusFailing_TriggersCompensation_RestorableOpRestored_LoggingOpNoOpRestoreDoesNotThrow()
+    public async Task TriggerCompensation_GivenLoggingPlusRestorablePlusFailing()
     {
         // Arrange: LoggingOperation (no-op RestoreAsync) + restorable op + failing op
         var restorableRestoreInvoked = false;
@@ -42,7 +42,7 @@ public class MixedCompensationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_GivenRestorableThenLoggingThenFailing_CompensatesInReverseOrder_LoggingRestoreSucceeds()
+    public async Task CompensateInReverseOrder_GivenRestorableThenLoggingThenFailing()
     {
         // Arrange: Restorable first, then LoggingOperation, then failing
         var restoreOrder = new List<string>();

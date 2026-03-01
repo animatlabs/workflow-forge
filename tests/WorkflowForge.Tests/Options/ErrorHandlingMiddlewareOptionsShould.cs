@@ -7,12 +7,12 @@ namespace WorkflowForge.Tests.Options;
 /// <summary>
 /// Unit tests for ErrorHandlingMiddlewareOptions - defaults, property setters, boundary values, clone.
 /// </summary>
-public class ErrorHandlingMiddlewareOptionsTests
+public class ErrorHandlingMiddlewareOptionsShould
 {
     #region Constructor and Defaults
 
     [Fact]
-    public void Constructor_Default_InitializesWithExpectedDefaults()
+    public void InitializeWithExpectedDefaults_GivenDefaultConstructor()
     {
         // Act
         var options = new ErrorHandlingMiddlewareOptions();
@@ -25,7 +25,7 @@ public class ErrorHandlingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Constructor_WithCustomSectionName_UseCustomSectionName()
+    public void UseCustomSectionName_GivenCustomSectionName()
     {
         // Arrange
         var customSection = "Custom:ErrorHandling:Config";
@@ -38,7 +38,7 @@ public class ErrorHandlingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void DefaultSectionName_IsExpectedValue()
+    public void BeExpectedValue_GivenDefaultSectionName()
     {
         Assert.Equal("WorkflowForge:Middleware:ErrorHandling", ErrorHandlingMiddlewareOptions.DefaultSectionName);
     }
@@ -48,7 +48,7 @@ public class ErrorHandlingMiddlewareOptionsTests
     #region Property Setters
 
     [Fact]
-    public void RethrowExceptions_CanBeSetToFalse()
+    public void AllowSettingToFalse_GivenRethrowExceptions()
     {
         // Arrange
         var options = new ErrorHandlingMiddlewareOptions();
@@ -61,7 +61,7 @@ public class ErrorHandlingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void RethrowExceptions_CanBeSetToTrue()
+    public void AllowSettingToTrue_GivenRethrowExceptions()
     {
         // Arrange
         var options = new ErrorHandlingMiddlewareOptions { RethrowExceptions = false };
@@ -74,7 +74,7 @@ public class ErrorHandlingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void IncludeStackTraces_CanBeSetToFalse()
+    public void AllowSettingToFalse_GivenIncludeStackTraces()
     {
         // Arrange
         var options = new ErrorHandlingMiddlewareOptions();
@@ -173,7 +173,7 @@ public class ErrorHandlingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Clone_WithCustomSectionName_PreservesSectionName()
+    public void PreserveSectionName_GivenCloneWithCustomSectionName()
     {
         // Arrange
         var original = new ErrorHandlingMiddlewareOptions("Custom:Section");

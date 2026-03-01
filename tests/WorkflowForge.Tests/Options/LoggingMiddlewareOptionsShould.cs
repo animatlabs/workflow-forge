@@ -7,12 +7,12 @@ namespace WorkflowForge.Tests.Options;
 /// <summary>
 /// Unit tests for LoggingMiddlewareOptions - defaults, property setters, validation, clone.
 /// </summary>
-public class LoggingMiddlewareOptionsTests
+public class LoggingMiddlewareOptionsShould
 {
     #region Constructor and Defaults
 
     [Fact]
-    public void Constructor_Default_InitializesWithExpectedDefaults()
+    public void InitializeWithExpectedDefaults_GivenDefaultConstructor()
     {
         // Act
         var options = new LoggingMiddlewareOptions();
@@ -25,7 +25,7 @@ public class LoggingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Constructor_WithCustomSectionName_UseCustomSectionName()
+    public void UseCustomSectionName_GivenCustomSectionName()
     {
         // Arrange
         var customSection = "Custom:Logging:Config";
@@ -38,7 +38,7 @@ public class LoggingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void DefaultSectionName_IsExpectedValue()
+    public void BeExpectedValue_GivenDefaultSectionName()
     {
         Assert.Equal("WorkflowForge:Middleware:Logging", LoggingMiddlewareOptions.DefaultSectionName);
     }
@@ -48,7 +48,7 @@ public class LoggingMiddlewareOptionsTests
     #region Property Setters
 
     [Fact]
-    public void MinimumLevel_CanBeSet()
+    public void AllowSetting_GivenMinimumLevel()
     {
         // Arrange
         var options = new LoggingMiddlewareOptions();
@@ -61,7 +61,7 @@ public class LoggingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void LogDataPayloads_CanBeSetToTrue()
+    public void AllowSettingToTrue_GivenLogDataPayloads()
     {
         // Arrange
         var options = new LoggingMiddlewareOptions();
@@ -74,7 +74,7 @@ public class LoggingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void LogDataPayloads_CanBeSetToFalse()
+    public void AllowSettingToFalse_GivenLogDataPayloads()
     {
         // Arrange
         var options = new LoggingMiddlewareOptions { LogDataPayloads = true };
@@ -87,7 +87,7 @@ public class LoggingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Enabled_CanBeSet()
+    public void AllowSetting_GivenEnabled()
     {
         // Arrange
         var options = new LoggingMiddlewareOptions();
@@ -104,7 +104,7 @@ public class LoggingMiddlewareOptionsTests
     #region Validate
 
     [Fact]
-    public void Validate_WithValidMinimumLevel_ReturnsEmptyList()
+    public void ReturnEmptyList_GivenValidMinimumLevel()
     {
         // Arrange
         var options = new LoggingMiddlewareOptions { MinimumLevel = "Information" };
@@ -124,7 +124,7 @@ public class LoggingMiddlewareOptionsTests
     [InlineData("Warning")]
     [InlineData("Error")]
     [InlineData("Critical")]
-    public void Validate_WithValidLogLevels_ReturnsEmptyList(string level)
+    public void ReturnEmptyList_GivenValidLogLevels(string level)
     {
         // Arrange
         var options = new LoggingMiddlewareOptions { MinimumLevel = level };
@@ -140,7 +140,7 @@ public class LoggingMiddlewareOptionsTests
     [InlineData("trace")]
     [InlineData("DEBUG")]
     [InlineData("information")]
-    public void Validate_WithValidLogLevelsCaseInsensitive_ReturnsEmptyList(string level)
+    public void ReturnEmptyList_GivenValidLogLevelsCaseInsensitive(string level)
     {
         // Arrange
         var options = new LoggingMiddlewareOptions { MinimumLevel = level };
@@ -153,7 +153,7 @@ public class LoggingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Validate_WithInvalidMinimumLevel_ReturnsError()
+    public void ReturnError_GivenInvalidMinimumLevel()
     {
         // Arrange
         var options = new LoggingMiddlewareOptions { MinimumLevel = "InvalidLevel" };
@@ -168,7 +168,7 @@ public class LoggingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Validate_WithEmptyMinimumLevel_ReturnsError()
+    public void ReturnError_GivenEmptyMinimumLevel()
     {
         // Arrange
         var options = new LoggingMiddlewareOptions { MinimumLevel = "" };
@@ -185,7 +185,7 @@ public class LoggingMiddlewareOptionsTests
     #region Clone
 
     [Fact]
-    public void Clone_ReturnsNewInstance()
+    public void ReturnNewInstance_GivenClone()
     {
         // Arrange
         var original = new LoggingMiddlewareOptions
@@ -208,7 +208,7 @@ public class LoggingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Clone_ModifyingCloneDoesNotAffectOriginal()
+    public void NotAffectOriginal_GivenModifyingClone()
     {
         // Arrange
         var original = new LoggingMiddlewareOptions { LogDataPayloads = true };
@@ -223,7 +223,7 @@ public class LoggingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Clone_WithCustomSectionName_PreservesSectionName()
+    public void PreserveSectionName_GivenCloneWithCustomSectionName()
     {
         // Arrange
         var original = new LoggingMiddlewareOptions("Custom:Section");

@@ -15,10 +15,10 @@ using WorkflowForge.Extensions.Validation.Options;
 
 namespace WorkflowForge.Extensions.DependencyInjection.Tests
 {
-    public class ConfigurationDrivenWorkflowTests
+    public class ConfigurationDrivenWorkflowShould
     {
         [Fact]
-        public async Task Workflow_WithValidationDisabled_ShouldSkipValidation()
+        public async Task SkipValidation_GivenWorkflowWithValidationDisabled()
         {
             var services = new ServiceCollection();
             var config = new ConfigurationBuilder()
@@ -48,7 +48,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
         }
 
         [Fact]
-        public async Task Workflow_WithValidationEnabled_ShouldExecuteValidation()
+        public async Task ExecuteValidation_GivenWorkflowWithValidationEnabled()
         {
             var services = new ServiceCollection();
             var config = new ConfigurationBuilder()
@@ -77,7 +77,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
         }
 
         [Fact]
-        public async Task Workflow_WithPersistenceDisabled_ShouldNotPersist()
+        public async Task NotPersist_GivenWorkflowWithPersistenceDisabled()
         {
             var services = new ServiceCollection();
             var config = new ConfigurationBuilder()
@@ -107,7 +107,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
         }
 
         [Fact]
-        public async Task Workflow_WithRecoveryDisabled_ShouldNotRetry()
+        public async Task NotRetry_GivenWorkflowWithRecoveryDisabled()
         {
             var services = new ServiceCollection();
             var config = new ConfigurationBuilder()

@@ -4,16 +4,12 @@ using WorkflowForge.Abstractions;
 
 namespace WorkflowForge.Tests.Orchestration
 {
-    /// <summary>
-    /// Comprehensive tests for the Workflow class covering construction, properties,
-    /// and workflow lifecycle management.
-    /// </summary>
-    public class WorkflowTests
+    public class WorkflowShould
     {
         #region Constructor Tests
 
         [Fact]
-        public void Constructor_WithValidParameters_CreatesWorkflow()
+        public void CreateWorkflow_GivenValidParameters()
         {
             // Arrange
             var name = "TestWorkflow";
@@ -40,7 +36,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public void Constructor_WithNullName_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenNullName()
         {
             // Arrange
             var operations = new List<IWorkflowOperation> { CreateMockOperation("Op1").Object };
@@ -52,7 +48,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public void Constructor_WithNullVersion_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenNullVersion()
         {
             // Arrange
             var operations = new List<IWorkflowOperation> { CreateMockOperation("Op1").Object };
@@ -64,7 +60,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public void Constructor_WithNullOperations_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenNullOperations()
         {
             // Arrange
             var properties = new Dictionary<string, object?>();
@@ -75,7 +71,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public void Constructor_WithNullProperties_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenNullProperties()
         {
             // Arrange
             var operations = new List<IWorkflowOperation> { CreateMockOperation("Op1").Object };
@@ -86,7 +82,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public void Constructor_WithNullDescription_AllowsNullValue()
+        public void AllowNullValue_GivenNullDescription()
         {
             // Arrange
             var operations = new List<IWorkflowOperation> { CreateMockOperation("Op1").Object };
@@ -100,7 +96,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public void Constructor_WithEmptyOperations_CreatesWorkflowWithEmptyOperationsList()
+        public void CreateWorkflowWithEmptyOperationsList_GivenEmptyOperations()
         {
             // Arrange
             var operations = new List<IWorkflowOperation>();
@@ -114,7 +110,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public void Constructor_WithEmptyProperties_CreatesWorkflowWithEmptyPropertiesDictionary()
+        public void CreateWorkflowWithEmptyPropertiesDictionary_GivenEmptyProperties()
         {
             // Arrange
             var operations = new List<IWorkflowOperation> { CreateMockOperation("Op1").Object };
@@ -132,7 +128,7 @@ namespace WorkflowForge.Tests.Orchestration
         #region Property Tests
 
         [Fact]
-        public void Operations_ReturnsReadOnlyList()
+        public void ReturnReadOnlyList_GivenOperationsAccessed()
         {
             // Arrange
             var operations = new List<IWorkflowOperation> { CreateMockOperation("Op1").Object, CreateMockOperation("Op2").Object };
@@ -147,7 +143,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public void Properties_ReturnsReadOnlyDictionary()
+        public void ReturnReadOnlyDictionary_GivenPropertiesAccessed()
         {
             // Arrange
             var properties = new Dictionary<string, object?> { { "key1", "value1" }, { "key2", 42 } };
@@ -168,7 +164,7 @@ namespace WorkflowForge.Tests.Orchestration
         #region Dispose Tests
 
         [Fact]
-        public void Dispose_DisposesAllOperations()
+        public void DisposeAllOperations_GivenDisposeCalled()
         {
             // Arrange
             var operations = new List<IWorkflowOperation> { CreateMockOperation("Op1").Object, CreateMockOperation("Op2").Object };
@@ -183,7 +179,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public void Dispose_CalledMultipleTimes_HandledGracefully()
+        public void HandleGracefully_GivenMultipleDisposeCalls()
         {
             // Arrange
             var operations = new List<IWorkflowOperation> { CreateMockOperation("Op1").Object };
@@ -191,14 +187,14 @@ namespace WorkflowForge.Tests.Orchestration
 
             // Act
             workflow.Dispose();
-            workflow.Dispose(); // Should not throw
+            workflow.Dispose();
 
-            // Assert - The workflow doesn't track dispose state, so operation.Dispose() is called each time
+            // Assert
             Mock.Get(operations[0]).Verify(op => op.Dispose(), Times.Exactly(2));
         }
 
         [Fact]
-        public void Dispose_WithOperationThatThrowsOnDispose_PropagatesException()
+        public void PropagateException_GivenOperationThrowsOnDispose()
         {
             // Arrange
             var throwingOp = CreateMockOperation("ThrowingOp");
@@ -208,20 +204,19 @@ namespace WorkflowForge.Tests.Orchestration
             var operations = new List<IWorkflowOperation> { throwingOp.Object, normalOp.Object };
             var workflow = CreateWorkflow(operations: operations);
 
-            // Act & Assert - The current implementation doesn't catch exceptions
+            // Act & Assert
             Assert.Throws<InvalidOperationException>(() => workflow.Dispose());
 
             throwingOp.Verify(op => op.Dispose(), Times.Once);
-            // normalOp.Dispose() won't be called because the exception stops execution
         }
 
         [Fact]
-        public void Dispose_WithNoOperations_CompletesSuccessfully()
+        public void CompleteSuccessfully_GivenNoOperations()
         {
             // Arrange
             var workflow = CreateWorkflow(operations: new List<IWorkflowOperation>());
 
-            // Act & Assert - Should not throw
+            // Act & Assert
             var ex = Record.Exception(() => workflow.Dispose());
             Assert.Null(ex);
         }
@@ -231,7 +226,7 @@ namespace WorkflowForge.Tests.Orchestration
         #region Immutability Tests
 
         [Fact]
-        public void Operations_ModifyingOriginalList_DoesNotAffectWorkflow()
+        public void NotAffectWorkflow_GivenOriginalOperationsListModified()
         {
             // Arrange
             var operations = new List<IWorkflowOperation> { CreateMockOperation("Op1").Object };
@@ -247,7 +242,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public void Properties_ModifyingOriginalDictionary_DoesNotAffectWorkflow()
+        public void NotAffectWorkflow_GivenOriginalPropertiesDictionaryModified()
         {
             // Arrange
             var properties = new Dictionary<string, object?> { { "key1", "value1" } };
@@ -268,7 +263,7 @@ namespace WorkflowForge.Tests.Orchestration
         #region Edge Cases
 
         [Fact]
-        public void Constructor_WithEmptyStringValues_AllowsEmptyStrings()
+        public void AllowEmptyStrings_GivenEmptyStringValues()
         {
             // Arrange
             var operations = new List<IWorkflowOperation> { CreateMockOperation("Op1").Object };
@@ -284,7 +279,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public void Constructor_WithVeryLongStrings_HandlesLongStrings()
+        public void HandleLongStrings_GivenVeryLongStringValues()
         {
             // Arrange
             var longString = new string('A', 10000);
@@ -301,7 +296,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public void Constructor_WithSpecialCharacters_HandlesSpecialCharacters()
+        public void HandleSpecialCharacters_GivenSpecialCharacterValues()
         {
             // Arrange
             var specialChars = "!@#$%^&*()_+-=[]{}|;':\",./<>?`~";

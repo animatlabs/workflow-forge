@@ -7,12 +7,12 @@ namespace WorkflowForge.Tests.Options;
 /// <summary>
 /// Unit tests for TimingMiddlewareOptions - defaults, property setters, boundary values, clone.
 /// </summary>
-public class TimingMiddlewareOptionsTests
+public class TimingMiddlewareOptionsShould
 {
     #region Constructor and Defaults
 
     [Fact]
-    public void Constructor_Default_InitializesWithExpectedDefaults()
+    public void InitializeWithExpectedDefaults_GivenDefaultConstructor()
     {
         // Act
         var options = new TimingMiddlewareOptions();
@@ -24,7 +24,7 @@ public class TimingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Constructor_WithCustomSectionName_UseCustomSectionName()
+    public void UseCustomSectionName_GivenCustomSectionName()
     {
         // Arrange
         var customSection = "Custom:Timing:Config";
@@ -37,7 +37,7 @@ public class TimingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void DefaultSectionName_IsExpectedValue()
+    public void BeExpectedValue_GivenDefaultSectionName()
     {
         Assert.Equal("WorkflowForge:Middleware:Timing", TimingMiddlewareOptions.DefaultSectionName);
     }
@@ -47,7 +47,7 @@ public class TimingMiddlewareOptionsTests
     #region Property Setters
 
     [Fact]
-    public void IncludeDetailedTimings_CanBeSetToTrue()
+    public void AllowSettingToTrue_GivenIncludeDetailedTimings()
     {
         // Arrange
         var options = new TimingMiddlewareOptions();
@@ -60,7 +60,7 @@ public class TimingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void IncludeDetailedTimings_CanBeSetToFalse()
+    public void AllowSettingToFalse_GivenIncludeDetailedTimings()
     {
         // Arrange
         var options = new TimingMiddlewareOptions { IncludeDetailedTimings = true };
@@ -73,7 +73,7 @@ public class TimingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Enabled_CanBeSet()
+    public void AllowSetting_GivenEnabled()
     {
         // Arrange
         var options = new TimingMiddlewareOptions();
@@ -90,7 +90,7 @@ public class TimingMiddlewareOptionsTests
     #region Validate
 
     [Fact]
-    public void Validate_AlwaysReturnsEmptyList()
+    public void ReturnEmptyList_GivenValidate()
     {
         // Arrange
         var options = new TimingMiddlewareOptions();
@@ -108,7 +108,7 @@ public class TimingMiddlewareOptionsTests
     #region Clone
 
     [Fact]
-    public void Clone_ReturnsNewInstance()
+    public void ReturnNewInstance_GivenClone()
     {
         // Arrange
         var original = new TimingMiddlewareOptions
@@ -129,7 +129,7 @@ public class TimingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Clone_ModifyingCloneDoesNotAffectOriginal()
+    public void NotAffectOriginal_GivenModifyingClone()
     {
         // Arrange
         var original = new TimingMiddlewareOptions { IncludeDetailedTimings = true };
@@ -144,7 +144,7 @@ public class TimingMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Clone_WithCustomSectionName_PreservesSectionName()
+    public void PreserveSectionName_GivenCloneWithCustomSectionName()
     {
         // Arrange
         var original = new TimingMiddlewareOptions("Custom:Section");

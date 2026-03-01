@@ -5,10 +5,10 @@ using Xunit;
 
 namespace WorkflowForge.Extensions.Resilience.Polly.Tests;
 
-public class PollyMiddlewareOptionsTests
+public class PollyMiddlewareOptionsShould
 {
     [Fact]
-    public void Constructor_Default_SetsDefaultSectionName()
+    public void SetDefaultSectionName_GivenDefaultConstructor()
     {
         var options = new PollyMiddlewareOptions();
 
@@ -16,7 +16,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Constructor_CustomSectionName_SetsSectionName()
+    public void SetSectionName_GivenCustomSectionName()
     {
         var options = new PollyMiddlewareOptions("Custom:Polly");
 
@@ -132,7 +132,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Validate_WhenRetryDisabled_ReturnsEmpty()
+    public void ReturnEmpty_GivenRetryDisabled()
     {
         var options = new PollyMiddlewareOptions { Retry = { IsEnabled = false } };
 
@@ -142,7 +142,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Validate_WhenRetryEnabledWithValidSettings_ReturnsEmpty()
+    public void ReturnEmpty_GivenRetryEnabledWithValidSettings()
     {
         var options = new PollyMiddlewareOptions
         {
@@ -155,7 +155,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Validate_WhenRetryMaxAttemptsOutOfRange_ReturnsError()
+    public void ReturnError_GivenRetryMaxAttemptsOutOfRange()
     {
         var options = new PollyMiddlewareOptions
         {
@@ -169,7 +169,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Validate_WhenRetryBaseDelayOutOfRange_ReturnsError()
+    public void ReturnError_GivenValidateWhenRetryBaseDelayOutOfRange()
     {
         var options = new PollyMiddlewareOptions
         {
@@ -183,7 +183,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Validate_WhenCircuitBreakerDisabled_ReturnsEmpty()
+    public void ReturnEmpty_GivenCircuitBreakerDisabled()
     {
         var options = new PollyMiddlewareOptions { CircuitBreaker = { IsEnabled = false } };
 
@@ -193,7 +193,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Validate_WhenCircuitBreakerFailureThresholdOutOfRange_ReturnsError()
+    public void ReturnError_GivenValidateWhenCircuitBreakerFailureThresholdOutOfRange()
     {
         var options = new PollyMiddlewareOptions
         {
@@ -207,7 +207,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Validate_WhenCircuitBreakerBreakDurationOutOfRange_ReturnsError()
+    public void ReturnError_GivenValidateWhenCircuitBreakerBreakDurationOutOfRange()
     {
         var options = new PollyMiddlewareOptions
         {
@@ -221,7 +221,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Validate_WhenTimeoutDisabled_ReturnsEmpty()
+    public void ReturnEmpty_GivenValidateWhenTimeoutDisabled()
     {
         var options = new PollyMiddlewareOptions { Timeout = { IsEnabled = false } };
 
@@ -231,7 +231,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Validate_WhenTimeoutDefaultTimeoutOutOfRange_ReturnsError()
+    public void ReturnError_GivenValidateWhenTimeoutDefaultTimeoutOutOfRange()
     {
         var options = new PollyMiddlewareOptions
         {
@@ -245,7 +245,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Validate_WhenRateLimiterDisabled_ReturnsEmpty()
+    public void ReturnEmpty_GivenValidateWhenRateLimiterDisabled()
     {
         var options = new PollyMiddlewareOptions { RateLimiter = { IsEnabled = false } };
 
@@ -255,7 +255,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Validate_WhenRateLimiterPermitLimitOutOfRange_ReturnsError()
+    public void ReturnError_GivenValidateWhenRateLimiterPermitLimitOutOfRange()
     {
         var options = new PollyMiddlewareOptions
         {
@@ -269,7 +269,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Validate_WhenMultipleInvalid_ReturnsAllErrors()
+    public void ReturnAllErrors_GivenValidateWhenMultipleInvalid()
     {
         var options = new PollyMiddlewareOptions
         {
@@ -285,7 +285,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void Clone_CreatesDeepCopy()
+    public void CreateDeepCopy_GivenClone()
     {
         var options = new PollyMiddlewareOptions
         {
@@ -304,7 +304,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void PollyRetrySettings_Clone_CreatesCopy()
+    public void CreateCopy_GivenPollyRetrySettingsClone()
     {
         var settings = new PollyRetrySettings
         {
@@ -324,7 +324,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void PollyCircuitBreakerSettings_Clone_CreatesCopy()
+    public void CreateCircuitBreakerSettingsCopy_GivenPollyCircuitBreakerSettingsClone()
     {
         var settings = new PollyCircuitBreakerSettings
         {
@@ -344,7 +344,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void PollyTimeoutSettings_Clone_CreatesCopy()
+    public void CreateTimeoutSettingsCopy_GivenPollyTimeoutSettingsClone()
     {
         var settings = new PollyTimeoutSettings
         {
@@ -362,7 +362,7 @@ public class PollyMiddlewareOptionsTests
     }
 
     [Fact]
-    public void PollyRateLimiterSettings_Clone_CreatesCopy()
+    public void CreateRateLimiterSettingsCopy_GivenPollyRateLimiterSettingsClone()
     {
         var settings = new PollyRateLimiterSettings
         {

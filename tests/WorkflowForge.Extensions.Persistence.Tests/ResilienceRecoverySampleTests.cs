@@ -8,10 +8,10 @@ using PersistenceAbstractions = global::WorkflowForge.Extensions.Persistence.Abs
 
 namespace WorkflowForge.Extensions.Persistence.Tests;
 
-public class ResilienceRecoverySampleTests
+public class ResilienceRecoverySampleShould
 {
     [Fact]
-    public async Task RecoveryPlusResilience_CompletesAfterResume()
+    public async Task CompleteAfterResume_GivenRecoveryPlusResilience()
     {
         // Arrange: a flaky workflow that fails first two attempts of its flaky step
         var workflow = WorkflowForge.CreateWorkflow()

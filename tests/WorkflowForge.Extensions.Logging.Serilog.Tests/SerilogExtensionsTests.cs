@@ -7,10 +7,10 @@ using Xunit;
 
 namespace WorkflowForge.Extensions.Logging.Serilog.Tests
 {
-    public class SerilogExtensionsTests
+    public class SerilogExtensionsShould
     {
         [Fact]
-        public void CreateLogger_WithNullOptions_ReturnsLogger()
+        public void ReturnLogger_GivenCreateLoggerWithNullOptions()
         {
             var logger = SerilogLoggerFactory.CreateLogger((SerilogLoggerOptions?)null);
 
@@ -19,7 +19,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithNoOptions_ReturnsLogger()
+        public void ReturnLogger_GivenCreateLoggerWithNoOptions()
         {
             var logger = SerilogLoggerFactory.CreateLogger();
 
@@ -28,7 +28,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithOptions_ReturnsConfiguredLogger()
+        public void ReturnConfiguredLogger_GivenCreateLoggerWithOptions()
         {
             var options = new SerilogLoggerOptions
             {
@@ -44,7 +44,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithConsoleDisabled_ReturnsLogger()
+        public void ReturnLogger_GivenCreateLoggerWithConsoleDisabled()
         {
             var options = new SerilogLoggerOptions { EnableConsoleSink = false };
 
@@ -55,7 +55,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithWarningLevel_FiltersLowerLevels()
+        public void FilterLowerLevels_GivenCreateLoggerWithWarningLevel()
         {
             var options = new SerilogLoggerOptions { MinimumLevel = "Warning", EnableConsoleSink = false };
 
@@ -71,7 +71,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithInvalidMinimumLevel_FallsBackToInformation()
+        public void FallBackToInformation_GivenCreateLoggerWithInvalidMinimumLevel()
         {
             var options = new SerilogLoggerOptions { MinimumLevel = "InvalidLevel", EnableConsoleSink = false };
 
@@ -83,7 +83,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithEmptyMinimumLevel_FallsBackToInformation()
+        public void FallBackToInformation_GivenCreateLoggerWithEmptyMinimumLevel()
         {
             var options = new SerilogLoggerOptions { MinimumLevel = "", EnableConsoleSink = false };
 
@@ -95,7 +95,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithWhitespaceMinimumLevel_FallsBackToInformation()
+        public void FallBackToInformation_GivenCreateLoggerWithWhitespaceMinimumLevel()
         {
             var options = new SerilogLoggerOptions { MinimumLevel = "   ", EnableConsoleSink = false };
 
@@ -107,7 +107,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_LoggerSupportsAllLogLevels()
+        public void SupportAllLogLevels_GivenCreateLogger()
         {
             var options = new SerilogLoggerOptions { MinimumLevel = "Verbose", EnableConsoleSink = false };
 
@@ -126,7 +126,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_LoggerSupportsBeginScope()
+        public void SupportBeginScope_GivenCreateLogger()
         {
             var options = new SerilogLoggerOptions { MinimumLevel = "Verbose", EnableConsoleSink = false };
             var logger = SerilogLoggerFactory.CreateLogger(options);
@@ -143,7 +143,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void SerilogLoggerOptions_HasExpectedDefaults()
+        public void HaveExpectedDefaults_GivenSerilogLoggerOptions()
         {
             var options = new SerilogLoggerOptions();
 
@@ -154,7 +154,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithNullConsoleOutputTemplate_UsesDefault()
+        public void UseDefault_GivenCreateLoggerWithNullConsoleOutputTemplate()
         {
             var options = new SerilogLoggerOptions
             {
@@ -171,7 +171,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         // --- ILoggerFactory overload tests ---
 
         [Fact]
-        public void CreateLogger_WithLoggerFactory_ReturnsLogger()
+        public void ReturnLogger_GivenCreateLoggerWithLoggerFactory()
         {
             using var factory = LoggerFactory.Create(builder => builder.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace));
 
@@ -182,14 +182,14 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithNullLoggerFactory_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenCreateLoggerWithNullLoggerFactory()
         {
             Assert.Throws<ArgumentNullException>(() =>
                 SerilogLoggerFactory.CreateLogger((Microsoft.Extensions.Logging.ILoggerFactory)null!));
         }
 
         [Fact]
-        public void CreateLogger_WithLoggerFactory_SupportsAllLogLevels()
+        public void SupportAllLogLevels_GivenCreateLoggerWithLoggerFactory()
         {
             using var factory = LoggerFactory.Create(builder => builder.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace));
 
@@ -208,7 +208,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithLoggerFactory_SupportsExceptions()
+        public void SupportExceptions_GivenCreateLoggerWithLoggerFactory()
         {
             using var factory = LoggerFactory.Create(builder => builder.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace));
             var logger = SerilogLoggerFactory.CreateLogger(factory);
@@ -223,7 +223,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithLoggerFactory_SupportsProperties()
+        public void SupportProperties_GivenCreateLoggerWithLoggerFactory()
         {
             using var factory = LoggerFactory.Create(builder => builder.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace));
             var logger = SerilogLoggerFactory.CreateLogger(factory);
@@ -239,7 +239,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithLoggerFactory_SupportsBeginScope()
+        public void SupportBeginScope_GivenCreateLoggerWithLoggerFactory()
         {
             using var factory = LoggerFactory.Create(builder => builder.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace));
             var logger = SerilogLoggerFactory.CreateLogger(factory);
@@ -256,7 +256,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithLoggerFactory_BeginScopeWithNullProperties_ReturnsDisposable()
+        public void ReturnDisposable_GivenCreateLoggerWithLoggerFactoryBeginScopeWithNullProperties()
         {
             using var factory = LoggerFactory.Create(builder => builder.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace));
             var logger = SerilogLoggerFactory.CreateLogger(factory);
@@ -268,7 +268,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithLoggerFactory_BeginScopeWithEmptyProperties_ReturnsDisposable()
+        public void ReturnDisposable_GivenCreateLoggerWithLoggerFactoryBeginScopeWithEmptyProperties()
         {
             using var factory = LoggerFactory.Create(builder => builder.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace));
             var logger = SerilogLoggerFactory.CreateLogger(factory);
@@ -280,7 +280,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithLoggerFactory_RoutesLogsThroughFactory()
+        public void RouteLogsThroughFactory_GivenCreateLoggerWithLoggerFactory()
         {
             var logged = new List<string>();
             using var factory = LoggerFactory.Create(builder =>
@@ -297,7 +297,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithLoggerFactory_RoutesErrorsWithExceptions()
+        public void RouteErrorsWithExceptions_GivenCreateLoggerWithLoggerFactory()
         {
             var logged = new List<string>();
             using var factory = LoggerFactory.Create(builder =>
@@ -314,7 +314,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         }
 
         [Fact]
-        public void CreateLogger_WithLoggerFactory_RoutesAllLevelsThroughFactory()
+        public void RouteAllLevelsThroughFactory_GivenCreateLoggerWithLoggerFactory()
         {
             var logged = new List<string>();
             using var factory = LoggerFactory.Create(builder =>

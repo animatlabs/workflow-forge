@@ -8,10 +8,10 @@ using Xunit;
 
 namespace WorkflowForge.Extensions.Resilience.Polly.Tests;
 
-public class PollyResilienceStrategyTests
+public class PollyResilienceStrategyShould
 {
     [Fact]
-    public void CreateRetryPolicy_ReturnsStrategyWithCorrectName()
+    public void ReturnStrategyWithCorrectName_GivenCreateRetryPolicy()
     {
         var strategy = PollyResilienceStrategy.CreateRetryPolicy(maxRetryAttempts: 5);
 
@@ -20,7 +20,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public async Task CreateRetryPolicy_ExecuteAsync_SuccessfulOperation_ReturnsResult()
+    public async Task ReturnResult_GivenCreateRetryPolicyExecuteAsyncSuccessfulOperation()
     {
         var strategy = PollyResilienceStrategy.CreateRetryPolicy(maxRetryAttempts: 3);
         const string expected = "result";
@@ -31,7 +31,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public async Task CreateRetryPolicy_ExecuteAsync_Void_SuccessfulOperation_Completes()
+    public async Task Complete_GivenCreateRetryPolicyExecuteAsyncVoidSuccessfulOperation()
     {
         var strategy = PollyResilienceStrategy.CreateRetryPolicy(maxRetryAttempts: 3);
         var executed = false;
@@ -46,7 +46,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public async Task CreateRetryPolicy_ExecuteAsync_RetriesOnFailure()
+    public async Task RetryOnFailure_GivenCreateRetryPolicyExecuteAsync()
     {
         var strategy = PollyResilienceStrategy.CreateRetryPolicy(
             maxRetryAttempts: 3,
@@ -67,7 +67,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public async Task CreateRetryPolicy_ExecuteAsync_ExhaustsRetries_ThrowsOriginalException()
+    public async Task ThrowOriginalException_GivenCreateRetryPolicyExecuteAsyncExhaustsRetries()
     {
         var strategy = PollyResilienceStrategy.CreateRetryPolicy(
             maxRetryAttempts: 2,
@@ -87,7 +87,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public async Task CreateRetryPolicy_ExecuteAsync_WithNullOperation_ThrowsArgumentNullException()
+    public async Task ThrowArgumentNullException_GivenCreateRetryPolicyExecuteAsyncWithNullOperation()
     {
         var strategy = PollyResilienceStrategy.CreateRetryPolicy();
 
@@ -96,7 +96,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public async Task CreateRetryPolicy_ExecuteAsync_Generic_WithNullOperation_ThrowsArgumentNullException()
+    public async Task ThrowArgumentNullException_GivenCreateRetryPolicyExecuteAsyncGenericWithNullOperation()
     {
         var strategy = PollyResilienceStrategy.CreateRetryPolicy();
 
@@ -105,7 +105,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public void CreateCircuitBreakerPolicy_ReturnsStrategyWithCorrectName()
+    public void ReturnCircuitBreakerStrategyWithCorrectName_GivenCreateCircuitBreakerPolicy()
     {
         var strategy = PollyResilienceStrategy.CreateCircuitBreakerPolicy(failureThreshold: 7);
 
@@ -114,7 +114,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public async Task CreateCircuitBreakerPolicy_ExecuteAsync_SuccessfulOperation_Completes()
+    public async Task Complete_GivenCreateCircuitBreakerPolicyExecuteAsyncSuccessfulOperation()
     {
         var strategy = PollyResilienceStrategy.CreateCircuitBreakerPolicy(
             failureThreshold: 5,
@@ -132,7 +132,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public void CreateTimeoutPolicy_ReturnsStrategyWithCorrectName()
+    public void ReturnStrategyWithCorrectName_GivenCreateTimeoutPolicy()
     {
         var strategy = PollyResilienceStrategy.CreateTimeoutPolicy(TimeSpan.FromSeconds(30));
 
@@ -141,7 +141,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public async Task CreateTimeoutPolicy_ExecuteAsync_CompletesWithinTimeout()
+    public async Task CompleteWithinTimeout_GivenCreateTimeoutPolicyExecuteAsync()
     {
         var strategy = PollyResilienceStrategy.CreateTimeoutPolicy(TimeSpan.FromSeconds(5));
         var result = await strategy.ExecuteAsync(() => Task.FromResult(42), CancellationToken.None);
@@ -150,7 +150,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public void CreateComprehensivePolicy_ReturnsStrategyWithCorrectName()
+    public void ReturnStrategyWithCorrectName_GivenCreateComprehensivePolicy()
     {
         var strategy = PollyResilienceStrategy.CreateComprehensivePolicy();
 
@@ -159,7 +159,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public async Task CreateComprehensivePolicy_ExecuteAsync_SuccessfulOperation_Completes()
+    public async Task Complete_GivenCreateComprehensivePolicyExecuteAsyncSuccessfulOperation()
     {
         var strategy = PollyResilienceStrategy.CreateComprehensivePolicy(
             maxRetryAttempts: 2,
@@ -179,7 +179,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public async Task ShouldRetryAsync_ReturnsFalse()
+    public async Task ReturnFalse_GivenShouldRetryAsync()
     {
         var strategy = PollyResilienceStrategy.CreateRetryPolicy();
 
@@ -189,7 +189,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public void GetRetryDelay_ReturnsZero()
+    public void ReturnZero_GivenGetRetryDelay()
     {
         var strategy = PollyResilienceStrategy.CreateRetryPolicy();
 
@@ -199,7 +199,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public async Task CreateRetryPolicy_ExecuteAsync_OperationCanceledException_DoesNotRetry()
+    public async Task NotRetry_GivenCreateRetryPolicyExecuteAsyncOperationCanceledException()
     {
         var strategy = PollyResilienceStrategy.CreateRetryPolicy(maxRetryAttempts: 5);
         var attemptCount = 0;
@@ -215,7 +215,7 @@ public class PollyResilienceStrategyTests
     }
 
     [Fact]
-    public async Task CreateRetryPolicy_WithLogger_ExecutesSuccessfully()
+    public async Task ExecuteSuccessfully_GivenCreateRetryPolicyWithLogger()
     {
         var logger = new Mock<IWorkflowForgeLogger>();
         var strategy = PollyResilienceStrategy.CreateRetryPolicy(

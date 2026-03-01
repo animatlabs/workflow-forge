@@ -12,12 +12,12 @@ namespace WorkflowForge.Tests.Operations;
 /// <summary>
 /// Comprehensive tests for DelayOperation covering functionality, timing, cancellation, and edge cases.
 /// </summary>
-public class DelayOperationTests
+public class DelayOperationShould
 {
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithTimeSpan_SetsProperties()
+    public void SetProperties_GivenTimeSpan()
     {
         // Arrange
         var delay = TimeSpan.FromMilliseconds(100);
@@ -31,7 +31,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public void Constructor_WithTimeSpanAndName_SetsCustomName()
+    public void SetCustomName_GivenTimeSpanAndName()
     {
         // Arrange
         var delay = TimeSpan.FromSeconds(1);
@@ -46,7 +46,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public void Constructor_WithZeroDelay_SetsName()
+    public void SetName_GivenZeroDelay()
     {
         // Arrange
         var delay = TimeSpan.Zero;
@@ -63,7 +63,7 @@ public class DelayOperationTests
     #region Static Factory Methods Tests
 
     [Fact]
-    public void FromMilliseconds_CreatesDelayOperation()
+    public void CreateDelayOperation_GivenFromMilliseconds()
     {
         // Arrange
         const int milliseconds = 250;
@@ -77,7 +77,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public void FromSeconds_CreatesDelayOperation()
+    public void CreateDelayOperation_GivenFromSeconds()
     {
         // Arrange
         const int seconds = 2;
@@ -91,7 +91,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public void FromMinutes_CreatesDelayOperation()
+    public void CreateDelayOperation_GivenFromMinutes()
     {
         // Arrange
         const int minutes = 1;
@@ -105,7 +105,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public void FromMilliseconds_WithZero_CreatesOperation()
+    public void CreateOperation_GivenFromMillisecondsWithZero()
     {
         // Act
         var operation = DelayOperation.FromMilliseconds(0);
@@ -116,7 +116,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public void FromSeconds_WithZero_CreatesOperation()
+    public void CreateOperation_GivenFromSecondsWithZero()
     {
         // Act
         var operation = DelayOperation.FromSeconds(0);
@@ -127,7 +127,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public void FromMinutes_WithZero_CreatesOperation()
+    public void CreateOperation_GivenFromMinutesWithZero()
     {
         // Act
         var operation = DelayOperation.FromMinutes(0);
@@ -142,7 +142,7 @@ public class DelayOperationTests
     #region ForgeAsync Tests
 
     [Fact]
-    public async Task ForgeAsync_WithNullFoundry_ThrowsArgumentNullException()
+    public async Task ThrowArgumentNullException_GivenNullFoundry()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(10));
@@ -153,7 +153,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithValidFoundry_ReturnsInputData()
+    public async Task ReturnInputData_GivenValidFoundry()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(10));
@@ -168,7 +168,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithNullInputData_ReturnsNull()
+    public async Task ReturnNull_GivenNullInputData()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(10));
@@ -182,7 +182,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithComplexInputData_ReturnsInputData()
+    public async Task ReturnInputData_GivenComplexInputData()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(10));
@@ -197,7 +197,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_ActuallyDelays()
+    public async Task Delay_GivenForgeAsync()
     {
         // Arrange
         var delayMs = 50;
@@ -214,7 +214,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithZeroDelay_CompletesImmediately()
+    public async Task CompleteImmediately_GivenZeroDelay()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.Zero);
@@ -230,7 +230,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_LogsStartAndCompletion()
+    public async Task LogStartAndCompletion_GivenForgeAsync()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(10));
@@ -245,7 +245,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_LogsCorrectProperties()
+    public async Task LogCorrectProperties_GivenForgeAsync()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(100), "TestDelay");
@@ -276,7 +276,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithNullInput_LogsNullInputType()
+    public async Task LogNullInputType_GivenNullInput()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(10));
@@ -299,7 +299,7 @@ public class DelayOperationTests
     #region Cancellation Tests
 
     [Fact]
-    public async Task ForgeAsync_WithCancellation_ThrowsTaskCanceledException()
+    public async Task ThrowTaskCanceledException_GivenCancellation()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromSeconds(10));
@@ -315,7 +315,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithPreCancelledToken_ThrowsTaskCanceledException()
+    public async Task ThrowTaskCanceledException_GivenPreCancelledToken()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(100));
@@ -329,7 +329,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_CancellationDuringDelay_StopsExecution()
+    public async Task StopExecution_GivenCancellationDuringDelay()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromSeconds(2));
@@ -362,7 +362,7 @@ public class DelayOperationTests
     #region RestoreAsync Tests
 
     [Fact]
-    public async Task RestoreAsync_CompletesSuccessfully()
+    public async Task CompleteSuccessfully_GivenRestoreAsync()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(10));
@@ -377,7 +377,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public async Task RestoreAsync_WithNullFoundry_CompletesSuccessfully()
+    public async Task CompleteSuccessfully_GivenRestoreAsyncWithNullFoundry()
     {
         // Arrange - Base implementation returns Task.CompletedTask (no-op), does not validate foundry
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(10));
@@ -395,7 +395,7 @@ public class DelayOperationTests
     #region Dispose Tests
 
     [Fact]
-    public void Dispose_DoesNotThrow()
+    public void NotThrow_GivenDispose()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(10));
@@ -405,7 +405,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public void Dispose_CanBeCalledMultipleTimes()
+    public void AllowMultipleCalls_GivenDispose()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(10));
@@ -417,7 +417,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_AfterDispose_StillWorks()
+    public async Task StillWork_GivenForgeAsyncAfterDispose()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(10));
@@ -436,7 +436,7 @@ public class DelayOperationTests
     #region Edge Cases and Performance Tests
 
     [Fact]
-    public async Task ForgeAsync_WithVeryLargeDelay_CanBeCancelled()
+    public async Task BeCancellable_GivenVeryLargeDelay()
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromDays(1));
@@ -452,7 +452,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public async Task ForgeAsync_MultipleInstancesConcurrently()
+    public async Task RunMultipleInstancesConcurrently_GivenForgeAsync()
     {
         // Arrange
         var operations = new[]
@@ -473,7 +473,7 @@ public class DelayOperationTests
     }
 
     [Fact]
-    public void Id_GeneratesUniqueValues()
+    public void GenerateUniqueValues_GivenId()
     {
         // Arrange & Act
         var operation1 = new DelayOperation(TimeSpan.FromMilliseconds(10));
@@ -490,7 +490,7 @@ public class DelayOperationTests
     [InlineData(10)]
     [InlineData(100)]
     [InlineData(500)]
-    public async Task ForgeAsync_VariousDelays_CompletesWithinReasonableTime(int delayMs)
+    public async Task CompleteWithinReasonableTime_GivenVariousDelays(int delayMs)
     {
         // Arrange
         var operation = new DelayOperation(TimeSpan.FromMilliseconds(delayMs));

@@ -8,12 +8,12 @@ using Xunit;
 
 namespace WorkflowForge.Extensions.Resilience.Polly.Tests;
 
-public class PollyMiddlewareTests : IDisposable
+public class PollyMiddlewareShould : IDisposable
 {
     private readonly IWorkflowFoundry _foundry;
     private readonly TestOperation _operation;
 
-    public PollyMiddlewareTests()
+        public PollyMiddlewareShould()
     {
         _foundry = new FakeWorkflowFoundry();
         _operation = new TestOperation();
@@ -25,7 +25,7 @@ public class PollyMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public void WithRetryPolicy_ReturnsMiddlewareWithCorrectName()
+    public void ReturnMiddlewareWithCorrectName_GivenWithRetryPolicy()
     {
         var logger = TestNullLogger.Instance;
 
@@ -35,7 +35,7 @@ public class PollyMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public void WithRetryPolicy_CustomName_SetsName()
+    public void SetName_GivenWithRetryPolicyCustomName()
     {
         var logger = TestNullLogger.Instance;
 
@@ -45,7 +45,7 @@ public class PollyMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithRetryPolicy_SuccessfulExecution_ReturnsResult()
+    public async Task ReturnResult_GivenExecuteAsyncWithRetryPolicySuccessfulExecution()
     {
         var logger = TestNullLogger.Instance;
         var middleware = PollyMiddleware.WithRetryPolicy(logger);
@@ -59,7 +59,7 @@ public class PollyMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithRetryPolicy_InvokesNextDelegate()
+    public async Task InvokeNextDelegate_GivenExecuteAsyncWithRetryPolicy()
     {
         var logger = TestNullLogger.Instance;
         var middleware = PollyMiddleware.WithRetryPolicy(logger);
@@ -77,7 +77,7 @@ public class PollyMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithRetryPolicy_RetriesOnFailure()
+    public async Task RetryOnFailure_GivenExecuteAsyncWithRetryPolicy()
     {
         var logger = TestNullLogger.Instance;
         var middleware = PollyMiddleware.WithRetryPolicy(
@@ -102,7 +102,7 @@ public class PollyMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithRetryPolicy_ExhaustsRetries_ThrowsException()
+    public async Task ThrowException_GivenExecuteAsyncWithRetryPolicyExhaustsRetries()
     {
         var logger = TestNullLogger.Instance;
         var middleware = PollyMiddleware.WithRetryPolicy(
@@ -120,7 +120,7 @@ public class PollyMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public void WithCircuitBreakerPolicy_ReturnsMiddlewareWithCorrectName()
+    public void ReturnCircuitBreakerMiddlewareWithCorrectName_GivenWithCircuitBreakerPolicy()
     {
         var logger = TestNullLogger.Instance;
 
@@ -130,7 +130,7 @@ public class PollyMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithCircuitBreakerPolicy_SuccessfulExecution_ReturnsResult()
+    public async Task ReturnResult_GivenExecuteAsyncWithCircuitBreakerPolicy()
     {
         var logger = TestNullLogger.Instance;
         var middleware = PollyMiddleware.WithCircuitBreakerPolicy(
@@ -146,7 +146,7 @@ public class PollyMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public void WithTimeoutPolicy_ReturnsMiddlewareWithCorrectName()
+    public void ReturnTimeoutMiddlewareWithCorrectName_GivenWithTimeoutPolicy()
     {
         var logger = TestNullLogger.Instance;
 
@@ -156,7 +156,7 @@ public class PollyMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithTimeoutPolicy_CompletesWithinTimeout()
+    public async Task CompleteWithinTimeout_GivenExecuteAsyncWithTimeoutPolicy()
     {
         var logger = TestNullLogger.Instance;
         var middleware = PollyMiddleware.WithTimeoutPolicy(logger, TimeSpan.FromSeconds(5));
@@ -169,7 +169,7 @@ public class PollyMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public void WithComprehensivePolicy_ReturnsMiddlewareWithCorrectName()
+    public void ReturnComprehensiveMiddlewareWithCorrectName_GivenWithComprehensivePolicy()
     {
         var logger = TestNullLogger.Instance;
 
@@ -179,7 +179,7 @@ public class PollyMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithComprehensivePolicy_SuccessfulExecution_ReturnsResult()
+    public async Task ReturnResult_GivenExecuteAsyncWithComprehensivePolicy()
     {
         var logger = TestNullLogger.Instance;
         var middleware = PollyMiddleware.WithComprehensivePolicy(
@@ -198,7 +198,7 @@ public class PollyMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithCircuitBreakerPolicy_AfterEnoughFailures_ThrowsBrokenCircuitException()
+    public async Task ThrowBrokenCircuitException_GivenExecuteAsyncWithCircuitBreakerPolicyAfterEnoughFailures()
     {
         var logger = TestNullLogger.Instance;
         var middleware = PollyMiddleware.WithCircuitBreakerPolicy(
@@ -224,7 +224,7 @@ public class PollyMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithTimeoutPolicy_TimesOut_ThrowsTimeoutRejectedException()
+    public async Task ThrowTimeoutRejectedException_GivenExecuteAsyncWithTimeoutPolicyTimesOut()
     {
         var logger = TestNullLogger.Instance;
         var middleware = PollyMiddleware.WithTimeoutPolicy(logger, TimeSpan.FromMilliseconds(50));
@@ -244,7 +244,7 @@ public class PollyMiddlewareTests : IDisposable
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithCancellationToken_PassesToNext()
+    public async Task PassTokenToNext_GivenExecuteAsyncWithCancellationToken()
     {
         var logger = TestNullLogger.Instance;
         var middleware = PollyMiddleware.WithRetryPolicy(logger);

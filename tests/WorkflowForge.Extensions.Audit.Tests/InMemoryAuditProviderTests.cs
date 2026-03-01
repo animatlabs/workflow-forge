@@ -4,10 +4,10 @@ using System.Threading.Tasks;
 
 namespace WorkflowForge.Extensions.Audit.Tests
 {
-    public class InMemoryAuditProviderTests
+    public class InMemoryAuditProviderShould
     {
         [Fact]
-        public async Task WriteAuditEntryAsync_ShouldStoreEntry()
+        public async Task StoreEntry_GivenWriteAuditEntryAsync()
         {
             var provider = new InMemoryAuditProvider();
             var entry = CreateTestEntry();
@@ -19,7 +19,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public async Task WriteAuditEntryAsync_MultipleEntries_ShouldStoreAll()
+        public async Task StoreAll_GivenWriteAuditEntryAsyncMultipleEntries()
         {
             var provider = new InMemoryAuditProvider();
             var entry1 = CreateTestEntry();
@@ -34,7 +34,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public async Task Clear_ShouldRemoveAllEntries()
+        public async Task RemoveAllEntries_GivenClear()
         {
             var provider = new InMemoryAuditProvider();
             await provider.WriteAuditEntryAsync(CreateTestEntry(), CancellationToken.None);
@@ -48,7 +48,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public async Task FlushAsync_ShouldSucceed()
+        public async Task Succeed_GivenFlushAsync()
         {
             var provider = new InMemoryAuditProvider();
             await provider.WriteAuditEntryAsync(CreateTestEntry(), CancellationToken.None);
@@ -59,7 +59,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public async Task Entries_ShouldBeReadOnly()
+        public async Task BeReadOnly_GivenEntries()
         {
             var provider = new InMemoryAuditProvider();
             await provider.WriteAuditEntryAsync(CreateTestEntry(), CancellationToken.None);
@@ -69,7 +69,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public async Task WriteAuditEntryAsync_ConcurrentWrites_ShouldHandleThreadSafely()
+        public async Task HandleThreadSafely_GivenWriteAuditEntryAsyncConcurrentWrites()
         {
             var provider = new InMemoryAuditProvider();
             var tasks = new Task[100];

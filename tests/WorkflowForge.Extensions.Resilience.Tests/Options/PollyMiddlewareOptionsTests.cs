@@ -2,17 +2,17 @@ using WorkflowForge.Extensions.Resilience.Polly.Options;
 
 namespace WorkflowForge.Extensions.Resilience.Tests.Options
 {
-    public class PollyMiddlewareOptionsTests
+    public class PollyMiddlewareOptionsShould
     {
         [Fact]
-        public void Constructor_WithDefaultSectionName_ShouldSetDefaultSectionName()
+        public void SetDefaultSectionName_GivenDefaultSectionName()
         {
             var options = new PollyMiddlewareOptions();
             Assert.Equal(PollyMiddlewareOptions.DefaultSectionName, options.SectionName);
         }
 
         [Fact]
-        public void Constructor_WithCustomSectionName_ShouldSetCustomSectionName()
+        public void SetCustomSectionName_GivenCustomSectionName()
         {
             var customSection = "MyApp:Polly";
             var options = new PollyMiddlewareOptions(customSection);
@@ -20,7 +20,7 @@ namespace WorkflowForge.Extensions.Resilience.Tests.Options
         }
 
         [Fact]
-        public void DefaultValues_ShouldBeCorrect()
+        public void BeCorrect_GivenDefaultValues()
         {
             var options = new PollyMiddlewareOptions();
             Assert.True(options.Enabled);
@@ -33,7 +33,7 @@ namespace WorkflowForge.Extensions.Resilience.Tests.Options
         }
 
         [Fact]
-        public void Validate_WithValidConfiguration_ShouldReturnEmptyErrors()
+        public void ReturnEmptyErrors_GivenValidConfiguration()
         {
             var options = new PollyMiddlewareOptions { Retry = { IsEnabled = true, MaxRetryAttempts = 5 } };
             var errors = options.Validate();
@@ -41,7 +41,7 @@ namespace WorkflowForge.Extensions.Resilience.Tests.Options
         }
 
         [Fact]
-        public void Validate_WithInvalidRetryAttempts_ShouldReturnError()
+        public void ReturnError_GivenInvalidRetryAttempts()
         {
             var options = new PollyMiddlewareOptions { Retry = { IsEnabled = true, MaxRetryAttempts = 101 } };
             var errors = options.Validate();

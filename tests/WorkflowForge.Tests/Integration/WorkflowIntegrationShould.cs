@@ -14,11 +14,11 @@ namespace WorkflowForge.Tests.Integration;
 /// Comprehensive integration tests for complete workflow execution scenarios.
 /// Tests end-to-end workflow execution with multiple operations, middleware, and complex scenarios.
 /// </summary>
-public class WorkflowIntegrationTests
+public class WorkflowIntegrationShould
 {
     private readonly ITestOutputHelper _output;
 
-    public WorkflowIntegrationTests(ITestOutputHelper output)
+    public WorkflowIntegrationShould(ITestOutputHelper output)
     {
         _output = output;
     }
@@ -26,7 +26,7 @@ public class WorkflowIntegrationTests
     #region Basic Integration Tests
 
     [Fact]
-    public async Task CompleteWorkflow_WithMultipleOperations_ExecutesSuccessfully()
+    public async Task ExecuteSuccessfully_GivenCompleteWorkflowWithMultipleOperations()
     {
         // Arrange
         var workflow = WorkflowForge.CreateWorkflow("CompleteWorkflow")
@@ -50,7 +50,7 @@ public class WorkflowIntegrationTests
     }
 
     [Fact]
-    public async Task WorkflowWithMiddleware_ExecutesWithCorrectPipeline()
+    public async Task ExecuteWithCorrectPipeline_GivenWorkflowWithMiddleware()
     {
         // Arrange
         var executionLog = new List<string>();
@@ -73,7 +73,7 @@ public class WorkflowIntegrationTests
     #region Complex Workflow Scenarios
 
     [Fact]
-    public async Task DataProcessingWorkflow_WithTransformations_ProcessesCorrectly()
+    public async Task ProcessCorrectly_GivenDataProcessingWorkflowWithTransformations()
     {
         // Arrange
         var workflow = WorkflowForge.CreateWorkflow("DataProcessingWorkflow")
@@ -105,7 +105,7 @@ public class WorkflowIntegrationTests
     }
 
     [Fact]
-    public async Task ConditionalWorkflow_WithBranching_ExecutesCorrectPath()
+    public async Task ExecuteCorrectPath_GivenConditionalWorkflowWithBranching()
     {
         // Arrange
         var workflow = WorkflowForge.CreateWorkflow("ConditionalWorkflow")
@@ -141,7 +141,7 @@ public class WorkflowIntegrationTests
     #region Error Handling Integration Tests
 
     [Fact]
-    public async Task WorkflowWithFailingOperation_HandlesErrorCorrectly()
+    public async Task HandleErrorCorrectly_GivenWorkflowWithFailingOperation()
     {
         // Arrange
         var workflow = WorkflowForge.CreateWorkflow("ErrorHandlingWorkflow")
@@ -159,7 +159,7 @@ public class WorkflowIntegrationTests
     }
 
     [Fact]
-    public async Task WorkflowWithErrorHandlingMiddleware_RecoverFromErrors()
+    public async Task RecoverFromErrors_GivenWorkflowWithErrorHandlingMiddleware()
     {
         // Arrange
         var workflow = WorkflowForge.CreateWorkflow("ErrorRecoveryTest")
@@ -179,7 +179,7 @@ public class WorkflowIntegrationTests
     #region Performance and Concurrency Tests
 
     [Fact]
-    public async Task HighVolumeWorkflow_WithManyOperations_ExecutesEfficiently()
+    public async Task ExecuteEfficiently_GivenHighVolumeWorkflowWithManyOperations()
     {
         // Arrange
         var workflowBuilder = WorkflowForge.CreateWorkflow("HighVolumeWorkflow");
@@ -215,7 +215,7 @@ public class WorkflowIntegrationTests
     }
 
     [Fact]
-    public async Task ConcurrentWorkflowExecution_WithSharedResources_HandlesCorrectly()
+    public async Task HandleCorrectly_GivenConcurrentWorkflowExecutionWithSharedResources()
     {
         // Arrange
         var sharedCounter = new SharedCounter();
@@ -247,7 +247,7 @@ public class WorkflowIntegrationTests
     #region Real-world Scenarios
 
     [Fact]
-    public async Task OrderProcessingWorkflow_CompleteScenario_ExecutesSuccessfully()
+    public async Task ExecuteSuccessfully_GivenOrderProcessingWorkflowCompleteScenario()
     {
         // Arrange
         var workflow = WorkflowForge.CreateWorkflow("OrderProcessingWorkflow")
@@ -275,7 +275,7 @@ public class WorkflowIntegrationTests
     }
 
     [Fact]
-    public async Task DocumentProcessingWorkflow_WithFileOperations_ProcessesCorrectly()
+    public async Task ProcessCorrectly_GivenDocumentProcessingWorkflowWithFileOperations()
     {
         // Arrange
         var workflow = WorkflowForge.CreateWorkflow("DocumentProcessingWorkflow")
@@ -627,7 +627,7 @@ public class WorkflowIntegrationTests
     }
 
     [Fact]
-    public async Task DebugDataFlow_SimpleTest()
+    public async Task ExecuteDataFlow_GivenDebugSimpleTest()
     {
         // Arrange
         var workflow = WorkflowForge.CreateWorkflow("DebugWorkflow")

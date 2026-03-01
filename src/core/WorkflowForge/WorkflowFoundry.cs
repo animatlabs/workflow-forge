@@ -428,9 +428,10 @@ namespace WorkflowForge
                     {
                         operation.Dispose();
                     }
-                    catch
+                    catch (Exception)
                     {
-                        // Best effort disposal
+                        // Intentionally swallowed: disposal must not prevent remaining
+                        // operations from being cleaned up.
                     }
                 }
                 _operations.Clear();

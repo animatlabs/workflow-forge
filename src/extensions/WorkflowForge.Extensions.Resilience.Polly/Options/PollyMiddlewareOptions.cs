@@ -186,6 +186,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
         /// <summary>Gets or sets whether to use jitter for retry delays.</summary>
         public bool UseJitter { get; set; } = true;
 
+        /// <summary>Creates a shallow copy of this <see cref="PollyRetrySettings"/> instance.</summary>
         public PollyRetrySettings Clone() => new()
         {
             IsEnabled = IsEnabled,
@@ -216,6 +217,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
         /// <summary>Gets or sets the minimum throughput before circuit can break.</summary>
         public int MinimumThroughput { get; set; } = 10;
 
+        /// <summary>Creates a shallow copy of this <see cref="PollyCircuitBreakerSettings"/> instance.</summary>
         public PollyCircuitBreakerSettings Clone() => new()
         {
             IsEnabled = IsEnabled,
@@ -240,6 +242,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
         /// <summary>Gets or sets whether to use optimistic timeout (cooperative cancellation).</summary>
         public bool UseOptimisticTimeout { get; set; } = true;
 
+        /// <summary>Creates a shallow copy of this <see cref="PollyTimeoutSettings"/> instance.</summary>
         public PollyTimeoutSettings Clone() => new()
         {
             IsEnabled = IsEnabled,
@@ -265,6 +268,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
         /// <summary>Gets or sets the queue limit for waiting requests.</summary>
         public int QueueLimit { get; set; } = 0;
 
+        /// <summary>Creates a shallow copy of this <see cref="PollyRateLimiterSettings"/> instance.</summary>
         public PollyRateLimiterSettings Clone() => new()
         {
             IsEnabled = IsEnabled,

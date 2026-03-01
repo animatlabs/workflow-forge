@@ -8,11 +8,11 @@ using WorkflowForge.Abstractions;
 
 namespace WorkflowForge.Tests.Orchestration
 {
-    public class WorkflowSmithPoolTests : IDisposable
+    public class WorkflowSmithPoolShould : IDisposable
     {
         private readonly string _uniqueTestId;
 
-        public WorkflowSmithPoolTests()
+        public WorkflowSmithPoolShould()
         {
             _uniqueTestId = $"{DateTime.UtcNow.Ticks}_{Guid.NewGuid():N}";
         }
@@ -20,7 +20,7 @@ namespace WorkflowForge.Tests.Orchestration
         public void Dispose() { }
 
         [Fact]
-        public async Task ForgeAsync_CalledTwice_ReusePooledFoundry()
+        public async Task ReusePooledFoundry_GivenConsecutiveForgeAsyncCalls()
         {
             using var smith = WorkflowForge.CreateSmith();
             var workflow1 = CreateNoOpWorkflow($"Pool-Reuse-1-{_uniqueTestId}");
@@ -36,7 +36,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public async Task Dispose_AfterForgeAsync_DrainsPoolWithoutException()
+        public async Task DrainPoolWithoutException_GivenDisposeAfterForgeAsync()
         {
             var smith = WorkflowForge.CreateSmith();
             var workflow = CreateNoOpWorkflow($"Pool-Drain-{_uniqueTestId}");
@@ -49,7 +49,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public async Task ForgeAsync_ManyParallel_CompletesWithinPoolBounds()
+        public async Task CompleteWithinPoolBounds_GivenManyParallelExecutions()
         {
             using var smith = WorkflowForge.CreateSmith();
             var concurrency = Environment.ProcessorCount * 2 + 5;
@@ -64,7 +64,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public async Task ForgeAndDispose_ConcurrentRace_DoesNotThrowUnhandledException()
+        public async Task NotThrowUnhandledException_GivenConcurrentForgeAndDisposeRace()
         {
             var smith = WorkflowForge.CreateSmith();
             var cts = new CancellationTokenSource();
@@ -99,7 +99,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public async Task ForgeAsync_SequentialBatch_AllCompleteSucessfully()
+        public async Task CompleteAllSuccessfully_GivenSequentialBatch()
         {
             using var smith = WorkflowForge.CreateSmith();
 
@@ -112,7 +112,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public async Task Dispose_CalledMultipleTimes_DoesNotThrow()
+        public async Task NotThrow_GivenMultipleDisposeCalls()
         {
             var smith = WorkflowForge.CreateSmith();
             await smith.ForgeAsync(CreateNoOpWorkflow($"Multi-Dispose-{_uniqueTestId}"));

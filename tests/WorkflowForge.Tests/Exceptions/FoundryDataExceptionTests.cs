@@ -7,12 +7,12 @@ namespace WorkflowForge.Tests.Exceptions
     /// <summary>
     /// Tests for <see cref="FoundryDataException"/>.
     /// </summary>
-    public class FoundryDataExceptionTests
+    public class FoundryDataExceptionShould
     {
         #region Constructor Tests
 
         [Fact]
-        public void Constructor_WithMessage_SetsMessageAndNullDataKey()
+        public void SetMessageAndNullDataKey_GivenMessage()
         {
             // Arrange
             const string message = "Data operation failed";
@@ -26,7 +26,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void Constructor_WithMessageAndDataKey_SetsBothProperties()
+        public void SetBothProperties_GivenMessageAndDataKey()
         {
             // Arrange
             const string message = "Data operation failed";
@@ -41,7 +41,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void Constructor_WithMessageAndEmptyDataKey_SetsEmptyString()
+        public void SetEmptyString_GivenMessageAndEmptyDataKey()
         {
             // Arrange
             const string message = "Data operation failed";
@@ -55,7 +55,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void Constructor_WithMessageAndInnerException_SetsInnerExceptionAndNullDataKey()
+        public void SetInnerExceptionAndNullDataKey_GivenMessageAndInnerException()
         {
             // Arrange
             const string message = "Data operation failed";
@@ -71,7 +71,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void Constructor_WithMessageInnerExceptionAndDataKey_SetsAllProperties()
+        public void SetAllProperties_GivenMessageInnerExceptionAndDataKey()
         {
             // Arrange
             const string message = "Data operation failed";
@@ -93,7 +93,7 @@ namespace WorkflowForge.Tests.Exceptions
 
 #pragma warning disable SYSLIB0050, SYSLIB0051 // Serialization tests for .NET Framework compatibility
         [Fact]
-        public void GetObjectData_SerializesDataKey()
+        public void SerializeDataKey_GivenGetObjectData()
         {
             // Arrange
             const string message = "Data operation failed";
@@ -111,7 +111,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void GetObjectData_WithNullDataKey_SerializesNull()
+        public void SerializeNull_GivenNullDataKey()
         {
             // Arrange
             const string message = "Data operation failed";

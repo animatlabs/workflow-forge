@@ -6,12 +6,12 @@ namespace WorkflowForge.Tests.Exceptions
     /// <summary>
     /// Tests for <see cref="WorkflowCancelledException"/>.
     /// </summary>
-    public class WorkflowCancelledExceptionTests
+    public class WorkflowCancelledExceptionShould
     {
         #region Constructor Tests
 
         [Fact]
-        public void Constructor_WithMessage_SetsMessage()
+        public void SetMessage_GivenMessage()
         {
             // Arrange
             const string message = "Workflow was cancelled by user";
@@ -25,7 +25,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void Constructor_WithEmptyMessage_SetsEmptyMessage()
+        public void SetEmptyMessage_GivenEmptyMessage()
         {
             // Act
             var exception = new WorkflowCancelledException(string.Empty);
@@ -35,7 +35,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void Constructor_WithMessageAndInnerException_SetsBoth()
+        public void SetBoth_GivenMessageAndInnerException()
         {
             // Arrange
             const string message = "Workflow was cancelled";
@@ -50,7 +50,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void Constructor_IsAssignableToWorkflowForgeException()
+        public void BeAssignableToWorkflowForgeException_GivenConstruction()
         {
             // Act
             var exception = new WorkflowCancelledException("Cancelled");

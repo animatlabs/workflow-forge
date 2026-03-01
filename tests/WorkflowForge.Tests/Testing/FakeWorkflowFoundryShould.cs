@@ -10,12 +10,12 @@ namespace WorkflowForge.Tests.Testing
     /// <summary>
     /// Tests for FakeWorkflowFoundry test double.
     /// </summary>
-    public class FakeWorkflowFoundryTests
+    public class FakeWorkflowFoundryShould
     {
         #region Constructor Tests
 
         [Fact]
-        public void Constructor_InitializesWithDefaults()
+        public void InitializeWithDefaults_GivenConstructor()
         {
             // Act
             var foundry = new FakeWorkflowFoundry();
@@ -31,7 +31,7 @@ namespace WorkflowForge.Tests.Testing
         }
 
         [Fact]
-        public void ExecutionId_CanBeSet()
+        public void AllowSetting_GivenExecutionId()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -49,7 +49,7 @@ namespace WorkflowForge.Tests.Testing
         #region Operation Tracking Tests
 
         [Fact]
-        public void AddOperation_TracksOperation()
+        public void TrackOperation_GivenAddOperation()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -64,7 +64,7 @@ namespace WorkflowForge.Tests.Testing
         }
 
         [Fact]
-        public async Task ForgeAsync_TracksExecutedOperations()
+        public async Task TrackExecutedOperations_GivenForgeAsync()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -83,7 +83,7 @@ namespace WorkflowForge.Tests.Testing
         }
 
         [Fact]
-        public void TrackExecution_ManuallyTracksOperation()
+        public void ManuallyTrackOperation_GivenTrackExecution()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -102,7 +102,7 @@ namespace WorkflowForge.Tests.Testing
         #region Properties Tests
 
         [Fact]
-        public async Task Properties_CanBeSetAndRead()
+        public async Task AllowSetAndRead_GivenProperties()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -122,7 +122,7 @@ namespace WorkflowForge.Tests.Testing
         #region Reset Tests
 
         [Fact]
-        public async Task Reset_ClearsAllState()
+        public async Task ClearAllState_GivenReset()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -146,7 +146,7 @@ namespace WorkflowForge.Tests.Testing
         #region Event Tests
 
         [Fact]
-        public async Task ForgeAsync_RaisesOperationEvents()
+        public async Task RaiseOperationEvents_GivenForgeAsync()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -168,7 +168,7 @@ namespace WorkflowForge.Tests.Testing
         }
 
         [Fact]
-        public async Task ForgeAsync_RaisesFailedEvent_OnException()
+        public async Task RaiseFailedEvent_GivenForgeAsyncOnException()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();
@@ -188,7 +188,7 @@ namespace WorkflowForge.Tests.Testing
         #region Dispose Tests
 
         [Fact]
-        public void Dispose_SetsDisposedState()
+        public void SetDisposedState_GivenDispose()
         {
             // Arrange
             var foundry = new FakeWorkflowFoundry();

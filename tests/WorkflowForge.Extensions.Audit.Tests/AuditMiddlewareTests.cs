@@ -8,14 +8,14 @@ using WF = WorkflowForge;
 
 namespace WorkflowForge.Extensions.Audit.Tests
 {
-    public class AuditMiddlewareTests : IDisposable
+    public class AuditMiddlewareShould : IDisposable
     {
         private readonly IWorkflowFoundry _foundry;
         private readonly InMemoryAuditProvider _auditProvider;
         private readonly TestOperation _operation;
         private readonly ISystemTimeProvider _timeProvider;
 
-        public AuditMiddlewareTests()
+        public AuditMiddlewareShould()
         {
             _timeProvider = SystemTimeProvider.Instance;
             _foundry = WF.WorkflowForge.CreateFoundry("AuditTest");
@@ -30,7 +30,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public async Task ExecuteAsync_SuccessfulOperation_ShouldCreateStartedAndCompletedEntries()
+        public async Task CreateStartedAndCompletedEntries_GivenExecuteAsyncSuccessfulOperation()
         {
             var options = new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Standard };
             var middleware = new AuditMiddleware(_auditProvider, options, _timeProvider, "test-user");
@@ -59,7 +59,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public async Task ExecuteAsync_FailedOperation_ShouldCreateFailedEntry()
+        public async Task CreateFailedEntry_GivenExecuteAsyncFailedOperation()
         {
             var options = new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Standard };
             var middleware = new AuditMiddleware(_auditProvider, options, _timeProvider, "test-user");
@@ -79,7 +79,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public async Task ExecuteAsync_WithMetadata_ShouldIncludeFoundryProperties()
+        public async Task IncludeFoundryProperties_GivenExecuteAsyncWithMetadata()
         {
             _foundry.Properties["CustomProperty"] = "CustomValue";
             var options = new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Verbose };
@@ -96,7 +96,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public async Task ExecuteAsync_WithoutMetadata_ShouldHaveEmptyMetadata()
+        public async Task HaveEmptyMetadata_GivenExecuteAsyncWithoutMetadata()
         {
             _foundry.Properties["CustomProperty"] = "CustomValue";
             var options = new AuditMiddlewareOptions
@@ -116,7 +116,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public void Constructor_WithNullAuditProvider_ShouldThrowArgumentNullException()
+        public void ThrowArgumentNullException_GivenConstructorWithNullAuditProvider()
         {
             var options = new AuditMiddlewareOptions();
             Assert.Throws<ArgumentNullException>(() =>
@@ -124,7 +124,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public async Task ExecuteAsync_WithDefaultTimeProvider_ShouldUseSystemTime()
+        public async Task UseSystemTime_GivenExecuteAsyncWithDefaultTimeProvider()
         {
             var options = new AuditMiddlewareOptions();
             var middleware = new AuditMiddleware(_auditProvider, options);

@@ -9,11 +9,11 @@ using WF = WorkflowForge;
 
 namespace WorkflowForge.Extensions.Resilience.Tests;
 
-public class RetryWorkflowOperationTests : IDisposable
+public class RetryWorkflowOperationShould : IDisposable
 {
     private readonly IWorkflowFoundry _foundry;
 
-    public RetryWorkflowOperationTests()
+        public RetryWorkflowOperationShould()
     {
         _foundry = WF.WorkflowForge.CreateFoundry("RetryTest");
     }
@@ -24,7 +24,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public void Constructor_WithNullOperation_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullOperation()
     {
         var strategy = new FixedIntervalStrategy(TimeSpan.FromMilliseconds(10), 3);
 
@@ -33,7 +33,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public void Constructor_WithNullStrategy_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullStrategy()
     {
         var operation = new FakeWorkflowOperation();
 
@@ -42,7 +42,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public void Constructor_WithValidParameters_SetsNameFromOperation()
+    public void SetNameFromOperation_GivenValidParameters()
     {
         var operation = new FakeWorkflowOperation { Name = "InnerOp" };
         var strategy = new FixedIntervalStrategy(TimeSpan.FromMilliseconds(10), 3);
@@ -54,7 +54,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public void Constructor_WithCustomName_SetsCustomName()
+    public void SetCustomName_GivenCustomName()
     {
         var operation = new FakeWorkflowOperation { Name = "InnerOp" };
         var strategy = new FixedIntervalStrategy(TimeSpan.FromMilliseconds(10), 3);
@@ -65,7 +65,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task ForgeAsync_SuccessfulExecutionOnFirstAttempt_ReturnsResult()
+    public async Task ReturnResult_GivenForgeAsyncSuccessfulExecutionOnFirstAttempt()
     {
         const string expectedResult = "success";
         var operation = new FakeWorkflowOperation { Result = expectedResult };
@@ -80,7 +80,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task ForgeAsync_WithNullFoundry_ThrowsArgumentNullException()
+    public async Task ThrowArgumentNullException_GivenForgeAsyncWithNullFoundry()
     {
         var operation = new FakeWorkflowOperation();
         var strategy = new FixedIntervalStrategy(TimeSpan.FromMilliseconds(10), 3);
@@ -91,7 +91,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task ForgeAsync_RetryBehavior_SucceedsOnSecondAttempt()
+    public async Task SucceedOnSecondAttempt_GivenForgeAsyncRetryBehavior()
     {
         var operation = new FakeWorkflowOperation
         {
@@ -109,7 +109,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task ForgeAsync_RetryExhausted_ThrowsOriginalException()
+    public async Task ThrowOriginalException_GivenForgeAsyncRetryExhausted()
     {
         var operation = new FakeWorkflowOperation { FailCount = 10 };
         var strategy = new FixedIntervalStrategy(TimeSpan.FromMilliseconds(10), 3);
@@ -124,7 +124,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task RestoreAsync_DelegatesToInnerOperation()
+    public async Task DelegateToInnerOperation_GivenRestoreAsync()
     {
         var operation = new FakeWorkflowOperation();
         var strategy = new FixedIntervalStrategy(TimeSpan.FromMilliseconds(10), 3);
@@ -137,7 +137,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public void Dispose_DisposesInnerOperation()
+    public void DisposeInnerOperation_GivenDispose()
     {
         var operation = new FakeWorkflowOperation();
         var strategy = new FixedIntervalStrategy(TimeSpan.FromMilliseconds(10), 3);
@@ -149,7 +149,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public void Dispose_WhenInnerOperationThrows_DoesNotPropagate()
+    public void NotPropagate_GivenDisposeWhenInnerOperationThrows()
     {
         var operation = new FakeWorkflowOperation { ThrowOnDispose = true };
         var strategy = new FixedIntervalStrategy(TimeSpan.FromMilliseconds(10), 3);
@@ -159,7 +159,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task WithFixedInterval_CreatesRetryOperation()
+    public async Task CreateRetryOperation_GivenWithFixedInterval()
     {
         var operation = new FakeWorkflowOperation();
         var interval = TimeSpan.FromSeconds(1);
@@ -173,7 +173,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task WithExponentialBackoff_CreatesRetryOperation()
+    public async Task CreateRetryOperation_GivenWithExponentialBackoff()
     {
         var operation = new FakeWorkflowOperation();
 
@@ -185,7 +185,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task WithRandomInterval_CreatesRetryOperation()
+    public async Task CreateRetryOperation_GivenWithRandomInterval()
     {
         var operation = new FakeWorkflowOperation();
         var minDelay = TimeSpan.FromMilliseconds(50);
@@ -199,7 +199,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task FromSettings_WithFixedIntervalStrategy_CreatesRetryOperation()
+    public async Task CreateRetryOperation_GivenFromSettingsWithFixedIntervalStrategy()
     {
         var operation = new FakeWorkflowOperation();
         var settings = new RetryPolicySettings
@@ -217,7 +217,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task FromSettings_WithExponentialBackoffStrategy_CreatesRetryOperation()
+    public async Task CreateRetryOperation_GivenFromSettingsWithExponentialBackoffStrategy()
     {
         var operation = new FakeWorkflowOperation();
         var settings = new RetryPolicySettings
@@ -237,7 +237,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task FromSettings_WithRandomIntervalStrategy_CreatesRetryOperation()
+    public async Task CreateRetryOperation_GivenFromSettingsWithRandomIntervalStrategy()
     {
         var operation = new FakeWorkflowOperation();
         var settings = new RetryPolicySettings
@@ -256,7 +256,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public void FromSettings_WithNullOperation_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenFromSettingsWithNullOperation()
     {
         var settings = new RetryPolicySettings
         {
@@ -269,7 +269,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public void FromSettings_WithNullSettings_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenFromSettingsWithNullSettings()
     {
         var operation = new FakeWorkflowOperation();
 
@@ -278,7 +278,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public void FromSettings_WithRetryStrategyTypeNone_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenFromSettingsWithRetryStrategyTypeNone()
     {
         var operation = new FakeWorkflowOperation();
         var settings = new RetryPolicySettings
@@ -294,7 +294,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task Create_CreatesRetryOperationWithDefaultExponentialBackoff()
+    public async Task CreateRetryOperationWithDefaultExponentialBackoff_GivenCreate()
     {
         var operation = new FakeWorkflowOperation();
 
@@ -306,7 +306,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task ForTransientErrors_CreatesRetryOperation()
+    public async Task CreateRetryOperation_GivenForTransientErrors()
     {
         var operation = new FakeWorkflowOperation();
 
@@ -318,7 +318,7 @@ public class RetryWorkflowOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task ForgeAsync_WithCustomStrategy_RetriesAccordingToStrategy()
+    public async Task RetryAccordingToStrategy_GivenForgeAsyncWithCustomStrategy()
     {
         var operation = new FakeWorkflowOperation { FailCount = 2, Result = "final" };
         var strategy = new FixedIntervalStrategy(TimeSpan.FromMilliseconds(5), maxAttempts: 5);

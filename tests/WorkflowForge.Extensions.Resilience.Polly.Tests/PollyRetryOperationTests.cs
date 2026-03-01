@@ -10,11 +10,11 @@ using Xunit;
 
 namespace WorkflowForge.Extensions.Resilience.Polly.Tests;
 
-public class PollyRetryOperationTests : IDisposable
+public class PollyRetryOperationShould : IDisposable
 {
     private readonly IWorkflowFoundry _foundry;
 
-    public PollyRetryOperationTests()
+    public PollyRetryOperationShould()
     {
         _foundry = new FakeWorkflowFoundry();
     }
@@ -25,7 +25,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public void WithRetryPolicy_ReturnsOperationWithCorrectName()
+    public void ReturnOperationWithCorrectName_GivenWithRetryPolicy()
     {
         var inner = new FakeWorkflowOperation();
         var op = PollyRetryOperation.WithRetryPolicy(inner, maxRetryAttempts: 5);
@@ -34,7 +34,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public void WithRetryPolicy_CustomName_SetsName()
+    public void SetName_GivenWithRetryPolicyCustomName()
     {
         var inner = new FakeWorkflowOperation();
         var op = PollyRetryOperation.WithRetryPolicy(inner, name: "CustomPollyRetry");
@@ -43,7 +43,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task ForgeAsync_SuccessfulExecution_ReturnsResult()
+    public async Task ReturnResult_GivenForgeAsyncSuccessfulExecution()
     {
         const string expected = "success";
         var inner = new FakeWorkflowOperation { Result = expected };
@@ -56,7 +56,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task ForgeAsync_RetriesOnFailure()
+    public async Task RetryOnFailure_GivenForgeAsync()
     {
         var inner = new FakeWorkflowOperation { FailCount = 2, Result = "ok" };
         var op = PollyRetryOperation.WithRetryPolicy(
@@ -72,7 +72,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task ForgeAsync_ExhaustsRetries_ThrowsOriginalException()
+    public async Task ThrowOriginalException_GivenForgeAsyncExhaustsRetries()
     {
         var inner = new FakeWorkflowOperation { FailCount = 10 };
         var op = PollyRetryOperation.WithRetryPolicy(
@@ -89,7 +89,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task ForgeAsync_WithNullFoundry_ThrowsArgumentNullException()
+    public async Task ThrowArgumentNullException_GivenForgeAsyncWithNullFoundry()
     {
         var inner = new FakeWorkflowOperation();
         var op = PollyRetryOperation.WithRetryPolicy(inner);
@@ -99,7 +99,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task RestoreAsync_DelegatesToInnerOperation()
+    public async Task DelegateToInnerOperation_GivenRestoreAsync()
     {
         var inner = new FakeWorkflowOperation();
         var op = PollyRetryOperation.WithRetryPolicy(inner);
@@ -111,7 +111,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task RestoreAsync_RetriesOnFailure()
+    public async Task RetryOnRestoreFailure_GivenRestoreAsync()
     {
         var inner = new FakeWorkflowOperation { RestoreFailCount = 2 };
         var op = PollyRetryOperation.WithRetryPolicy(
@@ -127,7 +127,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public void Dispose_DisposesInnerOperation()
+    public void DisposeInnerOperation_GivenDispose()
     {
         var inner = new FakeWorkflowOperation();
         var op = PollyRetryOperation.WithRetryPolicy(inner);
@@ -138,7 +138,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task ForgeAsync_AfterDispose_ThrowsObjectDisposedException()
+    public async Task ThrowObjectDisposedException_GivenForgeAsyncAfterDispose()
     {
         var inner = new FakeWorkflowOperation();
         var op = PollyRetryOperation.WithRetryPolicy(inner);
@@ -149,7 +149,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task RestoreAsync_AfterDispose_ThrowsObjectDisposedException()
+    public async Task ThrowObjectDisposedException_GivenRestoreAsyncAfterDispose()
     {
         var inner = new FakeWorkflowOperation();
         var op = PollyRetryOperation.WithRetryPolicy(inner);
@@ -160,7 +160,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public void WithCircuitBreakerPolicy_ReturnsOperation()
+    public void ReturnOperation_GivenWithCircuitBreakerPolicy()
     {
         var inner = new FakeWorkflowOperation();
         var op = PollyRetryOperation.WithCircuitBreakerPolicy(inner, failureThreshold: 5);
@@ -170,7 +170,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task WithCircuitBreakerPolicy_ForgeAsync_SuccessfulExecution_ReturnsResult()
+    public async Task ReturnResult_GivenWithCircuitBreakerPolicyForgeAsync()
     {
         var inner = new FakeWorkflowOperation { Result = "ok" };
         var op = PollyRetryOperation.WithCircuitBreakerPolicy(
@@ -184,7 +184,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public void WithComprehensivePolicy_ReturnsOperation()
+    public void ReturnOperation_GivenWithComprehensivePolicy()
     {
         var inner = new FakeWorkflowOperation();
         var settings = new PollyMiddlewareOptions
@@ -200,7 +200,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task WithComprehensivePolicy_ForgeAsync_SuccessfulExecution_ReturnsResult()
+    public async Task ReturnResult_GivenWithComprehensivePolicyForgeAsync()
     {
         var inner = new FakeWorkflowOperation { Result = "ok" };
         var settings = new PollyMiddlewareOptions
@@ -217,7 +217,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public void WithPollyRetry_Extension_ReturnsWrappedOperation()
+    public void ReturnWrappedOperation_GivenWithPollyRetryExtension()
     {
         var inner = new FakeWorkflowOperation();
 
@@ -228,7 +228,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public void WithPollyCircuitBreaker_Extension_ReturnsWrappedOperation()
+    public void ReturnWrappedOperation_GivenWithPollyCircuitBreakerExtension()
     {
         var inner = new FakeWorkflowOperation();
 
@@ -239,7 +239,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public void WithPollyComprehensive_Extension_ReturnsWrappedOperation()
+    public void ReturnWrappedOperation_GivenWithPollyComprehensiveExtension()
     {
         var inner = new FakeWorkflowOperation();
         var settings = new PollyMiddlewareOptions { Retry = { IsEnabled = true } };
@@ -251,7 +251,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public void Dispose_WhenInnerThrowsOnDispose_DoesNotPropagate()
+    public void NotPropagate_GivenDisposeWhenInnerThrowsOnDispose()
     {
         var inner = new FakeWorkflowOperation { ThrowOnDispose = true };
         var op = PollyRetryOperation.WithRetryPolicy(inner);
@@ -261,7 +261,7 @@ public class PollyRetryOperationTests : IDisposable
     }
 
     [Fact]
-    public async Task ForgeAsync_WithCircuitBreaker_AfterEnoughFailures_ThrowsWorkflowOperationException()
+    public async Task ThrowWorkflowOperationException_GivenForgeAsyncWithCircuitBreakerAfterEnoughFailures()
     {
         var inner = new FakeWorkflowOperation { FailCount = 100 };
         var op = PollyRetryOperation.WithCircuitBreakerPolicy(

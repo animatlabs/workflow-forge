@@ -72,7 +72,7 @@ public class HealthChecksSample : ISample
             .WithOperation(LoggingOperation.Info("Periodic health monitoring demonstration completed"));
 
         // Monitor health status during execution
-        var healthMonitoringTask = MonitorHealthStatusAsync(healthCheckService, foundry);
+        _ = MonitorHealthStatusAsync(healthCheckService, foundry);
 
         await foundry.ForgeAsync();
 

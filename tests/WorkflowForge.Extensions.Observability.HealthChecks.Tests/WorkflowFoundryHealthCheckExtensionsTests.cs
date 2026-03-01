@@ -11,17 +11,17 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks.Tests;
 /// <summary>
 /// Tests for WorkflowFoundryHealthCheckExtensions.
 /// </summary>
-public class WorkflowFoundryHealthCheckExtensionsTests
+public class WorkflowFoundryHealthCheckExtensionsShould
 {
     [Fact]
-    public void CreateHealthCheckService_WithNullFoundry_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenCreateHealthCheckServiceWithNullFoundry()
     {
         Assert.Throws<ArgumentNullException>(() =>
             ((IWorkflowFoundry)null!).CreateHealthCheckService());
     }
 
     [Fact]
-    public void CreateHealthCheckService_WithValidFoundry_ReturnsHealthCheckService()
+    public void ReturnHealthCheckService_GivenCreateHealthCheckServiceWithValidFoundry()
     {
         var foundryMock = new Mock<IWorkflowFoundry>();
         foundryMock.Setup(f => f.Logger).Returns(new ConsoleLogger("Test"));
@@ -32,7 +32,7 @@ public class WorkflowFoundryHealthCheckExtensionsTests
     }
 
     [Fact]
-    public void CreateHealthCheckService_WithCheckInterval_ReturnsServiceWithInterval()
+    public void ReturnServiceWithInterval_GivenCreateHealthCheckServiceWithCheckInterval()
     {
         var foundryMock = new Mock<IWorkflowFoundry>();
         foundryMock.Setup(f => f.Logger).Returns(new ConsoleLogger("Test"));
@@ -44,7 +44,7 @@ public class WorkflowFoundryHealthCheckExtensionsTests
     }
 
     [Fact]
-    public void CreateHealthCheckService_WithNullInterval_ReturnsServiceWithoutPeriodicChecks()
+    public void ReturnServiceWithoutPeriodicChecks_GivenCreateHealthCheckServiceWithNullInterval()
     {
         var foundryMock = new Mock<IWorkflowFoundry>();
         foundryMock.Setup(f => f.Logger).Returns(new ConsoleLogger("Test"));
@@ -55,7 +55,7 @@ public class WorkflowFoundryHealthCheckExtensionsTests
     }
 
     [Fact]
-    public async Task CheckFoundryHealthAsync_WithNullFoundry_ThrowsArgumentNullException()
+    public async Task ThrowArgumentNullException_GivenCheckFoundryHealthAsyncWithNullFoundry()
     {
         var logger = new ConsoleLogger("Test");
         var healthCheckService = new HealthCheckService(logger, registerBuiltInHealthChecks: false);
@@ -65,7 +65,7 @@ public class WorkflowFoundryHealthCheckExtensionsTests
     }
 
     [Fact]
-    public async Task CheckFoundryHealthAsync_WithNullHealthCheckService_ThrowsArgumentNullException()
+    public async Task ThrowArgumentNullException_GivenCheckFoundryHealthAsyncWithNullHealthCheckService()
     {
         var foundryMock = new Mock<IWorkflowFoundry>();
         foundryMock.Setup(f => f.Logger).Returns(new ConsoleLogger("Test"));
@@ -75,7 +75,7 @@ public class WorkflowFoundryHealthCheckExtensionsTests
     }
 
     [Fact]
-    public async Task CheckFoundryHealthAsync_WithValidArgs_ReturnsOverallStatus()
+    public async Task ReturnOverallStatus_GivenCheckFoundryHealthAsyncWithValidArgs()
     {
         var foundryMock = new Mock<IWorkflowFoundry>();
         foundryMock.Setup(f => f.Logger).Returns(new ConsoleLogger("Test"));
@@ -90,7 +90,7 @@ public class WorkflowFoundryHealthCheckExtensionsTests
     }
 
     [Fact]
-    public async Task CheckFoundryHealthAsync_WithCancellationToken_RespectsCancellation()
+    public async Task RespectCancellation_GivenCheckFoundryHealthAsyncWithCancellationToken()
     {
         var foundryMock = new Mock<IWorkflowFoundry>();
         foundryMock.Setup(f => f.Logger).Returns(new ConsoleLogger("Test"));

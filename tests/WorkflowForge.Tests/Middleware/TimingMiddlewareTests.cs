@@ -15,12 +15,12 @@ namespace WorkflowForge.Tests.Middleware;
 /// <summary>
 /// Unit tests for WorkflowForge TimingMiddleware - timing measurement and foundry property storage.
 /// </summary>
-public class TimingMiddlewareTests
+public class TimingMiddlewareShould
 {
     #region Constructor Tests
 
     [Fact]
-    public void Constructor_WithNullOptions_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullOptions()
     {
         // Arrange - use typed null to force the options overload
         TimingMiddlewareOptions? nullOptions = null;
@@ -31,7 +31,7 @@ public class TimingMiddlewareTests
     }
 
     [Fact]
-    public void Constructor_WithValidOptions_Initializes()
+    public void Initialize_GivenValidOptions()
     {
         // Arrange
         var options = new TimingMiddlewareOptions();
@@ -44,9 +44,9 @@ public class TimingMiddlewareTests
     }
 
     [Fact]
-    public void Constructor_BackwardCompatibility_DefaultCtor_Initializes()
+    public void Initialize_GivenDefaultCtor_BackwardCompatibility()
     {
-        // Act - use full namespace to avoid conflict with test TimingMiddleware in MiddlewareTests
+        // Act - use full namespace to avoid conflict with test TimingMiddleware in MiddlewareShould
         var middleware = new TimingMiddlewareCore();
 
         // Assert
@@ -58,7 +58,7 @@ public class TimingMiddlewareTests
     #region ExecuteAsync_Success
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextSucceeds_ReturnsResult()
+    public async Task ReturnResult_GivenNextSucceeds()
     {
         // Arrange
         var options = new TimingMiddlewareOptions();
@@ -79,7 +79,7 @@ public class TimingMiddlewareTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextSucceeds_StoresTimingDuration()
+    public async Task StoreTimingDuration_GivenNextSucceeds()
     {
         // Arrange
         var options = new TimingMiddlewareOptions { IncludeDetailedTimings = false };
@@ -107,7 +107,7 @@ public class TimingMiddlewareTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextSucceeds_AndIncludeDetailedTimingsTrue_StoresAllTimingProperties()
+    public async Task StoreAllTimingProperties_GivenNextSucceedsAndIncludeDetailedTimingsTrue()
     {
         // Arrange
         var options = new TimingMiddlewareOptions { IncludeDetailedTimings = true };
@@ -134,7 +134,7 @@ public class TimingMiddlewareTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextSucceeds_AndIncludeDetailedTimingsFalse_StoresOnlyDuration()
+    public async Task StoreOnlyDuration_GivenNextSucceedsAndIncludeDetailedTimingsFalse()
     {
         // Arrange
         var options = new TimingMiddlewareOptions { IncludeDetailedTimings = false };
@@ -161,7 +161,7 @@ public class TimingMiddlewareTests
     #region ExecuteAsync_Failure
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextThrows_PropagatesException()
+    public async Task PropagateException_GivenNextThrows()
     {
         // Arrange
         var options = new TimingMiddlewareOptions();
@@ -182,7 +182,7 @@ public class TimingMiddlewareTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextThrows_StoresTimingDuration()
+    public async Task StoreTimingDuration_GivenNextThrows()
     {
         // Arrange
         var options = new TimingMiddlewareOptions { IncludeDetailedTimings = false };
@@ -203,7 +203,7 @@ public class TimingMiddlewareTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextThrows_AndIncludeDetailedTimingsTrue_StoresStartTimeAndFailedFlag()
+    public async Task StoreStartTimeAndFailedFlag_GivenNextThrowsAndIncludeDetailedTimingsTrue()
     {
         // Arrange
         var options = new TimingMiddlewareOptions { IncludeDetailedTimings = true };
@@ -231,7 +231,7 @@ public class TimingMiddlewareTests
     #region ExecuteAsync_Cancellation
 
     [Fact]
-    public async Task ExecuteAsync_WhenNextThrowsOperationCanceledException_Propagates()
+    public async Task Propagate_GivenNextThrowsOperationCanceledException()
     {
         // Arrange
         var options = new TimingMiddlewareOptions();

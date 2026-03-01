@@ -9,11 +9,11 @@ using Xunit;
 
 namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
 {
-    public class WorkflowFoundryTelemetryExtensionsTests : IDisposable
+    public class WorkflowFoundryTelemetryExtensionsShould : IDisposable
     {
         private readonly FakeWorkflowFoundry _foundry;
 
-        public WorkflowFoundryTelemetryExtensionsTests()
+        public WorkflowFoundryTelemetryExtensionsShould()
         {
             _foundry = new FakeWorkflowFoundry();
         }
@@ -26,7 +26,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void EnableOpenTelemetry_WithValidFoundry_ReturnsTrue()
+        public void ReturnTrue_GivenValidFoundry()
         {
             var result = _foundry.EnableOpenTelemetry();
 
@@ -35,7 +35,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void EnableOpenTelemetry_WithOptions_ConfiguresService()
+        public void ConfigureService_GivenOptions()
         {
             var options = new WorkflowForgeOpenTelemetryOptions
             {
@@ -53,7 +53,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void EnableOpenTelemetry_WithNullOptions_UsesDefaults()
+        public void UseDefaults_GivenNullOptions()
         {
             var result = _foundry.EnableOpenTelemetry(null);
 
@@ -64,7 +64,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void EnableOpenTelemetry_WithNullFoundry_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenNullFoundry()
         {
             IWorkflowFoundry? foundry = null;
 
@@ -72,7 +72,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void DisableOpenTelemetry_WhenEnabled_ReturnsTrue()
+        public void ReturnTrue_GivenEnabled()
         {
             _foundry.EnableOpenTelemetry();
 
@@ -83,7 +83,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void DisableOpenTelemetry_WhenNotEnabled_ReturnsFalse()
+        public void ReturnFalse_GivenNotEnabled()
         {
             var result = _foundry.DisableOpenTelemetry();
 
@@ -91,7 +91,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void DisableOpenTelemetry_WithNullFoundry_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenDisableWithNullFoundry()
         {
             IWorkflowFoundry? foundry = null;
 
@@ -99,7 +99,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void GetOpenTelemetryService_WhenEnabled_ReturnsService()
+        public void ReturnService_GivenEnabled()
         {
             _foundry.EnableOpenTelemetry();
 
@@ -110,7 +110,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void GetOpenTelemetryService_WhenNotEnabled_ReturnsNull()
+        public void ReturnNull_GivenNotEnabled()
         {
             var service = _foundry.GetOpenTelemetryService();
 
@@ -118,7 +118,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void GetOpenTelemetryService_WithNullFoundry_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenGetServiceWithNullFoundry()
         {
             IWorkflowFoundry? foundry = null;
 
@@ -126,7 +126,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void StartActivity_WhenEnabled_ReturnsActivityOrNullWhenNotSampled()
+        public void ReturnActivityOrNull_GivenEnabledWhenNotSampled()
         {
             _foundry.EnableOpenTelemetry();
 
@@ -139,7 +139,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void StartActivity_WhenNotEnabled_ReturnsNull()
+        public void ReturnNull_GivenStartActivityWhenNotEnabled()
         {
             var activity = _foundry.StartActivity("TestOp");
 
@@ -147,7 +147,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void StartActivity_WithNullFoundry_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenStartActivityWithNullFoundry()
         {
             IWorkflowFoundry? foundry = null;
 
@@ -155,7 +155,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void RecordOperationMetrics_WhenEnabled_RecordsMetrics()
+        public void RecordMetrics_GivenEnabled()
         {
             var ex = Record.Exception(() =>
             {
@@ -168,14 +168,14 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void RecordOperationMetrics_WhenNotEnabled_DoesNotThrow()
+        public void NotThrow_GivenRecordOperationMetricsWhenNotEnabled()
         {
             var ex = Record.Exception(() => _foundry.RecordOperationMetrics("Op1", TimeSpan.FromSeconds(1), success: true));
             Assert.Null(ex);
         }
 
         [Fact]
-        public void RecordOperationMetrics_WithNullFoundry_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenRecordOperationMetricsWithNullFoundry()
         {
             IWorkflowFoundry? foundry = null;
 
@@ -184,7 +184,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void IncrementActiveOperations_WhenEnabled_IncrementsCounter()
+        public void IncrementCounter_GivenEnabled()
         {
             var ex = Record.Exception(() =>
             {
@@ -197,14 +197,14 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void IncrementActiveOperations_WhenNotEnabled_DoesNotThrow()
+        public void NotThrow_GivenIncrementActiveOperationsWhenNotEnabled()
         {
             var ex = Record.Exception(() => _foundry.IncrementActiveOperations("Op1"));
             Assert.Null(ex);
         }
 
         [Fact]
-        public void IncrementActiveOperations_WithNullFoundry_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenIncrementActiveOperationsWithNullFoundry()
         {
             IWorkflowFoundry? foundry = null;
 
@@ -212,7 +212,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void DecrementActiveOperations_WhenEnabled_DecrementsCounter()
+        public void DecrementCounter_GivenDecrementActiveOperationsWhenEnabled()
         {
             var ex = Record.Exception(() =>
             {
@@ -225,14 +225,14 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void DecrementActiveOperations_WhenNotEnabled_DoesNotThrow()
+        public void NotThrow_GivenDecrementActiveOperationsWhenNotEnabled()
         {
             var ex = Record.Exception(() => _foundry.DecrementActiveOperations("Op1"));
             Assert.Null(ex);
         }
 
         [Fact]
-        public void DecrementActiveOperations_WithNullFoundry_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenDecrementActiveOperationsWithNullFoundry()
         {
             IWorkflowFoundry? foundry = null;
 
@@ -240,7 +240,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void IsOpenTelemetryEnabled_WhenEnabled_ReturnsTrue()
+        public void ReturnTrue_GivenIsOpenTelemetryEnabledWhenEnabled()
         {
             _foundry.EnableOpenTelemetry();
 
@@ -248,13 +248,13 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void IsOpenTelemetryEnabled_WhenNotEnabled_ReturnsFalse()
+        public void ReturnFalse_GivenIsOpenTelemetryEnabledWhenNotEnabled()
         {
             Assert.False(_foundry.IsOpenTelemetryEnabled());
         }
 
         [Fact]
-        public void IsOpenTelemetryEnabled_WithNullFoundry_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenIsOpenTelemetryEnabledWithNullFoundry()
         {
             IWorkflowFoundry? foundry = null;
 
@@ -262,7 +262,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void CreateCounter_WhenEnabled_ReturnsCounter()
+        public void ReturnCounter_GivenCreateCounterWhenEnabled()
         {
             _foundry.EnableOpenTelemetry();
 
@@ -273,7 +273,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void CreateCounter_WhenNotEnabled_ReturnsNull()
+        public void ReturnNull_GivenCreateCounterWhenNotEnabled()
         {
             var counter = _foundry.CreateCounter<long>("custom.counter");
 
@@ -281,7 +281,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void CreateCounter_WithNullFoundry_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenCreateCounterWithNullFoundry()
         {
             IWorkflowFoundry? foundry = null;
 
@@ -289,7 +289,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void CreateHistogram_WhenEnabled_ReturnsHistogram()
+        public void ReturnHistogram_GivenCreateHistogramWhenEnabled()
         {
             _foundry.EnableOpenTelemetry();
 
@@ -300,7 +300,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void CreateHistogram_WhenNotEnabled_ReturnsNull()
+        public void ReturnNull_GivenCreateHistogramWhenNotEnabled()
         {
             var histogram = _foundry.CreateHistogram<double>("custom.histogram");
 
@@ -308,11 +308,81 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void CreateHistogram_WithNullFoundry_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenCreateHistogramWithNullFoundry()
         {
             IWorkflowFoundry? foundry = null;
 
             Assert.Throws<ArgumentNullException>(() => foundry!.CreateHistogram<double>("histogram"));
+        }
+
+        [Fact]
+        public void ConvertTupleTagsToKeyValuePairs_GivenRecordOperationMetricsWithTags()
+        {
+            _foundry.EnableOpenTelemetry();
+
+            var ex = Record.Exception(() =>
+                _foundry.RecordOperationMetrics("TagOp", TimeSpan.FromMilliseconds(100), true, 512,
+                    ("env", "test"), ("region", "us-east")));
+
+            Assert.Null(ex);
+        }
+
+        [Fact]
+        public void NotThrow_GivenRecordOperationMetricsWithEmptyTags()
+        {
+            _foundry.EnableOpenTelemetry();
+
+            var ex = Record.Exception(() =>
+                _foundry.RecordOperationMetrics("NoTagOp", TimeSpan.FromMilliseconds(50), false, 0));
+
+            Assert.Null(ex);
+        }
+
+        [Fact]
+        public void ConvertTupleTagsCorrectly_GivenIncrementAndDecrementWithTags()
+        {
+            _foundry.EnableOpenTelemetry();
+
+            var ex = Record.Exception(() =>
+            {
+                _foundry.IncrementActiveOperations("ConcOp", ("pool", "A"), ("priority", "high"));
+                _foundry.DecrementActiveOperations("ConcOp", ("pool", "A"), ("priority", "high"));
+            });
+
+            Assert.Null(ex);
+        }
+
+        [Fact]
+        public void OverwriteService_GivenEnableOpenTelemetryCalledTwice()
+        {
+            _foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions { ServiceName = "First" });
+            _foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions { ServiceName = "Second" });
+
+            var service = _foundry.GetOpenTelemetryService();
+            Assert.NotNull(service);
+            Assert.Equal("Second", service.ServiceName);
+        }
+
+        [Fact]
+        public void DisableSuccessfully_GivenDisableAfterDoubleEnable()
+        {
+            _foundry.EnableOpenTelemetry();
+            _foundry.EnableOpenTelemetry();
+
+            var result = _foundry.DisableOpenTelemetry();
+
+            Assert.True(result);
+            Assert.False(_foundry.IsOpenTelemetryEnabled());
+        }
+
+        [Fact]
+        public void ReturnNull_GivenPropertySetToNonServiceType()
+        {
+            _foundry.Properties["_opentelemetry_service"] = "not a service";
+
+            var service = _foundry.GetOpenTelemetryService();
+
+            Assert.Null(service);
         }
     }
 }

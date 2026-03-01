@@ -11,7 +11,7 @@ using Xunit;
 
 namespace WorkflowForge.Extensions.Persistence.Tests;
 
-public class PersistenceMiddlewareTests
+public class PersistenceMiddlewareShould
 {
     private sealed class InMemoryProvider : IWorkflowPersistenceProvider
     {
@@ -28,7 +28,7 @@ public class PersistenceMiddlewareTests
     }
 
     [Fact]
-    public async Task SavesSnapshotPerStep_DeletesOnCompletion()
+    public async Task DeleteOnCompletion_GivenSavesSnapshotPerStep()
     {
         var provider = new InMemoryProvider();
         var workflow = WorkflowForge.CreateWorkflow("PersistTest")
@@ -51,7 +51,7 @@ public class PersistenceMiddlewareTests
     }
 
     [Fact]
-    public async Task Resume_SkipsCompletedSteps_AndRestoresProperties()
+    public async Task SkipCompletedStepsAndRestoreProperties_GivenResume()
     {
         var provider = new InMemoryProvider();
         var workflow = WorkflowForge.CreateWorkflow("PersistResume")
@@ -66,12 +66,9 @@ public class PersistenceMiddlewareTests
         using (var f1 = WorkflowForge.CreateFoundry("PersistResume"))
         {
             f1.UsePersistence(provider, options);
-            var smith = WorkflowForge.CreateSmith();
 
-            // Execute only first step then simulate failure by saving manually and stopping
-            // Run the smith which will complete all, but we emulate partial progress by saving snapshot after S1
-            // Instead we directly save a snapshot to simulate a crash after S1
-            var builder = WorkflowForge.CreateWorkflow("Temp"); // just to access ids, not used
+            // Foundry is opened but we don't run – we directly save a snapshot
+            // below to simulate a crash after S1 completed.
         }
 
         // Emulate partial progress snapshot at S2 index (1)
@@ -97,7 +94,7 @@ public class PersistenceMiddlewareTests
     }
 
     [Fact]
-    public async Task Recovery_RetriesUntilSuccess_AndDoesNotReexecuteCompletedSteps()
+    public async Task RetryUntilSuccessAndNotReexecuteCompletedSteps_GivenRecovery()
     {
         var provider = new InMemoryProvider();
         var options = new PersistenceOptions { InstanceId = "recover-instance", WorkflowKey = "RecoverWorkflow" };
@@ -161,7 +158,7 @@ public class PersistenceMiddlewareTests
     }
 
     [Fact]
-    public void UsePersistence_WithEnabledFalse_ShouldNotAddMiddleware()
+    public void NotAddMiddleware_GivenUsePersistenceWithEnabledFalse()
     {
         var provider = new InMemoryProvider();
         var options = new PersistenceOptions { Enabled = false };
@@ -175,7 +172,7 @@ public class PersistenceMiddlewareTests
     }
 
     [Fact]
-    public void UsePersistence_WithEnabledTrue_ShouldAddMiddleware()
+    public void AddMiddleware_GivenUsePersistenceWithEnabledTrue()
     {
         var provider = new InMemoryProvider();
         var options = new PersistenceOptions { Enabled = true };

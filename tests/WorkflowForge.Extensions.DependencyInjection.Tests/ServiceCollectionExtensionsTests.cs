@@ -14,10 +14,10 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests;
 /// <summary>
 /// Comprehensive tests for ServiceCollectionExtensions in WorkflowForge.Extensions.DependencyInjection.
 /// </summary>
-public class ServiceCollectionExtensionsTests
+public class ServiceCollectionExtensionsShould
 {
     [Fact]
-    public void AddWorkflowForge_WithNullServices_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenAddWorkflowForgeWithNullServices()
     {
         var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
 
@@ -26,7 +26,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForge_WithNullConfiguration_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenAddWorkflowForgeWithNullConfiguration()
     {
         var services = new ServiceCollection();
 
@@ -35,7 +35,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForge_WithConfiguration_RegistersOptions()
+    public void RegisterOptions_GivenAddWorkflowForgeWithConfiguration()
     {
         var services = new ServiceCollection();
         var config = new ConfigurationBuilder()
@@ -55,7 +55,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForge_WithNullConfiguration_ThrowsArgumentNullException_WhenOverloadWithConfig()
+    public void ThrowArgumentNullException_GivenAddWorkflowForgeWithNullConfigurationWhenOverloadWithConfig()
     {
         var services = new ServiceCollection();
 
@@ -64,7 +64,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForge_WithCustomSectionNames_BindsCorrectly()
+    public void BindCorrectly_GivenAddWorkflowForgeWithCustomSectionNames()
     {
         var services = new ServiceCollection();
         var config = new ConfigurationBuilder()
@@ -94,14 +94,14 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForge_WithNullServices_ThrowsArgumentNullException_WhenOverloadWithActions()
+    public void ThrowArgumentNullException_GivenAddWorkflowForgeWithNullServicesWhenOverloadWithActions()
     {
         Assert.Throws<ArgumentNullException>(() =>
             ((IServiceCollection)null!).AddWorkflowForge(config => config.MaxConcurrentWorkflows = 5));
     }
 
     [Fact]
-    public void AddWorkflowForge_WithConfigureCore_RegistersConfiguredOptions()
+    public void RegisterConfiguredOptions_GivenAddWorkflowForgeWithConfigureCore()
     {
         var services = new ServiceCollection();
 
@@ -115,7 +115,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForge_WithConfigureTiming_RegistersConfiguredOptions()
+    public void RegisterConfiguredOptions_GivenAddWorkflowForgeWithConfigureTiming()
     {
         var services = new ServiceCollection();
 
@@ -130,7 +130,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForge_WithConfigureLogging_RegistersConfiguredOptions()
+    public void RegisterConfiguredOptions_GivenAddWorkflowForgeWithConfigureLogging()
     {
         var services = new ServiceCollection();
 
@@ -146,7 +146,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForge_WithConfigureErrorHandling_RegistersConfiguredOptions()
+    public void RegisterConfiguredOptions_GivenAddWorkflowForgeWithConfigureErrorHandling()
     {
         var services = new ServiceCollection();
 
@@ -163,7 +163,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForge_WithAllNullActions_StillRegistersOptions()
+    public void StillRegisterOptions_GivenAddWorkflowForgeWithAllNullActions()
     {
         var services = new ServiceCollection();
 
@@ -186,7 +186,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowForge_ReturnsSameServiceCollection()
+    public void ReturnSameServiceCollection_GivenAddWorkflowForge()
     {
         var services = new ServiceCollection();
         var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
@@ -197,14 +197,14 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowSmith_WithNullServices_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenAddWorkflowSmithWithNullServices()
     {
         Assert.Throws<ArgumentNullException>(() =>
             ((IServiceCollection)null!).AddWorkflowSmith());
     }
 
     [Fact]
-    public void AddWorkflowSmith_RegistersWorkflowSmith()
+    public void RegisterWorkflowSmith_GivenAddWorkflowSmith()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IWorkflowForgeLogger>(_ => new ConsoleLogger("Test"));
@@ -219,7 +219,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowSmith_ReturnsSameServiceCollection()
+    public void ReturnSameServiceCollection_GivenAddWorkflowSmith()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IWorkflowForgeLogger>(_ => new ConsoleLogger("Test"));
@@ -231,7 +231,7 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void AddWorkflowSmith_WithoutLogger_Throws()
+    public void Throw_GivenAddWorkflowSmithWithoutLogger()
     {
         var services = new ServiceCollection();
         services.AddWorkflowForge(config => config.MaxConcurrentWorkflows = 2);

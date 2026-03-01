@@ -11,12 +11,12 @@ namespace WorkflowForge.Tests.Operations;
 /// Comprehensive tests for DelegateWorkflowOperation covering RestoreAsync,
 /// factory methods, generic variant, null handling, cancellation, and error paths.
 /// </summary>
-public class DelegateWorkflowOperationEnhancedTests
+public class DelegateWorkflowOperationEnhancedShould
 {
     #region RestoreAsync
 
     [Fact]
-    public async Task RestoreAsync_WithNullRestoreFunc_ReturnsImmediately()
+    public async Task ReturnImmediately_GivenNullRestoreFunc()
     {
         var operation = new DelegateWorkflowOperation("Test", (input, _, _) => Task.FromResult<object?>(input));
         var foundry = new Mock<IWorkflowFoundry>().Object;
@@ -26,7 +26,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task RestoreAsync_WithRestoreFunc_InvokesRestore()
+    public async Task InvokeRestore_GivenRestoreFunc()
     {
         var restored = false;
         var operation = new DelegateWorkflowOperation(
@@ -41,7 +41,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task RestoreAsync_WhenRestoreThrows_ThrowsWorkflowRestoreException()
+    public async Task ThrowWorkflowRestoreException_GivenRestoreThrows()
     {
         var operation = new DelegateWorkflowOperation(
             "Test",
@@ -59,7 +59,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task RestoreAsync_WhenOperationCanceled_PropagatesWithoutWrapping()
+    public async Task PropagateWithoutWrapping_GivenRestoreOperationCanceled()
     {
         var operation = new DelegateWorkflowOperation(
             "Test",
@@ -77,7 +77,7 @@ public class DelegateWorkflowOperationEnhancedTests
     #region ForgeAsync - Error paths
 
     [Fact]
-    public async Task ForgeAsync_WhenOperationCanceled_PropagatesWithoutWrapping()
+    public async Task PropagateWithoutWrapping_GivenForgeAsyncOperationCanceled()
     {
         var operation = new DelegateWorkflowOperation("Test", (_, _, ct) =>
             throw new OperationCanceledException(ct));
@@ -89,7 +89,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithNullInput_HandlesCorrectly()
+    public async Task HandleCorrectly_GivenNullInput()
     {
         object? captured = "not null";
         var operation = new DelegateWorkflowOperation("Test", (input, _, _) =>
@@ -110,7 +110,7 @@ public class DelegateWorkflowOperationEnhancedTests
     #region Factory Methods - FromSync, FromAsync, FromAction, FromAsyncAction
 
     [Fact]
-    public async Task FromSync_ExecutesSyncFunc()
+    public async Task ExecuteSyncFunc_GivenFromSync()
     {
         var operation = DelegateWorkflowOperation.FromSync("Test", input => $"Processed: {input}");
 
@@ -121,7 +121,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task FromAsync_ExecutesAsyncFunc()
+    public async Task ExecuteAsyncFunc_GivenFromAsync()
     {
         var operation = DelegateWorkflowOperation.FromAsync("Test", async input =>
         {
@@ -136,7 +136,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task FromAction_ReturnsNull()
+    public async Task ReturnNull_GivenFromAction()
     {
         var executed = false;
         var operation = DelegateWorkflowOperation.FromAction("Test", input =>
@@ -153,7 +153,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task FromAsyncAction_ReturnsNull()
+    public async Task ReturnNull_GivenFromAsyncAction()
     {
         var executed = false;
         var operation = DelegateWorkflowOperation.FromAsyncAction("Test", async input =>
@@ -174,7 +174,7 @@ public class DelegateWorkflowOperationEnhancedTests
     #region Generic DelegateWorkflowOperation<TInput, TOutput>
 
     [Fact]
-    public async Task Generic_ForgeAsync_ExecutesTypedFunc()
+    public async Task ExecuteTypedFunc_GivenGenericForgeAsync()
     {
         var operation = new DelegateWorkflowOperation<string, int>("Test", (input, _, _) =>
             Task.FromResult(input.Length));
@@ -186,7 +186,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task Generic_ForgeAsync_WhenThrows_WrapsInWorkflowOperationException()
+    public async Task WrapInWorkflowOperationException_GivenGenericThrows()
     {
         var operation = new DelegateWorkflowOperation<string, int>("Test", (_, _, _) =>
             throw new DivideByZeroException("div by zero"));
@@ -200,7 +200,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task Generic_RestoreAsync_WithRestoreFunc_InvokesRestore()
+    public async Task InvokeRestore_GivenGenericRestoreFunc()
     {
         var restored = false;
         var operation = new DelegateWorkflowOperation<string, int>(
@@ -215,7 +215,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task Generic_FromSync_CreatesTypedOperation()
+    public async Task CreateTypedOperation_GivenGenericFromSync()
     {
         var operation = DelegateWorkflowOperation<string, int>.FromSync("Test", s => s.Length);
 
@@ -226,7 +226,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task Generic_FromAsync_CreatesTypedOperation()
+    public async Task CreateTypedOperation_GivenGenericFromAsync()
     {
         var operation = DelegateWorkflowOperation<string, string>.FromAsync("Test", async s =>
         {
@@ -241,7 +241,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task Generic_WithFoundry_CreatesOperationWithFoundryAccess()
+    public async Task CreateOperationWithFoundryAccess_GivenGenericWithFoundry()
     {
         Guid? capturedId = null;
         var operation = DelegateWorkflowOperation<string, string>.WithFoundry("Test", (input, foundry) =>
@@ -264,7 +264,7 @@ public class DelegateWorkflowOperationEnhancedTests
     #region WorkflowOperations factory
 
     [Fact]
-    public void WorkflowOperations_Create_ReturnsDelegateOperation()
+    public void ReturnDelegateOperation_GivenWorkflowOperationsCreate()
     {
         var operation = WorkflowOperations.Create("Test", input => input);
 
@@ -273,7 +273,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public void WorkflowOperations_CreateAsync_ReturnsDelegateOperation()
+    public void ReturnDelegateOperation_GivenWorkflowOperationsCreateAsync()
     {
         var operation = WorkflowOperations.CreateAsync("Test", input => Task.FromResult<object?>(input));
 
@@ -281,7 +281,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public void WorkflowOperations_CreateAction_ReturnsDelegateOperation()
+    public void ReturnDelegateOperation_GivenWorkflowOperationsCreateAction()
     {
         var operation = WorkflowOperations.CreateAction("Test", _ => { });
 
@@ -289,7 +289,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public void WorkflowOperations_CreateAsyncAction_ReturnsDelegateOperation()
+    public void ReturnDelegateOperation_GivenWorkflowOperationsCreateAsyncAction()
     {
         var operation = WorkflowOperations.CreateAsyncAction("Test", _ => Task.CompletedTask);
 
@@ -297,7 +297,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public void WorkflowOperations_CreateTyped_ReturnsTypedDelegateOperation()
+    public void ReturnTypedDelegateOperation_GivenWorkflowOperationsCreateTyped()
     {
         var operation = WorkflowOperations.Create<string, int>("Test", s => s.Length);
 
@@ -305,7 +305,7 @@ public class DelegateWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public void WorkflowOperations_CreateAsyncTyped_ReturnsTypedDelegateOperation()
+    public void ReturnTypedDelegateOperation_GivenWorkflowOperationsCreateAsyncTyped()
     {
         var operation = WorkflowOperations.CreateAsync<string, string>("Test", s => Task.FromResult(s));
 

@@ -9,10 +9,10 @@ using WorkflowForge.Options;
 
 namespace WorkflowForge.Tests.Orchestration
 {
-    public class WorkflowSmithTests
+    public class WorkflowSmithShould
     {
         [Fact]
-        public async Task ForgeAsync_WhenOperationFails_EmitsFailedOperationName()
+        public async Task EmitFailedOperationName_GivenOperationFailure()
         {
             // Arrange
             using var smith = global::WorkflowForge.WorkflowForge.CreateSmith();
@@ -37,7 +37,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public async Task ForgeAsync_WhenCompensating_PassesStoredOutputToRestore()
+        public async Task PassStoredOutputToRestore_GivenCompensation()
         {
             // Arrange
             using var smith = global::WorkflowForge.WorkflowForge.CreateSmith();
@@ -59,7 +59,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public async Task ForgeAsync_WhenCompensationFails_AggregatesErrors()
+        public async Task AggregateErrors_GivenCompensationFailure()
         {
             // Arrange
             var options = new WorkflowForgeOptions
@@ -86,7 +86,7 @@ namespace WorkflowForge.Tests.Orchestration
         }
 
         [Fact]
-        public async Task ForgeAsync_WhenFoundryProvided_ReplacesOperations()
+        public async Task ReplaceOperations_GivenExplicitFoundryProvided()
         {
             // Arrange
             using var smith = global::WorkflowForge.WorkflowForge.CreateSmith();

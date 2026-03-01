@@ -7,12 +7,12 @@ namespace WorkflowForge.Tests.Exceptions
     /// <summary>
     /// Tests for <see cref="WorkflowConfigurationException"/>.
     /// </summary>
-    public class WorkflowConfigurationExceptionTests
+    public class WorkflowConfigurationExceptionShould
     {
         #region Constructor Tests
 
         [Fact]
-        public void Constructor_WithMessage_SetsMessageAndNullConfigurationKey()
+        public void SetMessageAndNullConfigurationKey_GivenMessage()
         {
             // Arrange
             const string message = "Invalid workflow configuration";
@@ -26,7 +26,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void Constructor_WithMessageAndConfigurationKey_SetsBothProperties()
+        public void SetBothProperties_GivenMessageAndConfigurationKey()
         {
             // Arrange
             const string message = "Invalid workflow configuration";
@@ -41,7 +41,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void Constructor_WithMessageAndEmptyConfigurationKey_SetsEmptyString()
+        public void SetEmptyString_GivenMessageAndEmptyConfigurationKey()
         {
             // Arrange
             const string message = "Invalid workflow configuration";
@@ -55,7 +55,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void Constructor_WithMessageAndInnerException_SetsInnerExceptionAndNullConfigurationKey()
+        public void SetInnerExceptionAndNullConfigurationKey_GivenMessageAndInnerException()
         {
             // Arrange
             const string message = "Invalid workflow configuration";
@@ -71,7 +71,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void Constructor_WithMessageInnerExceptionAndConfigurationKey_SetsAllProperties()
+        public void SetAllProperties_GivenMessageInnerExceptionAndConfigurationKey()
         {
             // Arrange
             const string message = "Invalid workflow configuration";
@@ -93,7 +93,7 @@ namespace WorkflowForge.Tests.Exceptions
 
 #pragma warning disable SYSLIB0050, SYSLIB0051 // Serialization tests for .NET Framework compatibility
         [Fact]
-        public void GetObjectData_SerializesConfigurationKey()
+        public void SerializeConfigurationKey_GivenGetObjectData()
         {
             // Arrange
             const string message = "Invalid workflow configuration";
@@ -111,7 +111,7 @@ namespace WorkflowForge.Tests.Exceptions
         }
 
         [Fact]
-        public void GetObjectData_WithNullConfigurationKey_SerializesNull()
+        public void SerializeNull_GivenNullConfigurationKey()
         {
             // Arrange
             const string message = "Invalid workflow configuration";

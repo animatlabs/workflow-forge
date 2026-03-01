@@ -11,12 +11,12 @@ namespace WorkflowForge.Tests.Operations;
 /// condition evaluation, true/false branches, RestoreAsync, Dispose, and factory methods.
 /// Complements the basic tests in WorkflowOperationTests.cs.
 /// </summary>
-public class ConditionalWorkflowOperationEnhancedTests
+public class ConditionalWorkflowOperationEnhancedShould
 {
     #region Constructor - Async with input data
 
     [Fact]
-    public void Constructor_AsyncWithInputData_WithCustomNameAndId_SetsProperties()
+    public void SetProperties_GivenAsyncWithInputDataCustomNameAndId()
     {
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((_, _, _) => Task.FromResult(true));
         var trueOp = new Mock<IWorkflowOperation>().Object;
@@ -33,7 +33,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     #region Constructor - Simple async (no input)
 
     [Fact]
-    public void Constructor_SimpleAsync_WithValidParams_CreatesOperation()
+    public void CreateOperation_GivenSimpleAsyncValidParams()
     {
         var condition = new Func<IWorkflowFoundry, CancellationToken, Task<bool>>((_, _) => Task.FromResult(true));
         var trueOp = new Mock<IWorkflowOperation>().Object;
@@ -44,7 +44,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public void Constructor_SimpleAsync_WithNullCondition_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenSimpleAsyncNullCondition()
     {
         var trueOp = new Mock<IWorkflowOperation>().Object;
 
@@ -53,7 +53,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public void Constructor_SimpleAsync_WithFalseOperation_AcceptsFalseOp()
+    public void AcceptFalseOp_GivenSimpleAsyncFalseOperation()
     {
         var condition = new Func<IWorkflowFoundry, CancellationToken, Task<bool>>((_, _) => Task.FromResult(false));
         var trueOp = new Mock<IWorkflowOperation>().Object;
@@ -69,7 +69,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     #region Constructor - Sync condition
 
     [Fact]
-    public void Constructor_SyncCondition_WithValidParams_CreatesOperation()
+    public void CreateOperation_GivenSyncConditionValidParams()
     {
         var condition = new Func<object?, IWorkflowFoundry, bool>((input, _) => input is int i && i > 0);
         var trueOp = new Mock<IWorkflowOperation>().Object;
@@ -80,7 +80,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public void Constructor_SyncCondition_WithNullCondition_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenSyncConditionNullCondition()
     {
         var trueOp = new Mock<IWorkflowOperation>().Object;
 
@@ -93,7 +93,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     #region ForgeAsync - Condition evaluation
 
     [Fact]
-    public async Task ForgeAsync_SimpleAsyncCondition_WhenTrue_ExecutesTrueBranch()
+    public async Task ExecuteTrueBranch_GivenSimpleAsyncConditionTrue()
     {
         var condition = new Func<IWorkflowFoundry, CancellationToken, Task<bool>>((_, _) => Task.FromResult(true));
         var trueOp = new Mock<IWorkflowOperation>();
@@ -110,7 +110,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task ForgeAsync_SimpleAsyncCondition_WhenFalse_ExecutesFalseBranch()
+    public async Task ExecuteFalseBranch_GivenSimpleAsyncConditionFalse()
     {
         var condition = new Func<IWorkflowFoundry, CancellationToken, Task<bool>>((_, _) => Task.FromResult(false));
         var trueOp = new Mock<IWorkflowOperation>().Object;
@@ -127,7 +127,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WhenConditionFalseAndNoFalseOp_ReturnsNull()
+    public async Task ReturnNull_GivenConditionFalseAndNoFalseOp()
     {
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((_, _, _) => Task.FromResult(false));
         var trueOp = new Mock<IWorkflowOperation>().Object;
@@ -141,7 +141,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithNullFoundry_ThrowsArgumentNullException()
+    public async Task ThrowArgumentNullException_GivenNullFoundry()
     {
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((_, _, _) => Task.FromResult(true));
         var trueOp = new Mock<IWorkflowOperation>().Object;
@@ -152,7 +152,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task ForgeAsync_WithCancellation_PropagatesToCondition()
+    public async Task PropagateToCondition_GivenCancellation()
     {
         var cts = new CancellationTokenSource();
         var conditionCalled = false;
@@ -181,7 +181,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     #region RestoreAsync
 
     [Fact]
-    public async Task RestoreAsync_WhenLastConditionWasTrue_RestoresTrueOperation()
+    public async Task RestoreTrueOperation_GivenLastConditionWasTrue()
     {
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((_, _, _) => Task.FromResult(true));
         var trueOp = new Mock<IWorkflowOperation>();
@@ -200,7 +200,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task RestoreAsync_WhenLastConditionWasFalse_RestoresFalseOperation()
+    public async Task RestoreFalseOperation_GivenLastConditionWasFalse()
     {
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((_, _, _) => Task.FromResult(false));
         var trueOp = new Mock<IWorkflowOperation>().Object;
@@ -220,7 +220,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task RestoreAsync_WhenDisposed_ThrowsObjectDisposedException()
+    public async Task ThrowObjectDisposedException_GivenRestoreAsyncWhenDisposed()
     {
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((_, _, _) => Task.FromResult(true));
         var trueOp = new Mock<IWorkflowOperation>().Object;
@@ -234,7 +234,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task RestoreAsync_WithNullFoundry_ThrowsArgumentNullException()
+    public async Task ThrowArgumentNullException_GivenRestoreAsyncNullFoundry()
     {
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((_, _, _) => Task.FromResult(true));
         var trueOp = new Mock<IWorkflowOperation>().Object;
@@ -251,7 +251,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     #region Dispose
 
     [Fact]
-    public async Task ForgeAsync_WhenDisposed_ThrowsObjectDisposedException()
+    public async Task ThrowObjectDisposedException_GivenForgeAsyncWhenDisposed()
     {
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((_, _, _) => Task.FromResult(true));
         var trueOp = new Mock<IWorkflowOperation>().Object;
@@ -265,7 +265,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public void Dispose_DisposesChildOperations()
+    public void DisposeChildOperations_GivenDispose()
     {
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((_, _, _) => Task.FromResult(true));
         var trueOp = new Mock<IWorkflowOperation>();
@@ -279,7 +279,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public void Dispose_WhenChildThrows_SwallowsException()
+    public void SwallowException_GivenDisposeWhenChildThrows()
     {
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((_, _, _) => Task.FromResult(true));
         var trueOp = new Mock<IWorkflowOperation>();
@@ -292,7 +292,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public void Dispose_CanBeCalledMultipleTimes()
+    public void AllowMultipleCalls_GivenDispose()
     {
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((_, _, _) => Task.FromResult(true));
         var trueOp = new Mock<IWorkflowOperation>().Object;
@@ -308,7 +308,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     #region Factory Methods
 
     [Fact]
-    public void CreateDataAware_ReturnsConditionalOperation()
+    public void ReturnConditionalOperation_GivenCreateDataAware()
     {
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((_, _, _) => Task.FromResult(true));
         var trueOp = new Mock<IWorkflowOperation>().Object;
@@ -320,7 +320,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task CreateTyped_WithTypedCondition_ExecutesCorrectly()
+    public async Task ExecuteCorrectly_GivenCreateTypedWithTypedCondition()
     {
         var condition = new Func<int, IWorkflowFoundry, CancellationToken, Task<bool>>((input, _, _) =>
             Task.FromResult(input > 10));
@@ -342,7 +342,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public void Create_WithSyncCondition_ReturnsConditionalOperation()
+    public void ReturnConditionalOperation_GivenCreateWithSyncCondition()
     {
         var condition = new Func<IWorkflowFoundry, bool>(_ => true);
         var trueOp = new Mock<IWorkflowOperation>().Object;
@@ -355,7 +355,7 @@ public class ConditionalWorkflowOperationEnhancedTests
     }
 
     [Fact]
-    public async Task Create_WithSyncCondition_ExecutesCorrectBranch()
+    public async Task ExecuteCorrectBranch_GivenCreateWithSyncCondition()
     {
         var condition = new Func<IWorkflowFoundry, bool>(f => f != null);
         var trueOp = new Mock<IWorkflowOperation>();

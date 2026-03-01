@@ -16,12 +16,18 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
         private readonly IWorkflowPersistenceProvider _provider;
         private readonly RecoveryMiddlewareOptions _options;
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="RecoveryCoordinator"/> with the specified persistence provider and optional recovery options.
+        /// </summary>
+        /// <param name="provider">The persistence provider used to load and save workflow snapshots.</param>
+        /// <param name="options">Optional recovery middleware options; defaults are used when <c>null</c>.</param>
         public RecoveryCoordinator(IWorkflowPersistenceProvider provider, RecoveryMiddlewareOptions? options = null)
         {
             _provider = provider ?? throw new ArgumentNullException(nameof(provider));
             _options = options ?? new RecoveryMiddlewareOptions();
         }
 
+        /// <inheritdoc />
         public async Task ResumeAsync(
             Func<IWorkflowFoundry> foundryFactory,
             Func<IWorkflow> workflowFactory,
@@ -84,6 +90,7 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
                 throw lastEx;
         }
 
+        /// <inheritdoc />
         public async Task<int> ResumeAllAsync(
             Func<IWorkflowFoundry> foundryFactory,
             Func<IWorkflow> workflowFactory,

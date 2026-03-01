@@ -11,12 +11,12 @@ namespace WorkflowForge.Tests.Events
     /// <summary>
     /// Tests for operation restore event argument classes.
     /// </summary>
-    public class OperationRestoreEventArgsTests
+    public class OperationRestoreEventArgsShould
     {
         #region OperationRestoreStartedEventArgs Tests
 
         [Fact]
-        public void OperationRestoreStartedEventArgs_Constructor_SetsAllProperties()
+        public void SetAllProperties_GivenOperationRestoreStartedEventArgsConstruction()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();
@@ -32,7 +32,7 @@ namespace WorkflowForge.Tests.Events
         }
 
         [Fact]
-        public void OperationRestoreStartedEventArgs_Constructor_WithNullOperation_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenNullOperation_OperationRestoreStarted()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();
@@ -47,7 +47,7 @@ namespace WorkflowForge.Tests.Events
         #region OperationRestoreCompletedEventArgs Tests
 
         [Fact]
-        public void OperationRestoreCompletedEventArgs_Constructor_SetsAllProperties()
+        public void SetAllProperties_GivenOperationRestoreCompletedEventArgsConstruction()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();
@@ -65,7 +65,7 @@ namespace WorkflowForge.Tests.Events
         }
 
         [Fact]
-        public void OperationRestoreCompletedEventArgs_Constructor_WithNullOperation_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenNullOperation_OperationRestoreCompleted()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();
@@ -80,7 +80,7 @@ namespace WorkflowForge.Tests.Events
         #region OperationRestoreFailedEventArgs Tests
 
         [Fact]
-        public void OperationRestoreFailedEventArgs_Constructor_SetsAllProperties()
+        public void SetAllProperties_GivenOperationRestoreFailedEventArgsConstruction()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();
@@ -100,7 +100,7 @@ namespace WorkflowForge.Tests.Events
         }
 
         [Fact]
-        public void OperationRestoreFailedEventArgs_Constructor_WithNullException_SetsNullException()
+        public void SetNullException_GivenNullException_OperationRestoreFailed()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();
@@ -114,7 +114,7 @@ namespace WorkflowForge.Tests.Events
         }
 
         [Fact]
-        public void OperationRestoreFailedEventArgs_Constructor_WithNullOperation_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenNullOperation_OperationRestoreFailed()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();

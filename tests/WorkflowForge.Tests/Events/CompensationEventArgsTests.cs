@@ -7,12 +7,12 @@ namespace WorkflowForge.Tests.Events
     /// <summary>
     /// Tests for compensation event argument classes.
     /// </summary>
-    public class CompensationEventArgsTests
+    public class CompensationEventArgsShould
     {
         #region CompensationTriggeredEventArgs Tests
 
         [Fact]
-        public void CompensationTriggeredEventArgs_Constructor_SetsAllProperties()
+        public void SetAllProperties_GivenCompensationTriggeredEventArgsConstruction()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();
@@ -35,7 +35,7 @@ namespace WorkflowForge.Tests.Events
         }
 
         [Fact]
-        public void CompensationTriggeredEventArgs_Constructor_WithNullReason_SetsEmptyString()
+        public void SetEmptyString_GivenNullReason()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();
@@ -50,7 +50,7 @@ namespace WorkflowForge.Tests.Events
         }
 
         [Fact]
-        public void CompensationTriggeredEventArgs_Constructor_WithNullFailedOperationName_SetsEmptyString()
+        public void SetEmptyString_GivenNullFailedOperationName()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();
@@ -65,7 +65,7 @@ namespace WorkflowForge.Tests.Events
         }
 
         [Fact]
-        public void CompensationTriggeredEventArgs_Constructor_WithNullException_SetsNullException()
+        public void SetNullException_GivenNullException()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();
@@ -84,7 +84,7 @@ namespace WorkflowForge.Tests.Events
         #region CompensationCompletedEventArgs Tests
 
         [Fact]
-        public void CompensationCompletedEventArgs_Constructor_SetsAllProperties()
+        public void SetAllProperties_GivenCompensationCompletedEventArgsConstruction()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();
@@ -107,7 +107,7 @@ namespace WorkflowForge.Tests.Events
         }
 
         [Fact]
-        public void CompensationCompletedEventArgs_Constructor_WithZeroCounts_SetsCorrectly()
+        public void SetCorrectly_GivenZeroCounts()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();

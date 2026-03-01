@@ -14,12 +14,12 @@ namespace WorkflowForge.Tests.Extensions;
 /// Comprehensive tests for FoundryPropertyExtensions covering property get/set/tryGet,
 /// WithOperations, WithOperation, WithMiddleware, and GetOperationOutput.
 /// </summary>
-public class FoundryPropertyExtensionsTests
+public class FoundryPropertyExtensionsShould
 {
     #region SetCorrelationId / GetCorrelationId
 
     [Fact]
-    public void SetCorrelationId_WithValidFoundry_SetsValue()
+    public void SetValue_GivenValidFoundry()
     {
         var foundry = CreateMockFoundry();
         const string correlationId = "corr-123";
@@ -30,14 +30,14 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void SetCorrelationId_WithNullFoundry_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullFoundry()
     {
         Assert.Throws<ArgumentNullException>(() =>
             ((IWorkflowFoundry)null!).SetCorrelationId("corr"));
     }
 
     [Fact]
-    public void GetCorrelationId_WhenNotSet_ReturnsNull()
+    public void ReturnNull_GivenCorrelationIdNotSet()
     {
         var foundry = CreateMockFoundry();
 
@@ -47,7 +47,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void GetCorrelationId_WithNullFoundry_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullFoundryForGetCorrelationId()
     {
         Assert.Throws<ArgumentNullException>(() =>
             ((IWorkflowFoundry)null!).GetCorrelationId());
@@ -58,7 +58,7 @@ public class FoundryPropertyExtensionsTests
     #region SetParentWorkflowExecutionId
 
     [Fact]
-    public void SetParentWorkflowExecutionId_WithValidFoundry_SetsValue()
+    public void SetValue_GivenValidFoundryForParentWorkflowExecutionId()
     {
         var foundry = CreateMockFoundry();
         const string parentId = "parent-exec-456";
@@ -70,7 +70,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void SetParentWorkflowExecutionId_WithNullFoundry_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullFoundryForSetParentWorkflowExecutionId()
     {
         Assert.Throws<ArgumentNullException>(() =>
             ((IWorkflowFoundry)null!).SetParentWorkflowExecutionId("parent"));
@@ -81,7 +81,7 @@ public class FoundryPropertyExtensionsTests
     #region TryGetProperty
 
     [Fact]
-    public void TryGetProperty_WithExistingMatchingType_ReturnsTrueAndValue()
+    public void ReturnTrueAndValue_GivenExistingMatchingType()
     {
         var foundry = CreateMockFoundry();
         foundry.SetProperty("key1", 42);
@@ -93,7 +93,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void TryGetProperty_WithExistingWrongType_ReturnsFalse()
+    public void ReturnFalse_GivenExistingWrongType()
     {
         var foundry = CreateMockFoundry();
         foundry.SetProperty("key1", "string");
@@ -105,7 +105,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void TryGetProperty_WithNonExistentKey_ReturnsFalse()
+    public void ReturnFalse_GivenNonExistentKey()
     {
         var foundry = CreateMockFoundry();
 
@@ -116,14 +116,14 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void TryGetProperty_WithNullFoundry_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullFoundryForTryGetProperty()
     {
         Assert.Throws<ArgumentNullException>(() =>
             ((IWorkflowFoundry)null!).TryGetProperty<int>("key", out _));
     }
 
     [Fact]
-    public void TryGetProperty_WithNullKey_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenNullKey()
     {
         var foundry = CreateMockFoundry();
 
@@ -132,7 +132,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void TryGetProperty_WithEmptyKey_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenEmptyKey()
     {
         var foundry = CreateMockFoundry();
 
@@ -141,7 +141,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void TryGetProperty_WithWhitespaceKey_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenWhitespaceKey()
     {
         var foundry = CreateMockFoundry();
 
@@ -154,7 +154,7 @@ public class FoundryPropertyExtensionsTests
     #region GetPropertyOrDefault (no default param)
 
     [Fact]
-    public void GetPropertyOrDefault_WithExistingValue_ReturnsValue()
+    public void ReturnValue_GivenExistingValue()
     {
         var foundry = CreateMockFoundry();
         foundry.SetProperty("key1", 99);
@@ -165,7 +165,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void GetPropertyOrDefault_WithNonExistentKey_ReturnsDefault()
+    public void ReturnDefault_GivenNonExistentKey()
     {
         var foundry = CreateMockFoundry();
 
@@ -175,7 +175,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void GetPropertyOrDefault_WithWrongType_ReturnsDefault()
+    public void ReturnDefault_GivenWrongType()
     {
         var foundry = CreateMockFoundry();
         foundry.SetProperty("key1", "string");
@@ -190,7 +190,7 @@ public class FoundryPropertyExtensionsTests
     #region GetPropertyOrDefault (with default param)
 
     [Fact]
-    public void GetPropertyOrDefault_WithDefault_WhenValueExists_ReturnsValue()
+    public void ReturnValue_GivenDefaultWhenValueExists()
     {
         var foundry = CreateMockFoundry();
         foundry.SetProperty("key1", 100);
@@ -201,7 +201,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void GetPropertyOrDefault_WithDefault_WhenValueNull_ReturnsDefault()
+    public void ReturnDefault_GivenDefaultWhenValueNull()
     {
         var foundry = CreateMockFoundry();
         foundry.SetProperty("key1", (object?)null);
@@ -212,7 +212,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void GetPropertyOrDefault_WithDefault_WhenKeyMissing_ReturnsDefault()
+    public void ReturnDefault_GivenDefaultWhenKeyMissing()
     {
         var foundry = CreateMockFoundry();
 
@@ -226,7 +226,7 @@ public class FoundryPropertyExtensionsTests
     #region SetProperty
 
     [Fact]
-    public void SetProperty_WithValidKeyValue_SetsAndReturnsFoundry()
+    public void SetAndReturnFoundry_GivenValidKeyValue()
     {
         var foundry = CreateMockFoundry();
 
@@ -237,14 +237,14 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void SetProperty_WithNullFoundry_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullFoundryForSetProperty()
     {
         Assert.Throws<ArgumentNullException>(() =>
             ((IWorkflowFoundry)null!).SetProperty("key", "value"));
     }
 
     [Fact]
-    public void SetProperty_WithNullKey_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenNullKeyForSetProperty()
     {
         var foundry = CreateMockFoundry();
 
@@ -253,7 +253,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void SetProperty_WithEmptyKey_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenEmptyKeyForSetProperty()
     {
         var foundry = CreateMockFoundry();
 
@@ -262,7 +262,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void SetProperty_EnablesMethodChaining()
+    public void EnableMethodChaining_GivenSetProperty()
     {
         var foundry = CreateMockFoundry();
 
@@ -282,7 +282,7 @@ public class FoundryPropertyExtensionsTests
     #region WithOperations (params)
 
     [Fact]
-    public void WithOperations_Params_AddsOperationsAndReturnsFoundry()
+    public void AddOperationsAndReturnFoundry_GivenParams()
     {
         var foundry = CreateMockFoundryWithAddTracking(out var addedOps, out _);
         var op1 = new Mock<IWorkflowOperation>().Object;
@@ -297,7 +297,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void WithOperations_Params_WithNullFoundry_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenParamsWithNullFoundry()
     {
         var op = new Mock<IWorkflowOperation>().Object;
         Assert.Throws<ArgumentNullException>(() =>
@@ -305,7 +305,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void WithOperations_Params_WithNullOperations_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenParamsWithNullOperations()
     {
         var foundry = CreateMockFoundry();
         Assert.Throws<ArgumentNullException>(() =>
@@ -313,7 +313,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void WithOperations_Params_WithNullElement_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenParamsWithNullElement()
     {
         var foundry = CreateMockFoundry();
         var op = new Mock<IWorkflowOperation>().Object;
@@ -326,7 +326,7 @@ public class FoundryPropertyExtensionsTests
     #region WithOperations (IEnumerable)
 
     [Fact]
-    public void WithOperations_IEnumerable_AddsOperationsAndReturnsFoundry()
+    public void AddOperationsAndReturnFoundry_GivenIEnumerable()
     {
         var foundry = CreateMockFoundryWithAddTracking(out var addedOps, out _);
         var ops = new[] { new Mock<IWorkflowOperation>().Object, new Mock<IWorkflowOperation>().Object };
@@ -338,7 +338,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void WithOperations_IEnumerable_WithNullFoundry_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenIEnumerableWithNullFoundry()
     {
         var ops = new[] { new Mock<IWorkflowOperation>().Object };
         Assert.Throws<ArgumentNullException>(() =>
@@ -346,7 +346,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void WithOperations_IEnumerable_WithNullOperations_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenIEnumerableWithNullOperations()
     {
         var foundry = CreateMockFoundry();
         Assert.Throws<ArgumentNullException>(() =>
@@ -358,7 +358,7 @@ public class FoundryPropertyExtensionsTests
     #region WithOperation (single IWorkflowOperation)
 
     [Fact]
-    public void WithOperation_Single_AddsOperationAndReturnsFoundry()
+    public void AddOperationAndReturnFoundry_GivenSingle()
     {
         var foundry = CreateMockFoundryWithAddTracking(out var addedOps, out _);
         var op = new Mock<IWorkflowOperation>().Object;
@@ -371,7 +371,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void WithOperation_Single_WithNullFoundry_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenSingleWithNullFoundry()
     {
         var op = new Mock<IWorkflowOperation>().Object;
         Assert.Throws<ArgumentNullException>(() =>
@@ -379,7 +379,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void WithOperation_Single_WithNullOperation_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenSingleWithNullOperation()
     {
         var foundry = CreateMockFoundry();
         Assert.Throws<ArgumentNullException>(() =>
@@ -391,7 +391,7 @@ public class FoundryPropertyExtensionsTests
     #region WithOperation (async delegate)
 
     [Fact]
-    public void WithOperation_AsyncDelegate_AddsDelegateOperation()
+    public void AddDelegateOperation_GivenAsyncDelegate()
     {
         var foundry = CreateMockFoundryWithAddTracking(out var addedOps, out _);
         Func<IWorkflowFoundry, Task> action = _ => Task.CompletedTask;
@@ -403,7 +403,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void WithOperation_AsyncDelegate_WithNullName_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenAsyncDelegateWithNullName()
     {
         var foundry = CreateMockFoundry();
         Func<IWorkflowFoundry, Task> action = _ => System.Threading.Tasks.Task.CompletedTask;
@@ -413,7 +413,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void WithOperation_AsyncDelegate_WithEmptyName_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenAsyncDelegateWithEmptyName()
     {
         var foundry = CreateMockFoundry();
         Func<IWorkflowFoundry, Task> action = _ => System.Threading.Tasks.Task.CompletedTask;
@@ -423,7 +423,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void WithOperation_AsyncDelegate_WithNullAction_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenAsyncDelegateWithNullAction()
     {
         var foundry = CreateMockFoundry();
 
@@ -436,7 +436,7 @@ public class FoundryPropertyExtensionsTests
     #region WithOperation (sync Action)
 
     [Fact]
-    public void WithOperation_SyncAction_AddsDelegateOperation()
+    public void AddDelegateOperation_GivenSyncAction()
     {
         var foundry = CreateMockFoundryWithAddTracking(out var addedOps, out _);
         Action<IWorkflowFoundry> action = _ => { };
@@ -448,7 +448,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void WithOperation_SyncAction_WithRestoreAction_AddsOperationWithRestore()
+    public void AddOperationWithRestore_GivenSyncActionWithRestoreAction()
     {
         var foundry = CreateMockFoundryWithAddTracking(out var addedOps, out _);
         Action<IWorkflowFoundry> action = _ => { };
@@ -464,7 +464,7 @@ public class FoundryPropertyExtensionsTests
     #region WithMiddleware
 
     [Fact]
-    public void WithMiddleware_AddsMiddlewareAndReturnsFoundry()
+    public void AddMiddlewareAndReturnFoundry_GivenMiddleware()
     {
         var foundry = CreateMockFoundryWithAddTracking(out _, out var addedMiddleware);
         var middleware = new Mock<IWorkflowOperationMiddleware>().Object;
@@ -477,7 +477,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void WithMiddleware_WithNullFoundry_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullFoundryForWithMiddleware()
     {
         var middleware = new Mock<IWorkflowOperationMiddleware>().Object;
         Assert.Throws<ArgumentNullException>(() =>
@@ -485,7 +485,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void WithMiddleware_WithNullMiddleware_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullMiddleware()
     {
         var foundry = CreateMockFoundry();
         Assert.Throws<ArgumentNullException>(() =>
@@ -497,7 +497,7 @@ public class FoundryPropertyExtensionsTests
     #region GetOperationOutput
 
     [Fact]
-    public void GetOperationOutput_WithExistingOutput_ReturnsValue()
+    public void ReturnValue_GivenExistingOutput()
     {
         var foundry = CreateMockFoundry();
         foundry.Properties["Operation.0:TestOp.Output"] = "result";
@@ -508,7 +508,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void GetOperationOutput_WithNonExistentKey_ReturnsNull()
+    public void ReturnNull_GivenNonExistentKeyForGetOperationOutput()
     {
         var foundry = CreateMockFoundry();
 
@@ -518,7 +518,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void GetOperationOutput_Generic_WithMatchingType_ReturnsTypedValue()
+    public void ReturnTypedValue_GivenGenericMatchingType()
     {
         var foundry = CreateMockFoundry();
         foundry.Properties["Operation.1:IntOp.Output"] = 42;
@@ -529,7 +529,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void GetOperationOutput_Generic_WithWrongType_ReturnsDefault()
+    public void ReturnDefault_GivenGenericWrongType()
     {
         var foundry = CreateMockFoundry();
         foundry.Properties["Operation.0:StrOp.Output"] = "hello";
@@ -540,14 +540,14 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void GetOperationOutput_WithNullFoundry_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullFoundryForGetOperationOutput()
     {
         Assert.Throws<ArgumentNullException>(() =>
             ((IWorkflowFoundry)null!).GetOperationOutput(0, "Op"));
     }
 
     [Fact]
-    public void GetOperationOutput_WithNegativeIndex_ThrowsArgumentOutOfRangeException()
+    public void ThrowArgumentOutOfRangeException_GivenNegativeIndex()
     {
         var foundry = CreateMockFoundry();
 
@@ -556,7 +556,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void GetOperationOutput_WithNullOperationName_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenNullOperationName()
     {
         var foundry = CreateMockFoundry();
 
@@ -565,7 +565,7 @@ public class FoundryPropertyExtensionsTests
     }
 
     [Fact]
-    public void GetOperationOutput_WithEmptyOperationName_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenEmptyOperationName()
     {
         var foundry = CreateMockFoundry();
 

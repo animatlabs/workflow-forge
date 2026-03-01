@@ -12,12 +12,12 @@ namespace WorkflowForge.Tests.Extensions;
 /// <summary>
 /// Unit tests for FoundryMiddlewareExtensions - UseLogging, UseTiming, UseErrorHandling, UseDefaultMiddleware.
 /// </summary>
-public class FoundryMiddlewareExtensionsTests
+public class FoundryMiddlewareExtensionsShould
 {
     #region UseLogging
 
     [Fact]
-    public void UseLogging_WithFoundryLogger_AddsLoggingMiddleware()
+    public void AddLoggingMiddleware_GivenFoundryLogger()
     {
         // Arrange
         var foundry = new FakeWorkflowFoundry();
@@ -32,7 +32,7 @@ public class FoundryMiddlewareExtensionsTests
     }
 
     [Fact]
-    public void UseLogging_WithNullFoundry_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullFoundryForUseLogging()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
@@ -40,7 +40,7 @@ public class FoundryMiddlewareExtensionsTests
     }
 
     [Fact]
-    public void UseLogging_WithCustomLogger_AddsLoggingMiddleware()
+    public void AddLoggingMiddleware_GivenCustomLogger()
     {
         // Arrange
         var foundry = new FakeWorkflowFoundry();
@@ -56,7 +56,7 @@ public class FoundryMiddlewareExtensionsTests
     }
 
     [Fact]
-    public void UseLogging_WithNullFoundryAndLogger_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullFoundryAndLogger()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
@@ -64,7 +64,7 @@ public class FoundryMiddlewareExtensionsTests
     }
 
     [Fact]
-    public void UseLogging_WithNullLogger_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullLogger()
     {
         // Arrange
         var foundry = new FakeWorkflowFoundry();
@@ -79,7 +79,7 @@ public class FoundryMiddlewareExtensionsTests
     #region UseTiming
 
     [Fact]
-    public void UseTiming_AddsTimingMiddleware()
+    public void AddTimingMiddleware_GivenUseTiming()
     {
         // Arrange
         var foundry = new FakeWorkflowFoundry();
@@ -94,7 +94,7 @@ public class FoundryMiddlewareExtensionsTests
     }
 
     [Fact]
-    public void UseTiming_WithNullFoundry_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullFoundryForUseTiming()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
@@ -102,7 +102,7 @@ public class FoundryMiddlewareExtensionsTests
     }
 
     [Fact]
-    public void UseTiming_WithTimeProvider_AddsTimingMiddleware()
+    public void AddTimingMiddleware_GivenTimeProvider()
     {
         // Arrange
         var foundry = new FakeWorkflowFoundry();
@@ -122,7 +122,7 @@ public class FoundryMiddlewareExtensionsTests
     #region UseErrorHandling
 
     [Fact]
-    public void UseErrorHandling_AddsErrorHandlingMiddleware()
+    public void AddErrorHandlingMiddleware_GivenUseErrorHandling()
     {
         // Arrange
         var foundry = new FakeWorkflowFoundry();
@@ -137,7 +137,7 @@ public class FoundryMiddlewareExtensionsTests
     }
 
     [Fact]
-    public void UseErrorHandling_WithNullFoundry_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullFoundryForUseErrorHandling()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
@@ -145,7 +145,7 @@ public class FoundryMiddlewareExtensionsTests
     }
 
     [Fact]
-    public void UseErrorHandling_WithRethrowFalse_AddsErrorHandlingMiddleware()
+    public void AddErrorHandlingMiddleware_GivenRethrowFalse()
     {
         // Arrange
         var foundry = new FakeWorkflowFoundry();
@@ -160,7 +160,7 @@ public class FoundryMiddlewareExtensionsTests
     }
 
     [Fact]
-    public void UseErrorHandling_WithDefaultReturnValue_AddsErrorHandlingMiddleware()
+    public void AddErrorHandlingMiddleware_GivenDefaultReturnValue()
     {
         // Arrange
         var foundry = new FakeWorkflowFoundry();
@@ -178,7 +178,7 @@ public class FoundryMiddlewareExtensionsTests
     #region UseDefaultMiddleware
 
     [Fact]
-    public void UseDefaultMiddleware_WithNullFoundry_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullFoundryForUseDefaultMiddleware()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
@@ -186,7 +186,7 @@ public class FoundryMiddlewareExtensionsTests
     }
 
     [Fact]
-    public void UseDefaultMiddleware_WithDefaults_AddsAllEnabledMiddleware()
+    public void AddAllEnabledMiddleware_GivenDefaults()
     {
         // Arrange
         var foundry = new FakeWorkflowFoundry();
@@ -204,7 +204,7 @@ public class FoundryMiddlewareExtensionsTests
     }
 
     [Fact]
-    public void UseDefaultMiddleware_WithErrorHandlingDisabled_AddsOnlyTimingAndLogging()
+    public void AddOnlyTimingAndLogging_GivenErrorHandlingDisabled()
     {
         // Arrange
         var foundry = new FakeWorkflowFoundry();
@@ -221,7 +221,7 @@ public class FoundryMiddlewareExtensionsTests
     }
 
     [Fact]
-    public void UseDefaultMiddleware_WithTimingDisabled_AddsOnlyErrorHandlingAndLogging()
+    public void AddOnlyErrorHandlingAndLogging_GivenTimingDisabled()
     {
         // Arrange
         var foundry = new FakeWorkflowFoundry();
@@ -238,7 +238,7 @@ public class FoundryMiddlewareExtensionsTests
     }
 
     [Fact]
-    public void UseDefaultMiddleware_WithLoggingDisabled_AddsOnlyErrorHandlingAndTiming()
+    public void AddOnlyErrorHandlingAndTiming_GivenLoggingDisabled()
     {
         // Arrange
         var foundry = new FakeWorkflowFoundry();
@@ -255,7 +255,7 @@ public class FoundryMiddlewareExtensionsTests
     }
 
     [Fact]
-    public void UseDefaultMiddleware_WithInvalidLoggingOptions_ThrowsArgumentException()
+    public void ThrowArgumentException_GivenInvalidLoggingOptions()
     {
         // Arrange
         var foundry = new FakeWorkflowFoundry();
@@ -268,7 +268,7 @@ public class FoundryMiddlewareExtensionsTests
     }
 
     [Fact]
-    public void UseDefaultMiddleware_WithNullOptions_UsesDefaults()
+    public void UseDefaults_GivenNullOptions()
     {
         // Arrange
         var foundry = new FakeWorkflowFoundry();
@@ -289,7 +289,7 @@ public class FoundryMiddlewareExtensionsTests
     #region Method Chaining
 
     [Fact]
-    public void UseLogging_ReturnsFoundryForChaining()
+    public void ReturnFoundryForChaining_GivenUseLogging()
     {
         // Arrange
         var foundry = new FakeWorkflowFoundry();

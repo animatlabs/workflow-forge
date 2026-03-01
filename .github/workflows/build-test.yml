@@ -87,7 +87,8 @@ jobs:
           /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml" `
           /d:sonar.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**,**/docs/**,**/*.js,**/*.css" `
           /d:sonar.coverage.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**" `
-          /d:sonar.cpd.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**"
+          /d:sonar.cpd.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**" `
+          /d:sonar.scanner.scanAll=false
         dotnet build WorkflowForge.sln --configuration Release --no-restore
         dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
 

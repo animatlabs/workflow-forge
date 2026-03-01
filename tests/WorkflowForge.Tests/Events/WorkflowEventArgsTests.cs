@@ -8,12 +8,12 @@ namespace WorkflowForge.Tests.Events
     /// <summary>
     /// Tests for workflow-level event argument classes.
     /// </summary>
-    public class WorkflowEventArgsTests
+    public class WorkflowEventArgsShould
     {
         #region WorkflowStartedEventArgs Tests
 
         [Fact]
-        public void WorkflowStartedEventArgs_Constructor_SetsAllProperties()
+        public void SetAllProperties_GivenWorkflowStartedEventArgsConstruction()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();
@@ -33,7 +33,7 @@ namespace WorkflowForge.Tests.Events
         #region WorkflowCompletedEventArgs Tests
 
         [Fact]
-        public void WorkflowCompletedEventArgs_Constructor_SetsAllProperties()
+        public void SetAllProperties_GivenWorkflowCompletedEventArgsConstruction()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();
@@ -61,7 +61,7 @@ namespace WorkflowForge.Tests.Events
         }
 
         [Fact]
-        public void WorkflowCompletedEventArgs_Constructor_WithEmptyProperties_SetsCorrectly()
+        public void SetCorrectly_GivenEmptyProperties()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();
@@ -78,7 +78,7 @@ namespace WorkflowForge.Tests.Events
         }
 
         [Fact]
-        public void WorkflowCompletedEventArgs_Constructor_WithNullFinalProperties_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenNullFinalProperties()
         {
             // Arrange
             using var foundry = new FakeWorkflowFoundry();

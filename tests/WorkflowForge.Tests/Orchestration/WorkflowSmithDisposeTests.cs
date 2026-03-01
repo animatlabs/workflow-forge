@@ -7,12 +7,12 @@ namespace WorkflowForge.Tests.Orchestration;
 /// <summary>
 /// Tests for WorkflowSmith Dispose behavior, including event handler cleanup (memory leak prevention).
 /// </summary>
-public class WorkflowSmithDisposeTests
+public class WorkflowSmithDisposeShould
 {
     [Fact]
-    public void Dispose_GivenSubscribedEventHandlers_ClearsEventHandlers()
+    public void ClearEventHandlers_GivenSubscribedEventHandlers()
     {
-        // Arrange - Create smith via public API and subscribe to events
+        // Arrange
         var smith = WorkflowForge.CreateSmith();
         smith.WorkflowStarted += (s, e) => { };
         smith.WorkflowCompleted += (s, e) => { };
@@ -26,7 +26,7 @@ public class WorkflowSmithDisposeTests
         // Act
         smith.Dispose();
 
-        // Assert - Use reflection to verify event backing fields are null (handlers cleared)
+        // Assert
         var smithType = smith.GetType();
         var eventNames = new[] { "WorkflowStarted", "WorkflowCompleted", "WorkflowFailed", "CompensationTriggered",
             "CompensationCompleted", "OperationRestoreStarted", "OperationRestoreCompleted", "OperationRestoreFailed" };
@@ -41,7 +41,7 @@ public class WorkflowSmithDisposeTests
     }
 
     [Fact]
-    public async Task Dispose_WhenCalled_SubsequentForgeAsyncThrowsObjectDisposedException()
+    public async Task ThrowObjectDisposedException_GivenSubsequentForgeAsyncCall()
     {
         // Arrange
         var smith = WorkflowForge.CreateSmith();
@@ -56,7 +56,7 @@ public class WorkflowSmithDisposeTests
     }
 
     [Fact]
-    public void Dispose_CanBeCalledMultipleTimes_DoesNotThrow()
+    public void NotThrow_GivenMultipleDisposeCalls()
     {
         // Arrange
         var smith = WorkflowForge.CreateSmith();

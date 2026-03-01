@@ -6,13 +6,13 @@ using WF = WorkflowForge;
 
 namespace WorkflowForge.Extensions.Audit.Tests
 {
-    public class AuditExtensionsTests : IDisposable
+    public class AuditExtensionsShould : IDisposable
     {
         private readonly IWorkflowFoundry _foundry;
         private readonly InMemoryAuditProvider _auditProvider;
         private readonly ISystemTimeProvider _timeProvider;
 
-        public AuditExtensionsTests()
+        public AuditExtensionsShould()
         {
             _timeProvider = SystemTimeProvider.Instance;
             _foundry = WF.WorkflowForge.CreateFoundry("AuditExtTest");
@@ -26,7 +26,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public void UseAudit_ShouldAddMiddleware()
+        public void AddMiddleware_GivenUseAudit()
         {
             var options = new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Verbose };
             var result = _foundry.UseAudit(_auditProvider, options, _timeProvider, "test-user");
@@ -35,7 +35,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public void UseAudit_WithNullFoundry_ShouldThrowArgumentNullException()
+        public void ThrowArgumentNullException_GivenUseAuditWithNullFoundry()
         {
             IWorkflowFoundry? nullFoundry = null;
 
@@ -44,14 +44,14 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public void UseAudit_WithNullAuditProvider_ShouldThrowArgumentNullException()
+        public void ThrowArgumentNullException_GivenUseAuditWithNullAuditProvider()
         {
             Assert.Throws<ArgumentNullException>(() =>
                 _foundry.UseAudit(null!));
         }
 
         [Fact]
-        public async Task WriteCustomAuditAsync_ShouldCreateAuditEntry()
+        public async Task CreateAuditEntry_GivenWriteCustomAuditAsync()
         {
             await _foundry.WriteCustomAuditAsync(
                 _auditProvider,
@@ -71,7 +71,7 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public async Task WriteCustomAuditAsync_WithNullFoundry_ShouldThrowArgumentNullException()
+        public async Task ThrowArgumentNullException_GivenWriteCustomAuditAsyncWithNullFoundry()
         {
             IWorkflowFoundry? nullFoundry = null;
 
@@ -80,28 +80,28 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
-        public async Task WriteCustomAuditAsync_WithNullProvider_ShouldThrowArgumentNullException()
+        public async Task ThrowArgumentNullException_GivenWriteCustomAuditAsyncWithNullProvider()
         {
             await Assert.ThrowsAsync<ArgumentNullException>(() =>
                 _foundry.WriteCustomAuditAsync(null!, "Op", AuditEventType.Custom, "Status"));
         }
 
         [Fact]
-        public async Task WriteCustomAuditAsync_WithEmptyOperationName_ShouldThrowArgumentException()
+        public async Task ThrowArgumentException_GivenWriteCustomAuditAsyncWithEmptyOperationName()
         {
             await Assert.ThrowsAsync<ArgumentException>(() =>
                 _foundry.WriteCustomAuditAsync(_auditProvider, "", AuditEventType.Custom, "Status"));
         }
 
         [Fact]
-        public async Task WriteCustomAuditAsync_WithNullOperationName_ShouldThrowArgumentException()
+        public async Task ThrowArgumentException_GivenWriteCustomAuditAsyncWithNullOperationName()
         {
             await Assert.ThrowsAsync<ArgumentException>(() =>
                 _foundry.WriteCustomAuditAsync(_auditProvider, null!, AuditEventType.Custom, "Status"));
         }
 
         [Fact]
-        public async Task WriteCustomAuditAsync_WithoutWorkflowName_ShouldUseUnknown()
+        public async Task UseUnknown_GivenWriteCustomAuditAsyncWithoutWorkflowName()
         {
             var foundryWithoutName = WF.WorkflowForge.CreateFoundry("Test");
 

@@ -14,17 +14,17 @@ namespace WorkflowForge.Tests.Concurrency;
 /// Tests for concurrent access to WorkflowFoundry and operations.
 /// Verifies thread safety of core operations.
 /// </summary>
-public class ConcurrencyTests
+public class ConcurrencyShould
 {
     private readonly ITestOutputHelper _output;
 
-    public ConcurrencyTests(ITestOutputHelper output)
+    public ConcurrencyShould(ITestOutputHelper output)
     {
         _output = output;
     }
 
     [Fact]
-    public async Task ParallelOperations_ShouldExecuteSafely()
+    public async Task ExecuteSafely_GivenParallelOperations()
     {
         // Arrange
         const int operationCount = 100;
@@ -81,7 +81,7 @@ public class ConcurrencyTests
     }
 
     [Fact]
-    public async Task WorkflowFoundryDataAccess_ShouldBeThreadSafe()
+    public async Task BeThreadSafe_GivenConcurrentFoundryDataAccess()
     {
         // Arrange
         const int threadCount = 50;
@@ -121,7 +121,7 @@ public class ConcurrencyTests
     }
 
     [Fact]
-    public async Task ConcurrentOperationExecution_ShouldMaintainDataIntegrity()
+    public async Task MaintainDataIntegrity_GivenConcurrentOperationExecution()
     {
         // Arrange
         var data = new ConcurrentDictionary<string, object?>();
@@ -164,7 +164,7 @@ public class ConcurrencyTests
     }
 
     [Fact]
-    public async Task ParallelFoundryCreation_ShouldBeThreadSafe()
+    public async Task BeThreadSafe_GivenParallelFoundryCreation()
     {
         // Arrange
         const int foundryCount = 50;
@@ -208,7 +208,7 @@ public class ConcurrencyTests
     }
 
     [Fact]
-    public async Task ConcurrentPropertyAccess_ShouldBeThreadSafe()
+    public async Task BeThreadSafe_GivenConcurrentPropertyAccess()
     {
         // Arrange
         var data = new ConcurrentDictionary<string, object?>();
@@ -251,7 +251,7 @@ public class ConcurrencyTests
     }
 
     [Fact]
-    public async Task ConcurrentOperationAddition_ShouldMaintainOrder()
+    public async Task MaintainOrder_GivenConcurrentOperationAddition()
     {
         // Arrange
         var data = new ConcurrentDictionary<string, object?>();

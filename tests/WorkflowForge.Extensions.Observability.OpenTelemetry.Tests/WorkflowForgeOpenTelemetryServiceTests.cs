@@ -10,11 +10,11 @@ using Xunit;
 
 namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
 {
-    public class WorkflowForgeOpenTelemetryServiceTests : IDisposable
+    public class WorkflowForgeOpenTelemetryServiceShould : IDisposable
     {
         private readonly Mock<IWorkflowForgeLogger> _loggerMock;
 
-        public WorkflowForgeOpenTelemetryServiceTests()
+        public WorkflowForgeOpenTelemetryServiceShould()
         {
             _loggerMock = new Mock<IWorkflowForgeLogger>();
         }
@@ -25,7 +25,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void Constructor_WithValidServiceName_InitializesSuccessfully()
+        public void InitializeSuccessfully_GivenValidServiceName()
         {
             using var service = new WorkflowForgeOpenTelemetryService("TestService");
 
@@ -37,7 +37,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void Constructor_WithServiceNameAndVersion_InitializesWithVersion()
+        public void InitializeWithVersion_GivenServiceNameAndVersion()
         {
             using var service = new WorkflowForgeOpenTelemetryService("TestService", "2.0.0");
 
@@ -47,14 +47,14 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void Constructor_WithNullServiceName_ThrowsArgumentNullException()
+        public void ThrowArgumentNullException_GivenNullServiceName()
         {
             Assert.Throws<ArgumentNullException>(() =>
                 new WorkflowForgeOpenTelemetryService(null!));
         }
 
         [Fact]
-        public void Constructor_WithLogger_UsesProvidedLogger()
+        public void UseProvidedLogger_GivenLogger()
         {
             using var service = new WorkflowForgeOpenTelemetryService("TestService", "1.0.0", _loggerMock.Object);
 
@@ -64,7 +64,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void Constructor_WithNullLogger_UsesNullLogger()
+        public void UseNullLogger_GivenNullLogger()
         {
             using var service = new WorkflowForgeOpenTelemetryService("TestService", "1.0.0", null);
 
@@ -72,7 +72,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void StartActivity_ReturnsActivityOrNullWhenNotSampled()
+        public void ReturnActivityOrNull_GivenStartActivityWhenNotSampled()
         {
             using var service = new WorkflowForgeOpenTelemetryService("TestService");
 
@@ -86,7 +86,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void StartActivity_WithCustomKind_ReturnsActivityWithKindWhenSampled()
+        public void ReturnActivityWithKind_GivenStartActivityWithCustomKindWhenSampled()
         {
             using var service = new WorkflowForgeOpenTelemetryService("TestService");
 
@@ -99,7 +99,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void RecordOperation_RecordsMetrics()
+        public void RecordMetrics_GivenRecordOperation()
         {
             var ex = Record.Exception(() =>
             {
@@ -112,7 +112,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void RecordOperation_WithMemoryAllocated_RecordsMemoryMetric()
+        public void RecordMemoryMetric_GivenRecordOperationWithMemoryAllocated()
         {
             var ex = Record.Exception(() =>
             {
@@ -124,7 +124,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void RecordOperation_WithTags_RecordsWithTags()
+        public void RecordWithTags_GivenRecordOperationWithTags()
         {
             var ex = Record.Exception(() =>
             {
@@ -137,7 +137,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void RecordOperation_WhenDisposed_DoesNotThrow()
+        public void NotThrow_GivenRecordOperationWhenDisposed()
         {
             var ex = Record.Exception(() =>
             {
@@ -150,7 +150,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void IncrementActiveOperations_IncrementsCounter()
+        public void IncrementCounter_GivenIncrementActiveOperations()
         {
             var ex = Record.Exception(() =>
             {
@@ -163,7 +163,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void IncrementActiveOperations_WhenDisposed_DoesNotThrow()
+        public void NotThrow_GivenIncrementActiveOperationsWhenDisposed()
         {
             var ex = Record.Exception(() =>
             {
@@ -176,7 +176,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void DecrementActiveOperations_DecrementsCounter()
+        public void DecrementCounter_GivenDecrementActiveOperations()
         {
             var ex = Record.Exception(() =>
             {
@@ -189,7 +189,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void DecrementActiveOperations_WhenDisposed_DoesNotThrow()
+        public void NotThrow_GivenDecrementActiveOperationsWhenDisposed()
         {
             var ex = Record.Exception(() =>
             {
@@ -202,7 +202,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void CreateCounter_ReturnsCounter()
+        public void ReturnCounter_GivenCreateCounter()
         {
             using var service = new WorkflowForgeOpenTelemetryService("TestService");
 
@@ -213,7 +213,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void CreateHistogram_ReturnsHistogram()
+        public void ReturnHistogram_GivenCreateHistogram()
         {
             using var service = new WorkflowForgeOpenTelemetryService("TestService");
 
@@ -224,7 +224,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void CreateCounter_WithOptionalParams_WorksWithoutUnitAndDescription()
+        public void WorkWithoutUnitAndDescription_GivenCreateCounterWithOptionalParams()
         {
             using var service = new WorkflowForgeOpenTelemetryService("TestService");
 
@@ -234,7 +234,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void CreateHistogram_WithOptionalParams_WorksWithoutUnitAndDescription()
+        public void WorkWithoutUnitAndDescription_GivenCreateHistogramWithOptionalParams()
         {
             using var service = new WorkflowForgeOpenTelemetryService("TestService");
 
@@ -244,7 +244,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void Dispose_DisposesResources()
+        public void DisposeResources_GivenDispose()
         {
             var service = new WorkflowForgeOpenTelemetryService("TestService", "1.0.0", _loggerMock.Object);
 
@@ -257,7 +257,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void Dispose_CanBeCalledMultipleTimes()
+        public void AllowMultipleCalls_GivenDispose()
         {
             var ex = Record.Exception(() =>
             {
@@ -266,6 +266,117 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
                 service.Dispose();
                 service.Dispose();
             });
+            Assert.Null(ex);
+        }
+
+        [Fact]
+        public void CreateObservableGaugesReturningSystemMetrics_GivenConstruction()
+        {
+            var observedInstruments = new List<string>();
+
+            using var listener = new MeterListener();
+            listener.InstrumentPublished = (instrument, meterListener) =>
+            {
+                if (instrument.Meter.Name == "DiagSvc")
+                {
+                    observedInstruments.Add(instrument.Name);
+                    meterListener.EnableMeasurementEvents(instrument);
+                }
+            };
+            listener.Start();
+
+            using var service = new WorkflowForgeOpenTelemetryService("DiagSvc");
+
+            Assert.Contains("workflowforge.process.memory.usage", observedInstruments);
+            Assert.Contains("workflowforge.process.gc.collections.total", observedInstruments);
+            Assert.Contains("workflowforge.process.threadpool.threads.available", observedInstruments);
+        }
+
+        [Fact]
+        public void ReturnNonNegativeValues_GivenObservableGaugesWhenObserved()
+        {
+            var memoryValues = new List<long>();
+            var gcValues = new List<long>();
+            var threadPoolValues = new List<int>();
+
+            using var listener = new MeterListener();
+            listener.InstrumentPublished = (instrument, meterListener) =>
+            {
+                if (instrument.Meter.Name == "GaugeSvc")
+                    meterListener.EnableMeasurementEvents(instrument);
+            };
+            listener.SetMeasurementEventCallback<long>((instrument, measurement, tags, state) =>
+            {
+                if (instrument.Name == "workflowforge.process.memory.usage")
+                    memoryValues.Add(measurement);
+                else if (instrument.Name == "workflowforge.process.gc.collections.total")
+                    gcValues.Add(measurement);
+            });
+            listener.SetMeasurementEventCallback<int>((instrument, measurement, tags, state) =>
+            {
+                if (instrument.Name == "workflowforge.process.threadpool.threads.available")
+                    threadPoolValues.Add(measurement);
+            });
+            listener.Start();
+
+            using var service = new WorkflowForgeOpenTelemetryService("GaugeSvc");
+            listener.RecordObservableInstruments();
+
+            Assert.NotEmpty(memoryValues);
+            Assert.True(memoryValues[0] >= 0);
+
+            Assert.NotEmpty(gcValues);
+            Assert.True(gcValues[0] >= 0);
+
+            Assert.NotEmpty(threadPoolValues);
+            Assert.True(threadPoolValues[0] > 0);
+        }
+
+        [Fact]
+        public void ReturnCounter_GivenCreateUpDownCounter()
+        {
+            using var service = new WorkflowForgeOpenTelemetryService("TestService");
+
+            var counter = service.CreateUpDownCounter<int>("custom.updown", "item", "Custom up-down counter");
+
+            Assert.NotNull(counter);
+            counter.Add(5);
+            counter.Add(-3);
+        }
+
+        [Fact]
+        public void ReturnGauge_GivenCreateObservableGauge()
+        {
+            using var service = new WorkflowForgeOpenTelemetryService("TestService");
+
+            var gauge = service.CreateObservableGauge("custom.gauge", () => 42L, "count", "Custom gauge");
+
+            Assert.NotNull(gauge);
+        }
+
+        [Fact]
+        public void IncrementErrorCounter_GivenRecordOperationWithFailure()
+        {
+            var ex = Record.Exception(() =>
+            {
+                using var service = new WorkflowForgeOpenTelemetryService("TestService");
+
+                service.RecordOperation("FailOp", TimeSpan.FromMilliseconds(100), success: false, memoryAllocated: 2048,
+                    new[] { new KeyValuePair<string, object?>("error.type", "Timeout") });
+            });
+
+            Assert.Null(ex);
+        }
+
+        [Fact]
+        public void NotRecordMemoryMetric_GivenRecordOperationWithZeroMemory()
+        {
+            var ex = Record.Exception(() =>
+            {
+                using var service = new WorkflowForgeOpenTelemetryService("TestService");
+                service.RecordOperation("ZeroMem", TimeSpan.FromMilliseconds(10), success: true, memoryAllocated: 0);
+            });
+
             Assert.Null(ex);
         }
     }

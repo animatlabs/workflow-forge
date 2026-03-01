@@ -10,12 +10,12 @@ namespace WorkflowForge.Tests.Loggers;
 /// Comprehensive tests for ConsoleLogger covering FormatMessage (via log methods),
 /// ConvertTemplateToPositional (via structured templates), all log levels, and edge cases.
 /// </summary>
-public class ConsoleLoggerTests
+public class ConsoleLoggerShould
 {
     #region Constructor
 
     [Fact]
-    public void Constructor_WithPrefix_SetsPrefix()
+    public void SetPrefix_GivenPrefix()
     {
         var logger = new ConsoleLogger("TestPrefix");
         // Prefix is used in WriteToConsole - verify by logging and capturing output
@@ -36,13 +36,13 @@ public class ConsoleLoggerTests
     }
 
     [Fact]
-    public void Constructor_WithNullPrefix_ThrowsArgumentNullException()
+    public void ThrowArgumentNullException_GivenNullPrefix()
     {
         Assert.Throws<ArgumentNullException>(() => new ConsoleLogger(null!));
     }
 
     [Fact]
-    public void Constructor_WithCustomTimeProvider_UsesProvidedProvider()
+    public void UseProvidedProvider_GivenCustomTimeProvider()
     {
         var fixedTime = new DateTimeOffset(2025, 3, 1, 12, 0, 0, TimeSpan.Zero);
         var timeProvider = new Mock<ISystemTimeProvider>();
@@ -68,7 +68,7 @@ public class ConsoleLoggerTests
     }
 
     [Fact]
-    public void Constructor_WithNullTimeProvider_UsesDefaultProvider()
+    public void UseDefaultProvider_GivenNullTimeProvider()
     {
         var logger = new ConsoleLogger("Test", null);
         Assert.NotNull(logger);
@@ -81,7 +81,7 @@ public class ConsoleLoggerTests
     #region FormatMessage / ConvertTemplateToPositional (via Log methods)
 
     [Fact]
-    public void LogInformation_WithNoArgs_ReturnsMessageAsIs()
+    public void ReturnMessageAsIs_GivenNoArgs()
     {
         var logger = new ConsoleLogger("Test");
         using var sw = new StringWriter();
@@ -100,7 +100,7 @@ public class ConsoleLoggerTests
     }
 
     [Fact]
-    public void LogInformation_WithPositionalArgs_FormatsCorrectly()
+    public void FormatCorrectly_GivenPositionalArgs()
     {
         var logger = new ConsoleLogger("Test");
         using var sw = new StringWriter();
@@ -119,7 +119,7 @@ public class ConsoleLoggerTests
     }
 
     [Fact]
-    public void LogInformation_WithStructuredTemplate_ConvertsToPositional()
+    public void ConvertToPositional_GivenStructuredTemplate()
     {
         var logger = new ConsoleLogger("Test");
         using var sw = new StringWriter();
@@ -139,7 +139,7 @@ public class ConsoleLoggerTests
     }
 
     [Fact]
-    public void LogInformation_WithFormatException_ReturnsOriginalMessage()
+    public void ReturnOriginalMessage_GivenFormatException()
     {
         var logger = new ConsoleLogger("Test");
         using var sw = new StringWriter();
@@ -163,7 +163,7 @@ public class ConsoleLoggerTests
     #region Log Levels - Trace
 
     [Fact]
-    public void LogTrace_WithMessage_WritesToConsole()
+    public void WriteToConsole_GivenLogTraceMessage()
     {
         var logger = new ConsoleLogger("Test");
         using var sw = new StringWriter();
@@ -183,7 +183,7 @@ public class ConsoleLoggerTests
     }
 
     [Fact]
-    public void LogTrace_WithException_IncludesException()
+    public void IncludeException_GivenLogTraceWithException()
     {
         var logger = new ConsoleLogger("Test");
         var ex = new InvalidOperationException("Test error");
@@ -204,7 +204,7 @@ public class ConsoleLoggerTests
     }
 
     [Fact]
-    public void LogTrace_WithProperties_IncludesProperties()
+    public void IncludeProperties_GivenLogTraceWithProperties()
     {
         var logger = new ConsoleLogger("Test");
         var props = new Dictionary<string, string> { ["Key"] = "Value" };
@@ -229,7 +229,7 @@ public class ConsoleLoggerTests
     #region Log Levels - Debug
 
     [Fact]
-    public void LogDebug_WithMessage_WritesToConsole()
+    public void WriteToConsole_GivenLogDebugMessage()
     {
         var logger = new ConsoleLogger("Test");
         using var sw = new StringWriter();
@@ -249,7 +249,7 @@ public class ConsoleLoggerTests
     }
 
     [Fact]
-    public void LogDebug_WithException_IncludesException()
+    public void IncludeException_GivenLogDebugWithException()
     {
         var logger = new ConsoleLogger("Test");
         var ex = new ArgumentException("Arg error");
@@ -273,7 +273,7 @@ public class ConsoleLoggerTests
     #region Log Levels - Information
 
     [Fact]
-    public void LogInformation_WithMessage_WritesToConsole()
+    public void WriteToConsole_GivenLogInformationMessage()
     {
         var logger = new ConsoleLogger("Test");
         using var sw = new StringWriter();
@@ -293,7 +293,7 @@ public class ConsoleLoggerTests
     }
 
     [Fact]
-    public void LogInformation_WithProperties_IncludesProperties()
+    public void IncludeProperties_GivenLogInformationWithProperties()
     {
         var logger = new ConsoleLogger("Test");
         var props = new Dictionary<string, string> { ["A"] = "1", ["B"] = "2" };
@@ -318,7 +318,7 @@ public class ConsoleLoggerTests
     #region Log Levels - Warning
 
     [Fact]
-    public void LogWarning_WithMessage_WritesToConsole()
+    public void WriteToConsole_GivenLogWarningMessage()
     {
         var logger = new ConsoleLogger("Test");
         using var sw = new StringWriter();
@@ -338,7 +338,7 @@ public class ConsoleLoggerTests
     }
 
     [Fact]
-    public void LogWarning_WithException_IncludesException()
+    public void IncludeException_GivenLogWarningWithException()
     {
         var logger = new ConsoleLogger("Test");
         var ex = new Exception("Warn ex");
@@ -362,7 +362,7 @@ public class ConsoleLoggerTests
     #region Log Levels - Error
 
     [Fact]
-    public void LogError_WithMessage_WritesToConsole()
+    public void WriteToConsole_GivenLogErrorMessage()
     {
         var logger = new ConsoleLogger("Test");
         using var sw = new StringWriter();
@@ -382,7 +382,7 @@ public class ConsoleLoggerTests
     }
 
     [Fact]
-    public void LogError_WithPropertiesAndException_IncludesBoth()
+    public void IncludeBoth_GivenLogErrorWithPropertiesAndException()
     {
         var logger = new ConsoleLogger("Test");
         var props = new Dictionary<string, string> { ["ErrCode"] = "500" };
@@ -408,7 +408,7 @@ public class ConsoleLoggerTests
     #region Log Levels - Critical
 
     [Fact]
-    public void LogCritical_WithMessage_WritesToConsole()
+    public void WriteToConsole_GivenCriticalMessage()
     {
         var logger = new ConsoleLogger("Test");
         using var sw = new StringWriter();
@@ -428,7 +428,7 @@ public class ConsoleLoggerTests
     }
 
     [Fact]
-    public void LogCritical_WithException_IncludesException()
+    public void IncludeException_GivenCriticalLogWithException()
     {
         var logger = new ConsoleLogger("Test");
         var ex = new OutOfMemoryException("OOM");
@@ -448,7 +448,7 @@ public class ConsoleLoggerTests
     }
 
     [Fact]
-    public void LogCritical_WithProperties_IncludesProperties()
+    public void IncludeProperties_GivenCriticalLogWithProperties()
     {
         var logger = new ConsoleLogger("Test");
         var props = new Dictionary<string, string> { ["Severity"] = "Critical" };
@@ -481,7 +481,7 @@ public class ConsoleLoggerTests
     }
 
     [Fact]
-    public void BeginScope_WithProperties_ReturnsEmptyDisposable()
+    public void ReturnEmptyDisposable_GivenBeginScopeWithProperties()
     {
         var logger = new ConsoleLogger("Test");
         var props = new Dictionary<string, string> { ["Scope"] = "Test" };
@@ -495,7 +495,7 @@ public class ConsoleLoggerTests
     #region Edge Cases - Empty/Null Properties
 
     [Fact]
-    public void LogTrace_WithEmptyProperties_LogsMessageWithoutPropertiesSection()
+    public void LogMessageWithoutPropertiesSection_GivenTraceWithEmptyProperties()
     {
         var logger = new ConsoleLogger("Test");
         var emptyProps = new Dictionary<string, string>();
@@ -515,7 +515,7 @@ public class ConsoleLoggerTests
     }
 
     [Fact]
-    public void LogInformation_WithEmptyProperties_LogsMessageOnly()
+    public void LogMessageOnly_GivenInformationWithEmptyProperties()
     {
         var logger = new ConsoleLogger("Test");
         var emptyProps = new Dictionary<string, string>();

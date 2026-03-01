@@ -15,10 +15,10 @@ using WorkflowForge.Options;
 
 namespace WorkflowForge.Extensions.DependencyInjection.Tests
 {
-    public class ConfigurationBindingTests
+    public class ConfigurationBindingShould
     {
         [Fact]
-        public void AddAuditConfiguration_WithDefaultSection_ShouldBindCorrectly()
+        public void BindCorrectly_GivenAddAuditConfigurationWithDefaultSection()
         {
             var services = new ServiceCollection();
             var config = new ConfigurationBuilder()
@@ -38,7 +38,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
         }
 
         [Fact]
-        public void AddAuditConfiguration_WithCustomSection_ShouldBindCorrectly()
+        public void BindCorrectly_GivenAddAuditConfigurationWithCustomSection()
         {
             var services = new ServiceCollection();
             var config = new ConfigurationBuilder()
@@ -56,7 +56,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
         }
 
         [Fact]
-        public void AddValidationConfiguration_WithDefaultSection_ShouldBindCorrectly()
+        public void BindCorrectly_GivenAddValidationConfigurationWithDefaultSection()
         {
             var services = new ServiceCollection();
             var config = new ConfigurationBuilder()
@@ -76,7 +76,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
         }
 
         [Fact]
-        public void AddPersistenceConfiguration_WithDefaultSection_ShouldBindCorrectly()
+        public void BindCorrectly_GivenAddPersistenceConfigurationWithDefaultSection()
         {
             var services = new ServiceCollection();
             var config = new ConfigurationBuilder()
@@ -96,7 +96,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
         }
 
         [Fact]
-        public void AddRecoveryConfiguration_WithDefaultSection_ShouldBindCorrectly()
+        public void BindCorrectly_GivenAddRecoveryConfigurationWithDefaultSection()
         {
             var services = new ServiceCollection();
             var config = new ConfigurationBuilder()
@@ -116,7 +116,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
         }
 
         [Fact]
-        public void AddWorkflowForgePolly_WithDefaultSection_ShouldBindCorrectly()
+        public void BindCorrectly_GivenAddWorkflowForgePollyWithDefaultSection()
         {
             var services = new ServiceCollection();
             var config = new ConfigurationBuilder()
@@ -138,7 +138,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
         }
 
         [Fact]
-        public void WorkflowForgeOptionsValidator_WithInvalidOptions_ReturnsFailure()
+        public void ReturnFailure_GivenWorkflowForgeOptionsValidatorWithInvalidOptions()
         {
             var validator = new WorkflowForgeOptionsValidator();
             var options = new WorkflowForgeOptions
@@ -153,7 +153,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
         }
 
         [Fact]
-        public void AddWorkflowForge_RegistersOptionsValidator()
+        public void RegisterOptionsValidator_GivenAddWorkflowForge()
         {
             var services = new ServiceCollection();
             var config = new ConfigurationBuilder()
