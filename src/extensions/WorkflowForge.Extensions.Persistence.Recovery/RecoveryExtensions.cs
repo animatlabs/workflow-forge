@@ -37,7 +37,14 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
                 return;
             }
 
-            if (await TryResumeFromSnapshotAsync(coordinator: new RecoveryCoordinator(provider, options), foundry, workflow, foundryKey, workflowKey, cancellationToken).ConfigureAwait(false))
+            if (await TryResumeFromSnapshotAsync(
+                provider,
+                coordinator: new RecoveryCoordinator(provider, options),
+                foundry,
+                workflow,
+                foundryKey,
+                workflowKey,
+                cancellationToken).ConfigureAwait(false))
             {
                 return;
             }
@@ -58,6 +65,7 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
         }
 
         private static async Task<bool> TryResumeFromSnapshotAsync(
+            IWorkflowPersistenceProvider provider,
             RecoveryCoordinator coordinator,
             IWorkflowFoundry foundry,
             IWorkflow workflow,
@@ -65,6 +73,12 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
             Guid workflowKey,
             CancellationToken cancellationToken)
         {
+            var snapshot = await provider.TryLoadAsync(foundryKey, workflowKey, cancellationToken).ConfigureAwait(false);
+            if (snapshot == null)
+            {
+                return false;
+            }
+
             try
             {
                 await coordinator.ResumeAsync(

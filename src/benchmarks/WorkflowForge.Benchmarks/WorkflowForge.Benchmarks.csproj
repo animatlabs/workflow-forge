@@ -8,6 +8,7 @@
     <IsPackable>false</IsPackable>
     <LangVersion>latest</LangVersion>
     <SonarQubeExclude>true</SonarQubeExclude>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
 
   <ItemGroup>
