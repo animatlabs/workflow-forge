@@ -111,6 +111,43 @@ public class HealthCheckServiceEdgeCasesShould
         service.Dispose();
     }
 
+    [Fact]
+    public async Task RunBuiltInHealthChecks_GivenRegisterBuiltInHealthChecksTrue()
+    {
+        using var service = new HealthCheckService(new ConsoleLogger(), registerBuiltInHealthChecks: true);
+
+        var results = await service.CheckHealthAsync();
+
+        Assert.NotEmpty(results);
+        Assert.True(results.ContainsKey("Memory"));
+        Assert.True(results.ContainsKey("GarbageCollector"));
+        Assert.True(results.ContainsKey("ThreadPool"));
+    }
+
+    [Fact]
+    public void InitializeWithCheckInterval_GivenCheckInterval()
+    {
+        // Creating with a check interval should not throw
+        using var service = new HealthCheckService(
+            new ConsoleLogger(),
+            checkInterval: TimeSpan.FromSeconds(60),
+            registerBuiltInHealthChecks: false);
+
+        Assert.NotNull(service);
+    }
+
+    [Fact]
+    public void ReturnFalse_GivenUnregisterWhenDisposed()
+    {
+        var service = new HealthCheckService(new ConsoleLogger(), registerBuiltInHealthChecks: false);
+        service.RegisterHealthCheck(new StaticHealthCheck("Existing", HealthStatus.Healthy));
+        service.Dispose();
+
+        var result = service.UnregisterHealthCheck("Existing");
+
+        Assert.False(result);
+    }
+
     private sealed class StaticHealthCheck : IHealthCheck
     {
         public StaticHealthCheck(string name, HealthStatus status)

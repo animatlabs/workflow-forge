@@ -357,4 +357,46 @@ public class HealthCheckResultShould
         Assert.Equal(HealthStatus.Healthy, result.Status);
         Assert.Equal("All good", result.Description);
     }
+
+    [Fact]
+    public void ReturnDegradedResult_GivenDegradedFactory()
+    {
+        var result = HealthCheckResult.Degraded("Some degradation");
+
+        Assert.Equal(HealthStatus.Degraded, result.Status);
+        Assert.Equal("Some degradation", result.Description);
+        Assert.Null(result.Exception);
+    }
+
+    [Fact]
+    public void ReturnDegradedResultWithException_GivenDegradedFactoryWithException()
+    {
+        var ex = new Exception("degraded cause");
+
+        var result = HealthCheckResult.Degraded("Degraded with cause", ex);
+
+        Assert.Equal(HealthStatus.Degraded, result.Status);
+        Assert.Same(ex, result.Exception);
+    }
+
+    [Fact]
+    public void ReturnUnhealthyResult_GivenUnhealthyFactory()
+    {
+        var result = HealthCheckResult.Unhealthy("Critical failure");
+
+        Assert.Equal(HealthStatus.Unhealthy, result.Status);
+        Assert.Equal("Critical failure", result.Description);
+        Assert.Null(result.Exception);
+    }
+
+    [Fact]
+    public void ReturnUnhealthyResultWithException_GivenUnhealthyFactoryWithException()
+    {
+        var ex = new InvalidOperationException("failure reason");
+
+        var result = HealthCheckResult.Unhealthy("Unhealthy", ex);
+
+        Assert.Equal(HealthStatus.Unhealthy, result.Status);
+        Assert.Same(ex, result.Exception);
+    }
 }

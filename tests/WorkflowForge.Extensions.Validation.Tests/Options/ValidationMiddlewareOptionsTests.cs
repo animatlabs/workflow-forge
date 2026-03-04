@@ -79,5 +79,44 @@ namespace WorkflowForge.Extensions.Validation.Tests.Options
             Assert.Single(errors);
             Assert.Contains(customSection, errors[0]);
         }
+
+        [Fact]
+        public void ProduceIndependentCopy_GivenClone()
+        {
+            var original = new ValidationMiddlewareOptions("MySection")
+            {
+                Enabled = false,
+                IgnoreValidationFailures = true,
+                ThrowOnValidationError = false,
+                LogValidationErrors = false,
+                StoreValidationResults = false
+            };
+
+            var clone = (ValidationMiddlewareOptions)original.Clone();
+
+            Assert.Equal("MySection", clone.SectionName);
+            Assert.False(clone.Enabled);
+            Assert.True(clone.IgnoreValidationFailures);
+            Assert.False(clone.ThrowOnValidationError);
+            Assert.False(clone.LogValidationErrors);
+            Assert.False(clone.StoreValidationResults);
+
+            // Verify independence
+            clone.Enabled = true;
+            Assert.False(original.Enabled);
+        }
+
+        [Fact]
+        public void CloneWithDefaultSectionName_GivenDefaultOptions()
+        {
+            var original = new ValidationMiddlewareOptions();
+
+            var clone = (ValidationMiddlewareOptions)original.Clone();
+
+            Assert.Equal(original.SectionName, clone.SectionName);
+            Assert.Equal(original.Enabled, clone.Enabled);
+            Assert.Equal(original.IgnoreValidationFailures, clone.IgnoreValidationFailures);
+            Assert.Equal(original.ThrowOnValidationError, clone.ThrowOnValidationError);
+        }
     }
 }

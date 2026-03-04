@@ -198,6 +198,108 @@ public class ExponentialBackoffStrategyShould
         // Assert
         Assert.Equal(expectedResult, result);
     }
+
+    [Fact]
+    public void ThrowArgumentException_GivenInvalidBackoffMultiplier()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new ExponentialBackoffStrategy(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(10), 3, backoffMultiplier: 1.0));
+    }
+
+    [Fact]
+    public void ReturnValidStrategy_GivenDefault()
+    {
+        var strategy = ExponentialBackoffStrategy.Default();
+
+        Assert.NotNull(strategy);
+        Assert.Equal("ExponentialBackoff", strategy.Name);
+    }
+
+    [Fact]
+    public void ReturnValidStrategy_GivenDefaultWithCustomMaxAttempts()
+    {
+        var strategy = ExponentialBackoffStrategy.Default(maxAttempts: 5);
+
+        Assert.NotNull(strategy);
+    }
+
+    [Fact]
+    public void ReturnValidStrategy_GivenForTransientErrors()
+    {
+        var strategy = ExponentialBackoffStrategy.ForTransientErrors();
+
+        Assert.NotNull(strategy);
+        Assert.Equal("ExponentialBackoff", strategy.Name);
+    }
+
+    [Fact]
+    public async Task RetryOnlyTransientErrors_GivenForTransientErrorsStrategy()
+    {
+        var strategy = ExponentialBackoffStrategy.ForTransientErrors(maxAttempts: 2);
+        var executionCount = 0;
+
+        // TimeoutException is a transient error - should retry
+        await Assert.ThrowsAsync<TimeoutException>(async () =>
+        {
+            await strategy.ExecuteAsync(() =>
+            {
+                executionCount++;
+                throw new TimeoutException("Timed out");
+            }, CancellationToken.None);
+        });
+
+        Assert.Equal(2, executionCount);
+    }
+
+    [Fact]
+    public async Task NotRetryNonTransientErrors_GivenForTransientErrorsStrategy()
+    {
+        var strategy = ExponentialBackoffStrategy.ForTransientErrors(maxAttempts: 5);
+        var executionCount = 0;
+
+        // ArgumentException is not transient - should not retry
+        await Assert.ThrowsAsync<ArgumentException>(async () =>
+        {
+            await strategy.ExecuteAsync(() =>
+            {
+                executionCount++;
+                throw new ArgumentException("Invalid argument");
+            }, CancellationToken.None);
+        });
+
+        Assert.Equal(1, executionCount);
+    }
+
+    [Fact]
+    public void ReturnZeroDelay_GivenGetRetryDelayForFirstAttempt()
+    {
+        var strategy = ExponentialBackoffStrategy.Default();
+
+        var delay = strategy.GetRetryDelay(1, null);
+
+        Assert.Equal(TimeSpan.Zero, delay);
+    }
+
+    [Fact]
+    public void ApplyJitter_GivenGetRetryDelayWithJitterEnabled()
+    {
+        var baseDelay = TimeSpan.FromMilliseconds(1000);
+        var maxDelay = TimeSpan.FromSeconds(30);
+        var strategy = new ExponentialBackoffStrategy(baseDelay, maxDelay, 5, enableJitter: true);
+
+        var delays = new System.Collections.Generic.List<TimeSpan>();
+        for (int i = 2; i <= 5; i++)
+        {
+            delays.Add(strategy.GetRetryDelay(i, null));
+        }
+
+        // With jitter, all delays should be non-negative and within the max bound
+        Assert.All(delays, d =>
+        {
+            Assert.True(d >= TimeSpan.Zero);
+            Assert.True(d <= maxDelay);
+        });
+    }
 }
 
 public class FixedIntervalStrategyShould

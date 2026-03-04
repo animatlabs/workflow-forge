@@ -86,5 +86,49 @@ namespace WorkflowForge.Extensions.Persistence.Tests.Options
             Assert.Single(errors);
             Assert.Contains(customSection, errors[0]);
         }
+
+        [Fact]
+        public void ProduceIndependentCopy_GivenClone()
+        {
+            var original = new RecoveryMiddlewareOptions("My:Recovery")
+            {
+                Enabled = false,
+                MaxRetryAttempts = 7,
+                BaseDelay = TimeSpan.FromSeconds(5),
+                UseExponentialBackoff = false,
+                AttemptResume = false,
+                LogRecoveryAttempts = false
+            };
+
+            var clone = (RecoveryMiddlewareOptions)original.Clone();
+
+            Assert.Equal("My:Recovery", clone.SectionName);
+            Assert.False(clone.Enabled);
+            Assert.Equal(7, clone.MaxRetryAttempts);
+            Assert.Equal(TimeSpan.FromSeconds(5), clone.BaseDelay);
+            Assert.False(clone.UseExponentialBackoff);
+            Assert.False(clone.AttemptResume);
+            Assert.False(clone.LogRecoveryAttempts);
+
+            // Verify independence
+            clone.MaxRetryAttempts = 1;
+            Assert.Equal(7, original.MaxRetryAttempts);
+        }
+
+        [Fact]
+        public void CloneDefaultOptions_GivenDefaultConstructor()
+        {
+            var original = new RecoveryMiddlewareOptions();
+
+            var clone = (RecoveryMiddlewareOptions)original.Clone();
+
+            Assert.Equal(original.SectionName, clone.SectionName);
+            Assert.Equal(original.Enabled, clone.Enabled);
+            Assert.Equal(original.MaxRetryAttempts, clone.MaxRetryAttempts);
+            Assert.Equal(original.BaseDelay, clone.BaseDelay);
+            Assert.Equal(original.UseExponentialBackoff, clone.UseExponentialBackoff);
+            Assert.Equal(original.AttemptResume, clone.AttemptResume);
+            Assert.Equal(original.LogRecoveryAttempts, clone.LogRecoveryAttempts);
+        }
     }
 }
