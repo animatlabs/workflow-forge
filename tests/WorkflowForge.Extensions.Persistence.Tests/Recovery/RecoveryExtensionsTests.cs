@@ -279,12 +279,19 @@ public class RecoveryExtensionsShould
     private sealed class CountingWorkflowSmith : IWorkflowSmith
     {
         public event EventHandler<WorkflowStartedEventArgs>? WorkflowStarted;
+
         public event EventHandler<WorkflowCompletedEventArgs>? WorkflowCompleted;
+
         public event EventHandler<WorkflowFailedEventArgs>? WorkflowFailed;
+
         public event EventHandler<CompensationTriggeredEventArgs>? CompensationTriggered;
+
         public event EventHandler<CompensationCompletedEventArgs>? CompensationCompleted;
+
         public event EventHandler<OperationRestoreStartedEventArgs>? OperationRestoreStarted;
+
         public event EventHandler<OperationRestoreCompletedEventArgs>? OperationRestoreCompleted;
+
         public event EventHandler<OperationRestoreFailedEventArgs>? OperationRestoreFailed;
 
         public int ForgeWithFoundryCalls { get; private set; }

@@ -2,7 +2,9 @@ using System.Runtime.InteropServices;
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Environments;
 using BenchmarkDotNet.Exporters;
+using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
 using WorkflowForge.Benchmarks.Comparative.Benchmarks;
 
@@ -524,6 +526,15 @@ public class Program
     {
         return DefaultConfig.Instance
             .WithOption(ConfigOptions.DisableOptimizationsValidator, true)
+            .AddJob(Job.Default.WithRuntime(ClrRuntime.Net48)
+                .WithWarmupCount(5).WithIterationCount(50)
+                .WithInvocationCount(1).WithUnrollFactor(1))
+            .AddJob(Job.Default.WithRuntime(CoreRuntime.Core80)
+                .WithWarmupCount(5).WithIterationCount(50)
+                .WithInvocationCount(1).WithUnrollFactor(1))
+            .AddJob(Job.Default.WithRuntime(CoreRuntime.Core10_0)
+                .WithWarmupCount(5).WithIterationCount(50)
+                .WithInvocationCount(1).WithUnrollFactor(1))
             .AddDiagnoser(MemoryDiagnoser.Default)
             .AddColumn(StatisticColumn.Median)
             .AddColumn(StatisticColumn.P95)

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using WorkflowForge.Extensions.Resilience.Polly.Options;
-using Xunit;
 
 namespace WorkflowForge.Extensions.Resilience.Polly.Tests;
 

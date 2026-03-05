@@ -1,11 +1,8 @@
 using System;
-using System.Collections.Concurrent;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.Observability.Performance;
 using WorkflowForge.Extensions.Observability.Performance.Abstractions;
 using WorkflowForge.Testing;
-using Moq;
-using Xunit;
 
 namespace WorkflowForge.Tests.Extensions.Performance
 {

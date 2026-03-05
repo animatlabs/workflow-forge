@@ -62,19 +62,8 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore WorkflowForge.sln
 
-    - name: Build
-      run: dotnet build WorkflowForge.sln --configuration Release --no-restore
-
-    - name: Test (.NET 8.0/10.0 with Coverage)
-      run: |
-        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-core.trx" --collect:"XPlat Code Coverage" --framework net8.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-core.trx" --collect:"XPlat Code Coverage" --framework net10.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-
-    - name: Test (.NET Framework 4.8 - No Coverage)
-      run: |
-        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-netfx.trx" --framework net48
-
-    - name: SonarCloud Analysis
+    - name: Build and Test with SonarCloud
+      if: ${{ secrets.SONAR_TOKEN != '' }}
       continue-on-error: true
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -90,7 +79,18 @@ jobs:
           /d:sonar.cpd.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**" `
           /d:sonar.scanner.scanAll=false
         dotnet build WorkflowForge.sln --configuration Release --no-restore
+        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-core.trx" --collect:"XPlat Code Coverage" --framework net8.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-core.trx" --collect:"XPlat Code Coverage" --framework net10.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-netfx.trx" --framework net48
         dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
+
+    - name: Build and Test (without SonarCloud)
+      if: ${{ secrets.SONAR_TOKEN == '' }}
+      run: |
+        dotnet build WorkflowForge.sln --configuration Release --no-restore
+        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-core.trx" --collect:"XPlat Code Coverage" --framework net8.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-core.trx" --collect:"XPlat Code Coverage" --framework net10.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-netfx.trx" --framework net48
 
     - name: Upload test results
       uses: actions/upload-artifact@v6

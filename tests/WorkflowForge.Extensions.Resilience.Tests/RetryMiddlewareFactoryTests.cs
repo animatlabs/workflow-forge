@@ -1,5 +1,4 @@
 using System;
-using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.Resilience.Strategies;
 
 namespace WorkflowForge.Extensions.Resilience.Tests;

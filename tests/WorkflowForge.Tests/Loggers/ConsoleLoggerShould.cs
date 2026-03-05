@@ -76,7 +76,7 @@ public class ConsoleLoggerShould
         Assert.Null(ex);
     }
 
-    #endregion
+    #endregion Constructor
 
     #region FormatMessage / ConvertTemplateToPositional (via Log methods)
 
@@ -158,7 +158,7 @@ public class ConsoleLoggerShould
         }
     }
 
-    #endregion
+    #endregion FormatMessage / ConvertTemplateToPositional (via Log methods)
 
     #region Log Levels - Trace
 
@@ -224,7 +224,7 @@ public class ConsoleLoggerShould
         }
     }
 
-    #endregion
+    #endregion Log Levels - Trace
 
     #region Log Levels - Debug
 
@@ -268,7 +268,7 @@ public class ConsoleLoggerShould
         }
     }
 
-    #endregion
+    #endregion Log Levels - Debug
 
     #region Log Levels - Information
 
@@ -313,7 +313,7 @@ public class ConsoleLoggerShould
         }
     }
 
-    #endregion
+    #endregion Log Levels - Information
 
     #region Log Levels - Warning
 
@@ -357,7 +357,7 @@ public class ConsoleLoggerShould
         }
     }
 
-    #endregion
+    #endregion Log Levels - Warning
 
     #region Log Levels - Error
 
@@ -403,7 +403,7 @@ public class ConsoleLoggerShould
         }
     }
 
-    #endregion
+    #endregion Log Levels - Error
 
     #region Log Levels - Critical
 
@@ -467,7 +467,7 @@ public class ConsoleLoggerShould
         }
     }
 
-    #endregion
+    #endregion Log Levels - Critical
 
     #region BeginScope
 
@@ -490,7 +490,7 @@ public class ConsoleLoggerShould
         Assert.Null(ex);
     }
 
-    #endregion
+    #endregion BeginScope
 
     #region Edge Cases - Empty/Null Properties
 
@@ -534,5 +534,5 @@ public class ConsoleLoggerShould
         }
     }
 
-    #endregion
+    #endregion Edge Cases - Empty/Null Properties
 }

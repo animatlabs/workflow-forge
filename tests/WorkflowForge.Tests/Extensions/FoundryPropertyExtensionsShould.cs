@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Constants;
 using WorkflowForge.Extensions;
-using WorkflowForge.Operations;
 
 namespace WorkflowForge.Tests.Extensions;
 
@@ -53,7 +52,7 @@ public class FoundryPropertyExtensionsShould
             ((IWorkflowFoundry)null!).GetCorrelationId());
     }
 
-    #endregion
+    #endregion SetCorrelationId / GetCorrelationId
 
     #region SetParentWorkflowExecutionId
 
@@ -76,7 +75,7 @@ public class FoundryPropertyExtensionsShould
             ((IWorkflowFoundry)null!).SetParentWorkflowExecutionId("parent"));
     }
 
-    #endregion
+    #endregion SetParentWorkflowExecutionId
 
     #region TryGetProperty
 
@@ -149,7 +148,7 @@ public class FoundryPropertyExtensionsShould
             foundry.TryGetProperty<int>("   ", out _));
     }
 
-    #endregion
+    #endregion TryGetProperty
 
     #region GetPropertyOrDefault (no default param)
 
@@ -185,7 +184,7 @@ public class FoundryPropertyExtensionsShould
         Assert.Equal(0, result);
     }
 
-    #endregion
+    #endregion GetPropertyOrDefault (no default param)
 
     #region GetPropertyOrDefault (with default param)
 
@@ -221,7 +220,7 @@ public class FoundryPropertyExtensionsShould
         Assert.Equal("default", result);
     }
 
-    #endregion
+    #endregion GetPropertyOrDefault (with default param)
 
     #region SetProperty
 
@@ -277,7 +276,7 @@ public class FoundryPropertyExtensionsShould
         Assert.Equal(3, foundry.Properties["c"]);
     }
 
-    #endregion
+    #endregion SetProperty
 
     #region WithOperations (params)
 
@@ -321,7 +320,7 @@ public class FoundryPropertyExtensionsShould
             foundry.WithOperations(op, null!));
     }
 
-    #endregion
+    #endregion WithOperations (params)
 
     #region WithOperations (IEnumerable)
 
@@ -353,7 +352,7 @@ public class FoundryPropertyExtensionsShould
             foundry.WithOperations((IEnumerable<IWorkflowOperation>)null!));
     }
 
-    #endregion
+    #endregion WithOperations (IEnumerable)
 
     #region WithOperation (single IWorkflowOperation)
 
@@ -386,7 +385,7 @@ public class FoundryPropertyExtensionsShould
             foundry.WithOperation((IWorkflowOperation)null!));
     }
 
-    #endregion
+    #endregion WithOperation (single IWorkflowOperation)
 
     #region WithOperation (async delegate)
 
@@ -431,7 +430,7 @@ public class FoundryPropertyExtensionsShould
             foundry.WithOperation("Op", (Func<IWorkflowFoundry, Task>)null!));
     }
 
-    #endregion
+    #endregion WithOperation (async delegate)
 
     #region WithOperation (sync Action)
 
@@ -459,7 +458,7 @@ public class FoundryPropertyExtensionsShould
         Assert.Single(addedOps);
     }
 
-    #endregion
+    #endregion WithOperation (sync Action)
 
     #region WithMiddleware
 
@@ -492,7 +491,7 @@ public class FoundryPropertyExtensionsShould
             foundry.WithMiddleware(null!));
     }
 
-    #endregion
+    #endregion WithMiddleware
 
     #region GetOperationOutput
 
@@ -573,7 +572,7 @@ public class FoundryPropertyExtensionsShould
             foundry.GetOperationOutput(0, ""));
     }
 
-    #endregion
+    #endregion GetOperationOutput
 
     #region Helpers
 
@@ -607,5 +606,5 @@ public class FoundryPropertyExtensionsShould
         return mock.Object;
     }
 
-    #endregion
+    #endregion Helpers
 }

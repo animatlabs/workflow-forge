@@ -3,10 +3,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Constants;
-using WorkflowForge.Testing;
 using WorkflowForge.Middleware;
 using WorkflowForge.Options.Middleware;
-using Xunit;
+using WorkflowForge.Testing;
 
 namespace WorkflowForge.Tests.Middleware;
 

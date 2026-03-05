@@ -2,9 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.Resilience.Polly;
 using WorkflowForge.Testing;
-using Xunit;
 
 namespace WorkflowForge.Extensions.Resilience.Polly.Tests;
 
@@ -13,7 +11,7 @@ public class PollyMiddlewareShould : IDisposable
     private readonly IWorkflowFoundry _foundry;
     private readonly TestOperation _operation;
 
-        public PollyMiddlewareShould()
+    public PollyMiddlewareShould()
     {
         _foundry = new FakeWorkflowFoundry();
         _operation = new TestOperation();
@@ -273,6 +271,7 @@ public class PollyMiddlewareShould : IDisposable
         public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
-        public void Dispose() { }
+        public void Dispose()
+        { }
     }
 }

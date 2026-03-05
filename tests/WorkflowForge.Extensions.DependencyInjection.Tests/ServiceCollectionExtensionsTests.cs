@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.DependencyInjection;
 using WorkflowForge.Loggers;
 using WorkflowForge.Options;
 using WorkflowForge.Options.Middleware;

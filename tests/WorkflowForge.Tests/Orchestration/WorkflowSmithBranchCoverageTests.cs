@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,7 +18,8 @@ namespace WorkflowForge.Tests.Orchestration
             _uniqueTestId = $"{DateTime.UtcNow.Ticks}_{Guid.NewGuid():N}";
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        { }
 
         [Fact]
         public async Task CompleteSuccessfully_GivenConcurrentDictionaryData()

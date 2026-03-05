@@ -1,4 +1,11 @@
 using System.Runtime.InteropServices;
+using BenchmarkDotNet.Columns;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Engines;
+using BenchmarkDotNet.Environments;
+using BenchmarkDotNet.Exporters;
+using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
 
 namespace WorkflowForge.Benchmarks;
@@ -32,10 +39,10 @@ public class Program
             Console.WriteLine("To validate all benchmarks: dotnet run --configuration Release -- --validate");
             Console.WriteLine();
 
-            BenchmarkRunner.Run<OperationPerformanceBenchmark>();
-            BenchmarkRunner.Run<WorkflowThroughputBenchmark>();
-            BenchmarkRunner.Run<MemoryAllocationBenchmark>();
-            BenchmarkRunner.Run<ConcurrencyBenchmark>();
+            BenchmarkRunner.Run<OperationPerformanceBenchmark>(CreateConfig());
+            BenchmarkRunner.Run<WorkflowThroughputBenchmark>(CreateConfig());
+            BenchmarkRunner.Run<MemoryAllocationBenchmark>(CreateConfig());
+            BenchmarkRunner.Run<ConcurrencyBenchmark>(CreateConfig());
 
             Console.WriteLine();
             Console.WriteLine("================================================================");
@@ -46,7 +53,7 @@ public class Program
         else
         {
             var switcher = BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly);
-            switcher.Run(args);
+            switcher.Run(args, CreateConfig());
         }
     }
 
@@ -140,5 +147,30 @@ public class Program
             or StackOverflowException
             or ThreadInterruptedException
             or AccessViolationException;
+    }
+
+    private static IConfig CreateConfig()
+    {
+        return DefaultConfig.Instance
+            .WithOption(ConfigOptions.DisableOptimizationsValidator, true)
+            .AddJob(Job.Default.WithRuntime(ClrRuntime.Net48)
+                .WithStrategy(RunStrategy.Monitoring)
+                .WithIterationCount(50)
+                .WithInvocationCount(1).WithUnrollFactor(1))
+            .AddJob(Job.Default.WithRuntime(CoreRuntime.Core80)
+                .WithStrategy(RunStrategy.Monitoring)
+                .WithIterationCount(50)
+                .WithInvocationCount(1).WithUnrollFactor(1))
+            .AddJob(Job.Default.WithRuntime(CoreRuntime.Core10_0)
+                .WithStrategy(RunStrategy.Monitoring)
+                .WithIterationCount(50)
+                .WithInvocationCount(1).WithUnrollFactor(1))
+            .AddDiagnoser(MemoryDiagnoser.Default)
+            .AddColumn(StatisticColumn.Median)
+            .AddColumn(StatisticColumn.P95)
+            .AddColumn(StatisticColumn.StdDev)
+            .AddExporter(MarkdownExporter.GitHub)
+            .AddExporter(HtmlExporter.Default)
+            .AddExporter(BenchmarkDotNet.Exporters.Csv.CsvExporter.Default);
     }
 }

@@ -3,10 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Exceptions;
-using WorkflowForge.Extensions.Resilience.Polly;
 using WorkflowForge.Extensions.Resilience.Polly.Options;
 using WorkflowForge.Testing;
-using Xunit;
 
 namespace WorkflowForge.Extensions.Resilience.Polly.Tests;
 

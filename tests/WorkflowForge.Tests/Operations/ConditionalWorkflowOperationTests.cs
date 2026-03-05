@@ -28,7 +28,7 @@ public class ConditionalWorkflowOperationEnhancedShould
         Assert.Equal(id, operation.Id);
     }
 
-    #endregion
+    #endregion Constructor - Async with input data
 
     #region Constructor - Simple async (no input)
 
@@ -64,7 +64,7 @@ public class ConditionalWorkflowOperationEnhancedShould
         Assert.NotNull(operation);
     }
 
-    #endregion
+    #endregion Constructor - Simple async (no input)
 
     #region Constructor - Sync condition
 
@@ -88,7 +88,7 @@ public class ConditionalWorkflowOperationEnhancedShould
             new ConditionalWorkflowOperation((Func<object?, IWorkflowFoundry, bool>)null!, trueOp));
     }
 
-    #endregion
+    #endregion Constructor - Sync condition
 
     #region ForgeAsync - Condition evaluation
 
@@ -176,7 +176,7 @@ public class ConditionalWorkflowOperationEnhancedShould
         Assert.Equal("ok", result);
     }
 
-    #endregion
+    #endregion ForgeAsync - Condition evaluation
 
     #region RestoreAsync
 
@@ -246,7 +246,7 @@ public class ConditionalWorkflowOperationEnhancedShould
             operation.RestoreAsync("output", null!));
     }
 
-    #endregion
+    #endregion RestoreAsync
 
     #region Dispose
 
@@ -303,7 +303,7 @@ public class ConditionalWorkflowOperationEnhancedShould
         operation.Dispose();
     }
 
-    #endregion
+    #endregion Dispose
 
     #region Factory Methods
 
@@ -370,5 +370,5 @@ public class ConditionalWorkflowOperationEnhancedShould
         Assert.Equal("true", result);
     }
 
-    #endregion
+    #endregion Factory Methods
 }

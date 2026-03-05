@@ -17,7 +17,8 @@ namespace WorkflowForge.Tests.Orchestration
             _uniqueTestId = $"{DateTime.UtcNow.Ticks}_{Guid.NewGuid():N}";
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        { }
 
         [Fact]
         public async Task ReusePooledFoundry_GivenConsecutiveForgeAsyncCalls()
@@ -146,7 +147,8 @@ namespace WorkflowForge.Tests.Orchestration
             public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
                 => Task.CompletedTask;
 
-            public void Dispose() { }
+            public void Dispose()
+            { }
         }
     }
 }

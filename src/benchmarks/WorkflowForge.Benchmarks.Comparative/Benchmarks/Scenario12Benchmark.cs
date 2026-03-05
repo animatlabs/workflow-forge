@@ -1,17 +1,10 @@
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Jobs;
 using WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowCore;
 using WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowForge;
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
 
 namespace WorkflowForge.Benchmarks.Comparative.Benchmarks;
 
-[MemoryDiagnoser]
-[SimpleJob(RuntimeMoniker.Net48, warmupCount: 5, iterationCount: 50)]
-[SimpleJob(RuntimeMoniker.Net80, warmupCount: 5, iterationCount: 50)]
-[SimpleJob(RuntimeMoniker.Net10_0, warmupCount: 5, iterationCount: 50)]
-[MarkdownExporter]
-[HtmlExporter]
 public class Scenario12Benchmark
 {
     private IWorkflowScenario _workflowForgeScenario = null!;

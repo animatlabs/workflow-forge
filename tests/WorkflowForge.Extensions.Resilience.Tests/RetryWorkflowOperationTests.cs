@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.Resilience;
 using WorkflowForge.Extensions.Resilience.Configurations;
 using WorkflowForge.Extensions.Resilience.Strategies;
 using WF = WorkflowForge;
@@ -13,7 +12,7 @@ public class RetryWorkflowOperationShould : IDisposable
 {
     private readonly IWorkflowFoundry _foundry;
 
-        public RetryWorkflowOperationShould()
+    public RetryWorkflowOperationShould()
     {
         _foundry = WF.WorkflowForge.CreateFoundry("RetryTest");
     }

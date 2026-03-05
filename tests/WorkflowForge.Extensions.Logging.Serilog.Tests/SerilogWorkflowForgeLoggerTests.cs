@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.Logging.Serilog;
-using Xunit;
 
 namespace WorkflowForge.Extensions.Logging.Serilog.Tests
 {

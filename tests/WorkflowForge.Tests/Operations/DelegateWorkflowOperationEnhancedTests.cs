@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Exceptions;
@@ -72,7 +71,7 @@ public class DelegateWorkflowOperationEnhancedShould
             operation.RestoreAsync("output", foundry));
     }
 
-    #endregion
+    #endregion RestoreAsync
 
     #region ForgeAsync - Error paths
 
@@ -105,7 +104,7 @@ public class DelegateWorkflowOperationEnhancedShould
         Assert.Null(result);
     }
 
-    #endregion
+    #endregion ForgeAsync - Error paths
 
     #region Factory Methods - FromSync, FromAsync, FromAction, FromAsyncAction
 
@@ -169,7 +168,7 @@ public class DelegateWorkflowOperationEnhancedShould
         Assert.Null(result);
     }
 
-    #endregion
+    #endregion Factory Methods - FromSync, FromAsync, FromAction, FromAsyncAction
 
     #region Generic DelegateWorkflowOperation<TInput, TOutput>
 
@@ -259,7 +258,7 @@ public class DelegateWorkflowOperationEnhancedShould
         Assert.Equal(execId, capturedId);
     }
 
-    #endregion
+    #endregion Generic DelegateWorkflowOperation<TInput, TOutput>
 
     #region WorkflowOperations factory
 
@@ -312,5 +311,5 @@ public class DelegateWorkflowOperationEnhancedShould
         Assert.IsType<DelegateWorkflowOperation<string, string>>(operation);
     }
 
-    #endregion
+    #endregion WorkflowOperations factory
 }

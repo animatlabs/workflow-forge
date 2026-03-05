@@ -3,10 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Constants;
-using WorkflowForge.Middleware;
 using WorkflowForge.Options.Middleware;
 using WorkflowForge.Testing;
-using Xunit;
 
 using TimingMiddlewareCore = WorkflowForge.Middleware.TimingMiddleware;
 

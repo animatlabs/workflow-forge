@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.Logging.Serilog;
-using Xunit;
 
 namespace WorkflowForge.Extensions.Logging.Serilog.Tests
 {
@@ -340,17 +338,25 @@ namespace WorkflowForge.Extensions.Logging.Serilog.Tests
         private sealed class TestLoggerProvider : ILoggerProvider
         {
             private readonly List<string> _logged;
+
             public TestLoggerProvider(List<string> logged) => _logged = logged;
+
             public Microsoft.Extensions.Logging.ILogger CreateLogger(string categoryName) => new TestLogger(_logged);
-            public void Dispose() { }
+
+            public void Dispose()
+            { }
         }
 
         private sealed class TestLogger : Microsoft.Extensions.Logging.ILogger
         {
             private readonly List<string> _logged;
+
             public TestLogger(List<string> logged) => _logged = logged;
+
             public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
             public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+
             public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
             {
                 _logged.Add(formatter(state, exception));

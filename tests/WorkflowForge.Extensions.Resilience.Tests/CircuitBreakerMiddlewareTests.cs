@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.Resilience;
 using WorkflowForge.Extensions.Resilience.Abstractions;
 using WF = WorkflowForge;
 
@@ -13,7 +12,7 @@ public class CircuitBreakerMiddlewareShould : IDisposable
     private readonly IWorkflowFoundry _foundry;
     private readonly TestOperation _operation;
 
-        public CircuitBreakerMiddlewareShould()
+    public CircuitBreakerMiddlewareShould()
     {
         _foundry = WF.WorkflowForge.CreateFoundry("CircuitBreakerTest");
         _operation = new TestOperation();
@@ -203,7 +202,8 @@ public class CircuitBreakerMiddlewareShould : IDisposable
         public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
-        public void Dispose() { }
+        public void Dispose()
+        { }
     }
 
     private sealed class FakeCircuitBreakerPolicy : ICircuitBreakerPolicy
@@ -217,7 +217,9 @@ public class CircuitBreakerMiddlewareShould : IDisposable
         public CircuitBreakerState State => CircuitBreakerState.Closed;
 
 #pragma warning disable CS0067
+
         public event EventHandler<CircuitBreakerStateChangedEventArgs>? StateChanged;
+
 #pragma warning restore CS0067
 
         public async Task ExecuteAsync(Func<Task> operation, CancellationToken cancellationToken = default)

@@ -1,9 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Moq;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.Observability.HealthChecks;
 using WorkflowForge.Loggers;
 
 namespace WorkflowForge.Extensions.Observability.HealthChecks.Tests;

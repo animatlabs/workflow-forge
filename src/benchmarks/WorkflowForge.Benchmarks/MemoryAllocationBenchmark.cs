@@ -1,8 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Engines;
-using BenchmarkDotNet.Jobs;
 using WorkflowForge.Extensions;
 
 namespace WorkflowForge.Benchmarks;
@@ -14,12 +12,6 @@ namespace WorkflowForge.Benchmarks;
 /// - Garbage collection efficiency
 /// - Memory-optimized configurations
 /// </summary>
-[MemoryDiagnoser]
-[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net48, iterationCount: 50)]
-[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net80, iterationCount: 50)]
-[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net10_0, iterationCount: 50)]
-[MarkdownExporter]
-[HtmlExporter]
 public class MemoryAllocationBenchmark
 {
     [Params(10, 50, 100, 500)]

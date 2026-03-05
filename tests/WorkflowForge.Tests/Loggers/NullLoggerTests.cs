@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Loggers;
 
 namespace WorkflowForge.Tests.Loggers;
 

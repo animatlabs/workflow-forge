@@ -1,11 +1,10 @@
 using System;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
-using TimingMiddlewareCore = WorkflowForge.Middleware.TimingMiddleware;
 using WorkflowForge.Middleware;
 using WorkflowForge.Options.Middleware;
 using WorkflowForge.Testing;
-using Xunit;
+using TimingMiddlewareCore = WorkflowForge.Middleware.TimingMiddleware;
 
 namespace WorkflowForge.Tests.Extensions;
 

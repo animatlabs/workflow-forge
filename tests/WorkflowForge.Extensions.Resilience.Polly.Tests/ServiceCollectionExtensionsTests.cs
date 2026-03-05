@@ -1,14 +1,11 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.Resilience.Abstractions;
-using WorkflowForge.Extensions.Resilience.Polly;
 using WorkflowForge.Extensions.Resilience.Polly.Options;
 using WorkflowForge.Testing;
-using Xunit;
 
 namespace WorkflowForge.Extensions.Resilience.Polly.Tests;
 

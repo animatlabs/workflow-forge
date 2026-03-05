@@ -92,6 +92,7 @@ namespace WorkflowForge.Tests.Exceptions
         #region Serialization Tests
 
 #pragma warning disable SYSLIB0050, SYSLIB0051 // Serialization tests for .NET Framework compatibility
+
         [Fact]
         public void SerializeDataKey_GivenGetObjectData()
         {
@@ -126,6 +127,7 @@ namespace WorkflowForge.Tests.Exceptions
             var serializedDataKey = info.GetString(nameof(FoundryDataException.DataKey));
             Assert.Null(serializedDataKey);
         }
+
 #pragma warning restore SYSLIB0050, SYSLIB0051
 
         #endregion Serialization Tests

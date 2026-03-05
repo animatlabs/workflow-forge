@@ -87,7 +87,7 @@ public class ActionWorkflowOperationGenericShould
             operation.ForgeAsync("input", foundry));
     }
 
-    #endregion
+    #endregion ActionWorkflowOperation<TInput> - Constructor and ForgeAsync
 
     #region ActionWorkflowOperation<TInput> - RestoreAsync
 
@@ -137,7 +137,7 @@ public class ActionWorkflowOperationGenericShould
         Assert.Contains("Restore failed", ex.InnerException?.Message);
     }
 
-    #endregion
+    #endregion ActionWorkflowOperation<TInput> - RestoreAsync
 
     #region ActionWorkflowOperation (non-generic) - RestoreAsync with restoreFunc
 
@@ -200,5 +200,5 @@ public class ActionWorkflowOperationGenericShould
         Assert.Contains("Test", ex.Message);
     }
 
-    #endregion
+    #endregion ActionWorkflowOperation (non-generic) - RestoreAsync with restoreFunc
 }

@@ -124,6 +124,7 @@ public class LoggingMiddlewareShould : IDisposable
         public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
             => Task.CompletedTask;
 
-        public void Dispose() { }
+        public void Dispose()
+        { }
     }
 }

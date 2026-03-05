@@ -1,6 +1,4 @@
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Engines;
-using BenchmarkDotNet.Jobs;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
@@ -14,12 +12,6 @@ namespace WorkflowForge.Benchmarks;
 /// - Different operation types
 /// - Scaling with operation count
 /// </summary>
-[MemoryDiagnoser]
-[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net48, iterationCount: 50)]
-[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net80, iterationCount: 50)]
-[SimpleJob(RunStrategy.Monitoring, RuntimeMoniker.Net10_0, iterationCount: 50)]
-[MarkdownExporter]
-[HtmlExporter]
 public class WorkflowThroughputBenchmark
 {
     [Params(1, 5, 10, 25, 50)]

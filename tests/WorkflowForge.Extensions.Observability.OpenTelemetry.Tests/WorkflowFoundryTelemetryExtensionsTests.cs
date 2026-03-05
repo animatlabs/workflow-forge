@@ -1,11 +1,6 @@
 using System;
-using System.Diagnostics;
-using System.Diagnostics.Metrics;
 using WorkflowForge.Abstractions;
-using WorkflowForge.Extensions.Observability.OpenTelemetry;
 using WorkflowForge.Testing;
-using Moq;
-using Xunit;
 
 namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
 {
