@@ -140,6 +140,26 @@ namespace WorkflowForge.Extensions.Audit.Tests
             Assert.True(entry.Timestamp <= afterExecution);
         }
 
+        [Fact]
+        public async Task ContinueExecution_GivenAuditProviderThrowsDuringWrite()
+        {
+            var options = new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Standard };
+            var throwingProvider = new ThrowingAuditProvider();
+            var middleware = new AuditMiddleware(throwingProvider, options, _timeProvider, "test-user");
+
+            var nextCalled = false;
+            Task<object?> Next(CancellationToken _)
+            {
+                nextCalled = true;
+                return Task.FromResult<object?>("ok");
+            }
+
+            var result = await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
+
+            Assert.True(nextCalled);
+            Assert.Equal("ok", result);
+        }
+
         private class TestOperation : IWorkflowOperation
         {
             public Guid Id { get; } = Guid.NewGuid();
@@ -157,6 +177,19 @@ namespace WorkflowForge.Extensions.Audit.Tests
 
             public void Dispose()
             { }
+        }
+
+        private sealed class ThrowingAuditProvider : IAuditProvider
+        {
+            public Task WriteAuditEntryAsync(AuditEntry entry, CancellationToken cancellationToken = default)
+            {
+                throw new InvalidOperationException("audit-write-failed");
+            }
+
+            public Task FlushAsync(CancellationToken cancellationToken = default)
+            {
+                return Task.CompletedTask;
+            }
         }
     }
 }

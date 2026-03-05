@@ -279,6 +279,29 @@ public class PollyRetryOperationShould : IDisposable
         Assert.Contains("Circuit breaker is open", ex.Message);
     }
 
+    [Fact]
+    public async Task ThrowWorkflowOperationException_GivenForgeAsyncWhenTimeoutRejected()
+    {
+        var inner = new FakeWorkflowOperationWithDelay(TimeSpan.FromSeconds(1));
+        var settings = new PollyMiddlewareOptions
+        {
+            Retry = { IsEnabled = false },
+            CircuitBreaker = { IsEnabled = false },
+            Timeout =
+            {
+                IsEnabled = true,
+                DefaultTimeout = TimeSpan.FromMilliseconds(50)
+            }
+        };
+
+        var op = PollyRetryOperation.WithComprehensivePolicy(inner, settings);
+
+        var ex = await Assert.ThrowsAsync<WorkflowOperationException>(() =>
+            op.ForgeAsync(null, _foundry, CancellationToken.None));
+
+        Assert.Contains("timed out", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
     private sealed class FakeWorkflowOperation : IWorkflowOperation
     {
         public Guid Id { get; } = Guid.NewGuid();
@@ -316,6 +339,34 @@ public class PollyRetryOperationShould : IDisposable
             if (ThrowOnDispose)
                 throw new InvalidOperationException("Dispose failed");
             Disposed = true;
+        }
+    }
+
+    private sealed class FakeWorkflowOperationWithDelay : IWorkflowOperation
+    {
+        private readonly TimeSpan _delay;
+
+        public FakeWorkflowOperationWithDelay(TimeSpan delay)
+        {
+            _delay = delay;
+        }
+
+        public Guid Id { get; } = Guid.NewGuid();
+        public string Name => "DelayedOperation";
+
+        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(_delay, cancellationToken);
+            return "done";
+        }
+
+        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 using WorkflowForge.Middleware;
 using WorkflowForge.Operations;
 using Xunit;
@@ -441,6 +442,81 @@ public class MiddlewareShould
             timeoutMiddleware.ExecuteAsync(workflow, foundry, async () => await Task.Delay(200)));
 
         Assert.True(foundry.Properties.TryGetValue("Workflow.TimedOut", out var timedOut) && (bool)timedOut!);
+    }
+
+    [Fact]
+    public async Task ExecuteWithoutTimeout_GivenWorkflowTimeoutIsZero()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var logger = Mock.Of<IWorkflowForgeLogger>();
+        var timeoutMiddleware = new WorkflowTimeoutMiddleware(TimeSpan.Zero, logger);
+        var workflow = Mock.Of<IWorkflow>(w => w.Name == "NoTimeoutWorkflow");
+        var nextCalled = false;
+
+        // Act
+        await timeoutMiddleware.ExecuteAsync(workflow, foundry, () =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        });
+
+        // Assert
+        Assert.True(nextCalled);
+        Assert.False(foundry.Properties.ContainsKey(FoundryPropertyKeys.WorkflowTimedOut));
+    }
+
+    [Fact]
+    public async Task UseCustomTimeout_GivenWorkflowTimeoutPropertyIsSet()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var logger = Mock.Of<IWorkflowForgeLogger>();
+        var timeoutMiddleware = new WorkflowTimeoutMiddleware(TimeSpan.FromSeconds(1), logger);
+        var workflow = Mock.Of<IWorkflow>(w => w.Name == "CustomTimeoutWorkflow");
+        var customTimeout = TimeSpan.FromMilliseconds(25);
+        foundry.Properties[FoundryPropertyKeys.WorkflowTimeout] = customTimeout;
+
+        // Act
+        await Assert.ThrowsAsync<TimeoutException>(() =>
+            timeoutMiddleware.ExecuteAsync(workflow, foundry, async () => await Task.Delay(100)));
+
+        // Assert
+        Assert.True(foundry.Properties.TryGetValue(FoundryPropertyKeys.WorkflowTimeoutDuration, out var timeoutDuration));
+        Assert.Equal(customTimeout, timeoutDuration);
+    }
+
+    [Fact]
+    public async Task ThrowOperationCanceledException_GivenCancellationRequestedBeforeTimeout()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var logger = Mock.Of<IWorkflowForgeLogger>();
+        var timeoutMiddleware = new WorkflowTimeoutMiddleware(TimeSpan.FromSeconds(1), logger);
+        var workflow = Mock.Of<IWorkflow>(w => w.Name == "CanceledWorkflow");
+        using var cts = new CancellationTokenSource();
+        cts.CancelAfter(20);
+
+        // Act and Assert
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            timeoutMiddleware.ExecuteAsync(workflow, foundry, async () => await Task.Delay(200), cts.Token));
+    }
+
+    [Fact]
+    public void ThrowArgumentException_GivenNegativeWorkflowTimeout()
+    {
+        // Arrange
+        var logger = Mock.Of<IWorkflowForgeLogger>();
+
+        // Act and Assert
+        Assert.Throws<ArgumentException>(() => new WorkflowTimeoutMiddleware(TimeSpan.FromMilliseconds(-1), logger));
+    }
+
+    [Fact]
+    public void ThrowArgumentNullException_GivenNullLoggerForWorkflowTimeoutMiddleware()
+    {
+        // Act and Assert
+        Assert.Throws<ArgumentNullException>(() => new WorkflowTimeoutMiddleware(TimeSpan.FromSeconds(1), null!));
     }
 
     #endregion

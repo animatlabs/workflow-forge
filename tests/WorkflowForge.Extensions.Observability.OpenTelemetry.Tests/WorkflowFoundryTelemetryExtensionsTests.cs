@@ -1,6 +1,7 @@
 using System;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Testing;
+using Moq;
 
 namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
 {
@@ -91,6 +92,32 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
             IWorkflowFoundry? foundry = null;
 
             Assert.Throws<ArgumentNullException>(() => foundry!.DisableOpenTelemetry());
+        }
+
+        [Fact]
+        public void ReturnFalse_GivenEnableOpenTelemetryWhenPropertiesAccessThrows()
+        {
+            var logger = new Mock<IWorkflowForgeLogger>();
+            var foundry = new Mock<IWorkflowFoundry>();
+            foundry.SetupGet(f => f.Logger).Returns(logger.Object);
+            foundry.SetupGet(f => f.Properties).Throws(new InvalidOperationException("properties-unavailable"));
+
+            var result = foundry.Object.EnableOpenTelemetry();
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void ReturnFalse_GivenDisableOpenTelemetryWhenPropertiesAccessThrows()
+        {
+            var logger = new Mock<IWorkflowForgeLogger>();
+            var foundry = new Mock<IWorkflowFoundry>();
+            foundry.SetupGet(f => f.Logger).Returns(logger.Object);
+            foundry.SetupGet(f => f.Properties).Throws(new InvalidOperationException("properties-unavailable"));
+
+            var result = foundry.Object.DisableOpenTelemetry();
+
+            Assert.False(result);
         }
 
         [Fact]

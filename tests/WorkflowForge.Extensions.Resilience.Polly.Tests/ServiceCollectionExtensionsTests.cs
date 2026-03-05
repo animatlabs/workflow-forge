@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -192,5 +193,41 @@ public class ServiceCollectionExtensionsShould
         var provider = services.BuildServiceProvider();
         var options = provider.GetRequiredService<PollyMiddlewareOptions>();
         Assert.NotNull(options);
+    }
+
+    [Fact]
+    public void ReturnNoOpStrategy_GivenAddWorkflowForgePollyWhenDisabled()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IWorkflowForgeLogger>(TestNullLogger.Instance);
+
+        services.AddWorkflowForgePolly(opts =>
+        {
+            opts.Enabled = false;
+        });
+
+        var provider = services.BuildServiceProvider();
+        var strategy = provider.GetRequiredService<IWorkflowResilienceStrategy>();
+
+        Assert.Equal("NoOp", strategy.Name);
+    }
+
+    [Fact]
+    public void ReturnDefaultRetryMiddleware_GivenAddWorkflowForgePollyWhenRetryDisabled()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IWorkflowForgeLogger>(TestNullLogger.Instance);
+
+        services.AddWorkflowForgePolly(opts =>
+        {
+            opts.Enabled = true;
+            opts.EnableComprehensivePolicies = false;
+            opts.Retry.IsEnabled = false;
+        });
+
+        var provider = services.BuildServiceProvider();
+        var middleware = provider.GetRequiredService<PollyMiddleware>();
+
+        Assert.StartsWith("PollyRetry", middleware.Name, StringComparison.Ordinal);
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -435,6 +436,136 @@ namespace WorkflowForge.Tests.Orchestration
 
             Assert.True(restoreStarted);
             Assert.True(restoreCompleted);
+        }
+
+        [Fact]
+        public async Task StopCompensationEarly_GivenFailFastCompensationAndRestoreFailure()
+        {
+            var options = new WorkflowForgeOptions
+            {
+                FailFastCompensation = true,
+                ThrowOnCompensationError = true
+            };
+
+            using var smith = WorkflowForge.CreateSmith(options: options);
+            var restoredOperations = new List<string>();
+
+            var op1 = new BranchTestOperation("Op1",
+                forge: () => Task.FromResult<object?>("one"),
+                restore: () =>
+                {
+                    restoredOperations.Add("Op1");
+                    return Task.CompletedTask;
+                });
+
+            var op2 = new BranchTestOperation("Op2",
+                forge: () => Task.FromResult<object?>("two"),
+                restore: () => throw new InvalidOperationException("restore-op2-failed"));
+
+            var fail = new BranchTestOperation("Fail",
+                forge: () => throw new InvalidOperationException("forge-failed"),
+                restore: () => Task.CompletedTask);
+
+            var workflow = WorkflowForge.CreateWorkflow($"FailFastComp-{_uniqueTestId}")
+                .AddOperation(op1)
+                .AddOperation(op2)
+                .AddOperation(fail)
+                .Build();
+
+            await Assert.ThrowsAsync<AggregateException>(() => smith.ForgeAsync(workflow));
+
+            Assert.DoesNotContain("Op1", restoredOperations);
+        }
+
+        [Fact]
+        public async Task SkipRestoreError_GivenNotSupportedExceptionDuringCompensation()
+        {
+            var options = new WorkflowForgeOptions
+            {
+                ThrowOnCompensationError = true
+            };
+
+            using var smith = WorkflowForge.CreateSmith(options: options);
+
+            var op1 = new BranchTestOperation("Op1",
+                forge: () => Task.FromResult<object?>("one"),
+                restore: () => throw new NotSupportedException("no compensation"));
+
+            var fail = new BranchTestOperation("Fail",
+                forge: () => throw new InvalidOperationException("forge-failed"),
+                restore: () => Task.CompletedTask);
+
+            var workflow = WorkflowForge.CreateWorkflow($"SkipComp-{_uniqueTestId}")
+                .AddOperation(op1)
+                .AddOperation(fail)
+                .Build();
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() => smith.ForgeAsync(workflow));
+        }
+
+        [Fact]
+        public async Task FireOperationRestoreFailed_GivenCompensationRestoreThrows()
+        {
+            var options = new WorkflowForgeOptions
+            {
+                ThrowOnCompensationError = true
+            };
+
+            using var smith = WorkflowForge.CreateSmith(options: options);
+            var restoreFailedEventRaised = false;
+
+            smith.OperationRestoreFailed += (_, args) =>
+            {
+                restoreFailedEventRaised = true;
+                Assert.NotNull(args.Exception);
+            };
+
+            var op1 = new BranchTestOperation("Op1",
+                forge: () => Task.FromResult<object?>("one"),
+                restore: () => throw new InvalidOperationException("restore-failed"));
+
+            var fail = new BranchTestOperation("Fail",
+                forge: () => throw new InvalidOperationException("forge-failed"),
+                restore: () => Task.CompletedTask);
+
+            var workflow = WorkflowForge.CreateWorkflow($"RestoreFailedEvt-{_uniqueTestId}")
+                .AddOperation(op1)
+                .AddOperation(fail)
+                .Build();
+
+            await Assert.ThrowsAsync<AggregateException>(() => smith.ForgeAsync(workflow));
+
+            Assert.True(restoreFailedEventRaised);
+        }
+
+        private sealed class BranchTestOperation : IWorkflowOperation
+        {
+            private readonly Func<Task<object?>> _forge;
+            private readonly Func<Task> _restore;
+
+            public BranchTestOperation(string name, Func<Task<object?>> forge, Func<Task> restore)
+            {
+                Name = name;
+                _forge = forge;
+                _restore = restore;
+            }
+
+            public Guid Id { get; } = Guid.NewGuid();
+            public string Name { get; }
+
+            public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+            {
+                return _forge();
+            }
+
+            public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+            {
+                return _restore();
+            }
+
+            public void Dispose()
+            {
+            }
         }
     }
 }

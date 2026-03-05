@@ -114,5 +114,19 @@ namespace WorkflowForge.Extensions.Audit.Tests
             Assert.Single(_auditProvider.Entries);
             Assert.Equal("Unknown", _auditProvider.Entries[0].WorkflowName);
         }
+
+        [Fact]
+        public void NotAddMiddleware_GivenUseAuditWhenDisabled()
+        {
+            var foundry = WF.WorkflowForge.CreateFoundry("DisabledAudit");
+            var concreteFoundry = Assert.IsType<global::WorkflowForge.WorkflowFoundry>(foundry);
+            var options = new AuditMiddlewareOptions { Enabled = false };
+            var middlewareCountBefore = concreteFoundry.MiddlewareCount;
+
+            var result = foundry.UseAudit(_auditProvider, options, _timeProvider, "user");
+
+            Assert.Same(foundry, result);
+            Assert.Equal(middlewareCountBefore, concreteFoundry.MiddlewareCount);
+        }
     }
 }

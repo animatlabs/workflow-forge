@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions.Resilience.Abstractions;
 
 namespace WorkflowForge.Extensions.Resilience.Polly.Tests;
 
@@ -224,5 +225,55 @@ public class PollyResilienceStrategyShould
         var result = await strategy.ExecuteAsync(() => Task.FromResult("ok"), CancellationToken.None);
 
         Assert.Equal("ok", result);
+    }
+
+    [Fact]
+    public async Task ThrowCircuitBreakerOpenException_GivenExecuteAsyncWhenCircuitOpens()
+    {
+        var strategy = PollyResilienceStrategy.CreateCircuitBreakerPolicy(
+            failureThreshold: 5,
+            durationOfBreak: TimeSpan.FromSeconds(1),
+            minimumThroughput: 5);
+
+        for (int i = 0; i < 5; i++)
+        {
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                strategy.ExecuteAsync(() => Task.FromException(new InvalidOperationException("fail")), CancellationToken.None));
+        }
+
+        await Assert.ThrowsAsync<CircuitBreakerOpenException>(() =>
+            strategy.ExecuteAsync(() => Task.FromException(new InvalidOperationException("blocked")), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ThrowCircuitBreakerOpenException_GivenExecuteAsyncGenericWhenCircuitOpens()
+    {
+        var strategy = PollyResilienceStrategy.CreateCircuitBreakerPolicy(
+            failureThreshold: 5,
+            durationOfBreak: TimeSpan.FromSeconds(1),
+            minimumThroughput: 5);
+
+        for (int i = 0; i < 5; i++)
+        {
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                strategy.ExecuteAsync<int>(() => Task.FromException<int>(new InvalidOperationException("fail")), CancellationToken.None));
+        }
+
+        await Assert.ThrowsAsync<CircuitBreakerOpenException>(() =>
+            strategy.ExecuteAsync<int>(() => Task.FromException<int>(new InvalidOperationException("blocked")), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ThrowTimeoutRejectedException_GivenExecuteAsyncGenericWhenOperationThrowsTimeoutRejectedException()
+    {
+        var strategy = PollyResilienceStrategy.CreateRetryPolicy();
+
+        var ex = await Assert.ThrowsAnyAsync<Exception>(() =>
+            strategy.ExecuteAsync<int>(() =>
+            {
+                throw new global::Polly.Timeout.TimeoutRejectedException("timed-out");
+            }, CancellationToken.None));
+
+        Assert.Equal("TimeoutRejectedException", ex.GetType().Name);
     }
 }

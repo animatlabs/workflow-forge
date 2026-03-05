@@ -677,6 +677,74 @@ public class WorkflowFoundryShould
         await Assert.ThrowsAsync<ObjectDisposedException>(() => foundry.ForgeAsync());
     }
 
+    [Fact]
+    public async Task ThrowInvalidOperationException_GivenConcurrentForgeAsyncOnSameFoundry()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var started = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var resume = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("BlockingOp", async (input, f, ct) =>
+        {
+            started.TrySetResult(true);
+            await resume.Task;
+            return "done";
+        }));
+
+        // Act
+        var firstRun = foundry.ForgeAsync();
+        await started.Task;
+
+        // Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(() => foundry.ForgeAsync());
+
+        resume.TrySetResult(true);
+        await firstRun;
+    }
+
+    [Fact]
+    public async Task ContinueExecution_GivenOperationStartedHandlerThrows()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var operationExecuted = false;
+
+        foundry.OperationStarted += (_, _) => throw new InvalidOperationException("started-handler-error");
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("Op1", (input, f, ct) =>
+        {
+            operationExecuted = true;
+            return Task.FromResult("ok");
+        }));
+
+        // Act
+        await foundry.ForgeAsync();
+
+        // Assert
+        Assert.True(operationExecuted);
+    }
+
+    [Fact]
+    public async Task ContinueExecution_GivenOperationCompletedHandlerThrows()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var operationExecuted = false;
+
+        foundry.OperationCompleted += (_, _) => throw new InvalidOperationException("completed-handler-error");
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("Op1", (input, f, ct) =>
+        {
+            operationExecuted = true;
+            return Task.FromResult("ok");
+        }));
+
+        // Act
+        await foundry.ForgeAsync();
+
+        // Assert
+        Assert.True(operationExecuted);
+    }
+
     #endregion Operation Management Tests
 
     #region Middleware Tests

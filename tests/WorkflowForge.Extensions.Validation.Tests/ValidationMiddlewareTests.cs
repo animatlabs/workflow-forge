@@ -115,6 +115,62 @@ namespace WorkflowForge.Extensions.Validation.Tests
             Assert.True(nextCalled);
         }
 
+        [Fact]
+        public async Task CallNext_GivenInvalidDataWhenIgnoreValidationFailuresIsTrue()
+        {
+            var adapter = new DataAnnotationsWorkflowValidator<TestData>();
+            var dataExtractor = new Func<IWorkflowFoundry, object?>(f => new TestData { Value = -1 });
+            var options = new ValidationMiddlewareOptions
+            {
+                ThrowOnValidationError = true,
+                IgnoreValidationFailures = true
+            };
+
+            var middleware = new ValidationMiddleware(
+                _foundry.Logger,
+                new TestWorkflowValidator(adapter),
+                dataExtractor,
+                options);
+
+            var nextCalled = false;
+            Task<object?> Next(CancellationToken _)
+            {
+                nextCalled = true;
+                return Task.FromResult<object?>("continued");
+            }
+
+            var result = await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
+
+            Assert.True(nextCalled);
+            Assert.Equal("continued", result);
+            Assert.Equal("Failed", _foundry.Properties["Validation.Status"]);
+        }
+
+        [Fact]
+        public async Task NotStoreValidationStatus_GivenStoreValidationResultsIsFalse()
+        {
+            var adapter = new DataAnnotationsWorkflowValidator<TestData>();
+            var dataExtractor = new Func<IWorkflowFoundry, object?>(f => new TestData { Value = -1 });
+            var options = new ValidationMiddlewareOptions
+            {
+                ThrowOnValidationError = false,
+                StoreValidationResults = false
+            };
+
+            var middleware = new ValidationMiddleware(
+                _foundry.Logger,
+                new TestWorkflowValidator(adapter),
+                dataExtractor,
+                options);
+
+            Task<object?> Next(CancellationToken _) => Task.FromResult<object?>(null);
+
+            await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
+
+            Assert.False(_foundry.Properties.ContainsKey("Validation.Status"));
+            Assert.False(_foundry.Properties.ContainsKey("Validation.Errors"));
+        }
+
         private class TestData
         {
             [Range(1, int.MaxValue, ErrorMessage = "Value must be greater than 0")]
