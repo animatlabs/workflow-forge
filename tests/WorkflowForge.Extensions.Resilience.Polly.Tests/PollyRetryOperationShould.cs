@@ -426,6 +426,94 @@ public class PollyRetryOperationShould : IDisposable
         Assert.Equal("PollyRetry(InnerOp)", op.Name);
     }
 
+    [Fact]
+    public async Task ReturnResult_GivenForgeAsyncWithSuccessfulOperation()
+    {
+        const string expected = "success";
+        var inner = new FakeWorkflowOperation { Result = expected };
+        var op = PollyRetryOperation.WithRetryPolicy(inner);
+
+        var result = await op.ForgeAsync(null, _foundry, CancellationToken.None);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public async Task ThrowWorkflowOperationException_GivenForgeAsyncWithBrokenCircuit()
+    {
+        var inner = new FakeWorkflowOperation { FailCount = 100 };
+        var op = PollyRetryOperation.WithCircuitBreakerPolicy(
+            inner,
+            failureThreshold: 5,
+            durationOfBreak: TimeSpan.FromSeconds(5));
+
+        for (int i = 0; i < 5; i++)
+        {
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                op.ForgeAsync(null, _foundry, CancellationToken.None));
+        }
+
+        var ex = await Assert.ThrowsAsync<WorkflowOperationException>(() =>
+            op.ForgeAsync(null, _foundry, CancellationToken.None));
+
+        Assert.Contains("Circuit breaker is open", ex.Message);
+    }
+
+    [Fact]
+    public async Task ThrowWorkflowOperationException_GivenForgeAsyncWithTimeout()
+    {
+        var inner = new FakeWorkflowOperationWithDelay(TimeSpan.FromSeconds(1));
+        var settings = new PollyMiddlewareOptions
+        {
+            Retry = { IsEnabled = false },
+            CircuitBreaker = { IsEnabled = false },
+            Timeout = { IsEnabled = true, DefaultTimeout = TimeSpan.FromMilliseconds(50) }
+        };
+
+        var op = PollyRetryOperation.WithComprehensivePolicy(inner, settings);
+
+        var ex = await Assert.ThrowsAsync<WorkflowOperationException>(() =>
+            op.ForgeAsync(null, _foundry, CancellationToken.None));
+
+        Assert.Contains("timed out", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task CompleteSuccessfully_GivenRestoreAsyncWithValidOutput()
+    {
+        var inner = new FakeWorkflowOperation();
+        var op = PollyRetryOperation.WithRetryPolicy(inner);
+
+        await op.RestoreAsync("valid-output", _foundry, CancellationToken.None);
+
+        Assert.True(inner.RestoreAsyncCalled);
+    }
+
+    [Fact]
+    public async Task RethrowException_GivenRestoreAsyncWithFailure()
+    {
+        var inner = new FakeWorkflowOperation { RestoreFailCount = 100 };
+        var op = PollyRetryOperation.WithRetryPolicy(
+            inner,
+            maxRetryAttempts: 1,
+            baseDelay: TimeSpan.FromMilliseconds(5),
+            maxDelay: TimeSpan.FromMilliseconds(10));
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            op.RestoreAsync("data", _foundry, CancellationToken.None));
+
+        Assert.NotNull(ex);
+    }
+
+    [Fact]
+    public void UseCustomName_GivenCustomNameConstructor()
+    {
+        var inner = new FakeWorkflowOperation();
+        var op = PollyRetryOperation.WithRetryPolicy(inner, name: "CustomPollyOp");
+
+        Assert.Equal("CustomPollyOp", op.Name);
+    }
+
     private sealed class FakeWorkflowOperation : IWorkflowOperation
     {
         public Guid Id { get; } = Guid.NewGuid();

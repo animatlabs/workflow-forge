@@ -65,6 +65,17 @@ namespace WorkflowForge.Tests.OperationsTests
         }
 
         [Fact]
+        public void ThrowArgumentException_GivenNullElementInOperations()
+        {
+            // Arrange
+            var op = CreateMockOperation("Op1").Object;
+            var operations = new IWorkflowOperation[] { op, null! };
+
+            // Act & Assert
+            Assert.Throws<ArgumentException>(() => new ForEachWorkflowOperation(operations));
+        }
+
+        [Fact]
         public void ThrowArgumentException_GivenInvalidMaxConcurrency()
         {
             // Arrange
@@ -440,6 +451,23 @@ namespace WorkflowForge.Tests.OperationsTests
                 foreachOp.Dispose();
             });
             Assert.Null(ex);
+        }
+
+        [Fact]
+        public void SwallowException_GivenChildOperationThrowsOnDispose()
+        {
+            // Arrange - one operation throws during Dispose
+            var op1 = CreateMockOperation("Op1");
+            op1.Setup(o => o.Dispose()).Throws(new InvalidOperationException("Dispose failed"));
+            var op2 = CreateMockOperation("Op2").Object;
+            var foreachOp = new ForEachWorkflowOperation(new[] { op1.Object, op2 });
+
+            // Act - should not throw; exceptions during child Dispose are swallowed
+            var ex = Record.Exception(() => foreachOp.Dispose());
+
+            // Assert
+            Assert.Null(ex);
+            Mock.Get(op2).Verify(o => o.Dispose(), Times.Once);
         }
 
         #endregion Dispose Tests

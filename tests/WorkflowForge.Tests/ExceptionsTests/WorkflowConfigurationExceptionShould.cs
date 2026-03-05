@@ -71,6 +71,21 @@ namespace WorkflowForge.Tests.ExceptionsTests
         }
 
         [Fact]
+        public void SetMessageAndInnerException_GivenConstructor()
+        {
+            // Arrange
+            const string message = "Invalid workflow configuration";
+            var innerException = new ArgumentException("Invalid config value");
+
+            // Act
+            var exception = new WorkflowConfigurationException(message, innerException);
+
+            // Assert
+            Assert.Equal(message, exception.Message);
+            Assert.Same(innerException, exception.InnerException);
+        }
+
+        [Fact]
         public void SetAllProperties_GivenMessageInnerExceptionAndConfigurationKey()
         {
             // Arrange

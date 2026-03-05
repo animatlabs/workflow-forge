@@ -8,6 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <SonarQubeExclude>true</SonarQubeExclude>
+    <IsPackable>false</IsPackable>
     <WarningsAsErrors />
     <WarningsNotAsErrors>CS8981</WarningsNotAsErrors>
     <NoWarn>$(NoWarn);CS1998;CS8601;CS8604</NoWarn>

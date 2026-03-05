@@ -14,7 +14,7 @@
       TargetKind="SameAsPrimaryAssembly"
       Internalize="true"
       Parallel="true"
-      DebugInfo="false"
+      DebugInfo="true"
       KeyFile="$(AssemblyOriginatorKeyFile)" />
   </Target>
 

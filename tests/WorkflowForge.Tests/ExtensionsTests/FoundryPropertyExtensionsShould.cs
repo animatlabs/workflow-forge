@@ -148,6 +148,21 @@ public class FoundryPropertyExtensionsShould
             foundry.TryGetProperty<int>("   ", out _));
     }
 
+    [Fact]
+    public void ReturnFalse_GivenTryGetPropertyWithWhitespaceKey()
+    {
+        // Arrange - property value is whitespace string; type mismatch for int returns false
+        var foundry = CreateMockFoundry();
+        foundry.SetProperty("key1", "   ");
+
+        // Act
+        var result = foundry.TryGetProperty<int>("key1", out var value);
+
+        // Assert
+        Assert.False(result);
+        Assert.Equal(0, value);
+    }
+
     #endregion TryGetProperty
 
     #region GetPropertyOrDefault (no default param)
@@ -182,6 +197,20 @@ public class FoundryPropertyExtensionsShould
         var result = foundry.GetPropertyOrDefault<int>("key1");
 
         Assert.Equal(0, result);
+    }
+
+    [Fact]
+    public void ReturnDefault_GivenGetPropertyOrDefaultWithNullValue()
+    {
+        // Arrange - set property to null
+        var foundry = CreateMockFoundry();
+        foundry.SetProperty("key1", (object?)null);
+
+        // Act
+        var result = foundry.GetPropertyOrDefault<string>("key1");
+
+        // Assert - null is not string, so TryGetProperty returns false, we get default
+        Assert.Null(result);
     }
 
     #endregion GetPropertyOrDefault (no default param)
@@ -258,6 +287,17 @@ public class FoundryPropertyExtensionsShould
 
         Assert.Throws<ArgumentException>(() =>
             foundry.SetProperty("", "value"));
+    }
+
+    [Fact]
+    public void ThrowArgumentException_GivenSetPropertyWithWhitespaceKey()
+    {
+        // Arrange
+        var foundry = CreateMockFoundry();
+
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() =>
+            foundry.SetProperty("   ", "value"));
     }
 
     [Fact]
@@ -536,6 +576,20 @@ public class FoundryPropertyExtensionsShould
         var result = foundry.GetOperationOutput<int>(0, "StrOp");
 
         Assert.Equal(0, result);
+    }
+
+    [Fact]
+    public void ReturnDefault_GivenGetOperationOutputWithTypeMismatch()
+    {
+        // Arrange - set operation output to string value
+        var foundry = CreateMockFoundry();
+        foundry.Properties["Operation.0:StrOp.Output"] = "string";
+
+        // Act - request int, get type mismatch
+        var result = foundry.GetOperationOutput<int>(0, "StrOp");
+
+        // Assert
+        Assert.Equal(default(int), result);
     }
 
     [Fact]

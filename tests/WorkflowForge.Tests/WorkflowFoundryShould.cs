@@ -143,6 +143,30 @@ public class WorkflowFoundryShould
     }
 
     [Fact]
+    public void ThrowObjectDisposedException_GivenSetCurrentWorkflowAfterDispose()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var workflow = CreateMockWorkflow("TestWorkflow");
+        foundry.Dispose();
+
+        // Act & Assert
+        Assert.Throws<ObjectDisposedException>(() => foundry.SetCurrentWorkflow(workflow));
+    }
+
+    [Fact]
+    public void ThrowObjectDisposedException_GivenReplaceOperationsAfterDispose()
+    {
+        // Arrange
+        var foundry = CreateTestFoundry();
+        var operation = new TestOperation("ReplacementOp");
+        foundry.Dispose();
+
+        // Act & Assert
+        Assert.Throws<ObjectDisposedException>(() => foundry.ReplaceOperations(new[] { operation }));
+    }
+
+    [Fact]
     public void ReturnCorrectLogger_GivenLogger()
     {
         // Arrange

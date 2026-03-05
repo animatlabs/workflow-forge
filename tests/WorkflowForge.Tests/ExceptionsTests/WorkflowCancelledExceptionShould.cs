@@ -50,6 +50,21 @@ namespace WorkflowForge.Tests.ExceptionsTests
         }
 
         [Fact]
+        public void SetMessageAndInnerException_GivenConstructor()
+        {
+            // Arrange
+            const string message = "Workflow was cancelled";
+            var innerException = new OperationCanceledException("Token cancelled");
+
+            // Act
+            var exception = new WorkflowCancelledException(message, innerException);
+
+            // Assert
+            Assert.Equal(message, exception.Message);
+            Assert.Same(innerException, exception.InnerException);
+        }
+
+        [Fact]
         public void BeAssignableToWorkflowForgeException_GivenConstruction()
         {
             // Act

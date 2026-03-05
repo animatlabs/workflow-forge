@@ -379,4 +379,124 @@ public class PollyMiddlewareOptionsShould
         Assert.Equal(settings.Window, clone.Window);
         Assert.Equal(settings.QueueLimit, clone.QueueLimit);
     }
+
+    [Fact]
+    public void ProduceIndependentCopy_GivenClone()
+    {
+        // Arrange
+        var options = new PollyMiddlewareOptions
+        {
+            Enabled = true,
+            Retry = { IsEnabled = true, MaxRetryAttempts = 5, BaseDelay = TimeSpan.FromSeconds(2) },
+            CircuitBreaker = { IsEnabled = true, FailureThreshold = 10, BreakDuration = TimeSpan.FromSeconds(60) },
+            Timeout = { IsEnabled = true, DefaultTimeout = TimeSpan.FromMinutes(5) },
+            RateLimiter = { IsEnabled = true, PermitLimit = 200 },
+            EnableComprehensivePolicies = true,
+            EnableDetailedLogging = false,
+            DefaultTags = new Dictionary<string, string> { ["env"] = "test", ["app"] = "workflow" }
+        };
+
+        // Act
+        var clone = (PollyMiddlewareOptions)options.Clone();
+
+        // Assert - all properties match
+        Assert.NotSame(options, clone);
+        Assert.Equal(options.Enabled, clone.Enabled);
+        Assert.Equal(options.Retry.IsEnabled, clone.Retry.IsEnabled);
+        Assert.Equal(options.Retry.MaxRetryAttempts, clone.Retry.MaxRetryAttempts);
+        Assert.Equal(options.Retry.BaseDelay, clone.Retry.BaseDelay);
+        Assert.Equal(options.CircuitBreaker.IsEnabled, clone.CircuitBreaker.IsEnabled);
+        Assert.Equal(options.CircuitBreaker.FailureThreshold, clone.CircuitBreaker.FailureThreshold);
+        Assert.Equal(options.CircuitBreaker.BreakDuration, clone.CircuitBreaker.BreakDuration);
+        Assert.Equal(options.Timeout.IsEnabled, clone.Timeout.IsEnabled);
+        Assert.Equal(options.Timeout.DefaultTimeout, clone.Timeout.DefaultTimeout);
+        Assert.Equal(options.RateLimiter.IsEnabled, clone.RateLimiter.IsEnabled);
+        Assert.Equal(options.RateLimiter.PermitLimit, clone.RateLimiter.PermitLimit);
+        Assert.Equal(options.EnableComprehensivePolicies, clone.EnableComprehensivePolicies);
+        Assert.Equal(options.EnableDetailedLogging, clone.EnableDetailedLogging);
+        Assert.NotSame(options.DefaultTags, clone.DefaultTags);
+        Assert.Equal(options.DefaultTags["env"], clone.DefaultTags["env"]);
+        Assert.Equal(options.DefaultTags["app"], clone.DefaultTags["app"]);
+
+        // Mutate clone and verify original unchanged
+        clone.Enabled = false;
+        clone.Retry.MaxRetryAttempts = 99;
+        clone.EnableComprehensivePolicies = false;
+        clone.DefaultTags["env"] = "mutated";
+
+        Assert.True(options.Enabled);
+        Assert.Equal(5, options.Retry.MaxRetryAttempts);
+        Assert.True(options.EnableComprehensivePolicies);
+        Assert.Equal("test", options.DefaultTags["env"]);
+    }
+
+    [Fact]
+    public void ReturnValidationError_GivenNegativeMaxRetryAttempts()
+    {
+        var options = new PollyMiddlewareOptions
+        {
+            Retry = { IsEnabled = true, MaxRetryAttempts = -1 }
+        };
+
+        var errors = options.Validate();
+
+        Assert.NotEmpty(errors);
+        Assert.Contains(errors, e => e.Contains("MaxRetryAttempts"));
+    }
+
+    [Fact]
+    public void ReturnValidationError_GivenNegativeBaseDelay()
+    {
+        var options = new PollyMiddlewareOptions
+        {
+            Retry = { IsEnabled = true, BaseDelay = TimeSpan.FromMinutes(-1) }
+        };
+
+        var errors = options.Validate();
+
+        Assert.NotEmpty(errors);
+        Assert.Contains(errors, e => e.Contains("BaseDelay"));
+    }
+
+    [Fact]
+    public void ReturnValidationError_GivenNegativeBreakDuration()
+    {
+        var options = new PollyMiddlewareOptions
+        {
+            CircuitBreaker = { IsEnabled = true, BreakDuration = TimeSpan.FromMinutes(-1) }
+        };
+
+        var errors = options.Validate();
+
+        Assert.NotEmpty(errors);
+        Assert.Contains(errors, e => e.Contains("BreakDuration"));
+    }
+
+    [Fact]
+    public void ReturnValidationError_GivenPermitLimitAboveMaximum()
+    {
+        var options = new PollyMiddlewareOptions
+        {
+            RateLimiter = { IsEnabled = true, PermitLimit = 1000001 }
+        };
+
+        var errors = options.Validate();
+
+        Assert.NotEmpty(errors);
+        Assert.Contains(errors, e => e.Contains("PermitLimit"));
+    }
+
+    [Fact]
+    public void UseCustomSectionName_GivenCustomConstructor()
+    {
+        var options = new PollyMiddlewareOptions("Custom:Section");
+
+        Assert.Equal("Custom:Section", options.SectionName);
+    }
+
+    [Fact]
+    public void HaveCorrectDefaultSectionName_GivenDefaultInstance()
+    {
+        Assert.Equal("WorkflowForge:Extensions:Polly", PollyMiddlewareOptions.DefaultSectionName);
+    }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
@@ -397,6 +398,134 @@ public class PollyMiddlewareShould : IDisposable
         var middleware = PollyMiddleware.WithCircuitBreakerPolicy(logger);
 
         Assert.Equal("PollyCircuitBreaker(threshold:5)", middleware.Name);
+    }
+
+    [Fact]
+    public void CreateMiddleware_GivenWithRetryPolicy()
+    {
+        var logger = TestNullLogger.Instance;
+
+        var middleware = PollyMiddleware.WithRetryPolicy(logger, maxRetryAttempts: 3);
+
+        Assert.NotNull(middleware);
+    }
+
+    [Fact]
+    public void CreateMiddleware_GivenWithCircuitBreakerPolicy()
+    {
+        var logger = TestNullLogger.Instance;
+
+        var middleware = PollyMiddleware.WithCircuitBreakerPolicy(logger, failureThreshold: 5);
+
+        Assert.NotNull(middleware);
+    }
+
+    [Fact]
+    public void CreateMiddleware_GivenWithTimeoutPolicy()
+    {
+        var logger = TestNullLogger.Instance;
+
+        var middleware = PollyMiddleware.WithTimeoutPolicy(logger, TimeSpan.FromSeconds(30));
+
+        Assert.NotNull(middleware);
+    }
+
+    [Fact]
+    public void CreateMiddleware_GivenWithComprehensivePolicy()
+    {
+        var logger = TestNullLogger.Instance;
+
+        var middleware = PollyMiddleware.WithComprehensivePolicy(logger);
+
+        Assert.NotNull(middleware);
+    }
+
+    [Fact]
+    public async Task ReturnResult_GivenExecuteAsyncSuccessfulPipeline()
+    {
+        var logger = TestNullLogger.Instance;
+        var middleware = PollyMiddleware.WithRetryPolicy(logger);
+
+        Task<object?> Next(CancellationToken _) => Task.FromResult<object?>("result");
+
+        var result = await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None);
+
+        Assert.Equal("result", result);
+    }
+
+    [Fact]
+    public async Task LogWarning_GivenExecuteAsyncWithCircuitBreakerOpenWithLogger()
+    {
+        var logger = new Mock<IWorkflowForgeLogger>();
+        logger.Setup(l => l.BeginScope(It.IsAny<object>(), It.IsAny<IDictionary<string, string>?>()))
+            .Returns(Mock.Of<IDisposable>());
+        var middleware = PollyMiddleware.WithCircuitBreakerPolicy(
+            logger.Object,
+            failureThreshold: 5,
+            durationOfBreak: TimeSpan.FromSeconds(5));
+
+        Task<object?> Next(CancellationToken _) => throw new InvalidOperationException("fail");
+
+        for (int i = 0; i < 5; i++)
+        {
+            try { await middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None); }
+            catch { }
+        }
+
+        await Assert.ThrowsAnyAsync<Exception>(() =>
+            middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None));
+
+        logger.Verify(l => l.LogWarning(
+            It.IsAny<Exception>(),
+            It.Is<string>(s => s.Contains("Circuit") || s.Contains("BrokenCircuit")),
+            It.IsAny<object[]>()), Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public async Task LogError_GivenExecuteAsyncWithTimeoutWithLogger()
+    {
+        var logger = new Mock<IWorkflowForgeLogger>();
+        logger.Setup(l => l.BeginScope(It.IsAny<object>(), It.IsAny<IDictionary<string, string>?>()))
+            .Returns(Mock.Of<IDisposable>());
+        var middleware = PollyMiddleware.WithTimeoutPolicy(logger.Object, TimeSpan.FromMilliseconds(50));
+
+        async Task<object?> Next(CancellationToken ct)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(5), ct);
+            return null;
+        }
+
+        await Assert.ThrowsAnyAsync<Exception>(() =>
+            middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None));
+
+        logger.Verify(l => l.LogError(
+            It.IsAny<Exception>(),
+            It.IsAny<string>(),
+            It.IsAny<object[]>()), Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public async Task LogError_GivenExecuteAsyncWithGenericExceptionWithLogger()
+    {
+        var logger = new Mock<IWorkflowForgeLogger>();
+        logger.Setup(l => l.BeginScope(It.IsAny<object>(), It.IsAny<IDictionary<string, string>?>()))
+            .Returns(Mock.Of<IDisposable>());
+        var middleware = PollyMiddleware.WithRetryPolicy(
+            logger.Object,
+            maxRetryAttempts: 1,
+            baseDelay: TimeSpan.FromMilliseconds(1),
+            maxDelay: TimeSpan.FromMilliseconds(5));
+
+        Task<object?> Next(CancellationToken _) => throw new InvalidOperationException("generic failure");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            middleware.ExecuteAsync(_operation, _foundry, null, Next, CancellationToken.None));
+
+        logger.Verify(l => l.LogError(
+            It.IsAny<IDictionary<string, string>>(),
+            It.IsAny<Exception>(),
+            It.IsAny<string>(),
+            It.IsAny<object[]>()), Times.AtLeastOnce);
     }
 
     private sealed class TestOperation : IWorkflowOperation
