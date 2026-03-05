@@ -27,6 +27,8 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: read
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     steps:
     - uses: actions/checkout@v6
@@ -63,10 +65,8 @@ jobs:
       run: dotnet restore WorkflowForge.sln
 
     - name: Build and Test with SonarCloud
-      if: ${{ secrets.SONAR_TOKEN != '' }}
+      if: ${{ env.SONAR_TOKEN != '' }}
       continue-on-error: true
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
         dotnet sonarscanner begin `
           /k:"animatlabs_workflow-forge" `
@@ -85,7 +85,7 @@ jobs:
         dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
 
     - name: Build and Test (without SonarCloud)
-      if: ${{ secrets.SONAR_TOKEN == '' }}
+      if: ${{ env.SONAR_TOKEN == '' }}
       run: |
         dotnet build WorkflowForge.sln --configuration Release --no-restore
         dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-core.trx" --collect:"XPlat Code Coverage" --framework net8.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
