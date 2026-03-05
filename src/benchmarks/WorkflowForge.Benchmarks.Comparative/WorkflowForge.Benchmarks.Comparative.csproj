@@ -7,8 +7,10 @@
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <SonarQubeExclude>true</SonarQubeExclude>
+    <!-- Signing is disabled for benchmarks: unsigned third-party deps (WorkflowCore) cannot
+         load into a strongly-named process on .NET Framework 4.8. Benchmarks are dev-only tools. -->
     <SignAssembly>false</SignAssembly>
-    
+
     <!-- Package Information -->
     <AssemblyName>WorkflowForge.Benchmarks.Comparative</AssemblyName>
     <RootNamespace>WorkflowForge.Benchmarks.Comparative</RootNamespace>

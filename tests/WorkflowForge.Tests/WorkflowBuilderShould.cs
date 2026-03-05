@@ -943,6 +943,35 @@ public class WorkflowBuilderShould
         Assert.Same(builder, result);
     }
 
+    [Fact]
+    public async Task InvokeSyncRestoreDelegate_GivenSyncOverloadWithRestoreAction()
+    {
+        var restoreInvoked = false;
+        Action<IWorkflowFoundry> syncRestore = _ => restoreInvoked = true;
+
+        var workflow = WorkflowForge.CreateWorkflow("SyncRestoreTest")
+            .AddOperation("SyncOp", (IWorkflowFoundry _) => { }, syncRestore)
+            .Build();
+
+        var operation = workflow.Operations[0];
+        var foundry = new FakeWorkflowFoundry();
+
+        await operation.RestoreAsync("output", foundry, CancellationToken.None);
+
+        Assert.True(restoreInvoked);
+    }
+
+    [Fact]
+    public void ThrowInvalidOperationException_GivenAddOperationGenericWhenServiceProviderReturnsNull()
+    {
+        var serviceProvider = new TestServiceProvider();
+
+        var builder = WorkflowForge.CreateWorkflow("DITest", serviceProvider);
+
+        Assert.Throws<InvalidOperationException>(() =>
+            builder.AddOperation<TestParameterlessOperation>());
+    }
+
     #endregion AddParallelOperations Tests
 
     #region Helper Classes
