@@ -66,7 +66,6 @@ jobs:
 
     - name: Build and Test with SonarCloud
       if: ${{ env.SONAR_TOKEN != '' }}
-      continue-on-error: true
       run: |
         dotnet sonarscanner begin `
           /k:"animatlabs_workflow-forge" `
@@ -79,8 +78,8 @@ jobs:
           /d:sonar.cpd.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**" `
           /d:sonar.scanner.scanAll=false
         dotnet build WorkflowForge.sln --configuration Release --no-restore
-        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-core.trx" --collect:"XPlat Code Coverage" --framework net8.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-core.trx" --collect:"XPlat Code Coverage" --framework net10.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-net8.trx" --collect:"XPlat Code Coverage" --framework net8.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-net10.trx" --collect:"XPlat Code Coverage" --framework net10.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-netfx.trx" --framework net48
         dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
 
@@ -88,9 +87,26 @@ jobs:
       if: ${{ env.SONAR_TOKEN == '' }}
       run: |
         dotnet build WorkflowForge.sln --configuration Release --no-restore
-        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-core.trx" --collect:"XPlat Code Coverage" --framework net8.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-core.trx" --collect:"XPlat Code Coverage" --framework net10.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-net8.trx" --collect:"XPlat Code Coverage" --framework net8.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-net10.trx" --collect:"XPlat Code Coverage" --framework net10.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-netfx.trx" --framework net48
+
+    - name: Publish Sonar links
+      if: ${{ always() && env.SONAR_TOKEN != '' }}
+      shell: pwsh
+      run: |
+        $projectKey = "animatlabs_workflow-forge"
+        if ("${{ github.event_name }}" -eq "pull_request") {
+          $prNumber = "${{ github.event.pull_request.number }}"
+          $dashboardUrl = "https://sonarcloud.io/dashboard?id=$projectKey&pullRequest=$prNumber"
+          $newCodeUrl = "https://sonarcloud.io/summary/new_code?id=$projectKey&pullRequest=$prNumber"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## SonarCloud`nPR Dashboard: $dashboardUrl`nPR New Code: $newCodeUrl"
+        }
+        else {
+          $dashboardUrl = "https://sonarcloud.io/dashboard?id=$projectKey"
+          $newCodeUrl = "https://sonarcloud.io/summary/new_code?id=$projectKey"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## SonarCloud`nBranch Dashboard: $dashboardUrl`nBranch New Code: $newCodeUrl"
+        }
 
     - name: Upload test results
       uses: actions/upload-artifact@v6

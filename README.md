@@ -18,6 +18,10 @@ High-performance, dependency-free workflow orchestration library for .NET. Execu
 **License**: MIT  
 **Compatibility**: .NET Standard 2.0
 
+## Sonar Coverage Scope
+
+For pull requests, use the SonarCloud PR dashboard/new-code view (linked from each CI run summary) to evaluate the quality gate. The top-level README coverage badge reflects the main project context and can lag PR analysis results.
+
 ---
 
 ## Performance at a Glance
