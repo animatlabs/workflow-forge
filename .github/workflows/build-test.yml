@@ -13,7 +13,7 @@ on:
         default: false
         type: boolean
       version:
-        description: 'Package version override (e.g. 2.1.0)'
+        description: 'Package version override (e.g. 2.1.1)'
         required: false
         type: string
       sign:
@@ -196,9 +196,6 @@ jobs:
         Get-ChildItem ./packages -Filter *.nupkg | ForEach-Object {
           dotnet nuget sign $_.FullName --certificate-path cert.pfx --certificate-password $env:SIGNING_CERT_PASSWORD --timestamper http://timestamp.digicert.com
         }
-        Get-ChildItem ./packages -Filter *.snupkg | ForEach-Object {
-          dotnet nuget sign $_.FullName --certificate-path cert.pfx --certificate-password $env:SIGNING_CERT_PASSWORD --timestamper http://timestamp.digicert.com
-        }
         Remove-Item cert.pfx -Force
 
     - name: Attest NuGet Package Provenance
@@ -221,8 +218,5 @@ jobs:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: |
         Get-ChildItem ./packages -Filter *.nupkg | ForEach-Object {
-          dotnet nuget push $_.FullName --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
-        }
-        Get-ChildItem ./packages -Filter *.snupkg | ForEach-Object {
           dotnet nuget push $_.FullName --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate
         }

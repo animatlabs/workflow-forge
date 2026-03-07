@@ -49,7 +49,7 @@ public class ComprehensiveIntegrationSample : ISample
             var telemetryOptions = new WorkflowForgeOpenTelemetryOptions
             {
                 ServiceName = "ECommerce.OrderProcessing",
-                ServiceVersion = "2.1.0",
+                ServiceVersion = "2.1.1",
                 EnableTracing = true,
                 EnableMetrics = true,
                 EnableSystemMetrics = true,

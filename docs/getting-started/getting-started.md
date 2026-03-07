@@ -15,7 +15,7 @@ Welcome to WorkflowForge! This guide will walk you through installing, configuri
 
 ## Table of Contents
 
-- [What's New in 2.1.0](#whats-new-in-210)
+- [What's New in 2.1.1](#whats-new-in-211)
 - [What's New in 2.0.0](#whats-new-in-200)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -26,9 +26,9 @@ Welcome to WorkflowForge! This guide will walk you through installing, configuri
 
 ---
 
-## What's New in 2.1.0
+## What's New in 2.1.1
 
-**WorkflowForge 2.1.0** introduces multi-framework support, compensation improvements, and infrastructure hardening:
+**WorkflowForge 2.1.1** introduces multi-framework support, compensation improvements, and infrastructure hardening:
 
 ### Multi-Target Framework Support
 All libraries, tests, samples, and benchmarks now target **.NET 10.0**, **.NET 8.0**, and **.NET Framework 4.8** for broad runtime coverage.
@@ -302,7 +302,7 @@ Console.WriteLine($"Processing order {order.Id}...\n");
 // Build the workflow
 var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
     .WithDescription("Complete order processing workflow")
-    .WithVersion("2.1.0")
+    .WithVersion("2.1.1")
     .AddOperation(new ValidateOrderOperation())
     .AddOperation(new ProcessPaymentOperation())
     .AddOperation(new FulfillOrderOperation())

@@ -7,7 +7,7 @@ description: Internal performance benchmarks validating WorkflowForge's microsec
 
 This document presents WorkflowForge's internal performance benchmarks—comprehensive self-testing that validates the framework's performance characteristics independently of competitor comparisons.
 
-**Version**: 2.1.0  
+**Version**: 2.1.1  
 **Test System**: Windows 11 (25H2), Intel 11th Gen i7-1185G7, .NET SDK 10.0.103  
 **Runtimes**: .NET 10.0.3, .NET 8.0.24, .NET Framework 4.8.1  
 **Benchmark Framework**: BenchmarkDotNet v0.15.8  

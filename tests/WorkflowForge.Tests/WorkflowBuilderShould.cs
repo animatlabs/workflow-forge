@@ -209,7 +209,7 @@ public class WorkflowBuilderShould
     {
         // Arrange
         var builder = WorkflowForge.CreateWorkflow();
-        const string version = "2.1.0";
+        const string version = "2.1.1";
 
         // Act
         var result = builder.WithVersion(version);

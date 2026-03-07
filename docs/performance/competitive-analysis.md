@@ -5,10 +5,10 @@ description: Detailed benchmark comparison of WorkflowForge vs Workflow Core and
 
 # WorkflowForge Competitive Benchmark Analysis
 
-**Version**: 2.1.0  
+**Version**: 2.1.1  
 **Analysis Date**: March 2026  
 **Frameworks Tested**:
-- WorkflowForge 2.1.0
+- WorkflowForge 2.1.1
 - Workflow Core
 - Elsa Workflows
 

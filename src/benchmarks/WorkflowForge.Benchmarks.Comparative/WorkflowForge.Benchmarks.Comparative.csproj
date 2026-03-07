@@ -13,7 +13,7 @@
     <AssemblyName>WorkflowForge.Benchmarks.Comparative</AssemblyName>
     <RootNamespace>WorkflowForge.Benchmarks.Comparative</RootNamespace>
     <Description>Comparative performance benchmarks: WorkflowForge vs Workflow Core vs Elsa Workflows</Description>
-    <Version>2.1.0</Version>
+    <Version>2.1.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

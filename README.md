@@ -14,7 +14,7 @@
 
 High-performance, dependency-free workflow orchestration library for .NET. Execute thousands of workflows per second with microsecond-level operation latency and minimal memory footprint.
 
-**Version**: 2.1.0  
+**Version**: 2.1.1  
 **License**: MIT  
 **Compatibility**: .NET Standard 2.0
 

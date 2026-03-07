@@ -7,7 +7,7 @@ description: WorkflowForge delivers 13-511x faster execution and 6-575x less mem
 
 This document provides a comprehensive overview of WorkflowForge's performance characteristics, including internal benchmarks, competitive comparisons, targets, and optimization guidance.
 
-**Version**: 2.1.0  
+**Version**: 2.1.1  
 **Test System**: Windows 11 (25H2), Intel 11th Gen i7-1185G7, .NET SDK 10.0.103  
 **Runtimes**: .NET 10.0.3, .NET 8.0.24, .NET Framework 4.8.1  
 **BenchmarkDotNet**: v0.15.8, 50 iterations  
@@ -236,7 +236,7 @@ Results are written to `BenchmarkDotNet.Artifacts/results/`. Full runs may take 
 
 ## Version History
 
-### Version 2.1.0 (Current — March 2026)
+### Version 2.1.1 (Current — March 2026)
 
 - Multi-target .NET 10.0, .NET 8.0, .NET Framework 4.8
 - Sealed operation classes

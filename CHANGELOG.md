@@ -4,6 +4,16 @@ All notable changes to WorkflowForge will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.1.1] - 2026-03-07
+
+### Fixed
+- Fixed NuGet symbol packages (.snupkg) containing no .pdb files due to `DebugType` override conflict; all projects now correctly inherit `portable` from `Directory.Build.props`
+- Fixed `actions/attest-build-provenance` SHA typo in CI workflow
+- Removed duplicate `.snupkg` push loop from CI publish step
+
+### Changed
+- `DebugType` property removed from individual .csproj files; centralized in `src/Directory.Build.props` as `portable`
+
 ## [2.1.0] - 2026-02-15
 
 ### Added

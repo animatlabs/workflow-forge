@@ -10,7 +10,7 @@ This project contains fair, apple-to-apple performance benchmarks comparing Work
 
 ## Frameworks Tested
 
-- **WorkflowForge 2.1.0** - Zero-dependency, microsecond-scale orchestration
+- **WorkflowForge 2.1.1** - Zero-dependency, microsecond-scale orchestration
 - **Workflow Core** - Popular persistence-first workflow engine
 - **Elsa Workflows** - Modern workflow engine with designer support
 
