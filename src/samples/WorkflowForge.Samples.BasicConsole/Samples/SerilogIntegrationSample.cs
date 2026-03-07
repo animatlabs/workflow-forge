@@ -1,6 +1,7 @@
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Logging.Serilog;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -29,7 +30,7 @@ public class SerilogIntegrationSample : ISample
 
         // Add workflow data for context
         foundry.Properties["user_id"] = "usr_12345";
-        foundry.Properties["session_id"] = Guid.NewGuid().ToString("N")[..8];
+        foundry.Properties["session_id"] = Guid.NewGuid().ToString("N").Substring(0, 8);
         foundry.Properties["correlation_id"] = Guid.NewGuid().ToString();
 
         foundry
@@ -44,13 +45,11 @@ public class SerilogIntegrationSample : ISample
 /// <summary>
 /// User registration operation with rich structured logging
 /// </summary>
-public class UserRegistrationOperation : IWorkflowOperation
+public class UserRegistrationOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "UserRegistration";
-    public bool SupportsRestore => true;
+    public override string Name => "UserRegistration";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var userId = foundry.Properties["user_id"] as string ?? "unknown";
         var sessionId = foundry.Properties["session_id"] as string ?? "unknown";
@@ -106,7 +105,7 @@ public class UserRegistrationOperation : IWorkflowOperation
         return userData;
     }
 
-    public async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    public override async Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var userId = foundry.Properties["user_id"] as string ?? "unknown";
 
@@ -120,21 +119,16 @@ public class UserRegistrationOperation : IWorkflowOperation
 
         foundry.Logger.LogInformation("User registration restoration completed for user {UserId}", userId);
     }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Email notification operation with error simulation and logging
 /// </summary>
-public class EmailNotificationOperation : IWorkflowOperation
+public class EmailNotificationOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "EmailNotification";
-    public bool SupportsRestore => false;
+    public override string Name => "EmailNotification";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var userData = inputData as dynamic;
         var correlationId = foundry.Properties["correlation_id"] as string ?? "unknown";
@@ -153,7 +147,7 @@ public class EmailNotificationOperation : IWorkflowOperation
             // Simulate email sending
             await Task.Delay(200, cancellationToken);
 
-            var messageId = $"msg_{Guid.NewGuid().ToString("N")[..8]}";
+            var messageId = $"msg_{Guid.NewGuid().ToString("N").Substring(0, 8)}";
             var deliveryTime = 200;
 
             var emailProperties = new Dictionary<string, string>
@@ -188,26 +182,16 @@ public class EmailNotificationOperation : IWorkflowOperation
             throw;
         }
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException("Email notification does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }
 
 /// <summary>
 /// Audit logging operation demonstrating comprehensive audit trails
 /// </summary>
-public class AuditLoggingOperation : IWorkflowOperation
+public class AuditLoggingOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "AuditLogging";
-    public bool SupportsRestore => false;
+    public override string Name => "AuditLogging";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         var userId = foundry.Properties["user_id"] as string ?? "unknown";
         var correlationId = foundry.Properties["correlation_id"] as string ?? "unknown";
@@ -265,12 +249,4 @@ public class AuditLoggingOperation : IWorkflowOperation
 
         return auditEntry;
     }
-
-    public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        throw new NotSupportedException("Audit logging does not support restoration");
-    }
-
-    public void Dispose()
-    { }
 }

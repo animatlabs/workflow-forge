@@ -1,9 +1,9 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.Resilience.Abstractions;
 using WorkflowForge.Extensions.Resilience.Polly.Options;
@@ -74,7 +74,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         private static PollyMiddleware CreateMiddlewareFromSettings(IServiceProvider provider, PollyMiddlewareOptions settings)
         {
             var logger = provider.GetRequiredService<IWorkflowForgeLogger>();
-            var factory = provider.GetRequiredService<IPollyResilienceFactory>();
 
             if (settings.EnableComprehensivePolicies)
             {
@@ -213,17 +212,17 @@ namespace WorkflowForge.Extensions.Resilience.Polly
     {
         public string Name => "NoOp";
 
-        public Task ExecuteAsync(Func<Task> operation, CancellationToken cancellationToken)
+        public Task ExecuteAsync(Func<Task> operation, CancellationToken cancellationToken = default)
         {
             return operation();
         }
 
-        public Task<T> ExecuteAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken)
+        public Task<T> ExecuteAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken = default)
         {
             return operation();
         }
 
-        public Task<bool> ShouldRetryAsync(int attemptNumber, Exception? exception, CancellationToken cancellationToken)
+        public Task<bool> ShouldRetryAsync(int attemptNumber, Exception? exception, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(false);
         }

@@ -133,7 +133,7 @@ public interface ICompensationLifecycleEvents
 **When Events Fire**:
 - `CompensationTriggered`: When workflow failure triggers compensation
 - `CompensationCompleted`: After all compensations complete
-- `OperationRestoreStarted`: Before each operation's RestoreAsync executes
+- `OperationRestoreStarted`: Before each completed operation's RestoreAsync executes (all operations are attempted; no-op base class default for non-restorable operations)
 - `OperationRestoreCompleted`: After successful operation restoration
 - `OperationRestoreFailed`: When operation restoration fails
 
@@ -146,8 +146,7 @@ All event arguments inherit from `BaseWorkflowForgeEventArgs`:
 ```csharp
 public abstract class BaseWorkflowForgeEventArgs : EventArgs
 {
-    public Guid ExecutionId { get; }
-    public string WorkflowName { get; }
+    public IWorkflowFoundry Foundry { get; }
     public DateTimeOffset Timestamp { get; }
 }
 ```
@@ -158,8 +157,7 @@ public abstract class BaseWorkflowForgeEventArgs : EventArgs
 ```csharp
 public class WorkflowStartedEventArgs : BaseWorkflowForgeEventArgs
 {
-    public Guid WorkflowId { get; }
-    public int OperationCount { get; }
+    public DateTimeOffset StartedAt { get; }
 }
 ```
 
@@ -167,9 +165,9 @@ public class WorkflowStartedEventArgs : BaseWorkflowForgeEventArgs
 ```csharp
 public class WorkflowCompletedEventArgs : BaseWorkflowForgeEventArgs
 {
-    public Guid WorkflowId { get; }
+    public DateTimeOffset CompletedAt { get; }
+    public IReadOnlyDictionary<string, object?> FinalProperties { get; }
     public TimeSpan Duration { get; }
-    public int OperationsExecuted { get; }
 }
 ```
 
@@ -177,9 +175,10 @@ public class WorkflowCompletedEventArgs : BaseWorkflowForgeEventArgs
 ```csharp
 public class WorkflowFailedEventArgs : BaseWorkflowForgeEventArgs
 {
-    public Guid WorkflowId { get; }
-    public Exception Exception { get; }
-    public string? FailedOperationName { get; }
+    public DateTimeOffset FailedAt { get; }
+    public Exception? Exception { get; }
+    public string FailedOperationName { get; }
+    public TimeSpan Duration { get; }
 }
 ```
 
@@ -189,9 +188,8 @@ public class WorkflowFailedEventArgs : BaseWorkflowForgeEventArgs
 ```csharp
 public class OperationStartedEventArgs : BaseWorkflowForgeEventArgs
 {
-    public Guid OperationId { get; }
-    public string OperationName { get; }
-    public int OperationIndex { get; }
+    public IWorkflowOperation Operation { get; }
+    public object? InputData { get; }
 }
 ```
 
@@ -199,10 +197,10 @@ public class OperationStartedEventArgs : BaseWorkflowForgeEventArgs
 ```csharp
 public class OperationCompletedEventArgs : BaseWorkflowForgeEventArgs
 {
-    public Guid OperationId { get; }
-    public string OperationName { get; }
+    public IWorkflowOperation Operation { get; }
+    public object? InputData { get; }
+    public object? OutputData { get; }
     public TimeSpan Duration { get; }
-    public int OperationIndex { get; }
 }
 ```
 
@@ -210,10 +208,10 @@ public class OperationCompletedEventArgs : BaseWorkflowForgeEventArgs
 ```csharp
 public class OperationFailedEventArgs : BaseWorkflowForgeEventArgs
 {
-    public Guid OperationId { get; }
-    public string OperationName { get; }
-    public Exception Exception { get; }
-    public int OperationIndex { get; }
+    public IWorkflowOperation Operation { get; }
+    public object? InputData { get; }
+    public Exception? Exception { get; }
+    public TimeSpan Duration { get; }
 }
 ```
 
@@ -223,9 +221,10 @@ public class OperationFailedEventArgs : BaseWorkflowForgeEventArgs
 ```csharp
 public class CompensationTriggeredEventArgs : BaseWorkflowForgeEventArgs
 {
-    public Guid WorkflowId { get; }
-    public int OperationsToCompensate { get; }
-    public Exception TriggeringException { get; }
+    public DateTimeOffset TriggeredAt { get; }
+    public string Reason { get; }
+    public string FailedOperationName { get; }
+    public Exception? Exception { get; }
 }
 ```
 
@@ -233,8 +232,8 @@ public class CompensationTriggeredEventArgs : BaseWorkflowForgeEventArgs
 ```csharp
 public class OperationRestoreStartedEventArgs : BaseWorkflowForgeEventArgs
 {
-    public Guid OperationId { get; }
-    public string OperationName { get; }
+    public IWorkflowOperation Operation { get; }
+    public DateTimeOffset StartedAt { get; }
 }
 ```
 
@@ -242,11 +241,37 @@ public class OperationRestoreStartedEventArgs : BaseWorkflowForgeEventArgs
 ```csharp
 public class OperationRestoreCompletedEventArgs : BaseWorkflowForgeEventArgs
 {
-    public Guid OperationId { get; }
-    public string OperationName { get; }
+    public IWorkflowOperation Operation { get; }
+    public DateTimeOffset CompletedAt { get; }
     public TimeSpan Duration { get; }
 }
 ```
+
+### CompensationCompletedEventArgs
+
+Raised when all compensation (restore) operations have completed.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| Foundry | IWorkflowFoundry | The workflow foundry instance |
+| Timestamp | DateTimeOffset | When the event occurred |
+| CompletedAt | DateTimeOffset | When compensation completed |
+| SuccessCount | int | Number of successful restore operations |
+| FailureCount | int | Number of failed restore operations |
+| Duration | TimeSpan | Total compensation duration |
+
+### OperationRestoreFailedEventArgs
+
+Raised when an individual operation's restore (compensation) fails.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| Foundry | IWorkflowFoundry | The workflow foundry instance |
+| Timestamp | DateTimeOffset | When the event occurred |
+| Operation | IWorkflowOperation | The operation that failed to restore |
+| FailedAt | DateTimeOffset | When the restore failed |
+| Exception | Exception | The exception that caused the failure |
+| Duration | TimeSpan | How long the restore attempt took |
 
 ---
 
@@ -259,7 +284,7 @@ using var smith = WorkflowForge.CreateSmith();
 
 // Subscribe to workflow events
 smith.WorkflowStarted += (sender, e) => {
-    Console.WriteLine($"Workflow {e.WorkflowName} started at {e.Timestamp}");
+    Console.WriteLine($"Workflow {e.Foundry.CurrentWorkflow?.Name} started at {e.Timestamp}");
 };
 
 smith.WorkflowCompleted += (sender, e) => {
@@ -267,7 +292,7 @@ smith.WorkflowCompleted += (sender, e) => {
 };
 
 smith.WorkflowFailed += (sender, e) => {
-    Console.WriteLine($"Workflow failed: {e.Exception.Message}");
+    Console.WriteLine($"Workflow failed: {e.Exception?.Message}");
 };
 
 // Execute workflow
@@ -281,15 +306,15 @@ using var foundry = WorkflowForge.CreateFoundry("MonitoredWorkflow");
 
 // Subscribe to operation events
 foundry.OperationStarted += (sender, e) => {
-    Console.WriteLine($"Operation {e.OperationName} started (#{e.OperationIndex})");
+    Console.WriteLine($"Operation {e.Operation.Name} started");
 };
 
 foundry.OperationCompleted += (sender, e) => {
-    Console.WriteLine($"Operation {e.OperationName} completed in {e.Duration.TotalMilliseconds}ms");
+    Console.WriteLine($"Operation {e.Operation.Name} completed in {e.Duration.TotalMilliseconds}ms");
 };
 
 foundry.OperationFailed += (sender, e) => {
-    Console.WriteLine($"Operation {e.OperationName} failed: {e.Exception.Message}");
+    Console.WriteLine($"Operation {e.Operation.Name} failed: {e.Exception?.Message}");
 };
 
 // Execute workflow with foundry
@@ -304,16 +329,16 @@ using var smith = WorkflowForge.CreateSmith();
 
 // Subscribe to compensation events
 smith.CompensationTriggered += (sender, e) => {
-    Console.WriteLine($"Compensation triggered: {e.OperationsToCompensate} operations to rollback");
-    Console.WriteLine($"Cause: {e.TriggeringException.Message}");
+    Console.WriteLine($"Compensation triggered: {e.Reason} (failed: {e.FailedOperationName})");
+    Console.WriteLine($"Cause: {e.Exception?.Message}");
 };
 
 smith.OperationRestoreStarted += (sender, e) => {
-    Console.WriteLine($"Rolling back operation: {e.OperationName}");
+    Console.WriteLine($"Rolling back operation: {e.Operation.Name}");
 };
 
 smith.OperationRestoreCompleted += (sender, e) => {
-    Console.WriteLine($"Operation {e.OperationName} rolled back in {e.Duration.TotalMilliseconds}ms");
+    Console.WriteLine($"Operation {e.Operation.Name} rolled back in {e.Duration.TotalMilliseconds}ms");
 };
 
 smith.CompensationCompleted += (sender, e) => {
@@ -354,7 +379,7 @@ public class WorkflowEventLogger
     {
         _logger.LogInformation(
             "Workflow started: {WorkflowName} ({ExecutionId}) with {OperationCount} operations",
-            e.WorkflowName, e.ExecutionId, e.OperationCount);
+            e.Foundry.CurrentWorkflow?.Name, e.Foundry.ExecutionId, e.Foundry.CurrentWorkflow?.Operations.Count ?? 0);
     }
     
     // ... other event handlers
@@ -385,7 +410,7 @@ public class WorkflowMetrics
         smith.WorkflowCompleted += (s, e) => LogWorkflowMetrics(e);
         
         foundry.OperationCompleted += (s, e) => {
-            _operationMetrics.Add((e.OperationName, e.Duration));
+            _operationMetrics.Add((e.Operation.Name, e.Duration));
         };
     }
     
@@ -414,8 +439,8 @@ public class WorkflowAuditTrail
         smith.WorkflowStarted += async (s, e) => {
             await _repository.LogAsync(new AuditEntry {
                 EventType = "WorkflowStarted",
-                WorkflowName = e.WorkflowName,
-                ExecutionId = e.ExecutionId,
+                WorkflowName = e.Foundry.CurrentWorkflow?.Name,
+                ExecutionId = e.Foundry.ExecutionId,
                 Timestamp = e.Timestamp
             });
         };
@@ -423,7 +448,7 @@ public class WorkflowAuditTrail
         foundry.OperationCompleted += async (s, e) => {
             await _repository.LogAsync(new AuditEntry {
                 EventType = "OperationCompleted",
-                OperationName = e.OperationName,
+                OperationName = e.Operation.Name,
                 Duration = e.Duration,
                 Timestamp = e.Timestamp
             });
@@ -432,7 +457,7 @@ public class WorkflowAuditTrail
         smith.WorkflowFailed += async (s, e) => {
             await _repository.LogAsync(new AuditEntry {
                 EventType = "WorkflowFailed",
-                Error = e.Exception.Message,
+                Error = e.Exception?.Message,
                 FailedOperation = e.FailedOperationName,
                 Timestamp = e.Timestamp
             });
@@ -452,16 +477,16 @@ public class ErrorNotificationHandler
     {
         smith.WorkflowFailed += async (s, e) => {
             await _notificationService.SendAsync(new Notification {
-                Title = $"Workflow Failed: {e.WorkflowName}",
-                Message = $"Error: {e.Exception.Message}",
+                Title = $"Workflow Failed: {e.Foundry.CurrentWorkflow?.Name}",
+                Message = $"Error: {e.Exception?.Message}",
                 Severity = NotificationSeverity.Critical
             });
         };
         
         foundry.OperationFailed += async (s, e) => {
             await _notificationService.SendAsync(new Notification {
-                Title = $"Operation Failed: {e.OperationName}",
-                Message = $"Error: {e.Exception.Message}",
+                Title = $"Operation Failed: {e.Operation.Name}",
+                Message = $"Error: {e.Exception?.Message}",
                 Severity = NotificationSeverity.High
             });
         };
@@ -469,7 +494,7 @@ public class ErrorNotificationHandler
         smith.CompensationTriggered += async (s, e) => {
             await _notificationService.SendAsync(new Notification {
                 Title = "Compensation Triggered",
-                Message = $"Rolling back {e.OperationsToCompensate} operations",
+                Message = $"Rolling back: {e.Reason} (failed: {e.FailedOperationName})",
                 Severity = NotificationSeverity.High
             });
         };
@@ -548,9 +573,9 @@ smith.WorkflowCompleted += (sender, e) => {
 ```csharp
 foundry.OperationCompleted += (sender, e) => {
     var context = new {
-        ExecutionId = e.ExecutionId,
-        WorkflowName = e.WorkflowName,
-        OperationName = e.OperationName,
+        ExecutionId = e.Foundry.ExecutionId,
+        WorkflowName = e.Foundry.CurrentWorkflow?.Name,
+        OperationName = e.Operation.Name,
         Duration = e.Duration,
         Timestamp = e.Timestamp,
         // Access foundry properties for additional context
@@ -570,7 +595,7 @@ public static class WorkflowEventHandlers
     {
         return (sender, e) => logger.LogInformation(
             "Workflow {WorkflowName} started with {OperationCount} operations",
-            e.WorkflowName, e.OperationCount);
+            e.Foundry.CurrentWorkflow?.Name, e.Foundry.CurrentWorkflow?.Operations.Count ?? 0);
     }
     
     public static EventHandler<WorkflowFailedEventArgs> CreateErrorLogger(ILogger logger)
@@ -578,7 +603,7 @@ public static class WorkflowEventHandlers
         return (sender, e) => logger.LogError(
             e.Exception,
             "Workflow {WorkflowName} failed at operation {OperationName}",
-            e.WorkflowName, e.FailedOperationName);
+            e.Foundry.CurrentWorkflow?.Name, e.FailedOperationName);
     }
 }
 
@@ -593,16 +618,16 @@ smith.WorkflowFailed += WorkflowEventHandlers.CreateErrorLogger(logger);
 // Integrate with Application Insights
 smith.WorkflowCompleted += (s, e) => {
     _telemetryClient.TrackEvent("WorkflowCompleted", new Dictionary<string, string> {
-        ["WorkflowName"] = e.WorkflowName,
+        ["WorkflowName"] = e.Foundry.CurrentWorkflow?.Name ?? "",
         ["Duration"] = e.Duration.TotalMilliseconds.ToString(),
-        ["OperationCount"] = e.OperationsExecuted.ToString()
+        ["PropertyCount"] = e.FinalProperties.Count.ToString()
     });
 };
 
 // Integrate with Prometheus
 foundry.OperationCompleted += (s, e) => {
     _operationDurationHistogram
-        .WithLabels(e.WorkflowName, e.OperationName)
+        .WithLabels(e.Foundry.CurrentWorkflow?.Name ?? "", e.Operation.Name)
         .Observe(e.Duration.TotalSeconds);
 };
 ```

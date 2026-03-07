@@ -3,6 +3,7 @@ using WorkflowForge.Extensions;
 using WorkflowForge.Extensions.Persistence;
 using WorkflowForge.Extensions.Persistence.Recovery;
 using WorkflowForge.Extensions.Persistence.Recovery.Options;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -72,34 +73,24 @@ public class RecoveryOnlySample : ISample
         return new Guid(guidBytes);
     }
 
-    private sealed class InitOperation : IWorkflowOperation
+    private sealed class InitOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "Init";
-        public bool SupportsRestore => false;
+        public override string Name => "Init";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             foundry.Logger.LogInformation("Init executed");
             foundry.SetProperty("seq", new List<string> { "Init" });
             await Task.Delay(25, cancellationToken);
             return inputData;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
-    private sealed class FlakyOperation : IWorkflowOperation
+    private sealed class FlakyOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "Flaky";
-        public bool SupportsRestore => false;
+        public override string Name => "Flaky";
 
-        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var count = foundry.GetPropertyOrDefault("flaky.count", 0);
             foundry.SetProperty("flaky.count", count + 1);
@@ -114,21 +105,13 @@ public class RecoveryOnlySample : ISample
             foundry.Logger.LogInformation("Flaky finally succeeded");
             return Task.FromResult(inputData);
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
-    private sealed class FinalizeOperation : IWorkflowOperation
+    private sealed class FinalizeOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "Finalize";
-        public bool SupportsRestore => false;
+        public override string Name => "Finalize";
 
-        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var seq = foundry.GetPropertyOrDefault("seq", new List<string>());
             seq.Add("Finalize");
@@ -136,11 +119,5 @@ public class RecoveryOnlySample : ISample
             foundry.Logger.LogInformation("Finalize executed");
             return Task.FromResult(inputData);
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 }

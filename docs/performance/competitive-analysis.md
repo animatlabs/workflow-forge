@@ -5,14 +5,17 @@ description: Detailed benchmark comparison of WorkflowForge vs Workflow Core and
 
 # WorkflowForge Competitive Benchmark Analysis
 
-**Analysis Date**: January 2026  
+**Version**: 2.1.0  
+**Analysis Date**: March 2026  
 **Frameworks Tested**:
-- WorkflowForge 2.0.0
+- WorkflowForge 2.1.0
 - Workflow Core
 - Elsa Workflows
 
-**Test System**: Windows 11 (25H2), Intel 11th Gen i7-1185G7, .NET 8.0.23  
-**BenchmarkDotNet**: v0.15.8
+**Test System**: Windows 11 (25H2), Intel 11th Gen i7-1185G7, .NET SDK 10.0.103  
+**Runtimes**: .NET 10.0.3, .NET 8.0.24, .NET Framework 4.8.1  
+**BenchmarkDotNet**: v0.15.8 (50 iterations, 5 warmup)  
+**Benchmark Run**: March 7, 2026
 
 ## Table of Contents
 
@@ -40,85 +43,90 @@ description: Detailed benchmark comparison of WorkflowForge vs Workflow Core and
 
 ## Executive Summary
 
-WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory allocation** compared to Workflow Core and Elsa Workflows across 12 real-world scenarios (50 iterations per benchmark).
+WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory allocation** compared to Workflow Core and Elsa Workflows across 12 real-world scenarios, tested on .NET 10.0, .NET 8.0, and .NET Framework 4.8 (50 iterations per benchmark).
 
 | Metric | Value |
 |--------|-------|
-| **Max Speed Advantage** | 540x faster (State Machine) |
-| **Max Memory Advantage** | 573x less allocation |
-| **Min Execution Time** | 13μs |
-| **Min Memory Footprint** | 3.5KB |
+| **Max Speed Advantage** | 511x faster (State Machine 25 transitions, .NET 10.0) |
+| **Max Memory Advantage** | 575x less allocation (Parallel 16 ops, .NET 10.0) |
+| **Min Execution Time** | 11μs (Creation Overhead, .NET 10.0) |
+| **Min Memory Footprint** | 3.6KB |
 
 {% if site.url %}
 <div class="perf-stats">
   <div class="perf-stat">
-    <div class="perf-stat-value">540x</div>
+    <div class="perf-stat-value">511x</div>
     <div class="perf-stat-label">Faster (State Machine)</div>
   </div>
   <div class="perf-stat">
-    <div class="perf-stat-value">573x</div>
+    <div class="perf-stat-value">575x</div>
     <div class="perf-stat-label">Less Memory</div>
   </div>
   <div class="perf-stat">
-    <div class="perf-stat-value">13μs</div>
+    <div class="perf-stat-value">11μs</div>
     <div class="perf-stat-label">Min Execution Time</div>
   </div>
   <div class="perf-stat">
-    <div class="perf-stat-value">3.5KB</div>
+    <div class="perf-stat-value">3.6KB</div>
     <div class="perf-stat-label">Min Memory</div>
   </div>
 </div>
 {% endif %}
 
 **Key Insights**:
-- WorkflowForge operates at **microsecond scale** (13-497μs), competitors at **millisecond scale** (0.8-94ms)
-- Memory allocations remain in **kilobytes** (3.5-121KB) vs. **megabytes** (0.04-19MB) for competitors
-- **State Machine** scenarios show highest advantage: **up to 540x faster** vs Elsa
-- **Concurrent Execution** shows **109-264x faster** performance
-- **Sequential Workflows** show **26-71x faster** with minimal memory
-- Consistent performance across all 12 scenario types
+- WorkflowForge operates at **microsecond scale** (11-706μs), competitors at **millisecond scale** (0.3-109ms)
+- Memory allocations remain in **kilobytes** (3.5-256KB) vs. **megabytes** (0.04-19MB) for competitors
+- **State Machine** scenarios show highest advantage: **up to 511x faster** vs Elsa (.NET 10.0)
+- **Concurrent Execution** shows **118-288x faster** performance across all runtimes
+- **Sequential Workflows** show **26-55x faster** with minimal memory
+- Consistent performance across all 12 scenario types and all 3 runtimes
 
 ### Visual Performance Comparison
 
 #### Execution Time (Lower is Better)
 
-| Scenario | WorkflowForge | Workflow Core | Elsa | WF Advantage |
-|----------|---------------|---------------|------|--------------|
-| State Machine (25) | 68μs | 20,624μs | 36,695μs | 303-540x |
-| Concurrent (8 wf) | 356μs | 38,833μs | 94,018μs | 109-264x |
-| Sequential (10 ops) | 247μs | 6,531μs | 17,617μs | 26-71x |
+| Runtime | Scenario | WorkflowForge | Workflow Core | Elsa | WF Advantage |
+|---------|----------|---------------|---------------|------|--------------|
+| .NET 10.0 | State Machine (25) | 65μs | 29,537μs | 33,062μs | 455-511x |
+| .NET 8.0 | State Machine (25) | 71μs | 21,683μs | 34,426μs | 305-485x |
+| .NET FX 4.8 | State Machine (25) | 61μs | 18,486μs | N/A† | 303x |
+| .NET 10.0 | Concurrent (8 wf) | 372μs | 47,114μs | 87,491μs | 127-235x |
+| .NET 8.0 | Concurrent (8 wf) | 357μs | 42,054μs | 103,024μs | 118-288x |
+| .NET FX 4.8 | Concurrent (8 wf) | 167μs | 41,934μs | N/A† | 250x |
+| .NET 10.0 | Sequential (10 ops) | 422μs | 13,828μs | 18,676μs | 33-44x |
+| .NET 8.0 | Sequential (10 ops) | 377μs | 9,879μs | 19,168μs | 26-51x |
+| .NET FX 4.8 | Sequential (10 ops) | 122μs | 6,743μs | N/A† | 55x |
 
 {% if site.url %}
-<!-- Combined Execution Time Chart: State Machine + Concurrent + Sequential (log scale) -->
+<!-- State Machine Execution Time across all runtimes -->
 <div class="perf-vchart">
-  <div class="perf-vchart-title">Execution Time Comparison (Lower is Better)</div>
-  <div class="perf-vchart-subtitle">WorkflowForge operates at microsecond scale vs milliseconds for competitors</div>
+  <div class="perf-vchart-title">State Machine Execution (25 Transitions)</div>
+  <div class="perf-vchart-subtitle">Up to 511x faster than alternatives (.NET 10.0)</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">68μs</div><div class="perf-vchart-fill wf" style="height: 37%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">20.6ms</div><div class="perf-vchart-fill wc" style="height: 87%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">36.7ms</div><div class="perf-vchart-fill elsa" style="height: 92%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">65μs</div><div class="perf-vchart-fill wf" style="height: 20%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">29.5ms</div><div class="perf-vchart-fill wc" style="height: 89%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">33.1ms</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">State Machine</div>
+      <div class="perf-vchart-group-label">.NET 10.0</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">356μs</div><div class="perf-vchart-fill wf" style="height: 51%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">38.8ms</div><div class="perf-vchart-fill wc" style="height: 92%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">94ms</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">71μs</div><div class="perf-vchart-fill wf" style="height: 21%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">21.7ms</div><div class="perf-vchart-fill wc" style="height: 63%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">34.4ms</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">Concurrent (8 wf)</div>
+      <div class="perf-vchart-group-label">.NET 8.0</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">247μs</div><div class="perf-vchart-fill wf" style="height: 48%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">6.5ms</div><div class="perf-vchart-fill wc" style="height: 77%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">17.6ms</div><div class="perf-vchart-fill elsa" style="height: 85%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">61μs</div><div class="perf-vchart-fill wf" style="height: 33%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">18.5ms</div><div class="perf-vchart-fill wc" style="height: 100%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">Sequential (10 ops)</div>
+      <div class="perf-vchart-group-label">.NET FX 4.8</div>
     </div>
   </div>
   <div class="perf-vchart-legend">
@@ -130,32 +138,43 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 
 #### Memory Allocation (Lower is Better)
 
-| Scenario | WorkflowForge | Workflow Core | Elsa | WF Advantage |
-|----------|---------------|---------------|------|--------------|
-| Parallel (16 ops) | 8.1 KB | 122 KB | 4,647 KB | 15-573x |
-| Concurrent (8 wf) | 121 KB | 3,232 KB | 19,139 KB | 27-158x |
+| Runtime | Scenario | WorkflowForge | Workflow Core | Elsa | WF Advantage |
+|---------|----------|---------------|---------------|------|--------------|
+| .NET 10.0 | Concurrent (8 wf) | 155 KB | 3,247 KB | 19,568 KB | 21-126x |
+| .NET 8.0 | Concurrent (8 wf) | 155 KB | 3,308 KB | 19,572 KB | 21-126x |
+| .NET FX 4.8 | Concurrent (8 wf) | 272 KB | 3,816 KB | N/A† | 14x |
+| .NET 10.0 | Parallel (16 ops) | 8.0 KB | 126 KB | 4,576 KB | 16-575x |
+| .NET 8.0 | Parallel (16 ops) | 8.2 KB | 125 KB | 4,651 KB | 15-567x |
 
-<!-- Combined Memory Allocation Chart: Parallel + Concurrent (log scale) -->
+<!-- Concurrent Memory Allocation across all runtimes -->
 <div class="perf-vchart">
-  <div class="perf-vchart-title">Memory Allocation Comparison (Lower is Better)</div>
+  <div class="perf-vchart-title">Memory Allocation - Concurrent Execution (8 Workflows)</div>
   <div class="perf-vchart-subtitle">WorkflowForge stays in kilobytes while competitors use megabytes</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">8KB</div><div class="perf-vchart-fill wf" style="height: 21%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">122KB</div><div class="perf-vchart-fill wc" style="height: 49%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">4.6MB</div><div class="perf-vchart-fill elsa" style="height: 86%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">155KB</div><div class="perf-vchart-fill wf" style="height: 18%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">3.2MB</div><div class="perf-vchart-fill wc" style="height: 47%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">19.6MB</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">Parallel (16 ops)</div>
+      <div class="perf-vchart-group-label">.NET 10.0</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">121KB</div><div class="perf-vchart-fill wf" style="height: 49%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">3.2MB</div><div class="perf-vchart-fill wc" style="height: 82%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">19MB</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">155KB</div><div class="perf-vchart-fill wf" style="height: 18%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">3.2MB</div><div class="perf-vchart-fill wc" style="height: 47%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">19.6MB</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
       </div>
-      <div class="perf-vchart-group-label">Concurrent (8 wf)</div>
+      <div class="perf-vchart-group-label">.NET 8.0</div>
+    </div>
+    <div class="perf-vchart-divider"></div>
+    <div class="perf-vchart-group">
+      <div class="perf-vchart-bars">
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">272KB</div><div class="perf-vchart-fill wf" style="height: 28%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">3.8MB</div><div class="perf-vchart-fill wc" style="height: 75%;"></div></div>
+      </div>
+      <div class="perf-vchart-group-label">.NET FX 4.8</div>
     </div>
   </div>
   <div class="perf-vchart-legend">
@@ -172,10 +191,10 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 
 | Scenario | Scale | WF vs Elsa |
 |----------|-------|------------|
-| Sequential | 1 op → 50 ops | 47.6x → 116.1x |
-| Loop/ForEach | 10 items → 100 items | 79.5x → 139.3x |
-| Concurrent | 1 wf → 8 wf | 70.6x → 264.1x |
-| Conditional | 10 ops → 50 ops | 80.2x → 131.9x |
+| Sequential | 1 op → 50 ops | 35.8x → 95.4x |
+| Loop/ForEach | 10 items → 100 items | 71.8x → 156.0x |
+| Concurrent | 1 wf → 8 wf | 74.2x → 288.3x |
+| Conditional | 10 ops → 50 ops | 64.3x → 109.6x |
 
 {% if site.url %}
 <!-- Consolidated Execution Scaling Chart (log scale) -->
@@ -185,72 +204,72 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">183μs</div><div class="perf-vchart-fill wf" style="height: 45%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">1.3ms</div><div class="perf-vchart-fill wc" style="height: 62%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">8.7ms</div><div class="perf-vchart-fill elsa" style="height: 78%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">257μs</div><div class="perf-vchart-fill wf" style="height: 5%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">1.9ms</div><div class="perf-vchart-fill wc" style="height: 18%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">9.2ms</div><div class="perf-vchart-fill elsa" style="height: 89%;"></div></div>
       </div>
       <div class="perf-vchart-group-label">Seq 1 op</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">444μs</div><div class="perf-vchart-fill wf" style="height: 53%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">27ms</div><div class="perf-vchart-fill wc" style="height: 88%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">51.6ms</div><div class="perf-vchart-fill elsa" style="height: 94%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">615μs</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">31.8ms</div><div class="perf-vchart-fill wc" style="height: 31%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">58.6ms</div><div class="perf-vchart-fill elsa" style="height: 57%;"></div></div>
       </div>
       <div class="perf-vchart-group-label">Seq 50 ops</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">271μs</div><div class="perf-vchart-fill wf" style="height: 48%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">9.6ms</div><div class="perf-vchart-fill wc" style="height: 79%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">21.5ms</div><div class="perf-vchart-fill elsa" style="height: 86%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">270μs</div><div class="perf-vchart-fill wf" style="height: 5%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">7.2ms</div><div class="perf-vchart-fill wc" style="height: 7%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">19.4ms</div><div class="perf-vchart-fill elsa" style="height: 19%;"></div></div>
       </div>
       <div class="perf-vchart-group-label">Loop 10</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">773μs</div><div class="perf-vchart-fill wf" style="height: 57%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">64.2ms</div><div class="perf-vchart-fill wc" style="height: 96%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">107.7ms</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">660μs</div><div class="perf-vchart-fill wf" style="height: 6%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">60.2ms</div><div class="perf-vchart-fill wc" style="height: 58%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">103ms</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
       </div>
       <div class="perf-vchart-group-label">Loop 100</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">260μs</div><div class="perf-vchart-fill wf" style="height: 48%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">6.8ms</div><div class="perf-vchart-fill wc" style="height: 76%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">18.4ms</div><div class="perf-vchart-fill elsa" style="height: 85%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">260μs</div><div class="perf-vchart-fill wf" style="height: 5%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">7.6ms</div><div class="perf-vchart-fill wc" style="height: 7%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">19.3ms</div><div class="perf-vchart-fill elsa" style="height: 19%;"></div></div>
       </div>
       <div class="perf-vchart-group-label">Conc 1 wf</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">356μs</div><div class="perf-vchart-fill wf" style="height: 51%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">38.8ms</div><div class="perf-vchart-fill wc" style="height: 91%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">94ms</div><div class="perf-vchart-fill elsa" style="height: 99%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">357μs</div><div class="perf-vchart-fill wf" style="height: 5%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">42.1ms</div><div class="perf-vchart-fill wc" style="height: 41%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">103ms</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
       </div>
       <div class="perf-vchart-group-label">Conc 8 wf</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">266μs</div><div class="perf-vchart-fill wf" style="height: 48%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">8.5ms</div><div class="perf-vchart-fill wc" style="height: 78%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">21.3ms</div><div class="perf-vchart-fill elsa" style="height: 86%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">301μs</div><div class="perf-vchart-fill wf" style="height: 5%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">9.2ms</div><div class="perf-vchart-fill wc" style="height: 9%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">19.4ms</div><div class="perf-vchart-fill elsa" style="height: 19%;"></div></div>
       </div>
       <div class="perf-vchart-group-label">Cond 10</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">505μs</div><div class="perf-vchart-fill wf" style="height: 54%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">34.4ms</div><div class="perf-vchart-fill wc" style="height: 90%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">66.6ms</div><div class="perf-vchart-fill elsa" style="height: 96%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">526μs</div><div class="perf-vchart-fill wf" style="height: 5%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">32.1ms</div><div class="perf-vchart-fill wc" style="height: 31%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">57.7ms</div><div class="perf-vchart-fill elsa" style="height: 56%;"></div></div>
       </div>
       <div class="perf-vchart-group-label">Cond 50</div>
     </div>
@@ -271,25 +290,41 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 
 **Description**: Execute operations sequentially (1, 5, 10, 25, 50 operations)
 
-#### Performance Results (Median Times, 50 iterations)
+#### Multi-Runtime Performance (Median, 10 ops)
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 422μs | 13,828μs | 18,676μs |
+| .NET 8.0 | 377μs | 9,879μs | 19,168μs |
+| .NET FX 4.8 | 122μs | 6,743μs | N/A† |
+
+#### Parameter Sweep (.NET 8.0)
 
 | Operations | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |------------|---------------|---------------|------|----------|------------|
-| 1          | 183μs         | 1,348μs       | 8,703μs | **7.4x faster** | **47.6x faster** |
-| 5          | 205μs         | 4,154μs       | 12,954μs | **20.3x faster** | **63.2x faster** |
-| 10         | 247μs         | 6,531μs       | 17,617μs | **26.4x faster** | **71.3x faster** |
-| 25         | 316μs         | 14,193μs      | 29,919μs | **44.9x faster** | **94.7x faster** |
-| 50         | 444μs         | 26,996μs      | 51,557μs | **60.8x faster** | **116.1x faster** |
+| 1 | 257μs | 1,878μs | 9,175μs | **7.3x faster** | **35.8x faster** |
+| 5 | 319μs | 6,078μs | 14,168μs | **19.0x faster** | **44.4x faster** |
+| 10 | 377μs | 9,879μs | 19,168μs | **26.2x faster** | **50.9x faster** |
+| 25 | 462μs | 27,075μs | 34,395μs | **58.6x faster** | **74.5x faster** |
+| 50 | 615μs | 31,768μs | 58,648μs | **51.7x faster** | **95.4x faster** |
 
-#### Memory Allocation Results
+#### Memory Allocation (10 ops, by Runtime)
 
-| Operations | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
-|------------|---------------|---------------|------|----------|------------|
-| 1          | 4.84KB        | 45.27KB       | 1,242KB | **9.4x less** | **256.6x less** |
-| 5          | 9.37KB        | 217.19KB      | 2,023KB | **23.2x less** | **215.9x less** |
-| 10         | 16.31KB       | 429.77KB      | 2,984KB | **26.4x less** | **183.0x less** |
-| 25         | 43.49KB       | 1,063KB       | 5,950KB | **24.4x less** | **136.8x less** |
-| 50         | 85.51KB       | 2,124KB       | 10,905KB | **24.8x less** | **127.5x less** |
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 17.72KB | 427KB | 3,024KB |
+| .NET 8.0 | 17.72KB | 429KB | 2,992KB |
+| .NET FX 4.8 | 40.00KB | 560KB | N/A† |
+
+#### Memory Allocation - Parameter Sweep (.NET 8.0)
+
+| Operations | WorkflowForge | Workflow Core | Elsa |
+|------------|---------------|---------------|------|
+| 1 | 3.98KB | 46KB | 1,254KB |
+| 5 | 10.07KB | 218KB | 2,018KB |
+| 10 | 17.72KB | 429KB | 2,992KB |
+| 25 | 48.93KB | 1,064KB | 5,956KB |
+| 50 | 83.86KB | 2,126KB | 10,879KB |
 
 **Key Insight**: WorkflowForge performance advantage **increases linearly with operation count**.
 
@@ -299,21 +334,37 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 
 **Description**: Pass data between operations (5, 10, 25 operations)
 
-#### Performance Results (Median Times, 50 iterations)
+#### Multi-Runtime Performance (Median, 10 ops)
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 325μs | 11,651μs | 18,510μs |
+| .NET 8.0 | 321μs | 9,751μs | 19,164μs |
+| .NET FX 4.8 | 118μs | 6,684μs | N/A† |
+
+#### Parameter Sweep (.NET 8.0)
 
 | Operations | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |------------|---------------|---------------|------|----------|------------|
-| 5          | 233μs         | 4,220μs       | 13,210μs | **18.1x faster** | **56.7x faster** |
-| 10         | 262μs         | 6,737μs       | 18,222μs | **25.7x faster** | **69.5x faster** |
-| 25         | 331μs         | 16,214μs      | 32,043μs | **49.0x faster** | **96.8x faster** |
+| 5 | 299μs | 5,063μs | 14,052μs | **16.9x faster** | **47.0x faster** |
+| 10 | 321μs | 9,751μs | 19,164μs | **30.4x faster** | **59.7x faster** |
+| 25 | 483μs | 17,318μs | 33,825μs | **35.9x faster** | **70.0x faster** |
 
-#### Memory Allocation Results
+#### Memory Allocation (10 ops, by Runtime)
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 16.36KB | 425KB | 3,024KB |
+| .NET 8.0 | 16.36KB | 429KB | 2,988KB |
+| .NET FX 4.8 | 40.00KB | 544KB | N/A† |
+
+#### Memory Allocation - Parameter Sweep (.NET 8.0)
 
 | Operations | WorkflowForge | Workflow Core | Elsa |
 |------------|---------------|---------------|------|
-| 5          | 8.86KB        | 216.20KB      | 2,032KB |
-| 10         | 15.18KB       | 427.24KB      | 2,986KB |
-| 25         | 36.13KB       | 1,062KB       | 5,952KB |
+| 5 | 9.45KB | 216KB | 2,018KB |
+| 10 | 16.36KB | 429KB | 2,988KB |
+| 25 | 39.26KB | 1,063KB | 5,956KB |
 
 **Key Insight**: Data passing overhead is **minimal** in WorkflowForge (<1μs per operation).
 
@@ -323,13 +374,37 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 
 **Description**: Conditional logic with if/else branches (10, 25, 50 operations)
 
-#### Performance Results (Median Times)
+#### Multi-Runtime Performance (Median, 10 ops)
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 333μs | 13,427μs | 19,166μs |
+| .NET 8.0 | 301μs | 9,248μs | 19,361μs |
+| .NET FX 4.8 | 118μs | 6,562μs | N/A† |
+
+#### Parameter Sweep (.NET 8.0)
 
 | Operations | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |------------|---------------|---------------|------|----------|------------|
-| 10         | 266μs         | 8,543μs       | 21,333μs | **32.1x faster** | **80.2x faster** |
-| 25         | 339μs         | 20,520μs      | 35,557μs | **60.5x faster** | **104.9x faster** |
-| 50         | 505μs         | 34,358μs      | 66,625μs | **68.0x faster** | **131.9x faster** |
+| 10 | 301μs | 9,248μs | 19,361μs | **30.7x faster** | **64.3x faster** |
+| 25 | 382μs | 16,844μs | 33,480μs | **44.1x faster** | **87.6x faster** |
+| 50 | 526μs | 32,140μs | 57,654μs | **61.1x faster** | **109.6x faster** |
+
+#### Memory Allocation (10 ops, by Runtime)
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 19.48KB | 424KB | 3,019KB |
+| .NET 8.0 | 19.48KB | 427KB | 2,991KB |
+| .NET FX 4.8 | 48.00KB | 552KB | N/A† |
+
+#### Memory Allocation - Parameter Sweep (.NET 8.0)
+
+| Operations | WorkflowForge | Workflow Core | Elsa |
+|------------|---------------|---------------|------|
+| 10 | 19.48KB | 427KB | 2,991KB |
+| 25 | 48.04KB | 1,061KB | 5,947KB |
+| 50 | 88.97KB | 2,121KB | 10,907KB |
 
 **Key Insight**: Conditional overhead negligible (<1μs per branch decision).
 
@@ -339,21 +414,37 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 
 **Description**: Iterate over collections (10, 50, 100 items)
 
-#### Performance Results (Median Times)
+#### Multi-Runtime Performance (Median, 50 items)
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 450μs | 35,320μs | 54,827μs |
+| .NET 8.0 | 495μs | 30,742μs | 58,347μs |
+| .NET FX 4.8 | 350μs | 34,137μs | N/A† |
+
+#### Parameter Sweep (.NET 8.0)
 
 | Items | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |-------|---------------|---------------|------|----------|------------|
-| 10    | 271μs         | 9,601μs       | 21,545μs | **35.4x faster** | **79.5x faster** |
-| 50    | 497μs         | 35,421μs      | 64,171μs | **71.3x faster** | **129.1x faster** |
-| 100   | 773μs         | 64,202μs      | 107,701μs | **83.1x faster** | **139.3x faster** |
+| 10 | 270μs | 7,242μs | 19,404μs | **26.8x faster** | **71.8x faster** |
+| 50 | 495μs | 30,742μs | 58,347μs | **62.1x faster** | **117.9x faster** |
+| 100 | 660μs | 60,218μs | 102,879μs | **91.2x faster** | **156.0x faster** |
 
-#### Memory Allocation Results
+#### Memory Allocation (50 items, by Runtime)
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 96.93KB | 2,086KB | 10,907KB |
+| .NET 8.0 | 96.34KB | 2,121KB | 10,907KB |
+| .NET FX 4.8 | 176.00KB | 2,512KB | N/A† |
+
+#### Memory Allocation - Parameter Sweep (.NET 8.0)
 
 | Items | WorkflowForge | Workflow Core | Elsa |
 |-------|---------------|---------------|------|
-| 10    | 19.26KB       | 428.67KB      | 2,988KB |
-| 50    | 90.35KB       | 2,123KB       | 10,905KB |
-| 100   | 175.4KB       | 4,243KB       | 20,865KB |
+| 10 | 20.48KB | 428KB | 2,985KB |
+| 50 | 96.34KB | 2,121KB | 10,907KB |
+| 100 | 194.85KB | 4,241KB | 20,859KB |
 
 **Key Insight**: ForEach performance advantage **increases with collection size**.
 
@@ -363,23 +454,39 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 
 **Description**: Execute multiple workflows concurrently (1, 4, 8 workflows)
 
-#### Performance Results (Median Times)
+#### Multi-Runtime Performance (Median, 8 workflows)
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 372μs | 47,114μs | 87,491μs |
+| .NET 8.0 | 357μs | 42,054μs | 103,024μs |
+| .NET FX 4.8 | 167μs | 41,934μs | N/A† |
+
+#### Parameter Sweep (.NET 8.0)
 
 | Concurrency | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |-------------|---------------|---------------|------|----------|------------|
-| 1           | 260μs         | 6,848μs       | 18,357μs | **26.3x faster** | **70.6x faster** |
-| 4           | 334μs         | 20,612μs      | 55,570μs | **61.7x faster** | **166.4x faster** |
-| 8           | 356μs         | 38,833μs      | 94,018μs | **109.1x faster** | **264.1x faster** |
+| 1 | 260μs | 7,588μs | 19,265μs | **29.2x faster** | **74.2x faster** |
+| 4 | 322μs | 21,717μs | 56,360μs | **67.4x faster** | **175.0x faster** |
+| 8 | 357μs | 42,054μs | 103,024μs | **117.8x faster** | **288.3x faster** |
 
-#### Memory Allocation Results
+#### Memory Allocation (8 workflows, by Runtime)
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 154.66KB | 3,247KB | 19,568KB |
+| .NET 8.0 | 154.67KB | 3,308KB | 19,572KB |
+| .NET FX 4.8 | 272.00KB | 3,816KB | N/A† |
+
+#### Memory Allocation - Parameter Sweep (.NET 8.0)
 
 | Concurrency | WorkflowForge | Workflow Core | Elsa |
 |-------------|---------------|---------------|------|
-| 1           | 15.84KB       | 428.3KB       | 2,987KB |
-| 4           | 62.55KB       | 1,628KB       | 9,903KB |
-| 8           | 120.87KB      | 3,232KB       | 19,139KB |
+| 1 | 20.00KB | 426KB | 2,983KB |
+| 4 | 79.68KB | 1,627KB | 9,861KB |
+| 8 | 154.67KB | 3,308KB | 19,572KB |
 
-**Key Insight**: WorkflowForge maintains **consistent per-workflow overhead** (~16KB) regardless of concurrency.
+**Key Insight**: WorkflowForge maintains **consistent per-workflow overhead** regardless of concurrency.
 
 ---
 
@@ -387,21 +494,25 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 
 **Description**: Exception handling and recovery
 
-#### Performance Results (Median Times)
+#### Multi-Runtime Performance (Median)
 
-| Framework | Median | P95 |
-|-----------|--------|-----|
-| WorkflowForge | 111μs | 133μs |
-| Workflow Core | 1,228μs | 1,630μs |
-| Elsa | 7,150μs | 7,584μs |
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 70μs | 1,498μs | 7,694μs |
+| .NET 8.0 | 114μs | 1,349μs | 7,737μs |
+| .NET FX 4.8 | 88μs | 4,471μs | N/A† |
 
-**Advantage**:
-- **11.1x faster** than Workflow Core
-- **64.4x faster** than Elsa
+#### Memory Allocation (by Runtime)
 
-**Memory**: WorkflowForge 5KB vs. Workflow Core 46KB vs. Elsa 1,072KB
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 7.02KB | 51KB | 1,056KB |
+| .NET 8.0 | 8.38KB | 47KB | 1,072KB |
+| .NET FX 4.8 | N/A‡ | 864KB | N/A† |
 
-**Key Insight**: Error handling overhead is **minimal** (~111μs) in WorkflowForge.
+**Advantage**: **13-110x faster** than competitors, **6-150x less memory**.
+
+**Key Insight**: Error handling overhead is **minimal** (~70-114μs) in WorkflowForge.
 
 ---
 
@@ -409,45 +520,53 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 
 **Description**: Workflow instantiation cost
 
-#### Performance Results (Median Times)
+#### Multi-Runtime Performance (Median)
 
-| Framework | Median | P95 |
-|-----------|--------|-----|
-| WorkflowForge | 13μs | 16μs |
-| Workflow Core | 814μs | 859μs |
-| Elsa | 2,107μs | 2,376μs |
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 11μs | 1,001μs | 2,245μs |
+| .NET 8.0 | 11μs | 819μs | 2,328μs |
+| .NET FX 4.8 | 7μs | 260μs | N/A† |
 
-**Advantage**:
-- **63x faster** than Workflow Core
-- **162x faster** than Elsa
+#### Memory Allocation (by Runtime)
 
-**Memory**: WorkflowForge 3.73KB vs. Workflow Core 129KB vs. Elsa 578KB
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 3.72KB | 125KB | 537KB |
+| .NET 8.0 | 3.72KB | 129KB | 578KB |
+| .NET FX 4.8 | N/A‡ | 128KB | N/A† |
 
-**Key Insight**: WorkflowForge workflow creation is **negligible** (~13μs).
+**Advantage**: **37-206x faster** than competitors, **33-155x less memory**.
+
+**Key Insight**: WorkflowForge workflow creation is **negligible** (~7-11μs).
 
 ---
 
 ### Scenario 8: Complete Lifecycle
 
-**Description**: Full create-execute-dispose cycle
+**Description**: Full create-execute-dispose cycle (Workflow Core excluded)
 
-#### Performance Results (Median Times)
+#### Multi-Runtime Performance (Median)
 
-| Framework | Median | P95 |
-|-----------|--------|-----|
-| WorkflowForge | 42μs | 51μs |
-| Elsa | 9,933μs | 10,322μs |
-| Workflow Core | **EXCLUDED** | **EXCLUDED** |
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 36μs | N/A | 9,877μs |
+| .NET 8.0 | 59μs | N/A | 9,723μs |
+| .NET FX 4.8 | 33μs | N/A | N/A† |
 
-**Advantage**:
-- **236x faster** than Elsa
-- Workflow Core excluded due to architectural incompatibility (see note below)
+#### Memory Allocation (by Runtime)
 
-**Memory**: WorkflowForge 3.57KB vs. Elsa 1,510KB (**423x less**)
+| Runtime | WorkflowForge | Elsa |
+|---------|---------------|------|
+| .NET 10.0 | 3.69KB | 1,513KB |
+| .NET 8.0 | 3.69KB | 1,510KB |
+| .NET FX 4.8 | N/A‡ | N/A† |
 
-**Note**: Workflow Core was excluded from this benchmark due to an architectural design difference. Workflow Core's `WorkflowHost.Start()` method spins up background worker threads that are intended to run continuously, making rapid create-start-stop-dispose cycles (50 iterations) incompatible with its design. This is a fundamental architectural difference, not a performance issue. For more details, see the benchmark documentation.
+**Advantage**: **165-274x faster** than Elsa, **410x less memory**.
 
-**Key Insight**: Complete lifecycle overhead is **trivial** (~42μs) in WorkflowForge.
+**Note**: Workflow Core was excluded from this benchmark due to an architectural design difference. Workflow Core's `WorkflowHost.Start()` method spins up background worker threads that are intended to run continuously, making rapid create-start-stop-dispose cycles (50 iterations) incompatible with its design. This is a fundamental architectural difference, not a performance issue.
+
+**Key Insight**: Complete lifecycle overhead is **trivial** (~33-59μs) in WorkflowForge.
 
 ---
 
@@ -455,23 +574,39 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 
 **Description**: State machine with multiple transitions (5, 10, 25 transitions)
 
-#### Performance Results (Median Times)
+#### Multi-Runtime Performance (Median, 25 transitions)
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 65μs | 29,537μs | 33,062μs |
+| .NET 8.0 | 71μs | 21,683μs | 34,426μs |
+| .NET FX 4.8 | 61μs | 18,486μs | N/A† |
+
+#### Parameter Sweep (.NET 8.0)
 
 | Transitions | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |-------------|---------------|---------------|------|----------|------------|
-| 5           | 50μs          | 6,305μs       | 15,327μs | **126x faster** | **307x faster** |
-| 10          | 47μs          | 9,208μs       | 20,374μs | **196x faster** | **434x faster** |
-| 25          | 68μs          | 20,624μs      | 36,695μs | **303x faster** | **540x faster** |
+| 5 | 36μs | 6,275μs | 14,444μs | **174.3x faster** | **401.2x faster** |
+| 10 | 43μs | 10,028μs | 19,626μs | **233.2x faster** | **456.4x faster** |
+| 25 | 71μs | 21,683μs | 34,426μs | **305.4x faster** | **484.9x faster** |
 
-#### Memory Allocation Results
+#### Memory Allocation (25 transitions, by Runtime)
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 23.92KB | 1,090KB | 5,966KB |
+| .NET 8.0 | 23.92KB | 1,105KB | 5,937KB |
+| .NET FX 4.8 | 24.00KB | 1,344KB | N/A† |
+
+#### Memory Allocation - Parameter Sweep (.NET 8.0)
 
 | Transitions | WorkflowForge | Workflow Core | Elsa |
 |-------------|---------------|---------------|------|
-| 5           | 5.54KB        | 260KB         | 2,019KB |
-| 10          | 10.64KB       | 472KB         | 2,982KB |
-| 25          | 20.92KB       | 1,106KB       | 5,949KB |
+| 5 | 5.45KB | 261KB | 2,017KB |
+| 10 | 8.65KB | 472KB | 2,986KB |
+| 25 | 23.92KB | 1,105KB | 5,937KB |
 
-**Key Insight**: State machine execution shows the **highest performance advantage** (up to 540x faster).
+**Key Insight**: State machine execution shows the **highest performance advantage** (up to 511x faster on .NET 10.0).
 
 ---
 
@@ -479,26 +614,33 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 
 **Description**: Long-running operations with delays (delay-bound scenario)
 
-#### Performance Results (Median Times)
+#### Multi-Runtime Performance (Median, 5 ops, 5ms delay)
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 71,678μs | 70,868μs | 83,599μs |
+| .NET 8.0 | 71,885μs | 70,672μs | 82,982μs |
+| .NET FX 4.8 | 76,447μs | 75,129μs | N/A† |
+
+#### Parameter Sweep (.NET 8.0)
 
 | Ops/Delay | WorkflowForge | Workflow Core | Elsa |
 |-----------|---------------|---------------|------|
-| 3 ops/1ms | 39.2ms        | 38.8ms        | 51.3ms |
-| 3 ops/5ms | 39.3ms        | 39.1ms        | 51.5ms |
-| 5 ops/1ms | 72.0ms        | 70.9ms        | 82.5ms |
-| 5 ops/5ms | 72.3ms        | 71.1ms        | 84.0ms |
+| 3 ops/1ms | 38,836μs | 38,599μs | 50,641μs |
+| 5 ops/1ms | 71,802μs | 70,252μs | 81,715μs |
+| 5 ops/5ms | 71,885μs | 70,672μs | 82,982μs |
 
-#### Memory Allocation Results (5 ops/1ms delay)
+#### Memory Allocation (by Runtime)
 
-| Framework | Memory |
-|-----------|--------|
-| WorkflowForge | 5.25KB |
-| Workflow Core | 266KB |
-| Elsa | 2,221KB |
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 5.12KB | 267KB | 2,246KB |
+| .NET 8.0 | 5.12KB | 266KB | 2,216KB |
+| .NET FX 4.8 | N/A‡ | 393KB | N/A† |
 
-**Advantage**: Similar timing (delay-bound), but **51x less memory** than WC, **423x less** than Elsa.
+**Advantage**: Similar timing (delay-bound); advantage is in **52-439x less memory**.
 
-**Key Insight**: Long-running workflows are delay-bound; advantage is in **memory efficiency**.
+**Key Insight**: Long-running workflows are **delay-bound**; execution times are dominated by the configured delay. The advantage is in **memory efficiency**.
 
 ---
 
@@ -506,23 +648,31 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 
 **Description**: Parallel operation execution within a workflow (4, 8, 16 operations)
 
-#### Performance Results (Median Times)
+#### Multi-Runtime Performance (Median, 16 ops, 4 concurrency)
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 56μs | 2,861μs | 24,638μs |
+| .NET 8.0 | 63μs | 2,654μs | 24,940μs |
+| .NET FX 4.8 | 35μs | 1,754μs | N/A† |
+
+#### Parameter Sweep (.NET 8.0)
 
 | Ops/Concurrency | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |-----------------|---------------|---------------|------|----------|------------|
-| 4 ops/2         | 62μs          | 2,359μs       | 10,830μs | **38x faster** | **175x faster** |
-| 8 ops/4         | 56μs          | 2,366μs       | 14,750μs | **42x faster** | **263x faster** |
-| 16 ops/4        | 55μs          | 2,437μs       | 20,891μs | **44x faster** | **380x faster** |
+| 4 ops/2 | 68μs | 2,771μs | 13,147μs | **40.8x faster** | **193.3x faster** |
+| 8 ops/4 | 72μs | 2,736μs | 13,546μs | **38.0x faster** | **188.1x faster** |
+| 16 ops/4 | 63μs | 2,654μs | 24,940μs | **42.1x faster** | **395.9x faster** |
 
-#### Memory Allocation Results (16 ops/4 concurrency)
+#### Memory Allocation (by Runtime)
 
-| Framework | Memory |
-|-----------|--------|
-| WorkflowForge | 8.1KB |
-| Workflow Core | 123KB |
-| Elsa | 4,643KB |
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 7.96KB | 126KB | 4,576KB |
+| .NET 8.0 | 8.23KB | 125KB | 4,651KB |
+| .NET FX 4.8 | N/A‡ | 184KB | N/A† |
 
-**Key Insight**: Parallel execution maintains **38-380x speed advantage** with **15-573x less memory**.
+**Key Insight**: Parallel execution maintains **38-396x speed advantage** with **15-575x less memory**.
 
 ---
 
@@ -530,24 +680,32 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 
 **Description**: Event-driven workflow execution with delays
 
-#### Performance Results (Median Times)
+#### Multi-Runtime Performance (Median, 1ms delay)
+
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 7,083μs | 8,268μs | 20,590μs |
+| .NET 8.0 | 7,128μs | 7,362μs | 19,916μs |
+| .NET FX 4.8 | 12,585μs | 12,400μs | N/A† |
+
+#### Parameter Sweep (.NET 8.0)
 
 | Delay | WorkflowForge | Workflow Core | Elsa | WF vs WC | WF vs Elsa |
 |-------|---------------|---------------|------|----------|------------|
-| 1ms   | 7.3ms         | 8.2ms         | 19.3ms | 1.1x     | **2.6x faster** |
-| 5ms   | 7.6ms         | 8.1ms         | 20.8ms | 1.1x     | **2.7x faster** |
+| 1ms | 7,128μs | 7,362μs | 19,916μs | **1.0x** | **2.8x faster** |
+| 5ms | 7,147μs | 8,613μs | 20,608μs | **1.2x faster** | **2.9x faster** |
 
-#### Memory Allocation Results
+#### Memory Allocation (by Runtime)
 
-| Framework | Memory |
-|-----------|--------|
-| WorkflowForge | 3.49KB |
-| Workflow Core | 37KB |
-| Elsa | 1,032KB |
+| Runtime | WorkflowForge | Workflow Core | Elsa |
+|---------|---------------|---------------|------|
+| .NET 10.0 | 3.48KB | 40KB | 999KB |
+| .NET 8.0 | 3.48KB | 37KB | 1,032KB |
+| .NET FX 4.8 | N/A‡ | 90KB | N/A† |
 
-**Advantage**: Similar timing to WorkflowCore, but **11x less memory** than WC, **296x less** than Elsa.
+**Advantage**: WorkflowForge and Workflow Core are **near-parity** on execution time (1ms delay); WorkflowForge is **2.8-2.9x faster** vs Elsa. Memory advantage: **11-297x less**.
 
-**Key Insight**: Event-driven scenarios are I/O-bound; advantage is in **memory efficiency**.
+**Key Insight**: Event-driven scenarios are **I/O-bound**; advantage is in **memory efficiency** and consistency vs Elsa.
 
 ---
 
@@ -557,28 +715,30 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 
 | # | Scenario | Speed Advantage | Memory Advantage |
 |---|----------|-----------------|------------------|
-| 1 | Sequential (10 ops) | 26-71x | 26-183x |
-| 2 | Data Passing (10 ops) | 26-70x | 28-197x |
-| 3 | Conditional (10 ops) | 32-80x | 21-149x |
-| 4 | Loop/ForEach (50 items) | 71-129x | 24-121x |
-| 5 | Concurrent (8 workflows) | 109-264x | 27-158x |
-| 6 | Error Handling | 11-64x | 9-214x |
-| 7 | Creation Overhead | 63-162x | 35-155x |
-| 8 | Complete Lifecycle | 236x | 423x |
-| 9 | State Machine (25 trans) | **303-540x** | 53-284x |
-| 10 | Long Running | ~1x (delay-bound) | **51-423x** |
-| 11 | Parallel (16 ops) | 38-380x | 15-573x |
-| 12 | Event-Driven | 1.1-2.7x | 11-296x |
+| 1 | Sequential (10 ops) | 26-55x | 24-171x |
+| 2 | Data Passing (10 ops) | 30-60x | 26-185x |
+| 3 | Conditional (10 ops) | 31-64x | 22-155x |
+| 4 | Loop/ForEach (50 items) | 62-118x | 22-113x |
+| 5 | Concurrent (8 workflows) | 118-288x | 21-126x |
+| 6 | Error Handling | 13-110x | 6-150x |
+| 7 | Creation Overhead | 37-206x | 33-155x |
+| 8 | Complete Lifecycle | 165-274x | 410x |
+| 9 | State Machine (25 trans) | **303-511x** | 46-249x |
+| 10 | Long Running | ~1x (delay-bound) | **52-439x** |
+| 11 | Parallel (16 ops) | 38-396x | 15-575x |
+| 12 | Event-Driven | 1.0-2.9x | 11-297x |
 
-**Overall Speed Range**: **11-540x faster execution** (compute-bound scenarios)  
-**Overall Memory Range**: **9-573x less memory allocation**
+Ranges include all three runtimes (.NET 10.0, .NET 8.0, .NET Framework 4.8). Elsa is excluded from .NET Framework 4.8 comparisons.
+
+**Overall Speed Range**: **13-511x faster execution** (compute-bound scenarios)  
+**Overall Memory Range**: **6-575x less memory allocation**
 
 ### Key Findings
 
-1. **State Machine** scenarios show the highest speed advantage: **303-540x faster**
-2. **Concurrent Execution** maintains excellent scaling: **109-264x faster**
-3. **Long Running** and **Event-Driven** are I/O-bound, but memory savings are massive: **51-423x less**
-4. **Memory efficiency** is consistently excellent across all 12 scenarios
+1. **State Machine** scenarios show the highest speed advantage: **303-511x faster**
+2. **Concurrent Execution** maintains excellent scaling: **118-288x faster**
+3. **Long Running** and **Event-Driven** are I/O-bound, but memory savings are massive: **52-439x less**
+4. **Memory efficiency** is consistently excellent across all 12 scenarios and all 3 runtimes
 
 ---
 
@@ -652,7 +812,7 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 ### Test Configuration
 
 - **BenchmarkDotNet**: v0.15.8
-- **Runtime**: .NET 8.0.23
+- **Runtimes**: .NET 10.0.3, .NET 8.0.24, .NET Framework 4.8.1
 - **Iterations**: 50 per benchmark
 - **Warmup**: 5 iterations
 - **Invocation**: 1 per iteration
@@ -660,8 +820,9 @@ WorkflowForge demonstrates **11-540x faster execution** and **9-573x less memory
 
 ### Hardware
 
-- **OS**: Windows 11 (10.0.26200.6899)
+- **OS**: Windows 11 (25H2)
 - **CPU**: Intel 11th Gen i7-1185G7
+- **SDK**: .NET SDK 10.0.103
 - **Memory**: Sufficient for all benchmarks
 
 ### Scenario Implementations
@@ -692,7 +853,7 @@ Full benchmark source code available in repository:
 All results meet statistical significance criteria:
 - Standard deviation < 20% of mean (most scenarios)
 - P95 values show consistency
-- Median values used for comparison (more stable than mean)
+- **Median values used for comparison** (more stable than mean)
 - 50 iterations provide statistical confidence
 
 **Outliers**: Some scenarios show high standard deviation due to GC pauses or system activity. Median values are used to minimize impact.
@@ -701,7 +862,7 @@ All results meet statistical significance criteria:
 
 ## Conclusion
 
-WorkflowForge delivers **11-540x faster execution** and **9-573x less memory allocation** compared to Workflow Core and Elsa Workflows across 12 scenarios. This performance advantage stems from:
+WorkflowForge delivers **13-511x faster execution** and **6-575x less memory allocation** compared to Workflow Core and Elsa Workflows across 12 scenarios on .NET 10.0, .NET 8.0, and .NET Framework 4.8. This performance advantage stems from:
 
 1. **Architectural Simplicity**: No background threads, no persistent state, no serialization
 2. **Minimal Allocations**: Dictionary-based data flow, no reflection per operation
@@ -717,6 +878,11 @@ WorkflowForge is the **fastest .NET workflow engine** for high-performance, prog
 - WorkflowForge: https://github.com/animatlabs/workflow-forge
 - Workflow Core: https://github.com/danielgerlag/workflow-core
 - Elsa Workflows: https://github.com/elsa-workflows/elsa-core
+
+---
+
+† Elsa does not support .NET Framework 4.8; results are excluded for that runtime.  
+‡ BenchmarkDotNet does not report memory allocation metrics for .NET Framework 4.8 in some benchmark configurations.
 
 ---
 

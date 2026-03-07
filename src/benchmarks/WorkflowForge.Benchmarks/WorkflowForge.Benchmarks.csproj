@@ -2,36 +2,30 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net48;net8.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <LangVersion>latest</LangVersion>
+    <SonarQubeExclude>true</SonarQubeExclude>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.2" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.2" />
-    <PackageReference Include="Serilog" Version="4.3.0" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\core\WorkflowForge\WorkflowForge.csproj" />
-    <ProjectReference Include="..\..\extensions\WorkflowForge.Extensions.Observability.Performance\WorkflowForge.Extensions.Observability.Performance.csproj" />
-    <ProjectReference Include="..\..\extensions\WorkflowForge.Extensions.Resilience\WorkflowForge.Extensions.Resilience.csproj" />
-    <ProjectReference Include="..\..\extensions\WorkflowForge.Extensions.Resilience.Polly\WorkflowForge.Extensions.Resilience.Polly.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
+    <Using Include="System" />
+    <Using Include="System.Collections.Generic" />
+    <Using Include="System.IO" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Threading" />
+    <Using Include="System.Threading.Tasks" />
   </ItemGroup>
 
 </Project> 

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Constants;
 using WorkflowForge.Extensions.Audit.Options;
 
 namespace WorkflowForge.Extensions.Audit
@@ -50,9 +51,9 @@ namespace WorkflowForge.Extensions.Audit
             var startTime = _timeProvider.UtcNow;
             var stopwatch = Stopwatch.StartNew();
 
-            var workflowName = foundry.Properties.TryGetValue("Workflow.Name", out var wfName)
-                ? wfName?.ToString() ?? "Unknown"
-                : "Unknown";
+            var workflowName = foundry.Properties.TryGetValue(FoundryPropertyKeys.WorkflowName, out var wfName)
+                ? wfName?.ToString() ?? FoundryPropertyKeys.UnknownValue
+                : FoundryPropertyKeys.UnknownValue;
 
             // Log operation started
             await WriteAuditEntryAsync(
@@ -65,11 +66,11 @@ namespace WorkflowForge.Extensions.Audit
                 startTime,
                 null,
                 null,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             try
             {
-                var result = await next(cancellationToken);
+                var result = await next(cancellationToken).ConfigureAwait(false);
                 stopwatch.Stop();
 
                 // Log operation completed
@@ -83,7 +84,7 @@ namespace WorkflowForge.Extensions.Audit
                     _timeProvider.UtcNow,
                     null,
                     stopwatch.ElapsedMilliseconds,
-                    cancellationToken);
+                    cancellationToken).ConfigureAwait(false);
 
                 return result;
             }
@@ -102,7 +103,7 @@ namespace WorkflowForge.Extensions.Audit
                     _timeProvider.UtcNow,
                     ex.Message,
                     stopwatch.ElapsedMilliseconds,
-                    cancellationToken);
+                    cancellationToken).ConfigureAwait(false);
 
                 throw;
             }
@@ -158,12 +159,12 @@ namespace WorkflowForge.Extensions.Audit
 
             try
             {
-                await _auditProvider.WriteAuditEntryAsync(entry, cancellationToken);
+                await _auditProvider.WriteAuditEntryAsync(entry, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 // Audit failures should not break workflow execution
-                foundry.Logger.LogError($"Failed to write audit entry: {ex.Message}");
+                foundry.Logger.LogError("Failed to write audit entry: {ErrorMessage}", ex.Message);
             }
         }
     }

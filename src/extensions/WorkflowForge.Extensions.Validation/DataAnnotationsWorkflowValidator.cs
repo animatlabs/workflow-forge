@@ -20,7 +20,7 @@ namespace WorkflowForge.Extensions.Validation
         /// <returns>A task representing the validation result.</returns>
         public Task<ValidationResult> ValidateAsync(T data, CancellationToken cancellationToken = default)
         {
-            if (data == null)
+            if (data is null)
             {
                 return Task.FromResult(ValidationResult.Failure("Validation data cannot be null."));
             }

@@ -1,3 +1,4 @@
+#if !NET48
 using Elsa.Extensions;
 using Elsa.Workflows;
 using Elsa.Workflows.Activities;
@@ -82,3 +83,4 @@ public class Scenario4_LoopProcessing_Elsa : IWorkflowScenario
         }
     }
 }
+#endif

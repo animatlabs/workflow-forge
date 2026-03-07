@@ -1,12 +1,13 @@
 # WorkflowForge.Extensions.Persistence.Recovery
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
 Recovery orchestration extension for WorkflowForge to resume persisted workflows from the last checkpoint with configurable retry and backoff.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Persistence.Recovery.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Persistence.Recovery/)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 
 ## Zero Dependencies - Zero Conflicts
 
@@ -32,13 +33,14 @@ dotnet add package WorkflowForge.Extensions.Persistence.Recovery
 using WorkflowForge;
 using WorkflowForge.Extensions.Persistence.Abstractions;
 using WorkflowForge.Extensions.Persistence.Recovery;
+using WorkflowForge.Extensions.Persistence.Recovery.Options;
 
-// Your provider must be shared (DB/cache) used also by the runtime persistence middleware
-IWorkflowPersistenceProvider provider = new SQLitePersistenceProvider("workflows.db");
+// Your IWorkflowPersistenceProvider implementation (shared with runtime persistence middleware)
+IWorkflowPersistenceProvider provider = /* your provider */;
 
-var coordinator = new RecoveryCoordinator(provider, new RecoveryPolicy
+var coordinator = new RecoveryCoordinator(provider, new RecoveryMiddlewareOptions
 {
-    MaxAttempts = 3,
+    MaxRetryAttempts = 3,
     BaseDelay = TimeSpan.FromSeconds(1),
     UseExponentialBackoff = true
 });
@@ -83,8 +85,10 @@ await coordinator.ResumeAsync(
 ### Via Code
 
 ```csharp
+using WorkflowForge;
 using WorkflowForge.Extensions.Persistence.Recovery.Options;
 
+var smith = WorkflowForge.CreateSmith();
 var options = new RecoveryMiddlewareOptions
 {
     Enabled = true,
@@ -133,15 +137,22 @@ await coordinator.ResumeAsync(
 ### Batch Recovery
 
 ```csharp
+using WorkflowForge.Extensions.Persistence.Abstractions;
+
 public class MyCatalog : IRecoveryCatalog
 {
     private readonly IWorkflowPersistenceProvider _provider;
-    
+
+    public MyCatalog(IWorkflowPersistenceProvider provider)
+    {
+        _provider = provider;
+    }
+
     public async Task<IReadOnlyList<WorkflowExecutionSnapshot>> ListPendingAsync(
         CancellationToken cancellationToken = default)
     {
-        // Query your storage for pending workflows
-        return await _database.QueryAsync("SELECT * FROM Workflows WHERE Status = 'Pending'");
+        // Query your storage for pending workflows and return snapshots with FoundryExecutionId and WorkflowId
+        return Array.Empty<WorkflowExecutionSnapshot>();
     }
 }
 
@@ -160,8 +171,8 @@ int resumedCount = await coordinator.ResumeAllAsync(
 
 ```csharp
 // Good: Stable keys
-var foundryKey = Guid.Parse("FIXED-GUID-FOR-ORDER-SERVICE");
-var workflowKey = Guid.Parse("FIXED-GUID-FOR-WORKFLOW-DEF");
+var foundryKey = Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
+var workflowKey = Guid.Parse("b2c3d4e5-f6a7-8901-bcde-f12345678901");
 
 // Bad: Random keys (won't find saved state)
 var foundryKey = Guid.NewGuid();  // Different every time!
@@ -171,25 +182,17 @@ var foundryKey = Guid.NewGuid();  // Different every time!
 
 Keep workflow operation order stable across versions:
 
-```csharp
-// Version 1
-workflow
-    .AddOperation("ValidateOrder")
-    .AddOperation("ChargePayment")
-    .Build();
+```text
+// Pseudocode illustrating operation ordering rules:
 
-// Version 2 - OK: Append new operations
-workflow
-    .AddOperation("ValidateOrder")
-    .AddOperation("ChargePayment")
-    .AddOperation("SendNotification")  // New operation
-    .Build();
+// Version 1
+workflow: [ValidateOrder] → [ChargePayment]
+
+// Version 2 - OK: Append new operations at the end
+workflow: [ValidateOrder] → [ChargePayment] → [SendNotification]
 
 // Version 2 - BAD: Reorder existing operations
-workflow
-    .AddOperation("ChargePayment")      // Order changed!
-    .AddOperation("ValidateOrder")      // Recovery will break
-    .Build();
+workflow: [ChargePayment] → [ValidateOrder]  // Recovery will break!
 ```
 
 ### State Restoration
@@ -212,7 +215,7 @@ var orderId = foundry.GetPropertyOrDefault<string>("OrderId");
 2. **Restore Properties**: Populate foundry with saved properties
 3. **Skip Completed**: Start from `NextOperationIndex`
 4. **Resume Execution**: Continue workflow from checkpoint
-5. **Retry on Failure**: Use recovery policy for transient failures
+5. **Retry on Failure**: Use RecoveryMiddlewareOptions for transient failures
 
 ## Error Handling
 
@@ -221,9 +224,9 @@ try
 {
     await coordinator.ResumeAsync(...);
 }
-catch (RecoveryException ex)
+catch (Exception ex)
 {
-    logger.LogError(ex, "Failed to resume workflow after {Attempts} attempts", ex.Attempts);
+    logger.LogError(ex, "Failed to resume workflow after exhausting retries");
     // Handle permanent failure
 }
 ```

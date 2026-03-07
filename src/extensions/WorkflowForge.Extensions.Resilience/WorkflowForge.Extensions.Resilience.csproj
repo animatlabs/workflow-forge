@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>2.0.0</Version>
-    <PackageVersion>2.0.0</PackageVersion>
+    <Version>2.1.0</Version>
+    <PackageVersion>2.1.0</PackageVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -38,13 +38,12 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
-Major release v2.0.0:
-- Dependencies internalized via ILRepack (where applicable)
-- Users can avoid third-party version conflicts
-- ISystemTimeProvider integrated for testability
-- Enhanced documentation and samples
-- Enterprise-ready for production workflows
+v2.1.0: Updated for WorkflowForge v2.1.0 compatibility. Removed SupportsRestore references. Added ConfigureAwait(false) to all await calls. Improved error handling and resource disposal.
     </PackageReleaseNotes>
+
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
@@ -52,9 +51,12 @@ Major release v2.0.0:
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.19.0.132793">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.102" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>

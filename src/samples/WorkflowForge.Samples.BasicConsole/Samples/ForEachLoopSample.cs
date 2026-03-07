@@ -128,15 +128,14 @@ public class ForEachLoopSample : ISample
     }
 }
 
-public class ProcessSingleOrderOperation : IWorkflowOperation
+public class ProcessSingleOrderOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "ProcessSingleOrder";
-    public bool SupportsRestore => false;
+    public override string Name => "ProcessSingleOrder";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        if (inputData == null) return null;
+        if (inputData == null)
+            return null;
 
         // Extract order data (inputData will be one order from the split)
         var orderData = inputData.ToString()!;
@@ -150,54 +149,35 @@ public class ProcessSingleOrderOperation : IWorkflowOperation
 
         return $"Processed: {orderData}";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-    {
-        return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    { }
 }
 
-public class SendNotificationOperation : IWorkflowOperation
+public class SendNotificationOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "SendNotification";
-    public bool SupportsRestore => false;
+    public override string Name => "SendNotification";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        if (inputData == null) return null;
+        if (inputData == null)
+            return null;
 
         var notificationData = inputData.ToString()!;
         Console.WriteLine($"   [INFO] Sending notification: {notificationData}");
 
         // Simulate notification sending with variable delay
-        var delay = new Random().Next(50, 200);
+        var delay = ThreadSafeRandom.Next(50, 200);
         await Task.Delay(delay, cancellationToken);
 
         Console.WriteLine($"   [SUCCESS] Notification sent successfully (took {delay}ms)");
 
         return $"Sent: {notificationData}";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-    {
-        return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    { }
 }
 
-public class ValidateDataItemOperation : IWorkflowOperation
+public class ValidateDataItemOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "ValidateDataItem";
-    public bool SupportsRestore => false;
+    public override string Name => "ValidateDataItem";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         if (inputData == null)
         {
@@ -228,23 +208,18 @@ public class ValidateDataItemOperation : IWorkflowOperation
         return isValid;
     }
 
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    public override Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         foundry.Properties.TryRemove("last_validation_result", out _);
         return Task.CompletedTask;
     }
-
-    public void Dispose()
-    { }
 }
 
-public class ProcessValidDataOperation : IWorkflowOperation
+public class ProcessValidDataOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "ProcessValidData";
-    public bool SupportsRestore => false;
+    public override string Name => "ProcessValidData";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine($"   [INFO] Processing valid data item...");
 
@@ -261,23 +236,13 @@ public class ProcessValidDataOperation : IWorkflowOperation
 
         return "Processed";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-    {
-        return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    { }
 }
 
-public class SummarizeValidationResultsOperation : IWorkflowOperation
+public class SummarizeValidationResultsOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name => "SummarizeValidationResults";
-    public bool SupportsRestore => false;
+    public override string Name => "SummarizeValidationResults";
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
         Console.WriteLine($"   [INFO] Summarizing validation results...");
 
@@ -299,12 +264,4 @@ public class SummarizeValidationResultsOperation : IWorkflowOperation
 
         return "Summary completed";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-    {
-        return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    { }
 }

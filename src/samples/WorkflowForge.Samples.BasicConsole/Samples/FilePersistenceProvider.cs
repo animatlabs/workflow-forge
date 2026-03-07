@@ -38,10 +38,12 @@ internal sealed class FilePersistenceProvider : IWorkflowPersistenceProvider
     public Task<WorkflowExecutionSnapshot?> TryLoadAsync(Guid foundryExecutionId, Guid workflowId, CancellationToken cancellationToken = default)
     {
         var path = GetPath(foundryExecutionId, workflowId);
-        if (!File.Exists(path)) return Task.FromResult<WorkflowExecutionSnapshot?>(null);
+        if (!File.Exists(path))
+            return Task.FromResult<WorkflowExecutionSnapshot?>(null);
         var json = File.ReadAllText(path);
         var model = JsonSerializer.Deserialize<PersistedModel>(json, JsonOpts);
-        if (model == null) return Task.FromResult<WorkflowExecutionSnapshot?>(null);
+        if (model == null)
+            return Task.FromResult<WorkflowExecutionSnapshot?>(null);
 
         var snapshot = new WorkflowExecutionSnapshot
         {
@@ -57,7 +59,8 @@ internal sealed class FilePersistenceProvider : IWorkflowPersistenceProvider
     public Task DeleteAsync(Guid foundryExecutionId, Guid workflowId, CancellationToken cancellationToken = default)
     {
         var path = GetPath(foundryExecutionId, workflowId);
-        if (File.Exists(path)) File.Delete(path);
+        if (File.Exists(path))
+            File.Delete(path);
         return Task.CompletedTask;
     }
 
@@ -76,7 +79,8 @@ internal sealed class FilePersistenceProvider : IWorkflowPersistenceProvider
     private static Dictionary<string, object?> ConvertPropsFromStringMap(Dictionary<string, string?>? map)
     {
         var dict = new Dictionary<string, object?>();
-        if (map == null) return dict;
+        if (map == null)
+            return dict;
         foreach (var kv in map)
         {
             if (kv.Value is null)

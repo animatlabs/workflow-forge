@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>2.0.0</Version>
-    <PackageVersion>2.0.0</PackageVersion>
+    <Version>2.1.0</Version>
+    <PackageVersion>2.1.0</PackageVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -41,10 +41,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReleaseNotes>
-Initial release v2.0.0:
-- FakeWorkflowFoundry for unit testing operations
-- Test assertion helpers for tracking executed operations
-- Lightweight testing without full workflow infrastructure
+v2.1.0: Updated to align with WorkflowForge v2.1.0 breaking changes. Removed SupportsRestore references from test helpers.
     </PackageReleaseNotes>
   </PropertyGroup>
 
@@ -58,7 +55,10 @@ Initial release v2.0.0:
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.102" PrivateAssets="All" />
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.19.0.132793">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>

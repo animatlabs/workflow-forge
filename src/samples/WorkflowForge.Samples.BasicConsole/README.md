@@ -1,10 +1,6 @@
 # WorkflowForge Basic Console Samples
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
-Interactive examples demonstrating the core features and capabilities of WorkflowForge 2.0.
+Interactive examples demonstrating the core features and capabilities of WorkflowForge 2.1.0.
 
 ## Getting Started
 
@@ -102,6 +98,6 @@ Samples use `appsettings.json` for environment-specific configuration including 
 
 ## Documentation
 
-For detailed explanations of all samples, see [docs/samples-guide.md](../../../docs/getting-started/samples-guide.md)
+For detailed explanations of all samples, see [Samples Guide](../../../docs/getting-started/samples-guide.md)
 
 ---

@@ -1,6 +1,6 @@
+using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using WorkflowForge.Extensions.Audit.Options;
 
 namespace WorkflowForge.Extensions.Audit
@@ -23,8 +23,10 @@ namespace WorkflowForge.Extensions.Audit
             IConfiguration configuration,
             string? sectionName = null)
         {
-            if (services == null) throw new ArgumentNullException(nameof(services));
-            if (configuration == null) throw new ArgumentNullException(nameof(configuration));
+            if (services == null)
+                throw new ArgumentNullException(nameof(services));
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
             sectionName ??= AuditMiddlewareOptions.DefaultSectionName;
             services.Configure<AuditMiddlewareOptions>(configuration.GetSection(sectionName));
             return services;

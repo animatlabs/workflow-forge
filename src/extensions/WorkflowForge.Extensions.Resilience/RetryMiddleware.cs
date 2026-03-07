@@ -13,17 +13,14 @@ namespace WorkflowForge.Extensions.Resilience
     /// </summary>
     public sealed class RetryMiddleware : IWorkflowOperationMiddleware
     {
-        private readonly IWorkflowForgeLogger _logger;
         private readonly IWorkflowResilienceStrategy _retryStrategy;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RetryMiddleware"/> class.
         /// </summary>
-        /// <param name="logger">The logger to use for retry events.</param>
         /// <param name="retryStrategy">The retry strategy to use.</param>
-        public RetryMiddleware(IWorkflowForgeLogger logger, IWorkflowResilienceStrategy retryStrategy)
+        public RetryMiddleware(IWorkflowResilienceStrategy retryStrategy)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _retryStrategy = retryStrategy ?? throw new ArgumentNullException(nameof(retryStrategy));
         }
 
@@ -56,7 +53,7 @@ namespace WorkflowForge.Extensions.Resilience
             Func<Exception, bool>? retryPredicate = null)
         {
             var strategy = new FixedIntervalStrategy(interval, maxAttempts, retryPredicate, logger);
-            return new RetryMiddleware(logger, strategy);
+            return new RetryMiddleware(strategy);
         }
 
         /// <summary>
@@ -76,7 +73,7 @@ namespace WorkflowForge.Extensions.Resilience
             Func<Exception, bool>? retryPredicate = null)
         {
             var strategy = new ExponentialBackoffStrategy(initialDelay, maxDelay, maxAttempts, 2.0, retryPredicate, true, logger);
-            return new RetryMiddleware(logger, strategy);
+            return new RetryMiddleware(strategy);
         }
 
         /// <summary>
@@ -96,7 +93,7 @@ namespace WorkflowForge.Extensions.Resilience
             Func<Exception, bool>? retryPredicate = null)
         {
             var strategy = new RandomIntervalStrategy(maxAttempts, minDelay, maxDelay, retryPredicate, logger);
-            return new RetryMiddleware(logger, strategy);
+            return new RetryMiddleware(strategy);
         }
 
         /// <summary>

@@ -1,8 +1,8 @@
+using System;
+using System.Collections.Generic;
 using Serilog.Context;
 using Serilog.Core;
 using Serilog.Core.Enrichers;
-using System;
-using System.Collections.Generic;
 using WorkflowForge.Abstractions;
 using ILogger = Serilog.ILogger;
 
@@ -210,7 +210,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog
             return PushProperties(properties);
         }
 
-        private IDisposable PushProperties(IDictionary<string, string>? properties)
+        private static IDisposable PushProperties(IDictionary<string, string>? properties)
         {
             if (properties == null)
             {

@@ -1,12 +1,13 @@
 # WorkflowForge.Extensions.Logging.Serilog
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
 Structured logging extension for WorkflowForge with Serilog integration for rich, queryable logs.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Logging.Serilog.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Logging.Serilog/)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 
 ## Dependency Isolation
 
@@ -27,6 +28,7 @@ dotnet add package WorkflowForge.Extensions.Logging.Serilog
 ## Quick Start
 
 ```csharp
+using WorkflowForge;
 using WorkflowForge.Extensions.Logging.Serilog;
 
 var logger = SerilogLoggerFactory.CreateLogger(new SerilogLoggerOptions
@@ -97,11 +99,10 @@ foundry.Logger.LogInformation(
 ### With Properties
 
 ```csharp
-using (LogContext.PushProperty("WorkflowId", workflow.Id))
-{
-    foundry.Logger.LogInformation("Workflow started");
-    // All logs in this scope include WorkflowId
-}
+foundry.Logger.LogInformation(
+    new Dictionary<string, string> { ["WorkflowId"] = workflowId },
+    "Workflow started");
+// Or use foundry.Logger.BeginScope(state, properties) for scoped context
 ```
 
 ### Performance Metrics
@@ -117,35 +118,38 @@ foundry.Logger.LogInformation(
     sw.Elapsed.TotalMilliseconds);
 ```
 
-## Sinks
+## Sink Configuration
 
-### Console Sink
+### Built-in Console Sink
 
-```csharp
-.WriteTo.Console(outputTemplate: 
-    "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-```
-
-### File Sink
+The extension includes a built-in console sink configured via `SerilogLoggerOptions`:
 
 ```csharp
-.WriteTo.File(
-    "logs/workflow-.txt",
-    rollingInterval: RollingInterval.Day,
-    retainedFileCountLimit: 7)
+var logger = SerilogLoggerFactory.CreateLogger(new SerilogLoggerOptions
+{
+    EnableConsoleSink = true,
+    MinimumLevel = "Debug"
+});
 ```
 
-### Seq Sink
+### Advanced Sinks (Host Integration)
+
+For advanced sinks (File, Seq, Elasticsearch, etc.), use the `CreateLogger(ILoggerFactory)` overload with your host application's Serilog configuration:
 
 ```csharp
-.WriteTo.Seq("http://localhost:5341")
+// Configure Serilog in your host application (requires Serilog packages)
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.File("logs/workflow.log")
+    .WriteTo.Seq("http://localhost:5341")
+    .CreateLogger();
+
+var hostLoggerFactory = LoggerFactory.Create(builder => builder.AddSerilog());
+
+// Create WorkflowForge logger from host configuration
+var logger = SerilogLoggerFactory.CreateLogger(hostLoggerFactory);
 ```
 
-### Elasticsearch Sink
-
-```csharp
-.WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri("http://localhost:9200")))
-```
+This approach gives you access to the full Serilog sink ecosystem while keeping the extension dependency-free.
 
 ## Documentation
 

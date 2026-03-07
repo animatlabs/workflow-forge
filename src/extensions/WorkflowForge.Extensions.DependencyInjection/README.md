@@ -1,6 +1,11 @@
 # WorkflowForge.Extensions.DependencyInjection
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.DependencyInjection.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.DependencyInjection/)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/WorkflowForge.Extensions.DependencyInjection.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.DependencyInjection/)
 
 **Microsoft.Extensions.DependencyInjection integration for WorkflowForge**
@@ -33,7 +38,7 @@ public void ConfigureServices(IServiceCollection services)
 {
     // Register logger (choose your implementation)
     services.AddSingleton<IWorkflowForgeLogger>(sp =>
-        SerilogExtensions.CreateWorkflowForgeLogger());
+        SerilogLoggerFactory.CreateLogger());
     
     // Register WorkflowForge with configuration binding
     services.AddWorkflowForge(Configuration);

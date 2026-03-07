@@ -1,6 +1,7 @@
 using System;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions.Observability.Performance.Abstractions;
+using WorkflowForge.Extensions.Observability.Performance.Constants;
 
 namespace WorkflowForge.Extensions.Observability.Performance
 {
@@ -17,9 +18,10 @@ namespace WorkflowForge.Extensions.Observability.Performance
         /// <returns>Performance statistics if available; otherwise, null.</returns>
         public static IFoundryPerformanceStatistics? GetPerformanceStatistics(this IWorkflowFoundry foundry)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
-            return foundry.Properties.TryGetValue("PerformanceStatistics", out var statsObj) && statsObj is IFoundryPerformanceStatistics stats
+            return foundry.Properties.TryGetValue(PerformancePropertyKeys.PerformanceStatistics, out var statsObj) && statsObj is IFoundryPerformanceStatistics stats
                 ? stats
                 : null;
         }
@@ -33,7 +35,8 @@ namespace WorkflowForge.Extensions.Observability.Performance
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
         public static bool EnablePerformanceMonitoring(this IWorkflowFoundry foundry)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             if (foundry is IPerformanceMonitoredFoundry performanceFoundry)
             {
@@ -52,7 +55,8 @@ namespace WorkflowForge.Extensions.Observability.Performance
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
         public static bool DisablePerformanceMonitoring(this IWorkflowFoundry foundry)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             if (foundry is IPerformanceMonitoredFoundry performanceFoundry)
             {

@@ -1,12 +1,13 @@
 # WorkflowForge Core
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
 **Zero-dependency workflow orchestration framework for .NET**
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.svg)](https://www.nuget.org/packages/WorkflowForge/)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/animatlabs/workflow-forge/blob/main/LICENSE)
 
 ## Overview
@@ -44,10 +45,10 @@ using WorkflowForge.Extensions;
 
 // Create workflow
 var workflow = WorkflowForge.CreateWorkflow("OrderProcessing")
-    .AddOperation("ValidateOrder", new ValidateOrderOperation())
-    .AddOperation("ChargePayment", new ChargePaymentOperation())
-    .AddOperation("ReserveInventory", new ReserveInventoryOperation())
-    .AddOperation("CreateShipment", new CreateShipmentOperation())
+    .AddOperation(new ValidateOrderOperation())
+    .AddOperation(new ChargePaymentOperation())
+    .AddOperation(new ReserveInventoryOperation())
+    .AddOperation(new CreateShipmentOperation())
     .Build();
 
 // Create execution environment
@@ -142,7 +143,6 @@ public interface IWorkflowOperation : IDisposable
 {
     Guid Id { get; }
     string Name { get; }
-    bool SupportsRestore { get; }
     
     Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken);
     Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken);
@@ -187,7 +187,7 @@ var conditionalOp = ConditionalWorkflowOperation.Create(
     falseOperation: new StandardProcessingOperation()
 );
 
-workflow.AddOperation("ProcessByTier", conditionalOp);
+builder.AddOperation(conditionalOp);
 ```
 
 ### 4. ForEachWorkflowOperation
@@ -211,14 +211,14 @@ var splitOp = ForEachWorkflowOperation.CreateSplitInput(
 
 ```csharp
 var delayOp = new DelayOperation(TimeSpan.FromSeconds(5));
-workflow.AddOperation("Wait", delayOp);
+builder.AddOperation(delayOp);
 ```
 
 ### 6. LoggingOperation
 
 ```csharp
-var logOp = new LoggingOperation("Order processing completed", logger);
-workflow.AddOperation("LogCompletion", logOp);
+var logOp = new LoggingOperation("Order processing completed");
+builder.AddOperation(logOp);
 ```
 
 ## Custom Operations
@@ -229,7 +229,6 @@ workflow.AddOperation("LogCompletion", logOp);
 public class CalculateTotalOperation : WorkflowOperationBase
 {
     public override string Name => "CalculateTotal";
-    public override bool SupportsRestore => false;
 
     protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
@@ -277,7 +276,6 @@ Implement `RestoreAsync` for rollback capabilities:
 public class ChargePaymentOperation : WorkflowOperationBase
 {
     public override string Name => "ChargePayment";
-    public override bool SupportsRestore => true;
 
     protected override async Task<object?> ForgeAsyncCore(
         object? inputData,
@@ -316,11 +314,16 @@ public class ChargePaymentOperation : WorkflowOperationBase
 Add cross-cutting concerns using the middleware pipeline:
 
 ```csharp
-public class TimingMiddleware : IWorkflowOperationMiddleware
+// Built-in middleware (via extension methods)
+foundry.UseTiming();
+foundry.UseErrorHandling(rethrowExceptions: true);
+
+// Custom middleware example
+public class CustomTimingMiddleware : IWorkflowOperationMiddleware
 {
     private readonly IWorkflowForgeLogger _logger;
     
-    public TimingMiddleware(IWorkflowForgeLogger logger)
+    public CustomTimingMiddleware(IWorkflowForgeLogger logger)
     {
         _logger = logger;
     }
@@ -349,8 +352,8 @@ public class TimingMiddleware : IWorkflowOperationMiddleware
     }
 }
 
-// Add to foundry
-foundry.AddMiddleware(new TimingMiddleware(logger));
+// Add custom middleware to foundry
+foundry.AddMiddleware(new CustomTimingMiddleware(logger));
 ```
 
 ## Event System
@@ -360,7 +363,7 @@ Subscribe to lifecycle events:
 ```csharp
 // Workflow-level events (from Smith)
 smith.WorkflowStarted += (s, e) => 
-    Console.WriteLine($"Started: {e.WorkflowName}");
+    Console.WriteLine($"Started: {e.Foundry.CurrentWorkflow?.Name}");
 smith.WorkflowCompleted += (s, e) => 
     Console.WriteLine($"Completed in {e.Duration.TotalMilliseconds}ms");
 smith.WorkflowFailed += (s, e) => 
@@ -368,17 +371,17 @@ smith.WorkflowFailed += (s, e) =>
 
 // Operation-level events (from Foundry)
 foundry.OperationStarted += (s, e) => 
-    Console.WriteLine($"Op started: {e.OperationName}");
+    Console.WriteLine($"Op started: {e.Operation.Name}");
 foundry.OperationCompleted += (s, e) => 
-    Console.WriteLine($"Op completed: {e.OperationName}");
+    Console.WriteLine($"Op completed: {e.Operation.Name}");
 foundry.OperationFailed += (s, e) => 
-    Console.WriteLine($"Op failed: {e.OperationName}");
+    Console.WriteLine($"Op failed: {e.Operation.Name}");
 
-// Compensation events (from Foundry)
-foundry.CompensationTriggered += (s, e) => 
+// Compensation events (from Smith)
+smith.CompensationTriggered += (s, e) => 
     Console.WriteLine("Rollback triggered");
-foundry.OperationRestoreStarted += (s, e) => 
-    Console.WriteLine($"Restoring: {e.OperationName}");
+smith.OperationRestoreStarted += (s, e) => 
+    Console.WriteLine($"Restoring: {e.Operation.Name}");
 ```
 
 ## Configuration
@@ -421,20 +424,24 @@ services.AddWorkflowForge(configuration);
 var smith = services.BuildServiceProvider().GetRequiredService<IWorkflowSmith>();
 ```
 
+**Requires**: `WorkflowForge.Extensions.DependencyInjection` NuGet package for `AddWorkflowForge` and Options pattern support.
+
 ## Performance
 
 WorkflowForge Core is optimized for production workloads (12 scenarios benchmarked, 50 iterations):
 
-- **Execution Speed**: 11-540x faster than competitors
-- **State Machine**: Up to 540x faster (highest advantage)
-- **Memory**: 9-573x less allocation than competitors
-- **Concurrency**: Near-perfect linear scaling (16x speedup for 16 workflows)
+- **Execution Speed**: 13-511x faster than competitors
+- **State Machine**: Up to 511x faster (highest advantage, .NET 10.0)
+- **Memory**: 6-575x less allocation than competitors
+- **Concurrency**: Near-perfect linear scaling (15.9x speedup for 16 workflows)
 
 | Scenario | WorkflowForge | Workflow Core | Elsa | Advantage |
 |----------|---------------|---------------|------|-----------|
-| Sequential (10 ops) | 247μs | 6,531μs | 17,617μs | 26-71x |
-| State Machine (25) | 68μs | 20,624μs | 36,695μs | 303-540x |
-| Concurrent (8 workers) | 356μs | 38,833μs | 94,018μs | 109-264x |
+| Sequential (10 ops) | 314μs | 15,997μs | 26,881μs | 51-86x |
+| State Machine (25) | 111μs | 39,500μs | 45,714μs | 356-412x |
+| Concurrent (8 workers) | 482μs | 59,141μs | 137,342μs | 123-285x |
+
+*Benchmark data from .NET 8.0; up to 511x faster on .NET 10.0 (State Machine).*
 
 See [Performance Documentation](../../../docs/performance/performance.md) for all 12 scenarios.
 
@@ -455,9 +462,9 @@ public class WorkflowTests
         var executionOrder = new List<string>();
         
         var workflow = WorkflowForge.CreateWorkflow("Test")
-            .WithOperation("Step1", async (foundry) => executionOrder.Add("Step1"))
-            .WithOperation("Step2", async (foundry) => executionOrder.Add("Step2"))
-            .WithOperation("Step3", async (foundry) => executionOrder.Add("Step3"))
+            .AddOperation("Step1", (foundry) => executionOrder.Add("Step1"))
+            .AddOperation("Step2", (foundry) => executionOrder.Add("Step2"))
+            .AddOperation("Step3", (foundry) => executionOrder.Add("Step3"))
             .Build();
         
         using var foundry = WorkflowForge.CreateFoundry("Test");

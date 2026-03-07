@@ -52,7 +52,8 @@ public class Scenario6_ErrorHandling_WorkflowCore : IWorkflowScenario
     public async Task CleanupAsync()
     {
         _workflowHost?.Stop();
-        if (_serviceProvider is IDisposable disposable) disposable.Dispose();
+        if (_serviceProvider is IDisposable disposable)
+            disposable.Dispose();
         await Task.CompletedTask;
     }
 

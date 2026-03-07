@@ -1,12 +1,13 @@
 # WorkflowForge.Extensions.Resilience
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
 Base resilience patterns extension for WorkflowForge with fundamental retry logic and resilience strategies.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Resilience.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Resilience/)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 
 ## Zero Dependencies - Zero Conflicts
 
@@ -29,6 +30,7 @@ dotnet add package WorkflowForge.Extensions.Resilience
 ## Quick Start
 
 ```csharp
+using WorkflowForge;
 using WorkflowForge.Extensions.Resilience;
 using WorkflowForge.Extensions.Resilience.Strategies;
 
@@ -41,7 +43,7 @@ var resilientOperation = RetryWorkflowOperation.WithExponentialBackoff(
 
 // Use in workflow
 var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
-    .AddOperation("ProcessPayment", resilientOperation)
+    .AddOperation(resilientOperation)
     .Build();
 
 await smith.ForgeAsync(workflow, foundry);
@@ -62,9 +64,9 @@ await smith.ForgeAsync(workflow, foundry);
 
 ```csharp
 var strategy = new ExponentialBackoffStrategy(
-    maxAttempts: 5,
     baseDelay: TimeSpan.FromSeconds(1),
     maxDelay: TimeSpan.FromSeconds(60),
+    maxAttempts: 5,
     logger: logger);
 
 var resilientOp = new RetryWorkflowOperation(myOperation, strategy);
@@ -161,16 +163,16 @@ var resilientOperation = RetryWorkflowOperation.WithExponentialBackoff(
 
 // Or use specific strategies
 var strategy = new ExponentialBackoffStrategy(
-    maxAttempts: 5,
     baseDelay: TimeSpan.FromSeconds(1),
     maxDelay: TimeSpan.FromSeconds(60),
+    maxAttempts: 5,
     logger: logger);
 
 var resilientOp = new RetryWorkflowOperation(myOperation, strategy);
 
 // Add to workflow
 var workflow = WorkflowForge.CreateWorkflow("ResilientProcess")
-    .AddOperation("ProcessWithRetry", resilientOp)
+    .AddOperation(resilientOp)
     .Build();
 ```
 

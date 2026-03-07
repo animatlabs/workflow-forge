@@ -1,5 +1,4 @@
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Engines;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
 using WorkflowForge.Operations;
@@ -13,10 +12,6 @@ namespace WorkflowForge.Benchmarks;
 /// - Different operation types
 /// - Scaling with operation count
 /// </summary>
-[MemoryDiagnoser]
-[SimpleJob(RunStrategy.Monitoring, iterationCount: 50)]
-[MarkdownExporter]
-[HtmlExporter]
 public class WorkflowThroughputBenchmark
 {
     [Params(1, 5, 10, 25, 50)]
@@ -191,7 +186,9 @@ public class WorkflowThroughputBenchmark
             {
                 // Simulate memory allocation
                 var data = new byte[1024]; // 1KB allocation per operation
-                Array.Fill(data, (byte)(operationIndex % 256));
+                var fillByte = (byte)(operationIndex % 256);
+                for (int k = 0; k < data.Length; k++)
+                    data[k] = fillByte;
 
                 foundry.Properties[$"data_{operationIndex}"] = data;
                 await Task.Delay(1);
@@ -206,29 +203,18 @@ public class WorkflowThroughputBenchmark
 /// <summary>
 /// Lightweight operation for benchmarking
 /// </summary>
-public class LightweightOperation : IWorkflowOperation
+public class LightweightOperation : WorkflowOperationBase
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public string Name { get; }
-    public bool SupportsRestore => false;
+    public override string Name { get; }
 
     public LightweightOperation(string name)
     {
         Name = name;
     }
 
-    public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
     {
-        // Minimal work simulation
         await Task.Yield();
         return $"Result from {Name}";
     }
-
-    public Task RestoreAsync(object? context, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
-    {
-        return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    { }
 }

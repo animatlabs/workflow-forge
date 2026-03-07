@@ -17,7 +17,8 @@ namespace WorkflowForge.Extensions
         /// </summary>
         public static IWorkflowFoundry UseLogging(this IWorkflowFoundry foundry)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
             foundry.AddMiddleware(new LoggingMiddleware(foundry.Logger));
             return foundry;
         }
@@ -27,8 +28,10 @@ namespace WorkflowForge.Extensions
         /// </summary>
         public static IWorkflowFoundry UseLogging(this IWorkflowFoundry foundry, IWorkflowForgeLogger logger)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
-            if (logger == null) throw new ArgumentNullException(nameof(logger));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+            if (logger == null)
+                throw new ArgumentNullException(nameof(logger));
             foundry.AddMiddleware(new LoggingMiddleware(logger));
             return foundry;
         }
@@ -38,7 +41,8 @@ namespace WorkflowForge.Extensions
         /// </summary>
         public static IWorkflowFoundry UseTiming(this IWorkflowFoundry foundry, ISystemTimeProvider? timeProvider = null)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
             foundry.AddMiddleware(new TimingMiddleware(timeProvider));
             return foundry;
         }
@@ -52,7 +56,8 @@ namespace WorkflowForge.Extensions
             object? defaultReturnValue = null,
             ISystemTimeProvider? timeProvider = null)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
             foundry.AddMiddleware(new ErrorHandlingMiddleware(
                 foundry.Logger,
                 rethrowExceptions,
@@ -81,7 +86,8 @@ namespace WorkflowForge.Extensions
             LoggingMiddlewareOptions? loggingOptions = null,
             ISystemTimeProvider? timeProvider = null)
         {
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             // Use default options if none provided
             errorHandlingOptions ??= new ErrorHandlingMiddlewareOptions();

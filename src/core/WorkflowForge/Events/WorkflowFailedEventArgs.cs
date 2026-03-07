@@ -7,7 +7,7 @@ namespace WorkflowForge.Events
     /// Event arguments for workflow failed events.
     /// Fired when a workflow fails due to an uncaught exception.
     /// </summary>
-    public class WorkflowFailedEventArgs : BaseWorkflowForgeEventArgs
+    public sealed class WorkflowFailedEventArgs : BaseWorkflowForgeEventArgs
     {
         /// <summary>
         /// Gets the timestamp when the workflow failed.

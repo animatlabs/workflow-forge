@@ -7,7 +7,7 @@ namespace WorkflowForge.Events
     /// Event arguments for operation failed events.
     /// Fired when an operation fails with an exception.
     /// </summary>
-    public class OperationFailedEventArgs : BaseWorkflowForgeEventArgs
+    public sealed class OperationFailedEventArgs : BaseWorkflowForgeEventArgs
     {
         /// <summary>
         /// Gets the operation that failed.

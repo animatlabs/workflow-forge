@@ -4,6 +4,7 @@ using WorkflowForge.Extensions.Persistence;
 using WorkflowForge.Extensions.Persistence.Recovery;
 using WorkflowForge.Extensions.Persistence.Recovery.Options;
 using WorkflowForge.Extensions.Resilience;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -32,7 +33,8 @@ public class ResilienceRecoverySample : ISample
 
         // Ensure clean start for deterministic behavior
         var checkpointFile = Path.Combine(checkpoints, $"{foundryKey:N}_{workflowKey:N}.json");
-        if (File.Exists(checkpointFile)) File.Delete(checkpointFile);
+        if (File.Exists(checkpointFile))
+            File.Delete(checkpointFile);
 
         // First run: enable persistence + a simple retry middleware for transient errors
         using (var f1 = WorkflowForge.CreateFoundry("ResilienceRecoveryDemo"))
@@ -96,13 +98,11 @@ public class ResilienceRecoverySample : ISample
         return new Guid(guidBytes);
     }
 
-    private sealed class InitOperation : IWorkflowOperation
+    private sealed class InitOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "Init";
-        public bool SupportsRestore => false;
+        public override string Name => "Init";
 
-        public async Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             if (!foundry.TryGetProperty<DateTimeOffset>("startedAt", out _))
             {
@@ -112,21 +112,13 @@ public class ResilienceRecoverySample : ISample
             await Task.Delay(10, cancellationToken);
             return inputData;
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
-    private sealed class FlakyOperation : IWorkflowOperation
+    private sealed class FlakyOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "Flaky";
-        public bool SupportsRestore => false;
+        public override string Name => "Flaky";
 
-        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var seq = foundry.GetPropertyOrDefault("seq", new List<string>());
             seq.Add("FlakyAttempt");
@@ -140,32 +132,18 @@ public class ResilienceRecoverySample : ISample
 
             return Task.FromResult(inputData);
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
-    private sealed class FinalizeOperation : IWorkflowOperation
+    private sealed class FinalizeOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "Finalize";
-        public bool SupportsRestore => false;
+        public override string Name => "Finalize";
 
-        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var seq = foundry.GetPropertyOrDefault("seq", new List<string>());
             seq.Add("Finalize");
             foundry.SetProperty("done", true);
             return Task.FromResult(inputData);
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 }

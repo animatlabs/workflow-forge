@@ -35,15 +35,15 @@
     <!-- Documentation -->
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>2.0.0</Version>
-    <PackageVersion>2.0.0</PackageVersion>
+    <Version>2.1.0</Version>
+    <PackageVersion>2.1.0</PackageVersion>
     <PackageReleaseNotes>
-Major release v2.0.0:
-- Dependency isolation: Microsoft/System assemblies resolved by runtime
-- ISystemTimeProvider integrated for testability
-- Enhanced documentation and samples
-- Enterprise-ready for production workflows
+v2.1.0: Updated for WorkflowForge v2.1.0 compatibility. Removed SupportsRestore references. Added ConfigureAwait(false) to all await calls. Improved error handling and resource disposal.
     </PackageReleaseNotes>
+
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
@@ -51,12 +51,15 @@ Major release v2.0.0:
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.102" PrivateAssets="All" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.2" />
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.19.0.132793">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>

@@ -7,7 +7,7 @@ namespace WorkflowForge.Events
     /// Event arguments for compensation completed events.
     /// Fired when compensation (rollback) completes, successfully or with failures.
     /// </summary>
-    public class CompensationCompletedEventArgs : BaseWorkflowForgeEventArgs
+    public sealed class CompensationCompletedEventArgs : BaseWorkflowForgeEventArgs
     {
         /// <summary>
         /// Gets the timestamp when compensation completed.

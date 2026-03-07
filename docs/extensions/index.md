@@ -5,6 +5,12 @@ description: 13 NuGet packages for logging, resilience, observability, persisten
 
 # WorkflowForge Extension System
 
+<a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status" alt="Quality Gate Status" /></a>
+<a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage" alt="Coverage" /></a>
+<a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating" alt="Reliability Rating" /></a>
+<a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating" alt="Security Rating" /></a>
+<a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating" alt="Maintainability Rating" /></a>
+
 WorkflowForge follows an extension-first architecture where the core library provides minimal functionality, and rich features are delivered through a comprehensive extension ecosystem.
 
 ## Table of Contents
@@ -335,7 +341,7 @@ foundry
   "WorkflowForge": {
     "Polly": {
       "Retry": {
-        "MaxAttempts": 3,
+        "MaxRetryAttempts": 3,
         "BaseDelay": "00:00:01",
         "UseExponentialBackoff": true,
         "UseJitter": true
@@ -375,25 +381,34 @@ dotnet add package WorkflowForge.Extensions.Persistence
 **Usage:**
 ```csharp
 using WorkflowForge.Extensions.Persistence;
+using WorkflowForge.Extensions.Persistence.Abstractions;
 
 // Implement custom storage provider
-public class MyStorageProvider : IWorkflowStateStore
+public class MyStorageProvider : IWorkflowPersistenceProvider
 {
-    public async Task SaveStateAsync(WorkflowState state, CancellationToken ct)
+    public Task SaveAsync(WorkflowExecutionSnapshot snapshot, CancellationToken ct = default)
     {
         // Save to your database, file system, etc.
+        return Task.CompletedTask;
     }
-    
-    public async Task<WorkflowState?> LoadStateAsync(string workflowId, CancellationToken ct)
+
+    public Task<WorkflowExecutionSnapshot?> TryLoadAsync(
+        Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default)
     {
         // Load from your storage
+        return Task.FromResult<WorkflowExecutionSnapshot?>(null);
+    }
+
+    public Task DeleteAsync(Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default)
+    {
+        return Task.CompletedTask;
     }
 }
 
 // Use in workflow
-var stateStore = new MyStorageProvider();
+var provider = new MyStorageProvider();
 var foundry = WorkflowForge.CreateFoundry("PersistentWorkflow");
-foundry.AddStateStore(stateStore);
+foundry.UsePersistence(provider);
 ```
 
 #### WorkflowForge.Extensions.Persistence.Recovery
@@ -417,20 +432,20 @@ dotnet add package WorkflowForge.Extensions.Persistence.Recovery
 using WorkflowForge.Extensions.Persistence;
 using WorkflowForge.Extensions.Persistence.Recovery;
 
-var stateStore = new MyStorageProvider();
-var recoveryService = new WorkflowRecoveryService(stateStore);
+var provider = new MyStorageProvider();
 
-// Attempt to recover workflow
-var state = await recoveryService.LoadWorkflowStateAsync("workflow-123");
-if (state != null && state.CanRecover)
-{
-    var foundry = WorkflowForge.CreateFoundry("RecoveredWorkflow");
-    foundry.AddStateStore(stateStore);
-    foundry.EnableRecovery(state);
-    
-    // Resume from last checkpoint
-    await smith.ForgeAsync(workflow, foundry);
-}
+// Resume workflow from last checkpoint
+using var foundry = WorkflowForge.CreateFoundry("RecoveredWorkflow");
+foundry.UsePersistence(provider, options);
+
+var smith = WorkflowForge.CreateSmith();
+await smith.ForgeWithRecoveryAsync(
+    workflow,
+    foundry,
+    provider,
+    foundryKey,
+    workflowKey,
+    new RecoveryMiddlewareOptions { MaxRetryAttempts = 3, UseExponentialBackoff = true });
 ```
 
 **See Also:**
@@ -477,7 +492,7 @@ Console.WriteLine($"Operations/sec: {stats.OperationsPerSecond:F2}");
 // Per-operation statistics
 foreach (var opStats in stats.GetAllOperationStatistics())
 {
-    Console.WriteLine($"{opStats.OperationName}: {opStats.AverageDuration.TotalMilliseconds:F2}ms average");
+    Console.WriteLine($"{opStats.OperationName}: {opStats.AverageExecutionTime.TotalMilliseconds:F2}ms average");
 }
 ```
 
@@ -555,7 +570,7 @@ await smith.ForgeWithRecoveryAsync(
     provider,
     foundryKey,
     workflowKey,
-    new RecoveryPolicy { MaxAttempts = 5, BaseDelay = TimeSpan.FromMilliseconds(50), UseExponentialBackoff = true },
+    new RecoveryMiddlewareOptions { MaxRetryAttempts = 5, BaseDelay = TimeSpan.FromMilliseconds(50), UseExponentialBackoff = true },
     cancellationToken);
 ```
 
@@ -592,7 +607,7 @@ await smith.ForgeWithRecoveryAsync(
     provider,
     foundryKey,
     workflowKey,
-    new RecoveryPolicy { MaxAttempts = 3, BaseDelay = TimeSpan.FromMilliseconds(100), UseExponentialBackoff = true },
+    new RecoveryMiddlewareOptions { MaxRetryAttempts = 3, BaseDelay = TimeSpan.FromMilliseconds(100), UseExponentialBackoff = true },
     cancellationToken);
 ```
 
@@ -611,7 +626,7 @@ public sealed class MyRecoveryCatalog : IRecoveryCatalog
 }
 
 var catalog = new MyRecoveryCatalog();
-var coordinator = new RecoveryCoordinator(provider, new RecoveryPolicy { MaxAttempts = 3 });
+var coordinator = new RecoveryCoordinator(provider, new RecoveryMiddlewareOptions { MaxRetryAttempts = 3 });
 int recovered = await coordinator.ResumeAllAsync(
     () => WorkflowForge.CreateFoundry("Service"),
     () => BuildWorkflow(),
@@ -641,20 +656,17 @@ using WorkflowForge.Extensions.Observability.HealthChecks;
 
 var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
 var healthService = foundry.CreateHealthCheckService();
-var result = await healthService.CheckHealthAsync();
+var results = await healthService.CheckHealthAsync();
 
-Console.WriteLine($"Overall Status: {result.Status}");
-Console.WriteLine($"Memory Usage: {result.Results["Memory"].Description}");
-Console.WriteLine($"GC Health: {result.Results["GarbageCollector"].Description}");
-Console.WriteLine($"Thread Pool: {result.Results["ThreadPool"].Description}");
+Console.WriteLine($"Overall Status: {healthService.OverallStatus}");
+foreach (var (name, result) in results)
+{
+    Console.WriteLine($"{name}: {result.Status} - {result.Description}");
+}
 
 // Custom health checks
-foundry.AddHealthCheck("Database", async () =>
-{
-    var isHealthy = await CheckDatabaseConnectionAsync();
-    return isHealthy ? HealthCheckResult.Healthy("Database connection OK") 
-                     : HealthCheckResult.Unhealthy("Database connection failed");
-});
+healthService.RegisterHealthCheck(new DatabaseHealthCheck()); // implements IHealthCheck
+results = await healthService.CheckHealthAsync();
 ```
 
 #### WorkflowForge.Extensions.Observability.OpenTelemetry
@@ -694,10 +706,8 @@ foundry.SetProperty("Order", order);
 await smith.ForgeAsync(workflow, foundry);
 
 // Add custom events
-foundry.AddEvent("PaymentProcessed", new { 
-    Amount = order.Amount, 
-    PaymentMethod = order.PaymentMethod 
-});
+using var activity = foundry.StartActivity("PaymentProcessed");
+activity?.SetTag("amount", order.Amount.ToString());
 ```
 
 ## Extension Configuration Patterns
@@ -737,8 +747,8 @@ This keeps extension behavior predictable and avoids preset helper methods that 
 
 // Configuration loading
 var foundryConfig = configuration.GetSection("WorkflowForge");
-var foundry = WorkflowForge.CreateFoundry("ProcessOrder")
-    .ConfigureFromSection(foundryConfig);
+services.Configure<WorkflowForgeOptions>(foundryConfig);
+var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
 ```
 
 ### Validation Extension
@@ -855,7 +865,7 @@ var auditProvider = new InMemoryAuditProvider();
 
 // Enable audit logging
 var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
-foundry.EnableAudit(
+foundry.UseAudit(
     auditProvider,
     initiatedBy: "admin@company.com",
     includeMetadata: true);
@@ -906,14 +916,14 @@ public class DatabaseAuditProvider : IAuditProvider
 
 // Use custom provider
 var auditProvider = new DatabaseAuditProvider(dbContext);
-foundry.EnableAudit(auditProvider);
+foundry.UseAudit(auditProvider);
 ```
 
 **Audit Entry Structure:**
 ```csharp
 public class AuditEntry
 {
-    public Guid Id { get; init; }
+    public Guid AuditId { get; init; }
     public DateTimeOffset Timestamp { get; init; }
     public string WorkflowName { get; init; }
     public string OperationName { get; init; }

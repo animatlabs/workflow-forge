@@ -18,13 +18,18 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         private readonly IWorkflowForgeLogger _logger;
         private readonly ISystemTimeProvider _timeProvider;
         private readonly Timer? _periodicCheckTimer;
-        private readonly TimeSpan _checkInterval;
         private volatile bool _disposed;
 
         /// <summary>
         /// Gets the results of the last health check execution.
         /// </summary>
-        public IReadOnlyDictionary<string, HealthCheckResult> LastResults { get; private set; } =
+        public IReadOnlyDictionary<string, HealthCheckResult> LastResults
+        {
+            get => _lastResults;
+            private set => _lastResults = value;
+        }
+
+        private volatile IReadOnlyDictionary<string, HealthCheckResult> _lastResults =
             new Dictionary<string, HealthCheckResult>();
 
         /// <summary>
@@ -34,13 +39,14 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         {
             get
             {
-                if (!LastResults.Any())
+                var results = _lastResults;
+                if (!results.Any())
                     return HealthStatus.Healthy;
 
-                if (LastResults.Values.Any(r => r.Status == HealthStatus.Unhealthy))
+                if (results.Values.Any(r => r.Status == HealthStatus.Unhealthy))
                     return HealthStatus.Unhealthy;
 
-                if (LastResults.Values.Any(r => r.Status == HealthStatus.Degraded))
+                if (results.Values.Any(r => r.Status == HealthStatus.Degraded))
                     return HealthStatus.Degraded;
 
                 return HealthStatus.Healthy;
@@ -58,7 +64,6 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
-            _checkInterval = checkInterval ?? TimeSpan.FromMinutes(1);
 
             if (registerBuiltInHealthChecks)
             {
@@ -67,12 +72,13 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
 
             if (checkInterval.HasValue)
             {
-                _periodicCheckTimer = new Timer(PeriodicHealthCheck, null, _checkInterval, _checkInterval);
+                var interval = checkInterval.Value;
+                _periodicCheckTimer = new Timer(PeriodicHealthCheck, null, interval, interval);
 
                 var startupProperties = new Dictionary<string, string>
                 {
                     [HealthCheckPropertyNames.HealthStatus] = "ServiceStartup",
-                    [HealthCheckPropertyNames.MonitoringIntervalMs] = _checkInterval.TotalMilliseconds.ToString("F0")
+                    [HealthCheckPropertyNames.MonitoringIntervalMs] = interval.TotalMilliseconds.ToString("F0")
                 };
 
                 _logger.LogInformation(startupProperties, HealthCheckLogMessages.HealthCheckServiceStarted);
@@ -87,8 +93,10 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <exception cref="ObjectDisposedException">Thrown when the service has been disposed.</exception>
         public void RegisterHealthCheck(IHealthCheck healthCheck)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(HealthCheckService));
-            if (healthCheck == null) throw new ArgumentNullException(nameof(healthCheck));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(HealthCheckService));
+            if (healthCheck == null)
+                throw new ArgumentNullException(nameof(healthCheck));
 
             _healthChecks.AddOrUpdate(healthCheck.Name, healthCheck, (key, existing) => healthCheck);
 
@@ -108,7 +116,8 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <returns>True if the health check was removed; otherwise, false.</returns>
         public bool UnregisterHealthCheck(string name)
         {
-            if (_disposed || string.IsNullOrWhiteSpace(name)) return false;
+            if (_disposed || string.IsNullOrWhiteSpace(name))
+                return false;
 
             var removed = _healthChecks.TryRemove(name, out _);
             if (removed)
@@ -132,7 +141,8 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <exception cref="ObjectDisposedException">Thrown when the service has been disposed.</exception>
         public async Task<IReadOnlyDictionary<string, HealthCheckResult>> CheckHealthAsync(CancellationToken cancellationToken = default)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(HealthCheckService));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(HealthCheckService));
             cancellationToken.ThrowIfCancellationRequested();
 
             var results = new Dictionary<string, HealthCheckResult>();
@@ -197,8 +207,10 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// <returns>The health check result, or null if the health check is not found.</returns>
         public async Task<HealthCheckResult?> CheckHealthAsync(string name, CancellationToken cancellationToken = default)
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(HealthCheckService));
-            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Name cannot be null or empty", nameof(name));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(HealthCheckService));
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Name cannot be null or empty", nameof(name));
 
             if (!_healthChecks.TryGetValue(name, out var healthCheck))
             {
@@ -279,7 +291,8 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
 
         private void PeriodicHealthCheck(object? state)
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
 
             _ = Task.Run(async () =>
             {
@@ -300,7 +313,8 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         /// </summary>
         public void Dispose()
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
 
             _disposed = true;
             _periodicCheckTimer?.Dispose();
@@ -327,6 +341,7 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
             }
 
             _healthChecks.Clear();
+            GC.SuppressFinalize(this);
 
             var serviceDisposalProperties = new Dictionary<string, string>
             {

@@ -1,12 +1,13 @@
 # WorkflowForge.Extensions.Observability.HealthChecks
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
 Health check integration extension for WorkflowForge compatible with Microsoft.Extensions.Diagnostics.HealthChecks.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Observability.HealthChecks.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Observability.HealthChecks/)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 
 ## Zero Dependencies - Zero Conflicts
 
@@ -29,92 +30,90 @@ dotnet add package WorkflowForge.Extensions.Observability.HealthChecks
 ## Quick Start
 
 ```csharp
+using WorkflowForge;
 using WorkflowForge.Extensions.Observability.HealthChecks;
 
-// Configure health checks
-var healthCheck = new WorkflowHealthCheck(
-    timeProvider: new SystemTimeProvider(),
-    unhealthyThresholdSeconds: 30);
+using var foundry = WorkflowForge.CreateFoundry("MonitoredWorkflow");
 
-// Register workflow execution
-smith.WorkflowStarted += (s, e) => healthCheck.RecordWorkflowExecution();
-smith.WorkflowCompleted += (s, e) => healthCheck.RecordWorkflowExecution();
+// Create the health check service from the foundry
+var healthService = foundry.CreateHealthCheckService(
+    checkInterval: TimeSpan.FromSeconds(30));
 
-// Check health
-var healthStatus = await healthCheck.CheckHealthAsync(new HealthCheckContext());
+// Run all registered health checks
+var results = await healthService.CheckHealthAsync();
 
-if (healthStatus.Status == HealthStatus.Unhealthy)
+Console.WriteLine($"Overall status: {healthService.OverallStatus}");
+foreach (var (name, result) in results)
 {
-    logger.LogWarning("WorkflowForge health check failed: {Description}", 
-        healthStatus.Description);
+    Console.WriteLine($"  {name}: {result.Status} - {result.Description}");
 }
 ```
 
 ## Key Features
 
-- **ASP.NET Core Integration**: Compatible with health check middleware
-- **Workflow Monitoring**: Track workflow execution health
-- **Threshold-Based**: Configurable unhealthy thresholds
-- **Time Provider Integration**: `ISystemTimeProvider` for testability
-- **No Dependencies**: Interface-only implementation
+- **Built-in Checks**: Memory, Garbage Collector, and ThreadPool health checks out of the box
+- **Custom Health Checks**: Implement `IHealthCheck` to add your own checks
+- **Foundry Integration**: Create service directly from a foundry instance
+- **Configurable Interval**: Set check frequency for periodic monitoring
+- **Zero Dependencies**: WorkflowForge's own `IHealthCheck` abstraction (not Microsoft's)
 
-## ASP.NET Core Integration
+## Built-in Health Checks
 
-```csharp
-// Startup.cs or Program.cs
-services.AddSingleton<ISystemTimeProvider, SystemTimeProvider>();
-services.AddSingleton<WorkflowHealthCheck>();
+The `HealthCheckService` automatically registers three built-in checks when `registerBuiltInHealthChecks` is true (the default):
 
-services.AddHealthChecks()
-    .AddCheck<WorkflowHealthCheck>("workflow_health");
-
-app.MapHealthChecks("/health");
-```
-
-## Configuration
-
-```csharp
-var healthCheck = new WorkflowHealthCheck(
-    timeProvider: serviceProvider.GetRequiredService<ISystemTimeProvider>(),
-    unhealthyThresholdSeconds: 30);
-
-// Subscribe to events
-smith.WorkflowStarted += (s, e) => healthCheck.RecordWorkflowExecution();
-smith.WorkflowCompleted += (s, e) => healthCheck.RecordWorkflowExecution();
-```
-
-See [Configuration Guide](../../../docs/core/configuration.md#health-checks-extension) for complete options.
-
-## Health Status Logic
-
-- **Healthy**: Workflow executed within threshold (< 30 seconds by default)
-- **Unhealthy**: No workflow execution within threshold
-- **Degraded**: Not currently used
+| Check | Description |
+|-------|-------------|
+| `MemoryHealthCheck` | Monitors process memory usage |
+| `GarbageCollectorHealthCheck` | Monitors GC pressure and collection counts |
+| `ThreadPoolHealthCheck` | Monitors thread pool availability |
 
 ## Custom Health Check
 
 ```csharp
-public class CustomWorkflowHealthCheck : IHealthCheck
+using WorkflowForge.Extensions.Observability.HealthChecks.Abstractions;
+
+public class DatabaseHealthCheck : IHealthCheck
 {
-    private readonly IWorkflowSmith _smith;
-    private DateTime _lastExecution;
-    
+    public string Name => "Database";
+    public string Description => "Checks database connectivity";
+
     public async Task<HealthCheckResult> CheckHealthAsync(
-        HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
-        var timeSinceLastExecution = DateTime.UtcNow - _lastExecution;
-        
-        if (timeSinceLastExecution > TimeSpan.FromMinutes(5))
+        try
         {
-            return HealthCheckResult.Unhealthy(
-                $"No workflow execution in {timeSinceLastExecution.TotalMinutes:F1} minutes");
+            // Check your database connection
+            await CheckDatabaseAsync(cancellationToken);
+            return HealthCheckResult.Healthy("Database is reachable");
         }
-        
-        return HealthCheckResult.Healthy("Workflows executing normally");
+        catch (Exception ex)
+        {
+            return HealthCheckResult.Unhealthy("Database unreachable", ex);
+        }
     }
 }
+
+// Register custom checks
+healthService.RegisterHealthCheck(new DatabaseHealthCheck());
 ```
+
+## Health Status
+
+| Status | Meaning |
+|--------|---------|
+| `Healthy` | All checks pass |
+| `Degraded` | Some checks report degraded performance |
+| `Unhealthy` | One or more checks report failure |
+
+```csharp
+var result = await healthService.CheckHealthAsync("Memory");
+if (result?.Status == HealthStatus.Unhealthy)
+{
+    logger.LogWarning("Memory health check failed: {Description}", result.Description);
+}
+```
+
+See [Configuration Guide](../../../docs/core/configuration.md#health-checks-extension) for complete options.
 
 ## Monitoring Dashboard
 

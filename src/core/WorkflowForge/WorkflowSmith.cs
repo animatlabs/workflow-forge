@@ -28,6 +28,9 @@ namespace WorkflowForge
         private readonly SemaphoreSlim? _concurrencyLimiter;
         private readonly List<IWorkflowMiddleware> _workflowMiddlewares = new();
         private readonly object _workflowMiddlewareLock = new();
+        private readonly ConcurrentBag<IWorkflowFoundry> _foundryPool = new();
+        private static readonly int MaxPoolSize = Environment.ProcessorCount * 2;
+        private int _poolCount;
         private volatile bool _disposed;
 
         // ==================================================================================
@@ -65,14 +68,14 @@ namespace WorkflowForge
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _serviceProvider = serviceProvider;
             _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
-            _options = options ?? new WorkflowForgeOptions();
+            _options = options?.CloneTyped() ?? new WorkflowForgeOptions();
 
             // Validate options
             var validationErrors = _options.Validate();
             if (validationErrors.Count > 0)
             {
-                var errorMessage = $"Invalid WorkflowForge options: {string.Join("; ", validationErrors)}";
-                _logger.LogError(errorMessage);
+                var errorMessage = string.Format("Invalid WorkflowForge options: {0}", string.Join("; ", validationErrors));
+                _logger.LogError("Invalid WorkflowForge options: {ValidationErrors}", string.Join("; ", validationErrors));
                 throw new ArgumentException(errorMessage, nameof(options));
             }
 
@@ -84,7 +87,7 @@ namespace WorkflowForge
                     _options.MaxConcurrentWorkflows);
 
                 _logger.LogInformation(
-                    $"WorkflowSmith initialized with MaxConcurrentWorkflows={_options.MaxConcurrentWorkflows}");
+                    "WorkflowSmith initialized with MaxConcurrentWorkflows={MaxConcurrentWorkflows}", _options.MaxConcurrentWorkflows);
             }
             else
             {
@@ -103,11 +106,37 @@ namespace WorkflowForge
         public async Task ForgeAsync(IWorkflow workflow, CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
-            if (workflow == null) throw new ArgumentNullException(nameof(workflow));
+            if (workflow == null)
+                throw new ArgumentNullException(nameof(workflow));
 
-            // Simple pattern: create foundry internally
-            using var foundry = CreateFoundryFor(workflow);
-            await ForgeAsync(workflow, foundry, cancellationToken).ConfigureAwait(false);
+            IWorkflowFoundry? foundry = null;
+            if (!_foundryPool.TryTake(out foundry))
+            {
+                foundry = CreateFoundryFor(workflow);
+            }
+            else
+            {
+                Interlocked.Decrement(ref _poolCount);
+                ((WorkflowFoundry)foundry).Reset(Guid.NewGuid(), _logger, _serviceProvider, _options, workflow);
+            }
+
+            try
+            {
+                await ForgeAsync(workflow, foundry, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                if (!_disposed && Interlocked.Increment(ref _poolCount) <= MaxPoolSize)
+                {
+                    ((WorkflowFoundry)foundry).Reset(Guid.NewGuid(), _logger, _serviceProvider, _options, null);
+                    _foundryPool.Add(foundry);
+                }
+                else
+                {
+                    Interlocked.Decrement(ref _poolCount);
+                    foundry.Dispose();
+                }
+            }
         }
 
         /// <inheritdoc />
@@ -117,8 +146,10 @@ namespace WorkflowForge
             CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
-            if (workflow == null) throw new ArgumentNullException(nameof(workflow));
-            if (data == null) throw new ArgumentNullException(nameof(data));
+            if (workflow == null)
+                throw new ArgumentNullException(nameof(workflow));
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
 
             // Create foundry with provided data
             using var foundry = CreateFoundryWithData(data);
@@ -133,8 +164,10 @@ namespace WorkflowForge
             CancellationToken cancellationToken = default)
         {
             ThrowIfDisposed();
-            if (workflow == null) throw new ArgumentNullException(nameof(workflow));
-            if (foundry == null) throw new ArgumentNullException(nameof(foundry));
+            if (workflow == null)
+                throw new ArgumentNullException(nameof(workflow));
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
 
             // Apply concurrency throttling if configured
             if (_concurrencyLimiter != null)
@@ -146,7 +179,9 @@ namespace WorkflowForge
                 }
                 finally
                 {
-                    _concurrencyLimiter.Release();
+                    try
+                    { _concurrencyLimiter.Release(); }
+                    catch (ObjectDisposedException) { /* Smith disposed during execution */ }
                 }
             }
             else
@@ -205,44 +240,8 @@ namespace WorkflowForge
                 }
                 catch (Exception ex)
                 {
-                    var errorProperties = _logger.CreateErrorProperties(ex, "WorkflowExecution");
-                    _logger.LogError(errorProperties, ex, WorkflowLogMessageConstants.WorkflowExecutionFailed);
-
-                    // FIRE: WorkflowFailed event
-                    var duration = _timeProvider.UtcNow - startTime;
-                    var failedOperationName = foundry.Properties.TryGetValue("Operation.LastFailedName", out var failedNameValue)
-                        ? failedNameValue?.ToString() ?? "Unknown"
-                        : "Unknown";
-                    WorkflowFailed?.Invoke(this, new WorkflowFailedEventArgs(
-                        foundry,
-                        _timeProvider.UtcNow,
-                        ex,
-                        failedOperationName,
-                        duration));
-
-                    if (workflow.SupportsRestore)
-                    {
-                        var lastForgedIndex = -1;
-                        if (foundry.Properties.TryGetValue("Operation.LastCompletedIndex", out var lastCompletedValue)
-                            && lastCompletedValue is int completedIndex)
-                        {
-                            lastForgedIndex = completedIndex;
-                        }
-
-                        var compensationErrors = await CompensateForgedOperationsAsync(
-                            workflow.Operations,
-                            lastForgedIndex,
-                            foundry,
-                            cancellationToken).ConfigureAwait(false);
-
-                        if (compensationErrors.Count > 0 && (foundry.Options.FailFastCompensation || foundry.Options.ThrowOnCompensationError))
-                        {
-                            throw new AggregateException(
-                                "Workflow failed and compensation encountered errors.",
-                                PrependOriginalException(ex, compensationErrors));
-                        }
-                    }
-
+                    await HandleWorkflowFailureAsync(
+                        ex, workflow, foundry, startTime, cancellationToken).ConfigureAwait(false);
                     throw;
                 }
             };
@@ -266,6 +265,54 @@ namespace WorkflowForge
             await workflowExecution().ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Handles workflow failure by logging, firing events, and running compensation.
+        /// Throws <see cref="AggregateException"/> if compensation also fails and the foundry options require it.
+        /// </summary>
+        private async Task HandleWorkflowFailureAsync(
+            Exception ex,
+            IWorkflow workflow,
+            IWorkflowFoundry foundry,
+            DateTimeOffset startTime,
+            CancellationToken cancellationToken)
+        {
+            var errorProperties = _logger.CreateErrorProperties(ex, "WorkflowExecution");
+            _logger.LogError(errorProperties, ex, WorkflowLogMessageConstants.WorkflowExecutionFailed);
+
+            // FIRE: WorkflowFailed event
+            var duration = _timeProvider.UtcNow - startTime;
+            var failedOperationName = foundry.Properties.TryGetValue(FoundryPropertyKeys.LastFailedName, out var failedNameValue)
+                ? failedNameValue?.ToString() ?? FoundryPropertyKeys.UnknownValue
+                : FoundryPropertyKeys.UnknownValue;
+            WorkflowFailed?.Invoke(this, new WorkflowFailedEventArgs(
+                foundry,
+                _timeProvider.UtcNow,
+                ex,
+                failedOperationName,
+                duration));
+
+            // Always attempt compensation — the base class no-op handles non-restorable operations
+            var lastForgedIndex = -1;
+            if (foundry.Properties.TryGetValue(FoundryPropertyKeys.LastCompletedIndex, out var lastCompletedValue)
+                && lastCompletedValue is int completedIndex)
+            {
+                lastForgedIndex = completedIndex;
+            }
+
+            var compensationErrors = await CompensateForgedOperationsAsync(
+                workflow.Operations,
+                lastForgedIndex,
+                foundry,
+                cancellationToken).ConfigureAwait(false);
+
+            if (compensationErrors.Count > 0 && (foundry.Options.FailFastCompensation || foundry.Options.ThrowOnCompensationError))
+            {
+                throw new AggregateException(
+                    "Workflow failed and compensation encountered errors.",
+                    PrependOriginalException(ex, compensationErrors));
+            }
+        }
+
         /// <inheritdoc />
         /// <remarks>
         /// <para><strong>Isolation:</strong> Creates a NEW ConcurrentDictionary for Properties,
@@ -285,7 +332,7 @@ namespace WorkflowForge
                 properties,                                         // Isolated properties
                 logger ?? _logger,                                  // Logger (override or use smith's)
                 serviceProvider ?? _serviceProvider,                // ServiceProvider (override or use smith's)
-                options: _options.CloneTyped());                    // Clone options to avoid mutation
+                options: _options);                                 // Share options reference
         }
 
         /// <inheritdoc />
@@ -296,7 +343,8 @@ namespace WorkflowForge
         public IWorkflowFoundry CreateFoundryFor(IWorkflow workflow, IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null)
         {
             ThrowIfDisposed();
-            if (workflow == null) throw new ArgumentNullException(nameof(workflow));
+            if (workflow == null)
+                throw new ArgumentNullException(nameof(workflow));
 
             // NEW ConcurrentDictionary per foundry = complete isolation
             var properties = new ConcurrentDictionary<string, object?>();
@@ -307,21 +355,22 @@ namespace WorkflowForge
                 logger ?? _logger,                                  // Logger (override or use smith's)
                 serviceProvider ?? _serviceProvider,                // ServiceProvider (override or use smith's)
                 workflow,
-                options: _options.CloneTyped());                    // Pre-associate + options
+                options: _options);                                 // Pre-associate + options
         }
 
         /// <inheritdoc />
         public IWorkflowFoundry CreateFoundryWithData(ConcurrentDictionary<string, object?> data, IWorkflowForgeLogger? logger = null, IServiceProvider? serviceProvider = null)
         {
             ThrowIfDisposed();
-            if (data == null) throw new ArgumentNullException(nameof(data));
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
 
             return new WorkflowFoundry(
                 Guid.NewGuid(),
                 data,
                 logger ?? _logger,
                 serviceProvider ?? _serviceProvider,
-                options: _options.CloneTyped());
+                options: _options);
         }
 
         /// <summary>
@@ -337,7 +386,8 @@ namespace WorkflowForge
             IWorkflowFoundry foundry,
             CancellationToken cancellationToken)
         {
-            if (lastForgedIndex < 0) return Array.Empty<Exception>();
+            if (lastForgedIndex < 0)
+                return Array.Empty<Exception>();
 
             var failFast = GetFailFastCompensation(foundry);
             var errors = new List<Exception>();
@@ -352,7 +402,7 @@ namespace WorkflowForge
                 foundry,
                 _timeProvider.UtcNow,
                 "Operation failed, initiating compensation",
-                lastForgedIndex < operations.Count ? operations[lastForgedIndex].Name : "Unknown",
+                lastForgedIndex < operations.Count ? operations[lastForgedIndex].Name : FoundryPropertyKeys.UnknownValue,
                 null));
 
             int successCount = 0;
@@ -363,18 +413,6 @@ namespace WorkflowForge
             for (int i = lastForgedIndex; i >= 0; i--)
             {
                 var operation = operations[i];
-                if (!operation.SupportsRestore)
-                {
-                    var skipProperties = new Dictionary<string, string>
-                    {
-                        [PropertyNameConstants.ExecutionId] = operation.Id.ToString(),
-                        [PropertyNameConstants.ExecutionName] = operation.Name,
-                        [PropertyNameConstants.ExecutionType] = operation.GetType().Name
-                    };
-
-                    _logger.LogDebug(skipProperties, WorkflowLogMessageConstants.CompensationActionSkipped);
-                    continue;
-                }
 
                 var operationProperties = new Dictionary<string, string>
                 {
@@ -395,7 +433,7 @@ namespace WorkflowForge
                     OperationRestoreStarted?.Invoke(this, new OperationRestoreStartedEventArgs(operation, foundry));
 
                     object? outputData = null;
-                    var outputKey = $"Operation.{operation.Id}.Output";
+                    var outputKey = string.Format(FoundryPropertyKeys.OperationOutputFormat, i, operation.Name);
                     if (foundry.Properties.TryGetValue(outputKey, out var storedOutput))
                     {
                         outputData = storedOutput;
@@ -414,6 +452,12 @@ namespace WorkflowForge
                         restoreDuration));
 
                     successCount++;
+                }
+                catch (NotSupportedException)
+                {
+                    // Backward compatibility: direct IWorkflowOperation implementors may still throw
+                    // NotSupportedException from RestoreAsync. Treat as a skip (no-op).
+                    _logger.LogDebug(operationProperties, WorkflowLogMessageConstants.CompensationActionSkipped);
                 }
                 catch (Exception compensationEx)
                 {
@@ -481,7 +525,7 @@ namespace WorkflowForge
                 _logger,
                 _serviceProvider,
                 workflow,
-                options: _options.CloneTyped());
+                options: _options);
         }
 
         private IWorkflowFoundry CreateFoundryWithData(ConcurrentDictionary<string, object?> properties)
@@ -491,14 +535,15 @@ namespace WorkflowForge
                 properties,
                 _logger,
                 _serviceProvider,
-                options: _options.CloneTyped());
+                options: _options);
         }
 
         /// <inheritdoc />
         public void AddWorkflowMiddleware(IWorkflowMiddleware middleware)
         {
             ThrowIfDisposed();
-            if (middleware == null) throw new ArgumentNullException(nameof(middleware));
+            if (middleware == null)
+                throw new ArgumentNullException(nameof(middleware));
             lock (_workflowMiddlewareLock)
             {
                 _workflowMiddlewares.Add(middleware);
@@ -510,19 +555,39 @@ namespace WorkflowForge
         /// </summary>
         public void Dispose()
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
+            _disposed = true;
             _logger.LogTrace("WorkflowSmith disposal initiated");
 
-            // Dispose concurrency limiter if it was created
             _concurrencyLimiter?.Dispose();
 
-            _disposed = true;
+            while (_foundryPool.TryTake(out var pooledFoundry))
+            {
+                try
+                { pooledFoundry.Dispose(); }
+                catch (Exception ex) { _logger.LogWarning(ex, "Pooled foundry disposal failed"); }
+            }
+
+            WorkflowStarted = null;
+            WorkflowCompleted = null;
+            WorkflowFailed = null;
+            CompensationTriggered = null;
+            CompensationCompleted = null;
+            OperationRestoreStarted = null;
+            OperationRestoreCompleted = null;
+            OperationRestoreFailed = null;
+
+            foreach (var middleware in _workflowMiddlewares)
+                (middleware as IDisposable)?.Dispose();
+
             GC.SuppressFinalize(this);
         }
 
         private void ThrowIfDisposed()
         {
-            if (_disposed) throw new ObjectDisposedException(nameof(WorkflowSmith));
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(WorkflowSmith));
         }
     }
 }

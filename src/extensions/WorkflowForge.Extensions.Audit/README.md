@@ -1,12 +1,13 @@
 # WorkflowForge.Extensions.Audit
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
 Comprehensive audit logging extension for WorkflowForge with pluggable storage providers for compliance and observability.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Audit.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Audit/)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 
 ## Zero Dependencies - Zero Conflicts
 
@@ -29,47 +30,28 @@ dotnet add package WorkflowForge.Extensions.Audit
 ## Quick Start
 
 ```csharp
+using WorkflowForge;
 using WorkflowForge.Extensions.Audit;
+using WorkflowForge.Extensions.Audit.Options;
 
-// Implement audit provider
-public class FileAuditProvider : IAuditProvider
+// Create the audit provider
+var auditProvider = new InMemoryAuditProvider();
+
+// Create foundry, workflow, and smith
+using var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
+var smith = WorkflowForge.CreateSmith();
+var workflow = WorkflowForge.CreateWorkflow("OrderProcessing")
+    .AddOperation(new ActionWorkflowOperation("ValidateOrder", async (input, foundry, ct) => { /* ... */ }))
+    .Build();
+
+// Enable audit on the foundry
+foundry.UseAudit(auditProvider, new AuditMiddlewareOptions
 {
-    private readonly string _logPath;
-    
-    public FileAuditProvider(string logPath)
-    {
-        _logPath = logPath;
-    }
-    
-    public async Task WriteAuditEntryAsync(
-        AuditEntry entry,
-        CancellationToken cancellationToken = default)
-    {
-        var json = JsonSerializer.Serialize(entry);
-        await File.AppendAllTextAsync(_logPath, json + Environment.NewLine, cancellationToken);
-    }
-    
-    public Task FlushAsync(CancellationToken cancellationToken = default)
-    {
-        return Task.CompletedTask;
-    }
-}
-
-// Configure audit logging
-var auditProvider = new FileAuditProvider("audit.log");
-var auditLogger = new AuditLogger(
-    auditProvider,
-    userId: "user@example.com",
-    sessionId: Guid.NewGuid().ToString(),
-    timeProvider: new SystemTimeProvider());
-
-// Subscribe to events
-smith.WorkflowStarted += async (s, e) => 
-    await auditLogger.LogWorkflowStartedAsync(e);
-smith.WorkflowCompleted += async (s, e) => 
-    await auditLogger.LogWorkflowCompletedAsync(e);
-foundry.OperationCompleted += async (s, e) => 
-    await auditLogger.LogOperationCompletedAsync(e);
+    Enabled = true,
+    DetailLevel = AuditDetailLevel.Standard,
+    IncludeTimestamps = true,
+    IncludeUserContext = true
+}, initiatedBy: "user@example.com");
 
 await smith.ForgeAsync(workflow, foundry);
 ```
@@ -88,16 +70,17 @@ await smith.ForgeAsync(workflow, foundry);
 ```csharp
 public class AuditEntry
 {
-    public string EventType { get; set; }           // WorkflowStarted, OperationCompleted, etc.
-    public DateTimeOffset Timestamp { get; set; }
-    public string UserId { get; set; }
-    public string SessionId { get; set; }
-    public string WorkflowName { get; set; }
-    public string OperationName { get; set; }
-    public TimeSpan? Duration { get; set; }
-    public bool Success { get; set; }
-    public string ErrorMessage { get; set; }
-    public Dictionary<string, object> Metadata { get; set; }
+    public Guid AuditId { get; }                    // Unique identifier for this entry
+    public DateTimeOffset Timestamp { get; }
+    public Guid ExecutionId { get; }                // Workflow execution ID
+    public string WorkflowName { get; }
+    public string OperationName { get; }
+    public AuditEventType EventType { get; }       // WorkflowStarted, OperationCompleted, etc.
+    public string? InitiatedBy { get; }             // User or system that initiated the operation
+    public IReadOnlyDictionary<string, object?> Metadata { get; }
+    public string Status { get; }                  // Started, Completed, Failed, etc.
+    public string? ErrorMessage { get; }
+    public long? DurationMs { get; }               // Duration in milliseconds
 }
 ```
 
@@ -159,13 +142,16 @@ See [Configuration Guide](../../../docs/core/configuration.md#audit-extension) f
 public class DatabaseAuditProvider : IAuditProvider
 {
     private readonly IDbConnection _connection;
-    
-    public async Task WriteAuditEntryAsync(AuditEntry entry, CancellationToken cancellationToken)
+
+    public async Task WriteAuditEntryAsync(AuditEntry entry, CancellationToken cancellationToken = default)
     {
         await _connection.ExecuteAsync(
-            "INSERT INTO AuditLog (EventType, Timestamp, UserId, ...) VALUES (@EventType, @Timestamp, @UserId, ...)",
-            entry);
+            "INSERT INTO AuditLog (AuditId, Timestamp, ExecutionId, WorkflowName, OperationName, EventType, InitiatedBy, Status, ErrorMessage, DurationMs) VALUES (@AuditId, @Timestamp, @ExecutionId, @WorkflowName, @OperationName, @EventType, @InitiatedBy, @Status, @ErrorMessage, @DurationMs)",
+            entry,
+            cancellationToken);
     }
+
+    public Task FlushAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 }
 ```
 
@@ -175,13 +161,15 @@ public class DatabaseAuditProvider : IAuditProvider
 public class AzureAuditProvider : IAuditProvider
 {
     private readonly BlobContainerClient _container;
-    
-    public async Task WriteAuditEntryAsync(AuditEntry entry, CancellationToken cancellationToken)
+
+    public async Task WriteAuditEntryAsync(AuditEntry entry, CancellationToken cancellationToken = default)
     {
-        var blobName = $"{entry.Timestamp:yyyy-MM-dd}/{Guid.NewGuid()}.json";
+        var blobName = $"{entry.Timestamp:yyyy-MM-dd}/{entry.AuditId}.json";
         var blob = _container.GetBlobClient(blobName);
-        await blob.UploadAsync(JsonSerializer.Serialize(entry), cancellationToken);
+        await blob.UploadAsync(BinaryData.FromString(JsonSerializer.Serialize(entry)), overwrite: true, cancellationToken);
     }
+
+    public Task FlushAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 }
 ```
 

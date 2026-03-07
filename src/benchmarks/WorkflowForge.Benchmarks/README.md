@@ -1,17 +1,15 @@
 # WorkflowForge Internal Benchmarks
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge" width="120" height="120">
-</p>
-
 **Internal performance benchmarks for WorkflowForge core**
 
-**Last Updated**: January 2026  
+**Last Updated**: March 2026  
 **Published Results**: [Internal Benchmarks Documentation](../../../docs/performance/internal-benchmarks.md)
 
 ## Overview
 
 This project contains comprehensive internal performance benchmarks using BenchmarkDotNet to measure and track WorkflowForge's performance characteristics across different scenarios and configuration profiles.
+
+**Note**: ConfigurationProfilesBenchmark is not in the latest run results at BenchmarkDotNet.Artifacts.
 
 ## Benchmark Categories
 
@@ -27,7 +25,7 @@ Measures execution time and memory allocation for different operation types:
 - **ActionOperationCreation**: Action creation overhead
 - **CustomOperationCreation**: Custom operation instantiation
 
-**Results**: 12-290 μs execution, 296-1912 bytes allocated
+**Results**: 8.75-82 μs execution (CPU-bound), 56-8,536 bytes allocated
 
 ### 2. Workflow Throughput (`WorkflowThroughputBenchmark`)
 
@@ -38,7 +36,7 @@ Measures complete workflow execution with varying operation counts:
 - **HighPerformanceConfiguration**: Optimized configuration
 - **ForEachLoopWorkflow**: Collection processing workflows
 
-**Results**: 577-158,065 μs for 10 operations
+**Results**: 38-272 μs for CPU-bound workflows (1-50 operations)
 
 ### 3. Concurrency Performance (`ConcurrencyBenchmark`)
 
@@ -48,7 +46,7 @@ Measures parallel vs sequential workflow execution:
 - **ConcurrentWorkflows**: Execute 8 workflows concurrently
 - **ParallelWorkflows**: Execute using `Parallel.ForEach`
 
-**Results**: ~8x faster with concurrent/parallel execution (78-79ms vs 632ms)
+**Results**: ~8x faster with concurrent/parallel execution (79ms vs 627ms)
 
 ### 4. Memory Allocation (`MemoryAllocationBenchmark`)
 
@@ -58,17 +56,7 @@ Tracks memory usage and GC behavior:
 - **LargeObjectAllocation**: Handling large objects
 - **MemoryPressureScenario**: High memory scenarios
 
-**Results**: 2.65 KB for minimal, up to 4.9 MB for large objects
-
-### 5. Configuration Profiles (`ConfigurationProfilesBenchmark`)
-
-Measures overhead of different configuration approaches:
-
-- **MinimalConfiguration**: Zero-config baseline
-- **OptionsPatternWithValidation**: IOptions<T> with validation
-- **ConfigurationBinding**: Configuration system binding
-
-**Results**: 35-85 μs
+**Results**: 3,408 B (3.3 KB) for minimal, up to ~1 MB for large objects
 
 ## Running Benchmarks
 
@@ -104,16 +92,16 @@ Results are saved to `BenchmarkDotNet.Artifacts/results/` in multiple formats:
 
 | Category | Target | Actual |
 |----------|--------|--------|
-| Operation Execution | < 50 μs | 12-290 μs ✅ |
-| Workflow Creation | < 25 μs | 12-22 μs ✅ |
-| Memory per Operation | < 2 KB | 296-1912 B ✅ |
+| Operation Execution | < 50 μs | 8.75-82 μs ✅ |
+| Workflow Creation | < 25 μs | 1.2-1.9 μs ✅ |
+| Memory per Operation | < 2 KB | 56-8,536 B ✅ |
 | Concurrent Speedup | > 5x | 8x ✅ |
 
 ## Test System
 
 - **OS**: Windows 11 (25H2)
 - **CPU**: Intel 11th Gen i7-1185G7
-- **.NET**: 8.0.23
+- **Runtimes**: .NET 10.0.3, .NET 8.0.24, .NET Framework 4.8.1
 - **BenchmarkDotNet**: v0.15.8
 
 ## Documentation

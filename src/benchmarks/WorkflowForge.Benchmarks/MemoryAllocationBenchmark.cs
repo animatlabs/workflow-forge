@@ -1,7 +1,6 @@
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Engines;
 using System.Collections.Concurrent;
 using System.Text;
+using BenchmarkDotNet.Attributes;
 using WorkflowForge.Extensions;
 
 namespace WorkflowForge.Benchmarks;
@@ -13,10 +12,6 @@ namespace WorkflowForge.Benchmarks;
 /// - Garbage collection efficiency
 /// - Memory-optimized configurations
 /// </summary>
-[MemoryDiagnoser]
-[SimpleJob(RunStrategy.Monitoring, iterationCount: 50)]
-[MarkdownExporter]
-[HtmlExporter]
 public class MemoryAllocationBenchmark
 {
     [Params(10, 50, 100, 500)]
@@ -77,7 +72,9 @@ public class MemoryAllocationBenchmark
             {
                 // Allocate large objects (85KB+ to go to LOH)
                 var largeData = new byte[100_000];
-                Array.Fill(largeData, (byte)(index % 256));
+                var fillByte = (byte)(index % 256);
+                for (int k = 0; k < largeData.Length; k++)
+                    largeData[k] = fillByte;
                 foundry.Properties[$"large_{index}"] = largeData;
                 await Task.Yield();
             });
@@ -210,7 +207,9 @@ public class MemoryAllocationBenchmark
                 // Allocate various sizes to create memory pressure
                 var size = (index % 5 + 1) * 10_000; // 10KB to 50KB
                 var allocation = new byte[size];
-                Array.Fill(allocation, (byte)(index % 256));
+                var fillByte = (byte)(index % 256);
+                for (int k = 0; k < allocation.Length; k++)
+                    allocation[k] = fillByte;
                 data.Add(allocation);
 
                 // Occasionally force GC to test pressure handling
@@ -272,8 +271,9 @@ public class MemoryAllocationBenchmark
             {
                 var array = (int[])foundry.Properties["reuseable_array"]!;
 
-                // Reuse array instead of allocating new one
-                Array.Fill(array, index, 0, Math.Min(array.Length, index + 1));
+                var fillCount = Math.Min(array.Length, index + 1);
+                for (int k = 0; k < fillCount; k++)
+                    array[k] = index;
 
                 await Task.Yield();
                 foundry.Properties[$"array_sum_{index}"] = array.Sum();
@@ -355,7 +355,8 @@ public class DisposableBenchmarkResource : IDisposable
 
     public async Task DoWorkAsync(int workId)
     {
-        if (_disposed) throw new ObjectDisposedException(nameof(DisposableBenchmarkResource));
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(DisposableBenchmarkResource));
 
         await Task.Delay(1);
         // Simulate work with the resource

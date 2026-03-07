@@ -5,6 +5,12 @@ description: Design principles, patterns, and implementation details behind Work
 
 # WorkflowForge Architecture
 
+<a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status" alt="Quality Gate Status" /></a>
+<a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage" alt="Coverage" /></a>
+<a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating" alt="Reliability Rating" /></a>
+<a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating" alt="Security Rating" /></a>
+<a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating" alt="Maintainability Rating" /></a>
+
 Complete architectural overview of WorkflowForge's design principles, patterns, and implementation.
 
 ---
@@ -233,12 +239,13 @@ public interface IWorkflowOperation : IDisposable
 {
     Guid Id { get; }
     string Name { get; }
-    bool SupportsRestore { get; }
     
     Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken ct);
     Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken ct);
 }
 ```
+
+**Compensation**: Override `RestoreAsync` in your operation to support compensation. The base class provides a no-op default — operations that don't override it are safely skipped during compensation.
 
 **Type-Safe Variant**:
 ```csharp
@@ -372,9 +379,11 @@ public interface IOperationLifecycleEvents
 // Compensation lifecycle
 public interface ICompensationLifecycleEvents
 {
-    event EventHandler<CompensationStartedEventArgs>? CompensationStarted;
+    event EventHandler<CompensationTriggeredEventArgs>? CompensationTriggered;
     event EventHandler<CompensationCompletedEventArgs>? CompensationCompleted;
-    event EventHandler<CompensationFailedEventArgs>? CompensationFailed;
+    event EventHandler<OperationRestoreStartedEventArgs>? OperationRestoreStarted;
+    event EventHandler<OperationRestoreCompletedEventArgs>? OperationRestoreCompleted;
+    event EventHandler<OperationRestoreFailedEventArgs>? OperationRestoreFailed;
 }
 ```
 
@@ -391,11 +400,12 @@ All event args inherit from `BaseWorkflowForgeEventArgs`:
 ```csharp
 public abstract class BaseWorkflowForgeEventArgs : EventArgs
 {
-    public Guid ExecutionId { get; }
-    public string WorkflowName { get; }
+    public IWorkflowFoundry Foundry { get; }
     public DateTimeOffset Timestamp { get; }
 }
 ```
+
+Access `ExecutionId` and workflow name via `e.Foundry.ExecutionId` and `e.Foundry.CurrentWorkflow?.Name`.
 
 For complete event documentation, see [Event System Guide](../core/events.md).
 
@@ -475,8 +485,6 @@ Every operation can implement compensation:
 ```csharp
 public class CreateOrderOperation : WorkflowOperationBase
 {
-    public override bool SupportsRestore => true;
-    
     protected override async Task<object?> ForgeAsyncCore(
         object? inputData, 
         IWorkflowFoundry foundry, 
@@ -507,7 +515,7 @@ public class CreateOrderOperation : WorkflowOperationBase
 4. Executes `RestoreAsync` in **reverse order** on completed operations
 5. Fires `CompensationTriggered`, `CompensationCompleted` events
 
-**Design Decision**: Compensation is opt-in via `SupportsRestore` property.
+**Design Decision**: Compensation runs on all completed operations. Override `RestoreAsync` to implement rollback logic; the base class no-op safely skips operations that don't need compensation.
 
 ---
 
@@ -539,7 +547,7 @@ All operations are async-first:
 - Direct execution paths
 - No reflection in hot paths
 
-**Result**: 11-540x faster than competitors, 9-573x less memory (12 scenarios tested).
+**Result**: 13-511x faster than competitors, 6-575x less memory (12 scenarios tested across .NET 10.0, .NET 8.0, and .NET Framework 4.8).
 
 ---
 

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
@@ -9,12 +10,12 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
     /// <summary>
     /// Implements a resilience strategy with random intervals between retry attempts to reduce thundering herd problems.
     /// </summary>
+    [SuppressMessage("Security", "S2245:Random is used for non-security-sensitive retry jitter", Justification = "System.Random is intentionally used for retry delay jitter; cryptographic randomness is not required")]
     public sealed class RandomIntervalStrategy : ResilienceStrategyBase
     {
         private readonly TimeSpan _minInterval;
         private readonly TimeSpan _maxInterval;
-        private readonly int _maxAttempts;
-        private readonly Func<Exception, bool>? _retryPredicate;
+        private static readonly Random SeedSource = new Random();
         private readonly Random _random;
 
         /// <summary>
@@ -31,7 +32,8 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
             TimeSpan maxInterval,
             Func<Exception, bool>? retryPredicate = null,
             IWorkflowForgeLogger? logger = null)
-            : base($"RandomInterval(min:{minInterval.TotalMilliseconds}ms,max:{maxInterval.TotalMilliseconds}ms,attempts:{maxAttempts})", logger)
+            : base($"RandomInterval(min:{minInterval.TotalMilliseconds}ms,max:{maxInterval.TotalMilliseconds}ms,attempts:{maxAttempts})",
+                   maxAttempts, retryPredicate, logger)
         {
             if (minInterval < TimeSpan.Zero)
                 throw new ArgumentOutOfRangeException(nameof(minInterval), "Minimum interval cannot be negative");
@@ -42,41 +44,11 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
 
             _minInterval = minInterval;
             _maxInterval = maxInterval;
-            _maxAttempts = maxAttempts;
-            _retryPredicate = retryPredicate;
 
-            // Use thread-safe random with different seed per instance
-            _random = new Random(Environment.TickCount + GetHashCode());
-        }
-
-        /// <inheritdoc />
-        public override Task<bool> ShouldRetryAsync(int attemptNumber, Exception? exception, CancellationToken cancellationToken)
-        {
-            // Don't retry if we've exceeded max attempts
-            if (attemptNumber >= _maxAttempts)
-            {
-                Logger?.LogDebug("Max attempts ({MaxAttempts}) reached, not retrying", _maxAttempts);
-                return Task.FromResult(false);
-            }
-
-            // Don't retry cancellation
-            if (exception is OperationCanceledException)
-            {
-                Logger?.LogDebug("Operation was cancelled, not retrying");
-                return Task.FromResult(false);
-            }
-
-            // Use custom predicate if provided
-            if (_retryPredicate != null && exception != null)
-            {
-                bool shouldRetry = _retryPredicate(exception);
-                Logger?.LogDebug("Custom retry predicate returned {ShouldRetry} for exception {ExceptionType}",
-                    shouldRetry, exception.GetType().Name);
-                return Task.FromResult(shouldRetry);
-            }
-
-            // By default, retry all exceptions except cancellation
-            return Task.FromResult(true);
+            int seed;
+            lock (SeedSource)
+            { seed = SeedSource.Next(); }
+            _random = new Random(seed);
         }
 
         /// <inheritdoc />
@@ -98,42 +70,9 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
         }
 
         /// <inheritdoc />
-        public override async Task ExecuteAsync(Func<Task> operation, CancellationToken cancellationToken = default)
+        public override Task ExecuteAsync(Func<Task> operation, CancellationToken cancellationToken = default)
         {
-            if (operation == null)
-                throw new ArgumentNullException(nameof(operation));
-
-            var attemptNumber = 0;
-
-            while (true)
-            {
-                attemptNumber++;
-                cancellationToken.ThrowIfCancellationRequested();
-
-                try
-                {
-                    await operation().ConfigureAwait(false);
-                    return; // Success
-                }
-                catch (Exception ex)
-                {
-                    var shouldRetry = await ShouldRetryAsync(attemptNumber, ex, cancellationToken);
-                    if (!shouldRetry)
-                    {
-                        Logger?.LogError(ex, $"Attempt {attemptNumber} failed and will not be retried");
-                        throw;
-                    }
-
-                    var delay = GetRetryDelay(attemptNumber, ex);
-
-                    Logger?.LogWarning($"Attempt {attemptNumber} failed, retrying in {delay.TotalMilliseconds}ms. Error: {ex.Message}");
-
-                    if (delay > TimeSpan.Zero)
-                    {
-                        await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
-                    }
-                }
-            }
+            return ExecuteWithRetryAsync(operation, cancellationToken);
         }
 
         /// <summary>

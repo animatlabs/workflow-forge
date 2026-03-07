@@ -21,7 +21,7 @@ namespace WorkflowForge.Extensions.Resilience.Abstractions
         /// <param name="exception">The exception that occurred, if any.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>True if a retry should be attempted; otherwise, false.</returns>
-        Task<bool> ShouldRetryAsync(int attemptNumber, Exception? exception, CancellationToken cancellationToken);
+        Task<bool> ShouldRetryAsync(int attemptNumber, Exception? exception, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets the delay before the next retry attempt.
@@ -37,7 +37,7 @@ namespace WorkflowForge.Extensions.Resilience.Abstractions
         /// <param name="operation">The operation to execute.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        Task ExecuteAsync(Func<Task> operation, CancellationToken cancellationToken);
+        Task ExecuteAsync(Func<Task> operation, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Executes an operation with resilience handling and returns a result.
@@ -46,6 +46,6 @@ namespace WorkflowForge.Extensions.Resilience.Abstractions
         /// <param name="operation">The operation to execute.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task representing the asynchronous operation with a result.</returns>
-        Task<T> ExecuteAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken);
+        Task<T> ExecuteAsync<T>(Func<Task<T>> operation, CancellationToken cancellationToken = default);
     }
 }

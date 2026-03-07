@@ -1,5 +1,6 @@
 using WorkflowForge.Abstractions;
 using WorkflowForge.Extensions;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Samples.BasicConsole.Samples;
 
@@ -25,58 +26,40 @@ public class OutputChainingSample : ISample
         await foundry.ForgeAsync();
     }
 
-    private sealed class SeedNumberOperation : IWorkflowOperation
+    private sealed class SeedNumberOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "SeedNumber";
-        public bool SupportsRestore => false;
+        public override string Name => "SeedNumber";
 
-        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var value = 7;
             Console.WriteLine($"Seed value: {value}");
             return Task.FromResult<object?>(value);
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
-    private sealed class MultiplyOperation : IWorkflowOperation
+    private sealed class MultiplyOperation : WorkflowOperationBase
     {
         private readonly int _multiplier;
 
         public MultiplyOperation(int multiplier) => _multiplier = multiplier;
 
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "Multiply";
-        public bool SupportsRestore => false;
+        public override string Name => "Multiply";
 
-        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var value = inputData is int number ? number : 0;
             var result = value * _multiplier;
             Console.WriteLine($"Multiply {value} x {_multiplier} = {result}");
             return Task.FromResult<object?>(result);
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 
-    private sealed class FormatResultOperation : IWorkflowOperation
+    private sealed class FormatResultOperation : WorkflowOperationBase
     {
-        public Guid Id { get; } = Guid.NewGuid();
-        public string Name => "FormatResult";
-        public bool SupportsRestore => false;
+        public override string Name => "FormatResult";
 
-        public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
             var value = inputData is int number ? number : 0;
             var message = $"Final result: {value}";
@@ -84,11 +67,5 @@ public class OutputChainingSample : ISample
             foundry.Properties["final_message"] = message;
             return Task.FromResult<object?>(message);
         }
-
-        public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-            => Task.CompletedTask;
-
-        public void Dispose()
-        { }
     }
 }

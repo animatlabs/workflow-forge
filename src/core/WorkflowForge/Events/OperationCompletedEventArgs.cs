@@ -7,7 +7,7 @@ namespace WorkflowForge.Events
     /// Event arguments for operation completed events.
     /// Fired when an operation completes successfully.
     /// </summary>
-    public class OperationCompletedEventArgs : BaseWorkflowForgeEventArgs
+    public sealed class OperationCompletedEventArgs : BaseWorkflowForgeEventArgs
     {
         /// <summary>
         /// Gets the operation that completed.

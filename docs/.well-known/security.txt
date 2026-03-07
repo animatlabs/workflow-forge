@@ -1,0 +1,5 @@
+Contact: https://github.com/animatlabs/workflow-forge/security/advisories
+Expires: 2027-02-28T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://animatlabs.com/workflow-forge/.well-known/security.txt
+Policy: https://github.com/animatlabs/workflow-forge/blob/main/SECURITY.md

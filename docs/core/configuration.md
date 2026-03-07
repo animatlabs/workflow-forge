@@ -247,7 +247,7 @@ public sealed class WorkflowForgeOptions : WorkflowForgeOptionsBase
 
 Without explicit settings, WorkflowForge operates with:
 
-- **Automatic compensation**: On failure, `WorkflowSmith` triggers `RestoreAsync` (only for operations with `SupportsRestore`)
+- **Automatic compensation**: On failure, `WorkflowSmith` triggers `RestoreAsync` on all completed operations (no-op base class default handles non-restorable operations)
 - **Stop-on-first-error**: Execution stops at the first failed operation
 - **Best-effort compensation**: Compensation continues even if a restore fails
 - **No concurrency limits**: Limited only by system resources
@@ -310,11 +310,11 @@ var total = foundry.GetPropertyOrDefault<decimal>("Total");
 public class OrderWorkflowService
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<OrderWorkflowService> _logger;
+    private readonly IWorkflowForgeLogger _logger;
     
     public OrderWorkflowService(
         IServiceProvider serviceProvider,
-        ILogger<OrderWorkflowService> logger)
+        IWorkflowForgeLogger logger)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
@@ -322,16 +322,13 @@ public class OrderWorkflowService
     
     public async Task ProcessOrderAsync(Order order)
     {
-        // Create foundry with service provider
-        using var foundry = WorkflowForge.CreateFoundry(
-            $"Order-{order.Id}",
-            _serviceProvider);
+        // Create smith with service provider (foundry inherits it)
+        using var smith = WorkflowForge.CreateSmith(_logger, _serviceProvider);
+        using var foundry = smith.CreateFoundry();
         
         foundry.SetProperty("Order", order);
         
         var workflow = BuildOrderWorkflow();
-        
-        using var smith = WorkflowForge.CreateSmith();
         await smith.ForgeAsync(workflow, foundry);
     }
     
@@ -356,21 +353,21 @@ using var foundry = WorkflowForge.CreateFoundry("MonitoredWorkflow");
 
 // Configure workflow events
 smith.WorkflowStarted += (s, e) =>
-    _logger.LogInformation("Workflow started: {Name}", e.WorkflowName);
+    _logger.LogInformation("Workflow started: {Name}", e.Foundry.CurrentWorkflow?.Name);
 
 smith.WorkflowCompleted += (s, e) =>
     _logger.LogInformation("Workflow completed in {Duration}ms", 
         e.Duration.TotalMilliseconds);
 
 smith.WorkflowFailed += (s, e) =>
-    _logger.LogError(e.Exception, "Workflow failed: {Name}", e.WorkflowName);
+    _logger.LogError(e.Exception, "Workflow failed: {Name}", e.Foundry.CurrentWorkflow?.Name);
 
 // Configure operation events
 foundry.OperationStarted += (s, e) =>
-    _logger.LogDebug("Operation started: {Name}", e.OperationName);
+    _logger.LogDebug("Operation started: {Name}", e.Operation.Name);
 
 foundry.OperationCompleted += (s, e) =>
-    _metrics.RecordOperationDuration(e.OperationName, e.Duration);
+    _metrics.RecordOperationDuration(e.Operation.Name, e.Duration);
 
 await smith.ForgeAsync(workflow, foundry);
 ```
@@ -381,16 +378,14 @@ await smith.ForgeAsync(workflow, foundry);
 // Configure operation middleware
 using var foundry = WorkflowForge.CreateFoundry("MiddlewareExample");
 
-// Add timing middleware (from Performance extension)
-foundry.AddMiddleware(new TimingMiddleware(logger));
+// Add timing middleware (built-in)
+foundry.UseTiming();
 
-// Add error handling middleware
-foundry.AddMiddleware(new ErrorHandlingMiddleware(logger));
+// Add error handling middleware (built-in)
+foundry.UseErrorHandling(rethrowExceptions: true);
 
 // Add validation middleware (from Validation extension)
-foundry.AddMiddleware(new ValidationMiddleware<Order>(
-    validator, 
-    f => f.GetPropertyOrDefault<Order>("Order")));
+foundry.UseValidation(f => f.GetPropertyOrDefault<Order>("Order"));
 
 await smith.ForgeAsync(workflow, foundry);
 ```
@@ -431,9 +426,9 @@ var resilientOperation = RetryWorkflowOperation.WithExponentialBackoff(
 
 // Or use specific strategies
 var strategy = new ExponentialBackoffStrategy(
-    maxAttempts: 5,
     baseDelay: TimeSpan.FromSeconds(1),
     maxDelay: TimeSpan.FromSeconds(60),
+    maxAttempts: 5,
     logger: logger);
 
 var resilientOp = new RetryWorkflowOperation(myOperation, strategy);
@@ -470,13 +465,14 @@ var retryPolicy = Policy
                 retryCount, timeSpan.TotalMilliseconds);
         });
 
-// Wrap operation with policy
-var operation = new PollyWrappedOperation<HttpResponseMessage>(
+// Wrap operation with Polly retry
+var resilientOp = PollyRetryOperation.WithRetryPolicy(
     new CallExternalApiOperation(),
-    retryPolicy);
+    maxRetryAttempts: 3,
+    baseDelay: TimeSpan.FromSeconds(1));
 
 var workflow = WorkflowForge.CreateWorkflow("ResilientWorkflow")
-    .AddOperation(operation)
+    .AddOperation(resilientOp)
     .Build();
 ```
 
@@ -602,36 +598,42 @@ await smith.ForgeAsync(workflow, foundry);
 
 **Zero Dependencies**: Pure WorkflowForge extension. Implement `IAuditProvider` for your storage.
 
-### Persistence Extensions
+### Persistence Extension
 
 ```csharp
-using WorkflowForge.Extensions.Persistence.InMemory;
-using WorkflowForge.Extensions.Persistence.SQLite;
+using WorkflowForge.Extensions.Persistence;
+using WorkflowForge.Extensions.Persistence.Abstractions;
 
-// In-memory persistence (development/testing)
-var inMemoryProvider = new InMemoryPersistenceProvider();
-await inMemoryProvider.SaveWorkflowStateAsync(executionId, state);
-var loadedState = await inMemoryProvider.LoadWorkflowStateAsync(executionId);
-
-// SQLite persistence (production)
-var sqliteProvider = new SQLitePersistenceProvider("workflows.db");
-await sqliteProvider.SaveWorkflowStateAsync(executionId, state);
-var loadedState = await sqliteProvider.LoadWorkflowStateAsync(executionId);
-
-// Use in workflow
-foundry.SetProperty("PersistenceProvider", sqliteProvider);
-
-// Save checkpoints during execution
-var checkpointOp = new DelegateWorkflowOperation(async (foundry, ct) =>
+// Implement IWorkflowPersistenceProvider for your storage
+public sealed class MyPersistenceProvider : IWorkflowPersistenceProvider
 {
-    var provider = foundry.GetPropertyOrDefault<IPersistenceProvider>("PersistenceProvider");
-    var state = new WorkflowState { /* ... */ };
-    await provider.SaveWorkflowStateAsync(foundry.ExecutionId, state, ct);
-});
+    public Task SaveAsync(WorkflowExecutionSnapshot snapshot, CancellationToken ct = default)
+    {
+        // Save to your database, file system, etc.
+        return Task.CompletedTask;
+    }
+
+    public Task<WorkflowExecutionSnapshot?> TryLoadAsync(
+        Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default)
+    {
+        // Load from your storage
+        return Task.FromResult<WorkflowExecutionSnapshot?>(null);
+    }
+
+    public Task DeleteAsync(Guid foundryExecutionId, Guid workflowId, CancellationToken ct = default)
+    {
+        // Delete from your storage
+        return Task.CompletedTask;
+    }
+}
+
+// Enable persistence via middleware
+var provider = new MyPersistenceProvider();
+using var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
+foundry.UsePersistence(provider);
 ```
 
-**Zero Dependencies (InMemory)**: Pure WorkflowForge extension.  
-**Dependency Isolation (SQLite)**: Microsoft.Data.Sqlite embedded.
+**Zero Dependencies**: Bring-your-own-storage pattern with no external dependencies.
 
 ---
 
@@ -651,7 +653,7 @@ public static class DevelopmentConfiguration
         });
 
         var foundry = WorkflowForge.CreateFoundry(name, logger);
-        foundry.AddMiddleware(new TimingMiddleware(foundry.Logger));
+        foundry.UseTiming();
 
         return foundry;
     }
@@ -715,9 +717,9 @@ public class OrderOperation : WorkflowOperationBase
 
 ```csharp
 // Correct order: Validation → Timing → Error Handling → Business Logic
-foundry.AddMiddleware(new ValidationMiddleware<Order>(...));  // First
-foundry.AddMiddleware(new TimingMiddleware(...));             // Second
-foundry.AddMiddleware(new ErrorHandlingMiddleware(...));      // Third
+foundry.UseValidation(f => f.GetPropertyOrDefault<Order>("Order"));  // First
+foundry.UseTiming();                                                  // Second
+foundry.UseErrorHandling(rethrowExceptions: true);                   // Third
 // Operations execute last
 ```
 

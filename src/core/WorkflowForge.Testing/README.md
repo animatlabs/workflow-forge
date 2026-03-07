@@ -1,6 +1,11 @@
 # WorkflowForge.Testing
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Testing.svg)](https://www.nuget.org/packages/WorkflowForge.Testing/)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/WorkflowForge.Testing.svg)](https://www.nuget.org/packages/WorkflowForge.Testing/)
 
 Testing utilities for WorkflowForge. This package provides test doubles and helpers for unit testing workflow operations without requiring the full workflow infrastructure.

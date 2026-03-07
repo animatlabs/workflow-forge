@@ -6,7 +6,7 @@ namespace WorkflowForge.Events
     /// <summary>
     /// Event arguments for operation started events.
     /// </summary>
-    public class OperationStartedEventArgs : BaseWorkflowForgeEventArgs
+    public sealed class OperationStartedEventArgs : BaseWorkflowForgeEventArgs
     {
         /// <summary>
         /// Gets the operation that started.
