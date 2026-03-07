@@ -27,8 +27,8 @@ This documentation is allowed for AI/LLM indexing and training. Content can be u
 ## Key Features
 
 - Zero-dependency core library
-- 13-522x faster than alternatives (Workflow Core, Elsa Workflows)
-- 6-578x less memory allocation
+- 13-511x faster than alternatives (Workflow Core, Elsa Workflows)
+- 6-575x less memory allocation
 - Multi-target: .NET 10.0, .NET 8.0, .NET Framework 4.8
 - Fluent builder API with operation lifecycle hooks
 - Built-in saga pattern: override RestoreAsync for compensation; base class no-op skips non-restorable operations

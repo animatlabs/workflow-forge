@@ -37,7 +37,7 @@ foundry.UsePollyRetry(maxRetryAttempts: 3, baseDelay: TimeSpan.FromSeconds(1));
 
 // Option 2: Wrap individual operations
 var resilientOp = PollyRetryOperation.WithRetryPolicy(
-    new CallExternalApiOperation(),
+    new ActionWorkflowOperation("CallApi", async (input, foundry, ct) => { /* call external API */ }),
     maxRetryAttempts: 3,
     baseDelay: TimeSpan.FromSeconds(1));
 
@@ -135,57 +135,38 @@ services.AddWorkflowForgePolly(configuration, PollyMiddlewareOptions.DefaultSect
 var options = serviceProvider.GetRequiredService<PollyMiddlewareOptions>();
 ```
 
-### Preset Configurations
-
-```csharp
-// Development settings (minimal retry)
-var devOptions = PollyMiddlewareOptions.ForDevelopment();
-
-// Production settings (retry + circuit breaker)
-var prodOptions = PollyMiddlewareOptions.ForProduction();
-
-// Enterprise settings (all policies enabled)
-var enterpriseOptions = PollyMiddlewareOptions.ForEnterprise();
-
-// Minimal settings (basic retry only)
-var minimalOptions = PollyMiddlewareOptions.Minimal();
-```
-
 See [Configuration Guide](../../../docs/core/configuration.md#polly-extension) for complete options.
 
-## Policy Examples
+## Usage Examples
 
 ### Retry with Exponential Backoff
 
 ```csharp
-var retryPolicy = Policy
-    .Handle<HttpRequestException>()
-    .WaitAndRetryAsync(3, 
-        attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+// Foundry-level: applies retry to all operations
+foundry.UsePollyRetry(maxRetryAttempts: 3, baseDelay: TimeSpan.FromSeconds(1));
 ```
 
-### Circuit Breaker
+### Comprehensive Policies (Retry + Circuit Breaker + Timeout)
 
 ```csharp
-var circuitBreakerPolicy = Policy
-    .Handle<HttpRequestException>()
-    .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
+foundry.UsePollyComprehensive(
+    maxRetryAttempts: 3,
+    circuitBreakerThreshold: 5,
+    timeoutDuration: TimeSpan.FromSeconds(30));
 ```
 
-### Timeout
+### Code-Configured Options
 
 ```csharp
-var timeoutPolicy = Policy
-    .TimeoutAsync(TimeSpan.FromSeconds(30));
-```
+var options = new PollyMiddlewareOptions
+{
+    Enabled = true,
+    Retry = { IsEnabled = true, MaxRetryAttempts = 5, BaseDelay = TimeSpan.FromSeconds(2) },
+    CircuitBreaker = { IsEnabled = true, FailureThreshold = 10 },
+    Timeout = { IsEnabled = true, DefaultTimeout = TimeSpan.FromSeconds(60) }
+};
 
-### Combined Policies
-
-```csharp
-var combinedPolicy = Policy.WrapAsync(
-    retryPolicy,
-    circuitBreakerPolicy,
-    timeoutPolicy);
+foundry.UsePollyFromSettings(options);
 ```
 
 ## Documentation

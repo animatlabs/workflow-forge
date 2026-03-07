@@ -30,6 +30,7 @@ dotnet add package WorkflowForge.Extensions.Resilience
 ## Quick Start
 
 ```csharp
+using WorkflowForge;
 using WorkflowForge.Extensions.Resilience;
 using WorkflowForge.Extensions.Resilience.Strategies;
 
@@ -42,7 +43,7 @@ var resilientOperation = RetryWorkflowOperation.WithExponentialBackoff(
 
 // Use in workflow
 var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
-    .AddOperation("ProcessPayment", resilientOperation)
+    .AddOperation(resilientOperation)
     .Build();
 
 await smith.ForgeAsync(workflow, foundry);
@@ -63,9 +64,9 @@ await smith.ForgeAsync(workflow, foundry);
 
 ```csharp
 var strategy = new ExponentialBackoffStrategy(
-    maxAttempts: 5,
     baseDelay: TimeSpan.FromSeconds(1),
     maxDelay: TimeSpan.FromSeconds(60),
+    maxAttempts: 5,
     logger: logger);
 
 var resilientOp = new RetryWorkflowOperation(myOperation, strategy);
@@ -162,16 +163,16 @@ var resilientOperation = RetryWorkflowOperation.WithExponentialBackoff(
 
 // Or use specific strategies
 var strategy = new ExponentialBackoffStrategy(
-    maxAttempts: 5,
     baseDelay: TimeSpan.FromSeconds(1),
     maxDelay: TimeSpan.FromSeconds(60),
+    maxAttempts: 5,
     logger: logger);
 
 var resilientOp = new RetryWorkflowOperation(myOperation, strategy);
 
 // Add to workflow
 var workflow = WorkflowForge.CreateWorkflow("ResilientProcess")
-    .AddOperation("ProcessWithRetry", resilientOp)
+    .AddOperation(resilientOp)
     .Build();
 ```
 

@@ -51,8 +51,8 @@ WorkflowForge is a **zero-dependency workflow orchestration framework** for .NET
 
 ### Key Features
 
-- **High Performance**: 13-522x faster than alternatives in benchmarks
-- **Minimal Memory**: 6-578x less memory usage
+- **High Performance**: 13-511x faster than alternatives in benchmarks
+- **Minimal Memory**: 6-575x less memory usage
 - **Zero Dependencies**: Core package with no external dependencies
 - **Production Ready**: Built-in compensation (saga pattern), comprehensive testing
 - **Extension Ecosystem**: 13 packages (11 extensions + Testing) with zero version conflicts
@@ -185,19 +185,19 @@ Based on BenchmarkDotNet testing (12 scenarios, 50 iterations) against Workflow 
 {% if site.url %}
 <div class="perf-stats">
   <div class="perf-stat">
-    <div class="perf-stat-value">522x</div>
+    <div class="perf-stat-value">511x</div>
     <div class="perf-stat-label">Faster (State Machine)</div>
   </div>
   <div class="perf-stat">
-    <div class="perf-stat-value">578x</div>
+    <div class="perf-stat-value">575x</div>
     <div class="perf-stat-label">Less Memory</div>
   </div>
   <div class="perf-stat">
-    <div class="perf-stat-value">14μs</div>
+    <div class="perf-stat-value">8.75μs</div>
     <div class="perf-stat-label">Min Execution</div>
   </div>
   <div class="perf-stat">
-    <div class="perf-stat-value">3.3KB</div>
+    <div class="perf-stat-value">3.4KB</div>
     <div class="perf-stat-label">Min Memory</div>
   </div>
 </div>
@@ -207,42 +207,42 @@ Based on BenchmarkDotNet testing (12 scenarios, 50 iterations) against Workflow 
 
 | Runtime | Scenario | vs WorkflowCore | vs Elsa | Memory Advantage |
 |---------|----------|-----------------|---------|------------------|
-| .NET 10.0 | **State Machine** | 508x faster | 522x faster | 46-249x less |
-| .NET 8.0 | **State Machine** | 356x faster | 412x faster | 46-248x less |
-| .NET FX 4.8 | **State Machine** | 256x faster | N/A† | 57x less |
-| .NET 10.0 | **Concurrent (8 wf)** | 139x faster | 263x faster | 22-134x less |
-| .NET 8.0 | **Concurrent (8 wf)** | 123x faster | 285x faster | 23-134x less |
-| .NET FX 4.8 | **Concurrent (8 wf)** | 285x faster | N/A† | 15x less |
+| .NET 10.0 | **State Machine** | 455x faster | 511x faster | 46-249x less |
+| .NET 8.0 | **State Machine** | 305x faster | 485x faster | 46-248x less |
+| .NET FX 4.8 | **State Machine** | 303x faster | N/A† | 57x less |
+| .NET 10.0 | **Concurrent (8 wf)** | 139x faster | 251x faster | 22-134x less |
+| .NET 8.0 | **Concurrent (8 wf)** | 118x faster | 288x faster | 23-134x less |
+| .NET FX 4.8 | **Concurrent (8 wf)** | 251x faster | N/A† | 15x less |
 
 † Elsa does not support .NET Framework 4.8. See [Competitive Analysis](performance/competitive-analysis.md) for all 12 scenarios.
 
 {% if site.url %}
 <div class="perf-vchart">
   <div class="perf-vchart-title">State Machine Execution (25 Transitions)</div>
-  <div class="perf-vchart-subtitle">Up to 522x faster than alternatives (.NET 10.0)</div>
+  <div class="perf-vchart-subtitle">Up to 511x faster than alternatives (.NET 10.0)</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">83μs</div><div class="perf-vchart-fill wf" style="height: 37%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">42.2ms</div><div class="perf-vchart-fill wc" style="height: 95%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">43.3ms</div><div class="perf-vchart-fill elsa" style="height: 97%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">65μs</div><div class="perf-vchart-fill wf" style="height: 37%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">29.5ms</div><div class="perf-vchart-fill wc" style="height: 89%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">33.1ms</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
       </div>
       <div class="perf-vchart-group-label">.NET 10.0</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">111μs</div><div class="perf-vchart-fill wf" style="height: 40%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">39.5ms</div><div class="perf-vchart-fill wc" style="height: 92%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">45.7ms</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">71μs</div><div class="perf-vchart-fill wf" style="height: 37%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">21.7ms</div><div class="perf-vchart-fill wc" style="height: 63%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">34.4ms</div><div class="perf-vchart-fill elsa" style="height: 100%;"></div></div>
       </div>
       <div class="perf-vchart-group-label">.NET 8.0</div>
     </div>
     <div class="perf-vchart-divider"></div>
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">101μs</div><div class="perf-vchart-fill wf" style="height: 39%;"></div></div>
-        <div class="perf-vchart-bar"><div class="perf-vchart-val">25.9ms</div><div class="perf-vchart-fill wc" style="height: 87%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">61μs</div><div class="perf-vchart-fill wf" style="height: 37%;"></div></div>
+        <div class="perf-vchart-bar"><div class="perf-vchart-val">18.5ms</div><div class="perf-vchart-fill wc" style="height: 100%;"></div></div>
       </div>
       <div class="perf-vchart-group-label">.NET FX 4.8</div>
     </div>

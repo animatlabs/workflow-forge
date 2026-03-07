@@ -2,7 +2,7 @@
 
 ![WorkflowForge](https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png)
 
-**Last Updated**: February 2026
+**Last Updated**: March 2026
 
 ## Scenario 8: Complete Lifecycle - WorkflowCore Excluded
 

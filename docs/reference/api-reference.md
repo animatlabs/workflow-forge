@@ -106,7 +106,7 @@ await smith.ForgeAsync(workflow, foundry);
 Represents an immutable workflow definition.
 
 ```csharp
-public interface IWorkflow
+public interface IWorkflow : IDisposable
 {
     Guid Id { get; }
     string Name { get; }
@@ -450,7 +450,7 @@ public interface IWorkflowLifecycleEvents
 **Example**:
 ```csharp
 smith.WorkflowStarted += (s, e) => 
-    Console.WriteLine($"Started: {e.WorkflowName}");
+    Console.WriteLine($"Started: {e.Foundry.CurrentWorkflow?.Name}");
 smith.WorkflowCompleted += (s, e) => 
     Console.WriteLine($"Completed in {e.Duration.TotalMilliseconds}ms");
 ```
@@ -480,9 +480,9 @@ public interface IOperationLifecycleEvents
 **Example**:
 ```csharp
 foundry.OperationStarted += (s, e) => 
-    Console.WriteLine($"Operation {e.OperationName} started");
+    Console.WriteLine($"Operation {e.Operation.Name} started");
 foundry.OperationCompleted += (s, e) => 
-    Console.WriteLine($"Operation {e.OperationName} completed");
+    Console.WriteLine($"Operation {e.Operation.Name} completed");
 ```
 
 ---
@@ -514,9 +514,9 @@ public interface ICompensationLifecycleEvents
 **Example**:
 ```csharp
 smith.CompensationTriggered += (s, e) => 
-    Console.WriteLine($"Compensating {e.OperationsToCompensate} operations");
+    Console.WriteLine($"Compensating: {e.Reason} (failed: {e.FailedOperationName})");
 smith.OperationRestoreStarted += (s, e) => 
-    Console.WriteLine($"Rolling back {e.OperationName}");
+    Console.WriteLine($"Rolling back {e.Operation.Name}");
 ```
 
 ---

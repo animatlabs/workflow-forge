@@ -23,4 +23,4 @@ The site will be available at `http://localhost:4000/`.
 
 1. In GitHub, go to **Settings → Pages**.
 2. Set **Source** to **GitHub Actions**.
-3. The workflow at `.github/workflows/pages.yml` will build and deploy the site on each push to `main`.
+3. The workflow at `.github/workflows/pages.yml` will build and deploy the site when triggered manually (`workflow_dispatch`).

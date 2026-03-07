@@ -28,27 +28,29 @@ dotnet add package WorkflowForge.Extensions.Observability.OpenTelemetry
 ## Quick Start
 
 ```csharp
+using WorkflowForge;
 using WorkflowForge.Extensions.Observability.OpenTelemetry;
-using OpenTelemetry;
-using OpenTelemetry.Trace;
 
-// Configure OpenTelemetry
-var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddSource("WorkflowForge")
-    .AddConsoleExporter()
-    .AddJaegerExporter(options =>
-    {
-        options.AgentHost = "localhost";
-        options.AgentPort = 6831;
-    })
+// Create foundry and enable OpenTelemetry
+using var foundry = WorkflowForge.CreateFoundry("TracedWorkflow");
+foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions
+{
+    ServiceName = "OrderService",
+    EnableTracing = true,
+    EnableMetrics = true
+});
+
+var smith = WorkflowForge.CreateSmith();
+var workflow = WorkflowForge.CreateWorkflow("TracedWorkflow")
+    .AddOperation(new ActionWorkflowOperation("ProcessOrder", async (input, foundry, ct) => { /* ... */ }))
     .Build();
 
-// Create foundry with tracing
-using var foundry = WorkflowForge.CreateFoundry("TracedWorkflow");
-var tracer = tracerProvider.GetTracer("WorkflowForge");
-
-// Operations will create spans
+// Operations will create spans and record metrics
 await smith.ForgeAsync(workflow, foundry);
+
+// Access the OpenTelemetry service for custom instrumentation
+var otelService = foundry.GetOpenTelemetryService();
+using var activity = foundry.StartActivity("CustomOperation");
 ```
 
 ## Key Features
@@ -65,59 +67,41 @@ await smith.ForgeAsync(workflow, foundry);
 ### Programmatic
 
 ```csharp
-var tracerProvider = Sdk.CreateTracerProviderBuilder()
-    .AddSource("WorkflowForge")
-    .AddConsoleExporter()
-    .AddJaegerExporter(options =>
-    {
-        options.AgentHost = "localhost";
-        options.AgentPort = 6831;
-    })
-    .Build();
-
 using var foundry = WorkflowForge.CreateFoundry("TracedWorkflow");
-var tracer = tracerProvider.GetTracer("WorkflowForge");
 
-await smith.ForgeAsync(workflow, foundry);
+// Enable with custom options
+foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions
+{
+    ServiceName = "MyService",
+    EnableTracing = true,
+    EnableMetrics = true
+});
+
+// The extension uses System.Diagnostics.ActivitySource internally.
+// Any host-level OpenTelemetry SDK configuration will automatically
+// collect activities emitted by WorkflowForge.
 ```
 
 See [Configuration Guide](../../../docs/core/configuration.md#opentelemetry-extension) for complete options.
 
-## Exporters
+## Host-Level Exporter Configuration
 
-### Jaeger
-
-```csharp
-.AddJaegerExporter(options =>
-{
-    options.AgentHost = "localhost";
-    options.AgentPort = 6831;
-})
-```
-
-### Zipkin
+WorkflowForge emits `ActivitySource` events that any OpenTelemetry exporter can collect. Configure exporters at the host application level:
 
 ```csharp
-.AddZipkinExporter(options =>
-{
-    options.Endpoint = new Uri("http://localhost:9411/api/v2/spans");
-})
+// In your application startup (requires OpenTelemetry SDK packages)
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing
+        .AddSource("WorkflowForge")
+        .AddConsoleExporter()
+        .AddOtlpExporter());
 ```
 
-### OTLP (OpenTelemetry Protocol)
-
-```csharp
-.AddOtlpExporter(options =>
-{
-    options.Endpoint = new Uri("http://localhost:4317");
-})
-```
-
-### Console (Development)
-
-```csharp
-.AddConsoleExporter()
-```
+Supported exporters (via separate OpenTelemetry packages):
+- **Jaeger**: `OpenTelemetry.Exporter.Jaeger`
+- **Zipkin**: `OpenTelemetry.Exporter.Zipkin`
+- **OTLP**: `OpenTelemetry.Exporter.OpenTelemetryProtocol`
+- **Console**: `OpenTelemetry.Exporter.Console`
 
 ## Span Structure
 
@@ -141,19 +125,18 @@ Each span includes:
 ## Custom Spans
 
 ```csharp
-using var span = tracer.StartActiveSpan("CustomOperation");
-span.SetAttribute("order.id", orderId);
-span.SetAttribute("customer.id", customerId);
+using var activity = foundry.StartActivity("CustomOperation");
+activity?.SetTag("order.id", orderId);
+activity?.SetTag("customer.id", customerId);
 
 try
 {
     // ... operation logic ...
-    span.SetStatus(Status.Ok);
+    activity?.SetStatus(ActivityStatusCode.Ok);
 }
 catch (Exception ex)
 {
-    span.SetStatus(Status.Error);
-    span.RecordException(ex);
+    activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
     throw;
 }
 ```

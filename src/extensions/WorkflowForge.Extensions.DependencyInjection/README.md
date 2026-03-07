@@ -38,7 +38,7 @@ public void ConfigureServices(IServiceCollection services)
 {
     // Register logger (choose your implementation)
     services.AddSingleton<IWorkflowForgeLogger>(sp =>
-        SerilogExtensions.CreateWorkflowForgeLogger());
+        SerilogLoggerFactory.CreateLogger());
     
     // Register WorkflowForge with configuration binding
     services.AddWorkflowForge(Configuration);

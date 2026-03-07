@@ -24,6 +24,7 @@ dotnet add package WorkflowForge.Extensions.Validation
 ## Quick Start
 
 ```csharp
+using WorkflowForge;
 using WorkflowForge.Extensions.Validation;
 using System.ComponentModel.DataAnnotations;
 

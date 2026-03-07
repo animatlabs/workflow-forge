@@ -4,18 +4,18 @@
 
 | # | Scenario | WorkflowForge | Workflow Core | Elsa | Speed Advantage |
 |---|----------|---------------|---------------|------|-----------------|
-| 1 | Sequential (10 ops) | 314μs | 15,997μs | 26,881μs | 51-86x |
-| 2 | Data Passing (10 ops) | 288μs | 15,509μs | 26,100μs | 54-91x |
-| 3 | Conditional (10 ops) | 317μs | 15,543μs | 26,477μs | 49-84x |
-| 4 | Loop (50 items) | 570μs | 72,985μs | 82,407μs | 128-145x |
-| 5 | Concurrent (8 workers) | 482μs | 59,141μs | 137,342μs | 123-285x |
-| 6 | Error Handling | 140μs | 1,781μs | 10,799μs | 13-77x |
-| 7 | Creation Overhead | 16μs | 1,252μs | 3,396μs | 77-209x |
-| 8 | Complete Lifecycle | 74μs | N/A | 12,684μs | 171x |
-| 9 | State Machine (25) | 111μs | 39,500μs | 45,714μs | 356-412x |
-| 10 | Long Running* | 72ms | 71ms | 84ms | Memory-focused |
-| 11 | Parallel (16 ops) | 69μs | 2,945μs | 32,419μs | 43-471x |
-| 12 | Event-Driven* | 6.6ms | 6.7ms | 19.4ms | 1.0-2.9x |
+| 1 | Sequential (10 ops) | 377μs | 9,879μs | 19,168μs | 26-51x |
+| 2 | Data Passing (10 ops) | 321μs | 9,751μs | 19,164μs | 30-60x |
+| 3 | Conditional (10 ops) | 301μs | 9,248μs | 19,361μs | 31-64x |
+| 4 | Loop (50 items) | 495μs | 30,742μs | 58,347μs | 62-118x |
+| 5 | Concurrent (8 workers) | 357μs | 42,054μs | 103,024μs | 118-289x |
+| 6 | Error Handling | 114μs | 1,349μs | 7,737μs | 12-68x |
+| 7 | Creation Overhead | 11μs | 819μs | 2,328μs | 74-212x |
+| 8 | Complete Lifecycle | 59μs | N/A | 9,723μs | 165x |
+| 9 | State Machine (25) | 71μs | 21,683μs | 34,426μs | 305-485x |
+| 10 | Long Running* | 72ms | 71ms | 83ms | Memory-focused |
+| 11 | Parallel (16 ops) | 63μs | 2,654μs | 24,940μs | 42-396x |
+| 12 | Event-Driven* | 7.1ms | 7.4ms | 19.9ms | 1.0-2.8x |
 
 *Long Running and Event-Driven are delay-bound; advantage is in memory.
 
@@ -23,32 +23,32 @@
 
 | # | Scenario | WorkflowForge | Workflow Core | Elsa | Speed Advantage |
 |---|----------|---------------|---------------|------|-----------------|
-| 1 | Sequential (10 ops) | 290μs | 15,428μs | 26,595μs | 53-92x |
-| 2 | Data Passing (10 ops) | 267μs | 15,515μs | 27,316μs | 58-102x |
-| 3 | Conditional (10 ops) | 303μs | 16,951μs | 28,192μs | 56-93x |
-| 4 | Loop (50 items) | 602μs | 77,416μs | 64,750μs | 108-129x |
-| 5 | Concurrent (8 workers) | 448μs | 62,218μs | 117,964μs | 139-263x |
-| 6 | Error Handling | 94μs | 2,008μs | 10,891μs | 21-116x |
-| 7 | Creation Overhead | 14μs | 1,396μs | 3,105μs | 100-222x |
-| 8 | Complete Lifecycle | 73μs | N/A | 14,294μs | 195x |
-| 9 | State Machine (25) | 83μs | 42,205μs | 43,328μs | 508-522x |
+| 1 | Sequential (10 ops) | 422μs | 13,828μs | 18,676μs | 33-44x |
+| 2 | Data Passing (10 ops) | 325μs | 11,651μs | 18,510μs | 36-57x |
+| 3 | Conditional (10 ops) | 333μs | 13,427μs | 19,166μs | 40-58x |
+| 4 | Loop (50 items) | 450μs | 35,320μs | 54,827μs | 78-122x |
+| 5 | Concurrent (8 workers) | 372μs | 47,114μs | 87,491μs | 127-235x |
+| 6 | Error Handling | 70μs | 1,498μs | 7,694μs | 21-110x |
+| 7 | Creation Overhead | 11μs | 1,001μs | 2,245μs | 91-204x |
+| 8 | Complete Lifecycle | 36μs | N/A | 9,877μs | 274x |
+| 9 | State Machine (25) | 65μs | 29,537μs | 33,062μs | 455-511x |
 | 10 | Long Running* | 72ms | 71ms | 84ms | Memory-focused |
-| 11 | Parallel (16 ops) | 65μs | 3,140μs | 30,926μs | 48-477x |
-| 12 | Event-Driven* | 6.0ms | 6.5ms | 19.5ms | 1.1-3.2x |
+| 11 | Parallel (16 ops) | 56μs | 2,861μs | 24,638μs | 51-440x |
+| 12 | Event-Driven* | 7.1ms | 8.3ms | 20.6ms | 1.2-2.9x |
 
 ### Execution Time (.NET Framework 4.8)
 
 | # | Scenario | WorkflowForge | Workflow Core | Speed Advantage |
 |---|----------|---------------|---------------|-----------------|
-| 1 | Sequential (10 ops) | 179μs | 10,325μs | 58x |
-| 2 | Data Passing (10 ops) | 185μs | 10,278μs | 56x |
-| 3 | Conditional (10 ops) | 173μs | 9,892μs | 57x |
-| 4 | Loop (50 items) | 516μs | 49,575μs | 96x |
-| 5 | Concurrent (8 workers) | 218μs | 62,193μs | 285x |
-| 6 | Error Handling | 117μs | 4,633μs | 40x |
-| 7 | Creation Overhead | 9μs | 346μs | 38x |
-| 9 | State Machine (25) | 101μs | 25,884μs | 256x |
-| 11 | Parallel (16 ops) | 45μs | 2,157μs | 48x |
+| 1 | Sequential (10 ops) | 122μs | 6,743μs | 55x |
+| 2 | Data Passing (10 ops) | 118μs | 6,684μs | 57x |
+| 3 | Conditional (10 ops) | 118μs | 6,562μs | 56x |
+| 4 | Loop (50 items) | 350μs | 34,137μs | 98x |
+| 5 | Concurrent (8 workers) | 167μs | 41,934μs | 251x |
+| 6 | Error Handling | 88μs | 4,471μs | 51x |
+| 7 | Creation Overhead | 7μs | 260μs | 37x |
+| 9 | State Machine (25) | 61μs | 18,486μs | 303x |
+| 11 | Parallel (16 ops) | 35μs | 1,754μs | 50x |
 
 Elsa does not support .NET Framework 4.8 and is excluded from this comparison.
 
@@ -56,55 +56,55 @@ Elsa does not support .NET Framework 4.8 and is excluded from this comparison.
 
 | # | Scenario | WorkflowForge | Workflow Core | Elsa | Memory Advantage |
 |---|----------|---------------|---------------|------|------------------|
-| 1 | Sequential (10 ops) | 16.20KB | 427.9KB | 2,988KB | 26-184x |
-| 2 | Data Passing (10 ops) | 14.84KB | 429.7KB | 2,989KB | 29-201x |
-| 3 | Conditional (10 ops) | 17.97KB | 428.6KB | 2,984KB | 24-166x |
-| 4 | Loop (50 items) | 89.18KB | 2,124KB | 10,896KB | 24-122x |
-| 5 | Concurrent (8) | 142.5KB | 3,232KB | 19,164KB | 23-134x |
-| 6 | Error Handling | 7.77KB | 46.9KB | 1,072KB | 6-138x |
-| 7 | Creation Overhead | 3.73KB | 128.9KB | 578KB | 35-155x |
-| 8 | Complete Lifecycle | 3.59KB | N/A | 1,510KB | 421x |
-| 9 | State Machine (25) | 23.94KB | 1,108KB | 5,940KB | 46-248x |
-| 10 | Long Running | 5.14KB | 266.4KB | 2,215KB | 52-431x |
-| 11 | Parallel (16 ops) | 8.17KB | 125.5KB | 4,644KB | 15-568x |
-| 12 | Event-Driven | 3.49KB | 37.5KB | 1,032KB | 11-296x |
+| 1 | Sequential (10 ops) | 17.72KB | 429KB | 2,993KB | 24-169x |
+| 2 | Data Passing (10 ops) | 16.36KB | 429KB | 2,987KB | 26-183x |
+| 3 | Conditional (10 ops) | 19.48KB | 428KB | 2,984KB | 22-153x |
+| 4 | Loop (50 items) | 96.3KB | 2,122KB | 10,908KB | 22-113x |
+| 5 | Concurrent (8) | 154.7KB | 3,231KB | 19,114KB | 21-124x |
+| 6 | Error Handling | 8.38KB | 47.0KB | 1,072KB | 6-128x |
+| 7 | Creation Overhead | 3.72KB | 129KB | 578KB | 35-155x |
+| 8 | Complete Lifecycle | 3.70KB | N/A | 1,510KB | 408x |
+| 9 | State Machine (25) | 23.92KB | 1,105KB | 5,938KB | 46-248x |
+| 10 | Long Running | 5.12KB | 266KB | 2,215KB | 52-433x |
+| 11 | Parallel (16 ops) | 8.23KB | 125KB | 4,652KB | 15-565x |
+| 12 | Event-Driven | 3.48KB | 37.5KB | 1,032KB | 11-297x |
 
 ## Competitive Memory Summary (.NET 10.0)
 
 | # | Scenario | WorkflowForge | Workflow Core | Elsa | Memory Advantage |
 |---|----------|---------------|---------------|------|------------------|
-| 1 | Sequential (10 ops) | 17.23KB | 426.6KB | 3,024KB | 25-175x |
-| 2 | Data Passing (10 ops) | 14.84KB | 426.4KB | 3,023KB | 29-204x |
-| 3 | Conditional (10 ops) | 17.97KB | 425.8KB | 3,017KB | 24-168x |
-| 4 | Loop (50 items) | 92.72KB | 2,086KB | 10,921KB | 23-118x |
-| 5 | Concurrent (8) | 142.5KB | 3,171KB | 19,127KB | 22-134x |
-| 6 | Error Handling | 5.68KB | 50.1KB | 1,053KB | 9-185x |
-| 7 | Creation Overhead | 3.73KB | 124.6KB | 537KB | 33-144x |
-| 8 | Complete Lifecycle | 3.59KB | N/A | 1,513KB | 421x |
-| 9 | State Machine (25) | 23.94KB | 1,090KB | 5,963KB | 46-249x |
-| 10 | Long Running | 5.14KB | 266.1KB | 2,244KB | 52-437x |
-| 11 | Parallel (16 ops) | 7.91KB | 128.0KB | 4,571KB | 16-578x |
-| 12 | Event-Driven | 3.49KB | 41.3KB | 1,001KB | 12-287x |
+| 1 | Sequential (10 ops) | 17.72KB | 427KB | 3,024KB | 24-171x |
+| 2 | Data Passing (10 ops) | 16.36KB | 425KB | 3,024KB | 26-185x |
+| 3 | Conditional (10 ops) | 19.48KB | 426KB | 2,984KB | 22-153x |
+| 4 | Loop (50 items) | 96.9KB | 2,086KB | 10,908KB | 22-113x |
+| 5 | Concurrent (8) | 154.7KB | 3,171KB | 19,109KB | 21-124x |
+| 6 | Error Handling | 7.02KB | 50.7KB | 1,056KB | 7-150x |
+| 7 | Creation Overhead | 3.72KB | 125KB | 537KB | 34-146x |
+| 8 | Complete Lifecycle | 3.70KB | N/A | 1,513KB | 409x |
+| 9 | State Machine (25) | 23.92KB | 1,090KB | 5,966KB | 46-249x |
+| 10 | Long Running | 5.12KB | 266KB | 2,244KB | 52-438x |
+| 11 | Parallel (16 ops) | 7.96KB | 126KB | 4,576KB | 16-575x |
+| 12 | Event-Driven | 3.48KB | 40.0KB | 999KB | 11-287x |
 
 ## Competitive Memory Summary (.NET Framework 4.8)
 
 | # | Scenario | WorkflowForge | Workflow Core | Memory Advantage |
 |---|----------|---------------|---------------|------------------|
-| 1 | Sequential (10 ops) | 40.00KB | 600.0KB | 15x |
-| 2 | Data Passing (10 ops) | 32.00KB | 568.0KB | 18x |
-| 3 | Conditional (10 ops) | 48.00KB | 568.0KB | 12x |
-| 4 | Loop (50 items) | 168.00KB | 2,576KB | 15x |
-| 5 | Concurrent (8) | 256.00KB | 3,880KB | 15x |
-| 9 | State Machine (25) | 24.00KB | 1,368KB | 57x |
+| 1 | Sequential (10 ops) | 40.00KB | 560KB | 14x |
+| 2 | Data Passing (10 ops) | 40.00KB | 544KB | 14x |
+| 3 | Conditional (10 ops) | 48.00KB | 552KB | 12x |
+| 4 | Loop (50 items) | 176KB | 2,512KB | 14x |
+| 5 | Concurrent (8) | 272KB | 3,816KB | 14x |
+| 9 | State Machine (25) | 24.00KB | 1,344KB | 56x |
 
 Elsa does not support .NET Framework 4.8 and is excluded. Memory allocation metrics are not reported by BenchmarkDotNet for .NET Framework 4.8 in all scenarios.
 
 ## Key Insights
 
-- **Concurrent Execution**: Up to **285x faster** than Elsa with parallel workloads
-- **State Machine**: Up to **522x faster** with complex state transitions (.NET 10.0)
-- **Sequential Workflows**: **51-92x faster** across all runtimes with minimal memory
-- **Memory Baseline**: **3.49 KB** minimal allocation footprint
+- **Concurrent Execution**: Up to **289x faster** than Elsa with parallel workloads
+- **State Machine**: Up to **511x faster** with complex state transitions (.NET 10.0)
+- **Sequential Workflows**: **26-57x faster** across all runtimes with minimal memory
+- **Memory Baseline**: **3.48 KB** (Competitive, Event-Driven scenario); **3.33 KB** (Internal, MinimalAllocationWorkflow)
 - **Cross-Runtime**: Consistent advantage on .NET 10.0, .NET 8.0, and .NET Framework 4.8
 
 Notes:

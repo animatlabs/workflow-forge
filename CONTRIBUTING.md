@@ -61,7 +61,7 @@ dotnet test -c Release
 
 ## Release Process
 
-1. **Version Bump**: Update `<Version>` and `<PackageReleaseNotes>` in all 13 `.csproj` files
+1. **Version Bump**: Update `<Version>` and `<PackageReleaseNotes>` in all 13 packable `.csproj` files (core, Testing, and 11 extensions)
 2. **Documentation**: Update `README.md`, `CHANGELOG.md`, and `docs/` with new version and benchmark data
 3. **Build & Test**: Run `dotnet build` and `dotnet test` across all target frameworks (net48, net8.0, net10.0)
 4. **Pack**: Run `dotnet pack` to generate `.nupkg` and `.snupkg` packages

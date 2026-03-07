@@ -108,7 +108,7 @@ namespace WorkflowForge.Extensions.DependencyInjection
         /// <code>
         /// services.AddWorkflowForge(
         ///     core => {
-        ///         core.MaxConcurrentOperations = 4;
+        ///         core.MaxConcurrentWorkflows = 4;
         ///         core.MaxConcurrentWorkflows = 2;
         ///     },
         ///     timing => timing.Enabled = false,
@@ -192,7 +192,7 @@ namespace WorkflowForge.Extensions.DependencyInjection
         /// <code>
         /// // Register logger first
         /// services.AddSingleton&lt;IWorkflowForgeLogger&gt;(sp =>
-        ///     SerilogExtensions.CreateWorkflowForgeLogger());
+        ///     SerilogLoggerFactory.CreateLogger());
         ///
         /// // Register WorkflowForge configuration
         /// services.AddWorkflowForge(configuration);

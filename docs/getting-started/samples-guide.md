@@ -477,10 +477,8 @@ foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions
 
 **Key Code Pattern**:
 ```csharp
-services.AddHealthChecks()
-    .AddWorkflowForgeHealthCheck();
-
-app.MapHealthChecks("/health");
+var healthService = foundry.CreateHealthCheckService();
+var overallStatus = await foundry.CheckFoundryHealthAsync(healthService);
 ```
 
 **Data Flow**: Dictionary-based  
@@ -637,7 +635,7 @@ foundry.UseValidation(
 **Key Code Pattern**:
 ```csharp
 var auditProvider = new InMemoryAuditProvider();
-foundry.EnableAudit(
+foundry.UseAudit(
     auditProvider,
     initiatedBy: "user@example.com",
     includeMetadata: true
@@ -682,7 +680,7 @@ services.AddWorkflowForgePolly(configuration);
 var auditOptions = serviceProvider.GetRequiredService<IOptions<AuditOptions>>();
 if (auditOptions.Value.Enabled)
 {
-    foundry.EnableAudit(auditProvider);
+    foundry.UseAudit(auditProvider);
 }
 ```
 
@@ -708,9 +706,9 @@ if (auditOptions.Value.Enabled)
 foundry.EnablePerformanceMonitoring();
 foundry.UsePollyRetry(maxRetryAttempts: 3);
 foundry.UseValidation<OrderDto>(f => f.GetPropertyOrDefault<OrderDto>("Order"));
-foundry.EnableAudit(auditProvider);
+foundry.UseAudit(auditProvider);
 foundry.UsePersistence(persistenceProvider);
-foundry.AddMiddleware(new TimingMiddleware());
+foundry.UseTiming();
 
 // Complex workflow with all features enabled
 ```
@@ -909,7 +907,7 @@ catch (AggregateException ex)
 }
 
 // Final operation still executed despite earlier failure
-Console.WriteLine($"Final operation ran: {foundry.GetPropertyOrDefault("final.ran", false)}");
+Console.WriteLine($"Final operation ran: {foundry.GetPropertyOrDefault<bool>("final.ran", false)}");
 ```
 
 **Data Flow**: Dictionary-based  

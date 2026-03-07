@@ -379,9 +379,11 @@ public interface IOperationLifecycleEvents
 // Compensation lifecycle
 public interface ICompensationLifecycleEvents
 {
-    event EventHandler<CompensationStartedEventArgs>? CompensationStarted;
+    event EventHandler<CompensationTriggeredEventArgs>? CompensationTriggered;
     event EventHandler<CompensationCompletedEventArgs>? CompensationCompleted;
-    event EventHandler<CompensationFailedEventArgs>? CompensationFailed;
+    event EventHandler<OperationRestoreStartedEventArgs>? OperationRestoreStarted;
+    event EventHandler<OperationRestoreCompletedEventArgs>? OperationRestoreCompleted;
+    event EventHandler<OperationRestoreFailedEventArgs>? OperationRestoreFailed;
 }
 ```
 
@@ -398,11 +400,12 @@ All event args inherit from `BaseWorkflowForgeEventArgs`:
 ```csharp
 public abstract class BaseWorkflowForgeEventArgs : EventArgs
 {
-    public Guid ExecutionId { get; }
-    public string WorkflowName { get; }
+    public IWorkflowFoundry Foundry { get; }
     public DateTimeOffset Timestamp { get; }
 }
 ```
+
+Access `ExecutionId` and workflow name via `e.Foundry.ExecutionId` and `e.Foundry.CurrentWorkflow?.Name`.
 
 For complete event documentation, see [Event System Guide](../core/events.md).
 
@@ -544,7 +547,7 @@ All operations are async-first:
 - Direct execution paths
 - No reflection in hot paths
 
-**Result**: 13-522x faster than competitors, 6-578x less memory (12 scenarios tested across .NET 10.0, .NET 8.0, and .NET Framework 4.8).
+**Result**: 13-511x faster than competitors, 6-575x less memory (12 scenarios tested across .NET 10.0, .NET 8.0, and .NET Framework 4.8).
 
 ---
 

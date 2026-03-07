@@ -2,7 +2,7 @@
 
 **Head-to-head performance comparison: WorkflowForge vs Workflow Core vs Elsa Workflows**
 
-**Last Updated**: February 2026
+**Last Updated**: March 2026
 
 ## Overview
 
@@ -18,36 +18,52 @@ This project contains fair, apple-to-apple performance benchmarks comparing Work
 
 ### Scenario 1: Simple Sequential Workflow
 **Test**: 10 operations executed in sequence  
-**Result**: WorkflowForge 51-92x faster (290-314μs vs 10,325-26,881μs)
+**Result**: WorkflowForge 26-51x faster (237-422μs vs 9,878-18,675μs)
 
 ### Scenario 2: Data Passing Workflow
 **Test**: Pass data between 10 operations  
-**Result**: WorkflowForge 54-102x faster (267-288μs vs 10,278-27,316μs)
+**Result**: WorkflowForge 31-56x faster (304-325μs vs 9,751-18,510μs)
 
 ### Scenario 3: Conditional Branching
 **Test**: Conditional logic with if/else branches (10 operations)  
-**Result**: WorkflowForge 49-93x faster (173-317μs vs 9,892-28,192μs)
+**Result**: WorkflowForge 29-62x faster (301-333μs vs 9,247-19,165μs)
 
 ### Scenario 4: Loop/ForEach Processing
 **Test**: Process 50 items through operations  
-**Result**: WorkflowForge 96-145x faster (516-602μs vs 49,575-82,407μs)
+**Result**: WorkflowForge 64-121x faster (450-494μs vs 30,742-58,346μs)
 
 ### Scenario 5: Concurrent Execution
 **Test**: 8 workflows executing in parallel  
-**Result**: WorkflowForge 123-285x faster (218-482μs vs 59,141-137,342μs)
+**Result**: WorkflowForge 123-251x faster (276-372μs vs 7,588-87,491μs)
 
 ### Scenario 6: Error Handling
 **Test**: Exception handling and recovery  
-**Result**: WorkflowForge 13-116x faster (94-140μs vs 1,781-10,891μs)
+**Result**: WorkflowForge 13-108x faster (70-114μs vs 1,349-7,737μs)
 
 ### Scenario 7: Creation Overhead
 **Test**: Workflow instantiation cost  
-**Result**: WorkflowForge 38-223x faster (9-16μs vs 346-3,396μs)
+**Result**: WorkflowForge 38-207x faster (11-11.4μs vs 819-2,329μs)
 
 ### Scenario 8: Complete Lifecycle
 **Test**: Create + Execute + Cleanup  
 **Note**: WorkflowCore excluded due to architectural incompatibility with rapid lifecycle benchmarking (background worker threads)  
-**Result**: WorkflowForge 171-196x faster vs Elsa (73-74μs vs 12,684-14,294μs)
+**Result**: WorkflowForge 165-272x faster vs Elsa (36-59μs vs 9,723-9,878μs)
+
+### Scenario 9: State Machine Workflow
+**Test**: State machine pattern with conditional transitions (25 transitions)
+**Result**: WorkflowForge 305-511x faster (65-71μs vs 21,683-33,062μs)
+
+### Scenario 10: Long Running Workflow
+**Test**: Extended workflow execution with multiple phases
+**Result**: WorkflowForge 51-63x faster (39ms vs 51ms, 1 delay)
+
+### Scenario 11: Parallel Scaling
+**Test**: Parallel execution with 16 operations
+**Result**: WorkflowForge 43-429x faster (57-68μs vs 2,794-24,637μs)
+
+### Scenario 12: Event-Driven Workflow
+**Test**: Event-triggered workflow execution
+**Result**: WorkflowForge 2.7-2.9x faster vs Elsa, 11-288x less memory
 
 ## Running Benchmarks
 
@@ -82,8 +98,8 @@ Benchmark results are saved to:
 
 ### Performance Advantage
 
-- **13-522x faster execution** across 12 scenarios
-- **6-578x less memory allocation**
+- **13-511x faster execution** across 12 scenarios
+- **6-575x less memory allocation**
 - **Consistent microsecond-scale performance** vs millisecond-scale competitors
 
 ### Why WorkflowForge is Faster

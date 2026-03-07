@@ -341,7 +341,7 @@ foundry
   "WorkflowForge": {
     "Polly": {
       "Retry": {
-        "MaxAttempts": 3,
+        "MaxRetryAttempts": 3,
         "BaseDelay": "00:00:01",
         "UseExponentialBackoff": true,
         "UseJitter": true
@@ -570,7 +570,7 @@ await smith.ForgeWithRecoveryAsync(
     provider,
     foundryKey,
     workflowKey,
-    new RecoveryPolicy { MaxAttempts = 5, BaseDelay = TimeSpan.FromMilliseconds(50), UseExponentialBackoff = true },
+    new RecoveryMiddlewareOptions { MaxRetryAttempts = 5, BaseDelay = TimeSpan.FromMilliseconds(50), UseExponentialBackoff = true },
     cancellationToken);
 ```
 
@@ -607,7 +607,7 @@ await smith.ForgeWithRecoveryAsync(
     provider,
     foundryKey,
     workflowKey,
-    new RecoveryPolicy { MaxAttempts = 3, BaseDelay = TimeSpan.FromMilliseconds(100), UseExponentialBackoff = true },
+    new RecoveryMiddlewareOptions { MaxRetryAttempts = 3, BaseDelay = TimeSpan.FromMilliseconds(100), UseExponentialBackoff = true },
     cancellationToken);
 ```
 
@@ -626,7 +626,7 @@ public sealed class MyRecoveryCatalog : IRecoveryCatalog
 }
 
 var catalog = new MyRecoveryCatalog();
-var coordinator = new RecoveryCoordinator(provider, new RecoveryPolicy { MaxAttempts = 3 });
+var coordinator = new RecoveryCoordinator(provider, new RecoveryMiddlewareOptions { MaxRetryAttempts = 3 });
 int recovered = await coordinator.ResumeAllAsync(
     () => WorkflowForge.CreateFoundry("Service"),
     () => BuildWorkflow(),
@@ -656,20 +656,17 @@ using WorkflowForge.Extensions.Observability.HealthChecks;
 
 var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
 var healthService = foundry.CreateHealthCheckService();
-var result = await healthService.CheckHealthAsync();
+var results = await healthService.CheckHealthAsync();
 
-Console.WriteLine($"Overall Status: {result.Status}");
-Console.WriteLine($"Memory Usage: {result.Results["Memory"].Description}");
-Console.WriteLine($"GC Health: {result.Results["GarbageCollector"].Description}");
-Console.WriteLine($"Thread Pool: {result.Results["ThreadPool"].Description}");
+Console.WriteLine($"Overall Status: {healthService.OverallStatus}");
+foreach (var (name, result) in results)
+{
+    Console.WriteLine($"{name}: {result.Status} - {result.Description}");
+}
 
 // Custom health checks
-foundry.AddHealthCheck("Database", async () =>
-{
-    var isHealthy = await CheckDatabaseConnectionAsync();
-    return isHealthy ? HealthCheckResult.Healthy("Database connection OK") 
-                     : HealthCheckResult.Unhealthy("Database connection failed");
-});
+healthService.RegisterHealthCheck(new DatabaseHealthCheck()); // implements IHealthCheck
+results = await healthService.CheckHealthAsync();
 ```
 
 #### WorkflowForge.Extensions.Observability.OpenTelemetry
@@ -709,10 +706,8 @@ foundry.SetProperty("Order", order);
 await smith.ForgeAsync(workflow, foundry);
 
 // Add custom events
-foundry.AddEvent("PaymentProcessed", new { 
-    Amount = order.Amount, 
-    PaymentMethod = order.PaymentMethod 
-});
+using var activity = foundry.StartActivity("PaymentProcessed");
+activity?.SetTag("amount", order.Amount.ToString());
 ```
 
 ## Extension Configuration Patterns
@@ -870,7 +865,7 @@ var auditProvider = new InMemoryAuditProvider();
 
 // Enable audit logging
 var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
-foundry.EnableAudit(
+foundry.UseAudit(
     auditProvider,
     initiatedBy: "admin@company.com",
     includeMetadata: true);
@@ -921,14 +916,14 @@ public class DatabaseAuditProvider : IAuditProvider
 
 // Use custom provider
 var auditProvider = new DatabaseAuditProvider(dbContext);
-foundry.EnableAudit(auditProvider);
+foundry.UseAudit(auditProvider);
 ```
 
 **Audit Entry Structure:**
 ```csharp
 public class AuditEntry
 {
-    public Guid Id { get; init; }
+    public Guid AuditId { get; init; }
     public DateTimeOffset Timestamp { get; init; }
     public string WorkflowName { get; init; }
     public string OperationName { get; init; }

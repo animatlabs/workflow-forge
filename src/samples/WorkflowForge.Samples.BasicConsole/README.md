@@ -98,6 +98,6 @@ Samples use `appsettings.json` for environment-specific configuration including 
 
 ## Documentation
 
-For detailed explanations of all samples, see [docs/samples-guide.md](../../../docs/getting-started/samples-guide.md)
+For detailed explanations of all samples, see [Samples Guide](../../../docs/getting-started/samples-guide.md)
 
 ---

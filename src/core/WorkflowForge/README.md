@@ -314,11 +314,16 @@ public class ChargePaymentOperation : WorkflowOperationBase
 Add cross-cutting concerns using the middleware pipeline:
 
 ```csharp
-public class TimingMiddleware : IWorkflowOperationMiddleware
+// Built-in middleware (via extension methods)
+foundry.UseTiming();
+foundry.UseErrorHandling(rethrowExceptions: true);
+
+// Custom middleware example
+public class CustomTimingMiddleware : IWorkflowOperationMiddleware
 {
     private readonly IWorkflowForgeLogger _logger;
     
-    public TimingMiddleware(IWorkflowForgeLogger logger)
+    public CustomTimingMiddleware(IWorkflowForgeLogger logger)
     {
         _logger = logger;
     }
@@ -347,8 +352,8 @@ public class TimingMiddleware : IWorkflowOperationMiddleware
     }
 }
 
-// Add to foundry
-foundry.AddMiddleware(new TimingMiddleware(logger));
+// Add custom middleware to foundry
+foundry.AddMiddleware(new CustomTimingMiddleware(logger));
 ```
 
 ## Event System
@@ -358,7 +363,7 @@ Subscribe to lifecycle events:
 ```csharp
 // Workflow-level events (from Smith)
 smith.WorkflowStarted += (s, e) => 
-    Console.WriteLine($"Started: {e.WorkflowName}");
+    Console.WriteLine($"Started: {e.Foundry.CurrentWorkflow?.Name}");
 smith.WorkflowCompleted += (s, e) => 
     Console.WriteLine($"Completed in {e.Duration.TotalMilliseconds}ms");
 smith.WorkflowFailed += (s, e) => 
@@ -366,17 +371,17 @@ smith.WorkflowFailed += (s, e) =>
 
 // Operation-level events (from Foundry)
 foundry.OperationStarted += (s, e) => 
-    Console.WriteLine($"Op started: {e.OperationName}");
+    Console.WriteLine($"Op started: {e.Operation.Name}");
 foundry.OperationCompleted += (s, e) => 
-    Console.WriteLine($"Op completed: {e.OperationName}");
+    Console.WriteLine($"Op completed: {e.Operation.Name}");
 foundry.OperationFailed += (s, e) => 
-    Console.WriteLine($"Op failed: {e.OperationName}");
+    Console.WriteLine($"Op failed: {e.Operation.Name}");
 
-// Compensation events (from Foundry)
-foundry.CompensationTriggered += (s, e) => 
+// Compensation events (from Smith)
+smith.CompensationTriggered += (s, e) => 
     Console.WriteLine("Rollback triggered");
-foundry.OperationRestoreStarted += (s, e) => 
-    Console.WriteLine($"Restoring: {e.OperationName}");
+smith.OperationRestoreStarted += (s, e) => 
+    Console.WriteLine($"Restoring: {e.Operation.Name}");
 ```
 
 ## Configuration
@@ -419,14 +424,16 @@ services.AddWorkflowForge(configuration);
 var smith = services.BuildServiceProvider().GetRequiredService<IWorkflowSmith>();
 ```
 
+**Requires**: `WorkflowForge.Extensions.DependencyInjection` NuGet package for `AddWorkflowForge` and Options pattern support.
+
 ## Performance
 
 WorkflowForge Core is optimized for production workloads (12 scenarios benchmarked, 50 iterations):
 
-- **Execution Speed**: 13-522x faster than competitors
-- **State Machine**: Up to 522x faster (highest advantage, .NET 10.0)
-- **Memory**: 6-578x less allocation than competitors
-- **Concurrency**: Near-perfect linear scaling (16x speedup for 16 workflows)
+- **Execution Speed**: 13-511x faster than competitors
+- **State Machine**: Up to 511x faster (highest advantage, .NET 10.0)
+- **Memory**: 6-575x less allocation than competitors
+- **Concurrency**: Near-perfect linear scaling (15.9x speedup for 16 workflows)
 
 | Scenario | WorkflowForge | Workflow Core | Elsa | Advantage |
 |----------|---------------|---------------|------|-----------|
@@ -434,7 +441,7 @@ WorkflowForge Core is optimized for production workloads (12 scenarios benchmark
 | State Machine (25) | 111μs | 39,500μs | 45,714μs | 356-412x |
 | Concurrent (8 workers) | 482μs | 59,141μs | 137,342μs | 123-285x |
 
-*Benchmark data from .NET 8.0; up to 522x faster on .NET 10.0 (State Machine).*
+*Benchmark data from .NET 8.0; up to 511x faster on .NET 10.0 (State Machine).*
 
 See [Performance Documentation](../../../docs/performance/performance.md) for all 12 scenarios.
 

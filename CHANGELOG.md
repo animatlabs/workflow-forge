@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `CODE_OF_CONDUCT.md` (Contributor Covenant v2.1)
 
 ### Changed
-- **BREAKING**: Serilog extension factory now uses `CreateLogger(ILoggerFactory)` instead of the previous `SerilogLoggerOptions` + `ILogEventSink` overload
+- **Serilog extension**: Added `CreateLogger(ILoggerFactory)` overload for host MEL integration; `CreateLogger(SerilogLoggerOptions?)` remains available
 - CI/CD moved to GitHub Actions with SonarCloud analysis, artifact reuse for publish, and package signing flow
 - Core orchestration and operation infrastructure hardened: compensation path consistency, defensive options cloning, stricter disposal/event cleanup, and reduced mutable surface area
 - Middleware and persistence internals streamlined with index-based operation tracking and consolidated internal key constants

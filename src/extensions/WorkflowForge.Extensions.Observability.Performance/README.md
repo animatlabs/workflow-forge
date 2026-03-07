@@ -29,40 +29,46 @@ dotnet add package WorkflowForge.Extensions.Observability.Performance
 
 ## Quick Start
 
+The recommended approach is to use custom timing middleware for performance monitoring:
+
 ```csharp
+using WorkflowForge;
 using WorkflowForge.Extensions.Observability.Performance;
 
-// Add timing middleware
 using var foundry = WorkflowForge.CreateFoundry("PerformanceMonitored");
-foundry.AddMiddleware(new TimingMiddleware(logger));
 
-// Timing data is logged per operation
+// Add timing middleware to track operation performance (see Custom Timing Middleware section below)
+foundry.AddMiddleware(new DetailedTimingMiddleware(foundry.Logger, TimeSpan.FromMilliseconds(100)));
+
+var smith = WorkflowForge.CreateSmith();
+var workflow = WorkflowForge.CreateWorkflow("PerformanceMonitored")
+    .AddOperation(new ActionWorkflowOperation("Step1", async (input, foundry, ct) => { /* ... */ }))
+    .Build();
+
 await smith.ForgeAsync(workflow, foundry);
-
-// Output:
-// [INF] Operation 'CalculateTotal' started
-// [INF] Operation 'CalculateTotal' completed in 23.4ms
 ```
+
+> **Note:** The `EnablePerformanceMonitoring()` and `GetPerformanceStatistics()` extension methods require a foundry that implements `IPerformanceMonitoredFoundry`. Standard foundries created via `WorkflowForge.CreateFoundry()` use the middleware pattern shown above instead.
 
 ## Key Features
 
 - **Operation Timing**: Precise timing for each operation
-- **Middleware-Based**: Non-intrusive timing collection
-- **Automatic Logging**: Integrates with foundry logger
-- **Memory Tracking**: Optional memory allocation tracking
-- **Configurable Thresholds**: Alert on slow operations
-- **Zero Overhead**: Minimal performance impact
+- **Per-Operation Statistics**: Drill into individual operation metrics
+- **Memory Tracking**: Track memory allocation per operation
+- **Success/Failure Rates**: Monitor operation reliability
+- **Enable/Disable at Runtime**: Toggle monitoring without restarting
+- **Zero Dependencies**: Pure WorkflowForge extension
 
 ## Configuration
 
-**This extension requires NO configuration.** Simply add the middleware to your foundry:
+**This extension provides middleware components and interfaces for performance monitoring.** The primary approach is to add timing middleware to your foundry:
 
 ```csharp
 using var foundry = WorkflowForge.CreateFoundry("PerformanceMonitored");
-foundry.AddMiddleware(new TimingMiddleware(logger));
+foundry.AddMiddleware(new DetailedTimingMiddleware(foundry.Logger, TimeSpan.FromMilliseconds(500)));
 ```
 
-The extension works out-of-the-box with sensible defaults. See [Configuration Guide](../../../docs/core/configuration.md#performance-extension) for more information.
+The `IFoundryPerformanceStatistics` and `IOperationStatistics` interfaces define the contract for foundries that provide built-in performance statistics.
 
 ## Advanced Usage
 
@@ -156,14 +162,26 @@ public class MemoryTrackingMiddleware : IWorkflowOperationMiddleware
 }
 ```
 
-## Performance Metrics
+## Available Statistics
 
-The extension tracks:
-- **Operation Duration**: Precise timing for each operation
-- **Workflow Duration**: Total workflow execution time
-- **Slow Operations**: Operations exceeding threshold
-- **Memory Allocation**: Optional memory tracking
-- **GC Collections**: Garbage collection metrics
+### Foundry-Level (`IFoundryPerformanceStatistics`)
+
+- **TotalOperations / SuccessfulOperations / FailedOperations**: Operation counts
+- **SuccessRate**: Percentage of successful operations
+- **AverageDuration / MinimumDuration / MaximumDuration**: Timing statistics
+- **TotalMemoryAllocated / AverageMemoryPerOperation**: Memory metrics
+- **OperationsPerSecond**: Throughput
+- **StartTime / EndTime / TotalDuration**: Workflow timing
+
+### Per-Operation (`IOperationStatistics`)
+
+```csharp
+var stats = foundry.GetPerformanceStatistics();
+foreach (var opStats in stats.GetAllOperationStatistics())
+{
+    Console.WriteLine($"{opStats.OperationName}: avg {opStats.AverageExecutionTime.TotalMilliseconds:F2}ms");
+}
+```
 
 ## Documentation
 
