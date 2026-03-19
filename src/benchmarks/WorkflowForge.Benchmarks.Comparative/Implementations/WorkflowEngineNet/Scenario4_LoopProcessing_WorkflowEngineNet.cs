@@ -1,38 +1,48 @@
 #if !NET48
+using OptimaJet.Workflow.Core.Model;
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
 
 namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowEngineNet;
 
+/// <summary>
+/// Scenario 4: Loop Processing - WorkflowEngine.NET
+/// Iterates over ItemCount items using sequential state transitions.
+/// </summary>
 public class Scenario4_LoopProcessing_WorkflowEngineNet : IWorkflowScenario
 {
     private readonly ScenarioParameters _parameters;
+    private ProcessDefinition _definition = null!;
 
-    public string Name => "Loop Processing Workflow";
-    public string Description => $"Process {_parameters.ItemCount} items using WorkflowEngine.NET";
+    public string Name => "Loop Processing";
+    public string Description => $"Process {_parameters.ItemCount} items via state transitions";
 
     public Scenario4_LoopProcessing_WorkflowEngineNet(ScenarioParameters parameters) => _parameters = parameters;
 
-    public Task SetupAsync() => Task.CompletedTask;
+    public Task SetupAsync()
+    {
+        _definition = WorkflowEngineNetInfrastructure.BuildLinearScheme("S4_Loop", _parameters.ItemCount);
+        return Task.CompletedTask;
+    }
 
     public async Task<ScenarioResult> ExecuteAsync()
     {
-        var processed = 0;
+        var state = new WorkflowState(_definition);
         for (var i = 0; i < _parameters.ItemCount; i++)
         {
-            await SimulateProcessCommandAsync(i);
-            processed++;
+            state.Data[$"item_{i}"] = i * 2;
+            await state.ExecuteNextCommandAsync();
         }
+        await state.ExecuteFinishCommandAsync();
+
         return new ScenarioResult
         {
-            Success = true,
-            OperationsExecuted = processed,
-            OutputData = $"Processed {processed} items",
-            Metadata = { ["FrameworkName"] = "WorkflowEngineNet", ["Mode"] = "Simulated" }
+            Success = state.IsComplete,
+            OperationsExecuted = state.StepsExecuted,
+            OutputData = $"Processed {_parameters.ItemCount} items",
+            Metadata = { ["FrameworkName"] = "WorkflowEngineNet", ["Mode"] = "StateMachineSimulation", ["SchemeBuiltWith"] = "ProcessDefinitionBuilder" }
         };
     }
 
     public Task CleanupAsync() => Task.CompletedTask;
-
-    private static Task SimulateProcessCommandAsync(int itemId) { _ = itemId; return Task.CompletedTask; }
 }
 #endif

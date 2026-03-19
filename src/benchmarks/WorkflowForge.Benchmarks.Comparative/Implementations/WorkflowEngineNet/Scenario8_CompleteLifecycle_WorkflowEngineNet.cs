@@ -1,14 +1,19 @@
 #if !NET48
+using OptimaJet.Workflow.Core.Model;
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
 
 namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowEngineNet;
 
+/// <summary>
+/// Scenario 8: Complete Lifecycle - WorkflowEngine.NET
+/// Measures full create → build scheme → execute → dispose lifecycle.
+/// </summary>
 public class Scenario8_CompleteLifecycle_WorkflowEngineNet : IWorkflowScenario
 {
     private readonly ScenarioParameters _parameters;
 
-    public string Name => "Complete Lifecycle Workflow";
-    public string Description => "Measure complete process lifecycle (create, execute, persist, complete) using WorkflowEngine.NET";
+    public string Name => "Complete Lifecycle";
+    public string Description => "Full workflow lifecycle: scheme creation → execution → completion";
 
     public Scenario8_CompleteLifecycle_WorkflowEngineNet(ScenarioParameters parameters) => _parameters = parameters;
 
@@ -16,25 +21,24 @@ public class Scenario8_CompleteLifecycle_WorkflowEngineNet : IWorkflowScenario
 
     public async Task<ScenarioResult> ExecuteAsync()
     {
-        await SimulateCreateProcessAsync("SimpleWorkflow");
-        await SimulateExecuteCommandAsync("Start");
-        await SimulatePersistStateAsync();
-        await SimulateCompleteProcessAsync();
+        // Build scheme
+        var definition = WorkflowEngineNetInfrastructure.BuildLinearScheme("S8_Lifecycle", _parameters.OperationCount);
+
+        // Execute
+        var state = new WorkflowState(definition);
+        for (var i = 0; i < _parameters.OperationCount; i++)
+            await state.ExecuteNextCommandAsync();
+        await state.ExecuteFinishCommandAsync();
 
         return new ScenarioResult
         {
-            Success = true,
-            OperationsExecuted = 1,
-            OutputData = "Complete lifecycle executed",
-            Metadata = { ["FrameworkName"] = "WorkflowEngineNet", ["Mode"] = "Simulated" }
+            Success = state.IsComplete,
+            OperationsExecuted = state.StepsExecuted,
+            OutputData = "Complete lifecycle finished",
+            Metadata = { ["FrameworkName"] = "WorkflowEngineNet", ["Mode"] = "StateMachineSimulation", ["SchemeBuiltWith"] = "ProcessDefinitionBuilder" }
         };
     }
 
     public Task CleanupAsync() => Task.CompletedTask;
-
-    private static Task SimulateCreateProcessAsync(string schemeCode) { _ = schemeCode.Length; return Task.CompletedTask; }
-    private static Task SimulateExecuteCommandAsync(string command) { _ = command.Length; return Task.CompletedTask; }
-    private static async Task SimulatePersistStateAsync() { await Task.CompletedTask; }
-    private static Task SimulateCompleteProcessAsync() => Task.CompletedTask;
 }
 #endif

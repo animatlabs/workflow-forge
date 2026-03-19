@@ -1,42 +1,37 @@
 #if !NET48
+using OptimaJet.Workflow.Core.Model;
 using WorkflowForge.Benchmarks.Comparative.Scenarios;
 
 namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowEngineNet;
 
+/// <summary>
+/// Scenario 7: Creation Overhead - WorkflowEngine.NET
+/// Measures the cost of building a workflow scheme via ProcessDefinitionBuilder.
+/// </summary>
 public class Scenario7_CreationOverhead_WorkflowEngineNet : IWorkflowScenario
 {
     private readonly ScenarioParameters _parameters;
 
-    public string Name => "Creation Overhead Workflow";
-    public string Description => "Measure workflow process instance creation overhead using WorkflowEngine.NET";
+    public string Name => "Creation Overhead";
+    public string Description => "Measure ProcessDefinitionBuilder scheme creation overhead";
 
     public Scenario7_CreationOverhead_WorkflowEngineNet(ScenarioParameters parameters) => _parameters = parameters;
 
     public Task SetupAsync() => Task.CompletedTask;
 
-    public async Task<ScenarioResult> ExecuteAsync()
+    public Task<ScenarioResult> ExecuteAsync()
     {
-        var created = 0;
-        for (var i = 0; i < _parameters.OperationCount; i++)
+        var definition = WorkflowEngineNetInfrastructure.BuildLinearScheme("S7_Creation", _parameters.OperationCount);
+
+        return Task.FromResult(new ScenarioResult
         {
-            var processInstance = CreateProcessInstance(i);
-            await SimulateMinimalCommandAsync(processInstance);
-            created++;
-        }
-        return new ScenarioResult
-        {
-            Success = true,
-            OperationsExecuted = created,
-            OutputData = $"Created and executed {created} process instances",
-            Metadata = { ["FrameworkName"] = "WorkflowEngineNet", ["Mode"] = "Simulated" }
-        };
+            Success = definition.Activities.Count == _parameters.OperationCount + 2,
+            OperationsExecuted = _parameters.OperationCount,
+            OutputData = $"Created scheme with {definition.Activities.Count} activities, {definition.Transitions.Count} transitions",
+            Metadata = { ["FrameworkName"] = "WorkflowEngineNet", ["Mode"] = "StateMachineSimulation", ["SchemeBuiltWith"] = "ProcessDefinitionBuilder" }
+        });
     }
 
     public Task CleanupAsync() => Task.CompletedTask;
-
-    private static Dictionary<string, object> CreateProcessInstance(int index) =>
-        new() { ["ProcessId"] = Guid.NewGuid(), ["SchemeCode"] = "SimpleWorkflow", ["Index"] = index };
-
-    private static Task SimulateMinimalCommandAsync(Dictionary<string, object> instance) { _ = instance.Count; return Task.CompletedTask; }
 }
 #endif
