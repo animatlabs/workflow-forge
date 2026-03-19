@@ -10,6 +10,9 @@ public class Scenario11Benchmark
     private IWorkflowScenario _workflowForgeScenario = null!;
     private IWorkflowScenario _workflowCoreScenario = null!;
     private IWorkflowScenario _elsaScenario = null!;
+    private IWorkflowScenario _temporalScenario = null!;
+    private IWorkflowScenario _daprScenario = null!;
+    private IWorkflowScenario _workflowEngineNetScenario = null!;
 
     [Params(4, 8, 16)]
     public int OperationCount { get; set; }
@@ -31,6 +34,13 @@ public class Scenario11Benchmark
         _workflowCoreScenario.SetupAsync().GetAwaiter().GetResult();
         _elsaScenario = ElsaScenarioFactory.Create(11, parameters);
         _elsaScenario.SetupAsync().GetAwaiter().GetResult();
+
+        _temporalScenario = TemporalScenarioFactory.Create(11, parameters);
+        _temporalScenario.SetupAsync().GetAwaiter().GetResult();
+        _daprScenario = DaprScenarioFactory.Create(11, parameters);
+        _daprScenario.SetupAsync().GetAwaiter().GetResult();
+        _workflowEngineNetScenario = WorkflowEngineNetScenarioFactory.Create(11, parameters);
+        _workflowEngineNetScenario.SetupAsync().GetAwaiter().GetResult();
     }
 
     [IterationCleanup]
@@ -39,6 +49,9 @@ public class Scenario11Benchmark
         _workflowForgeScenario.CleanupAsync().GetAwaiter().GetResult();
         _workflowCoreScenario.CleanupAsync().GetAwaiter().GetResult();
         _elsaScenario.CleanupAsync().GetAwaiter().GetResult();
+        _temporalScenario.CleanupAsync().GetAwaiter().GetResult();
+        _daprScenario.CleanupAsync().GetAwaiter().GetResult();
+        _workflowEngineNetScenario.CleanupAsync().GetAwaiter().GetResult();
     }
 
     [Benchmark(Baseline = true, Description = "WorkflowForge - Parallel Execution")]
@@ -49,4 +62,13 @@ public class Scenario11Benchmark
 
     [Benchmark(Description = "Elsa - Parallel Execution")]
     public async Task<ScenarioResult> Elsa_ParallelExecution() => await _elsaScenario.ExecuteAsync();
+
+    [Benchmark(Description = "Temporal - Parallel Execution")]
+    public async Task<ScenarioResult> Temporal_ParallelExecution() => await _temporalScenario.ExecuteAsync();
+
+    [Benchmark(Description = "Dapr - Parallel Execution")]
+    public async Task<ScenarioResult> Dapr_ParallelExecution() => await _daprScenario.ExecuteAsync();
+
+    [Benchmark(Description = "WorkflowEngineNet - Parallel Execution")]
+    public async Task<ScenarioResult> WorkflowEngineNet_ParallelExecution() => await _workflowEngineNetScenario.ExecuteAsync();
 }

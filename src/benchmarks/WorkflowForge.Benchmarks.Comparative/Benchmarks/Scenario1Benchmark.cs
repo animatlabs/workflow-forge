@@ -14,6 +14,9 @@ public class Scenario1Benchmark
     private IWorkflowScenario _workflowForgeScenario = null!;
     private IWorkflowScenario _workflowCoreScenario = null!;
     private IWorkflowScenario _elsaScenario = null!;
+    private IWorkflowScenario _temporalScenario = null!;
+    private IWorkflowScenario _daprScenario = null!;
+    private IWorkflowScenario _workflowEngineNetScenario = null!;
 
     [Params(1, 5, 10, 25, 50)]
     public int OperationCount { get; set; }
@@ -32,6 +35,13 @@ public class Scenario1Benchmark
 
         _elsaScenario = ElsaScenarioFactory.Create(1, parameters);
         _elsaScenario.SetupAsync().GetAwaiter().GetResult();
+
+        _temporalScenario = TemporalScenarioFactory.Create(1, parameters);
+        _temporalScenario.SetupAsync().GetAwaiter().GetResult();
+        _daprScenario = DaprScenarioFactory.Create(1, parameters);
+        _daprScenario.SetupAsync().GetAwaiter().GetResult();
+        _workflowEngineNetScenario = WorkflowEngineNetScenarioFactory.Create(1, parameters);
+        _workflowEngineNetScenario.SetupAsync().GetAwaiter().GetResult();
     }
 
     [IterationCleanup]
@@ -40,6 +50,9 @@ public class Scenario1Benchmark
         _workflowForgeScenario.CleanupAsync().GetAwaiter().GetResult();
         _workflowCoreScenario.CleanupAsync().GetAwaiter().GetResult();
         _elsaScenario.CleanupAsync().GetAwaiter().GetResult();
+        _temporalScenario.CleanupAsync().GetAwaiter().GetResult();
+        _daprScenario.CleanupAsync().GetAwaiter().GetResult();
+        _workflowEngineNetScenario.CleanupAsync().GetAwaiter().GetResult();
     }
 
     [Benchmark(Baseline = true, Description = "WorkflowForge - Simple Sequential")]
@@ -58,5 +71,23 @@ public class Scenario1Benchmark
     public async Task<ScenarioResult> Elsa_SimpleSequential()
     {
         return await _elsaScenario.ExecuteAsync();
+    }
+
+    [Benchmark(Description = "Temporal - Simple Sequential")]
+    public async Task<ScenarioResult> Temporal_SimpleSequential()
+    {
+        return await _temporalScenario.ExecuteAsync();
+    }
+
+    [Benchmark(Description = "Dapr - Simple Sequential")]
+    public async Task<ScenarioResult> Dapr_SimpleSequential()
+    {
+        return await _daprScenario.ExecuteAsync();
+    }
+
+    [Benchmark(Description = "WorkflowEngineNet - Simple Sequential")]
+    public async Task<ScenarioResult> WorkflowEngineNet_SimpleSequential()
+    {
+        return await _workflowEngineNetScenario.ExecuteAsync();
     }
 }

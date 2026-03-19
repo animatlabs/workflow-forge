@@ -17,7 +17,7 @@ public class Program
     {
         Console.WriteLine("═══════════════════════════════════════════════════════════════════");
         Console.WriteLine("  WorkflowForge Comparative Performance Benchmarks");
-        Console.WriteLine("  WorkflowForge vs Workflow Core vs Elsa Workflows");
+        Console.WriteLine("  WorkflowForge vs Workflow Core vs Elsa vs Temporal vs Dapr vs WorkflowEngine.NET");
         Console.WriteLine("═══════════════════════════════════════════════════════════════════");
         Console.WriteLine();
 
