@@ -5,30 +5,29 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     labels:
       - "dependencies"
       - "nuget"
+      - "security"
     groups:
-      microsoft-extensions:
+      nuget-security:
+        applies-to: security-updates
         patterns:
-          - "Microsoft.Extensions.*"
-      testing:
-        patterns:
-          - "xunit*"
-          - "coverlet.*"
-          - "Microsoft.NET.Test.*"
-      analyzers:
-        patterns:
-          - "SonarAnalyzer.*"
-          - "Microsoft.CodeAnalysis.*"
+          - "*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0
     labels:
       - "dependencies"
       - "github-actions"
+      - "security"
+    groups:
+      actions-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
