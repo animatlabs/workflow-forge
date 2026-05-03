@@ -37,13 +37,13 @@ description: Detailed benchmark comparison of WorkflowForge vs Workflow Core and
 - [Architectural Differences](#architectural-differences)
 - [Benchmark Methodology](#benchmark-methodology)
 - [Statistical Significance](#statistical-significance)
-- [Conclusion](#conclusion)
+- [Summary](#summary)
 
 ---
 
 ## Executive Summary
 
-WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory allocation** compared to Workflow Core and Elsa Workflows across 12 real-world scenarios, tested on .NET 10.0, .NET 8.0, and .NET Framework 4.8 (50 iterations per benchmark).
+Across twelve benchmark scenarios on .NET 10.0, .NET 8.0, and .NET Framework 4.8 (50 iterations each), WorkflowForge measured **13–511x faster execution** and **6–575x less allocation** than Workflow Core and Elsa for the same scripted logic.
 
 | Metric | Value |
 |--------|-------|
@@ -73,13 +73,14 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 </div>
 {% endif %}
 
-**Key Insights**:
-- WorkflowForge operates at **microsecond scale** (11-706μs), competitors at **millisecond scale** (0.3-109ms)
-- Memory allocations remain in **kilobytes** (3.5-256KB) vs. **megabytes** (0.04-19MB) for competitors
-- **State Machine** scenarios show highest advantage: **up to 511x faster** vs Elsa (.NET 10.0)
-- **Concurrent Execution** shows **118-288x faster** performance across all runtimes
-- **Sequential Workflows** show **26-55x faster** with minimal memory
-- Consistent performance across all 12 scenario types and all 3 runtimes
+**Recorded ranges** (same hardware, shared scripts):
+
+- WorkflowForge medians sit in the **microsecond** band (11–706μs) on these runs; Workflow Core and Elsa land in **milliseconds** (0.3–109ms) for the same scenarios.
+- Reported WorkflowForge allocations stay in **kilobytes** (3.5–256KB) while competitors often allocate **megabytes** (0.04–19MB) in the same tests.
+- The **State Machine** sweep posts the largest execution gap: **up to ~511x** versus Elsa on .NET 10.0 for 25 transitions.
+- **Concurrent Execution** spans **118–288x** faster than Elsa across the three runtimes we tested.
+- **Sequential** scenarios measure **26–55x** faster with comparatively small memory use.
+- The pattern holds across all twelve scenario types and three runtimes (Elsa omitted on .NET Framework 4.8 where unsupported).
 
 ### Visual Performance Comparison
 
@@ -101,7 +102,7 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 <!-- State Machine Execution Time across all runtimes -->
 <div class="perf-vchart">
   <div class="perf-vchart-title">State Machine Execution (25 Transitions)</div>
-  <div class="perf-vchart-subtitle">Up to 511x faster than alternatives (.NET 10.0)</div>
+  <div class="perf-vchart-subtitle">State machine scenario, .NET 10.0 (see table)</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
@@ -149,7 +150,7 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 <!-- Concurrent Memory Allocation across all runtimes -->
 <div class="perf-vchart">
   <div class="perf-vchart-title">Memory Allocation - Concurrent Execution (8 Workflows)</div>
-  <div class="perf-vchart-subtitle">WorkflowForge stays in kilobytes while competitors use megabytes</div>
+  <div class="perf-vchart-subtitle">Concurrent run: WorkflowForge ~155KB reported vs ~3.2MB / ~19.6MB in this harness</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
@@ -185,9 +186,9 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 </div>
 {% endif %}
 
-#### Scaling Charts - Performance Advantage Grows with Workload
+#### Scaling charts (workload sweeps)
 
-**Key Finding**: WorkflowForge's advantage **increases with workload size**.
+Measured WorkflowForge gap **widens as the scripted workload grows** in these sweeps.
 
 | Scenario | Scale | WF vs Elsa |
 |----------|-------|------------|
@@ -200,7 +201,7 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 <!-- Consolidated Execution Scaling Chart (log scale) -->
 <div class="perf-vchart">
   <div class="perf-vchart-title">Execution Scaling - Advantage Grows with Workload</div>
-  <div class="perf-vchart-subtitle">All scenarios show increasing advantage as workload scales up</div>
+  <div class="perf-vchart-subtitle">Larger scripted workloads; ratios from the sweep tables</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
@@ -326,7 +327,7 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 | 25 | 48.93KB | 1,064KB | 5,956KB |
 | 50 | 83.86KB | 2,126KB | 10,879KB |
 
-**Key Insight**: WorkflowForge performance advantage **increases linearly with operation count**.
+**Numbers**: the execution gap versus Workflow Core and Elsa **widens as the operation count rises** in the sequential sweep.
 
 ---
 
@@ -366,7 +367,7 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 | 10 | 16.36KB | 429KB | 2,988KB |
 | 25 | 39.26KB | 1,063KB | 5,956KB |
 
-**Key Insight**: Data passing overhead is **minimal** in WorkflowForge (<1μs per operation).
+**What matters**: extra data-passing steps add **under about a microsecond per operation** in WorkflowForge for this scenario.
 
 ---
 
@@ -406,7 +407,7 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 | 25 | 48.04KB | 1,061KB | 5,947KB |
 | 50 | 88.97KB | 2,121KB | 10,907KB |
 
-**Key Insight**: Conditional overhead negligible (<1μs per branch decision).
+**Takeaway**: branch decisions add **negligible time** in WorkflowForge here (under ~1μs per decision in the harness).
 
 ---
 
@@ -446,7 +447,7 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 | 50 | 96.34KB | 2,121KB | 10,907KB |
 | 100 | 194.85KB | 4,241KB | 20,859KB |
 
-**Key Insight**: ForEach performance advantage **increases with collection size**.
+**Numbers**: the ForEach scenario shows a **larger speedup as the collection grows** from 10 to 100 items.
 
 ---
 
@@ -486,7 +487,7 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 | 4 | 79.68KB | 1,627KB | 9,861KB |
 | 8 | 154.67KB | 3,308KB | 19,572KB |
 
-**Key Insight**: WorkflowForge maintains **consistent per-workflow overhead** regardless of concurrency.
+**What matters**: total time scales with the number of workflows, but **per-workflow overhead stays flat** in WorkflowForge as concurrency rises in this test.
 
 ---
 
@@ -512,7 +513,7 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 
 **Advantage**: **13-110x faster** than competitors, **6-150x less memory**.
 
-**Key Insight**: Error handling overhead is **minimal** (~70-114μs) in WorkflowForge.
+**Takeaway**: error-handling paths finish in about **70–114μs** median on WorkflowForge versus milliseconds on the others in this scenario.
 
 ---
 
@@ -538,7 +539,7 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 
 **Advantage**: **37-206x faster** than competitors, **33-155x less memory**.
 
-**Key Insight**: WorkflowForge workflow creation is **negligible** (~7-11μs).
+**Numbers**: creating a workflow instance costs about **7–11μs** median on WorkflowForge in the creation-overhead benchmark.
 
 ---
 
@@ -564,9 +565,9 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 
 **Advantage**: **165-274x faster** than Elsa, **410x less memory**.
 
-**Note**: Workflow Core was excluded from this benchmark due to an architectural design difference. Workflow Core's `WorkflowHost.Start()` method spins up background worker threads that are intended to run continuously, making rapid create-start-stop-dispose cycles (50 iterations) incompatible with its design. This is a fundamental architectural difference, not a performance issue.
+**Note**: Workflow Core was excluded from this benchmark because `WorkflowHost.Start()` starts background worker threads meant to run continuously, which does not line up with tight create-start-stop-dispose loops at 50 iterations. That is a model mismatch for this particular test, not a claim about raw CPU speed.
 
-**Key Insight**: Complete lifecycle overhead is **trivial** (~33-59μs) in WorkflowForge.
+**What matters**: WorkflowForge completes the full create-execute-dispose cycle in about **33–59μs** median here.
 
 ---
 
@@ -606,7 +607,7 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 | 10 | 8.65KB | 472KB | 2,986KB |
 | 25 | 23.92KB | 1,105KB | 5,937KB |
 
-**Key Insight**: State machine execution shows the **highest performance advantage** (up to 511x faster on .NET 10.0).
+**Takeaway**: the state-machine sweep posts the **largest execution deltas** in the suite (up to ~511x versus Elsa on .NET 10.0 for 25 transitions).
 
 ---
 
@@ -640,7 +641,7 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 
 **Advantage**: Similar timing (delay-bound); advantage is in **52-439x less memory**.
 
-**Key Insight**: Long-running workflows are **delay-bound**; execution times are dominated by the configured delay. The advantage is in **memory efficiency**.
+**Numbers**: long-running scenarios are **delay-bound**, so wall-clock time tracks the configured delays. The measurable gap is **allocation**, not raw orchestration time.
 
 ---
 
@@ -672,7 +673,7 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 | .NET 8.0 | 8.23KB | 125KB | 4,651KB |
 | .NET FX 4.8 | N/A‡ | 184KB | N/A† |
 
-**Key Insight**: Parallel execution maintains **38-396x speed advantage** with **15-575x less memory**.
+**What matters**: parallel execution keeps a **38–396x** execution advantage in this sweep alongside **15–575x** less allocated memory versus the listed competitors.
 
 ---
 
@@ -705,7 +706,7 @@ WorkflowForge demonstrates **13-511x faster execution** and **6-575x less memory
 
 **Advantage**: WorkflowForge and Workflow Core are **near-parity** on execution time (1ms delay); WorkflowForge is **2.8-2.9x faster** vs Elsa. Memory advantage: **11-297x less**.
 
-**Key Insight**: Event-driven scenarios are **I/O-bound**; advantage is in **memory efficiency** and consistency vs Elsa.
+**Takeaway**: event-driven runs are **I/O-bound** at the tested delays; WorkflowForge mainly separates from Elsa on **memory use** and steadier timing at 1–5ms delays.
 
 ---
 
@@ -733,12 +734,12 @@ Ranges include all three runtimes (.NET 10.0, .NET 8.0, .NET Framework 4.8). Els
 **Overall Speed Range**: **13-511x faster execution** (compute-bound scenarios)  
 **Overall Memory Range**: **6-575x less memory allocation**
 
-### Key Findings
+### Reading the summary table
 
-1. **State Machine** scenarios show the highest speed advantage: **303-511x faster**
-2. **Concurrent Execution** maintains excellent scaling: **118-288x faster**
-3. **Long Running** and **Event-Driven** are I/O-bound, but memory savings are massive: **52-439x less**
-4. **Memory efficiency** is consistently excellent across all 12 scenarios and all 3 runtimes
+1. **State machine** carries the widest execution spread we recorded (**303–511x** in the sweep).
+2. **Concurrent** work stays in the **118–288x** band vs Elsa on the runtimes listed.
+3. **Long running** and **event-driven** rows are delay-heavy; the standout delta there is allocation (WorkflowForge **52–439x** lower in those tests).
+4. On .NET 10.0 and 8.0, WorkflowForge reported less allocated memory in every row we logged (Elsa omitted on .NET Framework 4.8).
 
 ---
 
@@ -784,14 +785,14 @@ Ranges include all three runtimes (.NET 10.0, .NET 8.0, .NET Framework 4.8). Els
    - Workflows that survive process restarts
    - Background processing
 
-**Conclusion**: Workflow Core is optimized for **durability**, not **speed**. WorkflowForge is optimized for **speed**, not **durability** (though persistence extensions available).
+**In short:** Workflow Core targets **durable, host-backed** processes. WorkflowForge targets **in-process, low-overhead** runs first; add persistence packages when you need resume semantics.
 
 ### Elsa Workflows Design
 
 1. **Workflow Designer Focus**
    - Visual workflow designer
    - HTTP workflow triggers
-   - Extensive activity library
+   - Large built-in activity catalog
 
 2. **Serialization-Heavy**
    - JSON serialization for all data
@@ -803,7 +804,7 @@ Ranges include all three runtimes (.NET 10.0, .NET 8.0, .NET Framework 4.8). Els
    - Human task workflows
    - Integration workflows
 
-**Conclusion**: Elsa is optimized for **designer experience**, not **performance**. WorkflowForge is optimized for **performance**, not **visual design** (though programmatic API is very expressive).
+**In short:** Elsa emphasizes designer-first authoring, HTTP triggers, and a large built-in activity set. WorkflowForge keeps everything in C# with a smaller default surface. Neither layout is universally better; they optimize for different entry points.
 
 ---
 
@@ -860,16 +861,16 @@ All results meet statistical significance criteria:
 
 ---
 
-## Conclusion
+## Summary
 
-WorkflowForge delivers **13-511x faster execution** and **6-575x less memory allocation** compared to Workflow Core and Elsa Workflows across 12 scenarios on .NET 10.0, .NET 8.0, and .NET Framework 4.8. This performance advantage stems from:
+Across these twelve scenarios, the harness logged **13–511x faster execution** and **6–575x lower allocation** for WorkflowForge vs Workflow Core and Elsa on .NET 10.0, 8.0, and .NET Framework 4.8. The deltas line up with a few concrete differences:
 
-1. **Architectural Simplicity**: No background threads, no persistent state, no serialization
-2. **Minimal Allocations**: Dictionary-based data flow, no reflection per operation
-3. **Optimized Execution**: Russian Doll middleware, efficient delegate handling
-4. **Focused Design**: Optimized for speed, not durability or visual design
+1. Fewer moving parts in the default path: no host-owned worker pool, no baked-in durable store, no JSON round-trip on every hop.
+2. **`ConcurrentDictionary` state** instead of large per-step object graphs in this test code.
+3. **Straight-line middleware**: nested delegates instead of reflection-heavy resolution on each call.
+4. **Different goals**: WorkflowForge chases **in-process throughput** first; the other stacks bet on **hosting models, designers, or long-running durability** you may still want elsewhere.
 
-WorkflowForge is the **fastest .NET workflow engine** for high-performance, programmatic workflow orchestration.
+On this hardware and these scripts, WorkflowForge had the lowest median times and allocations for programmatic, in-memory orchestration. Your workload and hosting still matter more than any ratio in a table.
 
 ---
 

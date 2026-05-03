@@ -1,31 +1,16 @@
 # WorkflowForge.Extensions.Observability.HealthChecks
 
-Health check integration extension for WorkflowForge compatible with Microsoft.Extensions.Diagnostics.HealthChecks.
+Expose memory, GC, thread-pool, and custom probes with the same `IHealthCheck` shape you use elsewhere, without taking a dependency on Microsoft's health-check package graph.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Observability.HealthChecks.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Observability.HealthChecks/)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 
-## Zero Dependencies - Zero Conflicts
-
-**This extension has ZERO external dependencies.** This means:
-
-- NO DLL Hell - No third-party dependencies to conflict with
-- NO Version Conflicts - Works with any versions of your application dependencies
-- Clean Deployment - Pure WorkflowForge extension
-
-**Interface-only**: Implements `IHealthCheck` interface without requiring the full Microsoft package.
-
-## Installation
+## Install
 
 ```bash
 dotnet add package WorkflowForge.Extensions.Observability.HealthChecks
 ```
 
-**Requires**: .NET Standard 2.0 or later
+Targets .NET Standard 2.0 or later.
 
 ## Quick Start
 
@@ -49,17 +34,16 @@ foreach (var (name, result) in results)
 }
 ```
 
-## Key Features
+## Key points
 
-- **Built-in Checks**: Memory, Garbage Collector, and ThreadPool health checks out of the box
-- **Custom Health Checks**: Implement `IHealthCheck` to add your own checks
-- **Foundry Integration**: Create service directly from a foundry instance
-- **Configurable Interval**: Set check frequency for periodic monitoring
-- **Zero Dependencies**: WorkflowForge's own `IHealthCheck` abstraction (not Microsoft's)
+- Ships WorkflowForge's `IHealthCheck` abstraction, not the full Microsoft health-check stack.
+- Registers memory, GC, and thread-pool checks by default (`registerBuiltInHealthChecks: true`).
+- `CreateHealthCheckService` lives on the foundry; interval is yours to choose.
+- You can add any custom check that implements `IHealthCheck`.
 
-## Built-in Health Checks
+## Built-in health checks
 
-The `HealthCheckService` automatically registers three built-in checks when `registerBuiltInHealthChecks` is true (the default):
+The `HealthCheckService` registers three built-in checks when `registerBuiltInHealthChecks` is true (the default):
 
 | Check | Description |
 |-------|-------------|
@@ -67,7 +51,7 @@ The `HealthCheckService` automatically registers three built-in checks when `reg
 | `GarbageCollectorHealthCheck` | Monitors GC pressure and collection counts |
 | `ThreadPoolHealthCheck` | Monitors thread pool availability |
 
-## Custom Health Check
+## Custom health check
 
 ```csharp
 using WorkflowForge.Extensions.Observability.HealthChecks.Abstractions;
@@ -97,7 +81,7 @@ public class DatabaseHealthCheck : IHealthCheck
 healthService.RegisterHealthCheck(new DatabaseHealthCheck());
 ```
 
-## Health Status
+## Health status
 
 | Status | Meaning |
 |--------|---------|
@@ -113,22 +97,13 @@ if (result?.Status == HealthStatus.Unhealthy)
 }
 ```
 
-See [Configuration Guide](../../../docs/core/configuration.md#health-checks-extension) for complete options.
+[Health checks configuration](../../../docs/core/configuration.md#health-checks-extension)
 
-## Monitoring Dashboard
+You can surface results over ASP.NET Core `/health`, Application Insights, Prometheus, or your own dashboards.
 
-Health checks can be monitored via:
-- ASP.NET Core `/health` endpoint
-- Application Insights
-- Prometheus metrics
-- Custom monitoring solutions
+## Links
 
-## Documentation
-
-- **[Getting Started](../../../docs/getting-started/getting-started.md)**
-- **[Configuration Guide](../../../docs/core/configuration.md#health-checks-extension)**
-- **[Extensions Overview](../../../docs/extensions/index.md)**
-- **[Sample 16: Health Checks](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
-
----
-
+- [Getting Started](../../../docs/getting-started/getting-started.md)
+- [Configuration Guide](../../../docs/core/configuration.md#health-checks-extension)
+- [Extensions Overview](../../../docs/extensions/index.md)
+- [Sample 16: Health Checks](../../samples/WorkflowForge.Samples.BasicConsole/README.md)

@@ -1,31 +1,16 @@
 # WorkflowForge.Extensions.Audit
 
-Comprehensive audit logging extension for WorkflowForge with pluggable storage providers for compliance and observability.
+Record who did what, when, and whether it finished: audit logging with your own storage behind `IAuditProvider`.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Audit.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Audit/)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 
-## Zero Dependencies - Zero Conflicts
-
-**This extension has ZERO external dependencies.** This means:
-
-- NO DLL Hell - No third-party dependencies to conflict with
-- NO Version Conflicts - Works with any versions of your application dependencies
-- Clean Deployment - Pure WorkflowForge extension
-
-**Architecture**: Implement `IAuditProvider` for your storage (file, database, cloud).
-
-## Installation
+## Install
 
 ```bash
 dotnet add package WorkflowForge.Extensions.Audit
 ```
 
-**Requires**: .NET Standard 2.0 or later
+Targets .NET Standard 2.0 or later.
 
 ## Quick Start
 
@@ -56,16 +41,15 @@ foundry.UseAudit(auditProvider, new AuditMiddlewareOptions
 await smith.ForgeAsync(workflow, foundry);
 ```
 
-## Key Features
+## Key points
 
-- **Pluggable Storage**: Implement `IAuditProvider` for any storage
-- **Comprehensive Logging**: Workflow and operation lifecycle events
-- **Structured Data**: Rich audit entries with metadata
-- **Time Provider Integration**: `ISystemTimeProvider` for testability
-- **User Context**: Track user and session information
-- **Compliance Ready**: Immutable audit trail for regulatory requirements
+- Only pulls in WorkflowForge core; you supply storage by implementing `IAuditProvider`.
+- Covers workflow and operation lifecycle events in one stream.
+- Optional initiator/session-style context and timestamps; detail level is configurable.
+- `ISystemTimeProvider` helps keep tests deterministic.
+- Entries carry metadata dictionaries; append-only style storage fits many compliance setups.
 
-## Audit Entry Structure
+## Audit entry shape
 
 ```csharp
 public class AuditEntry
@@ -104,7 +88,7 @@ public class AuditEntry
 }
 ```
 
-### Via Code
+### Via code
 
 ```csharp
 using WorkflowForge.Extensions.Audit.Options;
@@ -121,7 +105,7 @@ var options = new AuditMiddlewareOptions
 foundry.UseAudit(auditProvider, options);
 ```
 
-### Via Dependency Injection
+### Via dependency injection
 
 ```csharp
 using Microsoft.Extensions.Configuration;
@@ -132,11 +116,11 @@ services.AddAuditConfiguration(configuration);
 var options = serviceProvider.GetRequiredService<IOptions<AuditMiddlewareOptions>>().Value;
 ```
 
-See [Configuration Guide](../../../docs/core/configuration.md#audit-extension) for complete options.
+[Configuration: Audit](../../../docs/core/configuration.md#audit-extension)
 
-## Storage Provider Examples
+## Storage provider examples
 
-### Database Provider
+### Database provider
 
 ```csharp
 public class DatabaseAuditProvider : IAuditProvider
@@ -155,7 +139,7 @@ public class DatabaseAuditProvider : IAuditProvider
 }
 ```
 
-### Cloud Storage Provider
+### Cloud storage provider
 
 ```csharp
 public class AzureAuditProvider : IAuditProvider
@@ -173,12 +157,9 @@ public class AzureAuditProvider : IAuditProvider
 }
 ```
 
-## Documentation
+## Links
 
-- **[Getting Started](../../../docs/getting-started/getting-started.md)**
-- **[Configuration Guide](../../../docs/core/configuration.md#audit-extension)**
-- **[Extensions Overview](../../../docs/extensions/index.md)**
-- **[Sample 24: Audit](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
-
----
-
+- [Getting Started](../../../docs/getting-started/getting-started.md)
+- [Configuration Guide](../../../docs/core/configuration.md#audit-extension)
+- [Extensions Overview](../../../docs/extensions/index.md)
+- [Sample 24: Audit](../../samples/WorkflowForge.Samples.BasicConsole/README.md)

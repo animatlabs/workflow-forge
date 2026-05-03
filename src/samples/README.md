@@ -1,87 +1,62 @@
-# WorkflowForge Samples
+# WorkflowForge samples
 
-**Interactive examples demonstrating WorkflowForge capabilities**
+Runnable console projects you can step through locally.
 
-## Available Sample Projects
+## `WorkflowForge.Samples.BasicConsole`
 
-### 1. Basic Console Samples (33 Examples)
+**33** menu-driven examples:
 
-**Location**: `WorkflowForge.Samples.BasicConsole`
+- **Basic (1–4):** hello world, data through `foundry.Properties`, branching, class-based operations  
+- **Control flow (5–8):** conditionals, `ForEach`, errors, built-in ops  
+- **Config + middleware (9–12):** options pattern, configuration profiles, events, middleware  
+- **Extensions (13–18, 21–25):** Serilog, Polly, OpenTelemetry, health checks, performance hooks, persistence, recovery, validation, audit, configuration-driven wiring  
+- **Advanced (19–20):** all extensions in one pass; ways to construct operations  
+- **Onboarding (26–33):** DI, workflow middleware, cancellation/timeouts, continue-on-error, compensation, foundry reuse, output chaining, service resolution  
 
-Interactive console application with 33 hands-on examples covering:
-
-- **Basic Workflows (1-4)**: Hello World, Data Passing, Multiple Outcomes, Class-Based Operations
-- **Control Flow (5-8)**: Conditionals, ForEach Loops, Error Handling, Built-in Operations
-- **Configuration & Middleware (9-12)**: Options Pattern, Configuration Profiles, Events, Middleware
-- **Extensions (13-18, 21-25)**: Serilog, Polly, OpenTelemetry, Health Checks, Performance, Persistence, Recovery, Validation, Audit, Configuration-Driven
-- **Advanced (19-20)**: Comprehensive Integration, Operation Creation Patterns
-- **Onboarding & Best Practices (26-33)**: DI, workflow middleware, cancellation/timeout, continue-on-error, compensation, foundry reuse, output chaining, service resolution
-
-#### Quick Start
+### Run it
 
 ```bash
 cd WorkflowForge.Samples.BasicConsole
 dotnet run
 ```
 
-The application provides an interactive menu to run individual samples or all samples sequentially.
+Use the menu for a single sample or walk the list in order.
 
-#### Features Demonstrated
+### What you will see
 
-- Zero-dependency core workflow orchestration
-- Dictionary-based data flow via `foundry.Properties`
-- Saga pattern compensation/rollback
-- Middleware pipeline (Russian Doll pattern)
-- SRP-compliant event system (Workflow, Operation, Compensation)
-- All 13 packages (11 extensions + Testing) with zero version conflicts
-- Options pattern configuration from `appsettings.json`
-- Production-grade patterns and best practices
+- Core engine: `foundry.Properties`, compensation, middleware, lifecycle events  
+- All official extension packages (plus Testing) without version clashes  
+- `appsettings.json` wiring you can copy into real services  
 
-## Learning Path
+## Suggested order
 
-**Beginners**: Start with [Basic Console Samples 1-4](WorkflowForge.Samples.BasicConsole/README.md)  
-**Intermediate**: Explore samples 5-12 for control flow and configuration  
-**Advanced**: Study samples 13-33 for extensions and production patterns  
+1. New to WorkflowForge: samples **1–4** ([BasicConsole README](WorkflowForge.Samples.BasicConsole/README.md))  
+2. Flow + configuration: **5–12**  
+3. Extensions + hosting patterns: **13–33**  
 
-## Documentation
+## Docs
 
-- **[Samples Guide](../../docs/getting-started/samples-guide.md)** - Detailed breakdown of all 33 samples
-- **[Getting Started](../../docs/getting-started/getting-started.md)** - Step-by-step tutorial
-- **[Operations Guide](../../docs/core/operations.md)** - All operation types
-- **[Configuration](../../docs/core/configuration.md)** - Configuration options
-- **[Extensions](../../docs/extensions/index.md)** - Available extensions
+- [Samples guide](../../docs/getting-started/samples-guide.md)  
+- [Getting started](../../docs/getting-started/getting-started.md)  
+- [Operations](../../docs/core/operations.md)  
+- [Configuration](../../docs/core/configuration.md)  
+- [Extensions](../../docs/extensions/index.md)  
 
-## Running Samples
+## Prerequisites
 
-### Prerequisites
+- .NET 8.0 SDK or later  
+- Windows, Linux, or macOS  
 
-- .NET 8.0 SDK or later
-- Windows, Linux, or macOS
-
-### Run All Samples
+## Run everything
 
 ```bash
 cd WorkflowForge.Samples.BasicConsole
 dotnet run
-# Select 'A' from menu to run all samples
+# Choose 'A' in the menu for the full set
 ```
 
-### Run Specific Sample
+Pick **1–33** for one sample.
 
-```bash
-dotnet run
-# Enter sample number (1-33) from menu
-```
+## Contributing samples
 
-## Contributing Samples
-
-Want to contribute a sample? See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines.
-
-Samples should:
-- Demonstrate a specific feature or pattern
-- Include clear console output
-- Be self-contained and runnable
-- Follow existing sample structure
-
----
-
+See [CONTRIBUTING.md](../../CONTRIBUTING.md). Each sample should show one idea clearly, print useful output, stay self-contained, and follow the existing layout.

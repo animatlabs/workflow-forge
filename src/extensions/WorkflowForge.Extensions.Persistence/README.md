@@ -1,31 +1,20 @@
 # WorkflowForge.Extensions.Persistence
 
-Persistence extension for WorkflowForge enabling resumable workflows via a pluggable provider (bring your own storage). Zero-dependency core integration.
+Save and resume workflows through `IWorkflowPersistenceProvider`: you choose SQL, Cosmos, Redis, files, or anything else. The package ships abstractions and middleware only, no built-in database driver.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Persistence.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Persistence/)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 
-## Bring Your Own Storage
-
-This extension defines the **abstractions and middleware** for workflow persistence. You implement `IWorkflowPersistenceProvider` to plug in your chosen storage (SQL Server, Cosmos DB, Redis, file system, etc.).
-
-There are **no built-in providers** -- this is by design to keep the extension dependency-free and storage-agnostic.
-
-## Installation
+## Install
 
 ```bash
 dotnet add package WorkflowForge.Extensions.Persistence
 ```
 
-**Requires**: .NET Standard 2.0 or later
+Targets .NET Standard 2.0 or later.
 
 ## Quick Start
 
-### 1. Implement the Provider Interface
+### 1. Implement the provider interface
 
 ```csharp
 using WorkflowForge.Extensions.Persistence.Abstractions;
@@ -64,7 +53,7 @@ public class SqlPersistenceProvider : IWorkflowPersistenceProvider
 }
 ```
 
-### 2. Enable Persistence on the Foundry
+### 2. Enable persistence on the foundry
 
 ```csharp
 using WorkflowForge;
@@ -83,7 +72,7 @@ foundry.UsePersistence(provider);
 await smith.ForgeAsync(workflow, foundry);
 ```
 
-### 3. Enable with Stable Keys (for Cross-Process Resume)
+### 3. Enable with stable keys (for cross-process resume)
 
 ```csharp
 using WorkflowForge.Extensions.Persistence;
@@ -99,16 +88,14 @@ foundry.UsePersistence(provider, options);
 
 When `InstanceId` and `WorkflowKey` are set, deterministic GUIDs are derived from those strings so the same workflow can be found across process restarts.
 
-## Key Features
+## Key points
 
-- **Pluggable Storage**: `IWorkflowPersistenceProvider` interface -- bring any storage backend
-- **Checkpoint & Resume**: Automatically checkpoints after each operation and skips completed steps on resume
-- **Index-Based Tracking**: O(1) operation tracking with no dictionary lookups
-- **Stable Keys**: Deterministic IDs for cross-process recovery
-- **Thread-Safe**: Safe for concurrent workflow execution
-- **Zero Dependencies**: No external packages beyond WorkflowForge core
+- No default provider on purpose: stay storage-neutral and dependency-free.
+- Checkpoints after each successful operation; resume skips completed steps via `NextOperationIndex`.
+- Optional stable keys tie executions to logical instances across restarts.
+- Middleware is written to be safe under concurrent workflows.
 
-## How It Works
+## How it works
 
 The `PersistenceMiddleware` wraps each operation in the pipeline:
 
@@ -118,7 +105,7 @@ The `PersistenceMiddleware` wraps each operation in the pipeline:
 4. **After success**: Builds a `WorkflowExecutionSnapshot` with `NextOperationIndex` incremented and calls `SaveAsync`
 5. **When all operations complete**: Calls `DeleteAsync` to clean up
 
-## Snapshot Structure
+## Snapshot structure
 
 ```csharp
 public sealed class WorkflowExecutionSnapshot
@@ -132,7 +119,7 @@ public sealed class WorkflowExecutionSnapshot
 ```
 
 - `NextOperationIndex`: -1 means not started; N means operation at index N is next
-- `Properties`: Arbitrary key-value state from `foundry.Properties` -- store only what you need for resumption
+- `Properties`: Arbitrary key-value state from `foundry.Properties`; store only what you need for resumption
 
 ## Configuration
 
@@ -156,7 +143,7 @@ public sealed class WorkflowExecutionSnapshot
 }
 ```
 
-### Via Code
+### Via code
 
 ```csharp
 using WorkflowForge.Extensions.Persistence;
@@ -175,7 +162,7 @@ var options = new PersistenceOptions
 foundry.UsePersistence(provider, options);
 ```
 
-### Via Dependency Injection
+### Via dependency injection
 
 ```csharp
 using Microsoft.Extensions.Configuration;
@@ -186,9 +173,9 @@ services.AddPersistenceConfiguration(configuration);
 var options = serviceProvider.GetRequiredService<IOptions<PersistenceOptions>>().Value;
 ```
 
-See [Configuration Guide](../../../docs/core/configuration.md#persistence-extensions) for complete options.
+[Persistence configuration](../../../docs/core/configuration.md#persistence-extensions)
 
-## Provider Interface
+## Provider interface
 
 ```csharp
 public interface IWorkflowPersistenceProvider
@@ -203,12 +190,10 @@ public interface IWorkflowPersistenceProvider
 }
 ```
 
-## Documentation
+## Links
 
-- **[Getting Started](../../../docs/getting-started/getting-started.md)**
-- **[Configuration Guide](../../../docs/core/configuration.md#persistence-extensions)**
-- **[Extensions Overview](../../../docs/extensions/index.md)**
-- **[Recovery Extension](../WorkflowForge.Extensions.Persistence.Recovery/README.md)** - Recovery orchestration on top of persistence
-- **[Sample 18: Persistence](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
-
----
+- [Getting Started](../../../docs/getting-started/getting-started.md)
+- [Configuration Guide](../../../docs/core/configuration.md#persistence-extensions)
+- [Extensions Overview](../../../docs/extensions/index.md)
+- [Recovery Extension](../WorkflowForge.Extensions.Persistence.Recovery/README.md)
+- [Sample 18: Persistence](../../samples/WorkflowForge.Samples.BasicConsole/README.md)

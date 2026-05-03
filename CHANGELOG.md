@@ -24,7 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `SerilogLoggerFactory.CreateLogger(ILoggerFactory)` bridge to integrate WorkflowForge logging with the host `Microsoft.Extensions.Logging` pipeline
 - Comparative benchmarks now include .NET Framework 4.8 runtime alongside .NET 8.0 and .NET 10.0, producing full cross-runtime comparison graphs for all 12 scenarios (WorkflowForge vs WorkflowCore; Elsa skipped on net48)
 - GitHub Actions build provenance attestation for `.nupkg`, `.snupkg`, and CycloneDX SBOM artifacts via Sigstore (`actions/attest-build-provenance`)
-- NuGet dependency vulnerability auditing (`NuGetAudit`) across all direct and transitive dependencies on every restore — any known CVE fails the build
+- NuGet dependency vulnerability auditing (`NuGetAudit`) across all direct and transitive dependencies on every restore; any known CVE fails the build
 - Dependabot configuration for automated weekly NuGet and GitHub Actions dependency update PRs
 - SDK version pinning via `global.json` to prevent CI/local SDK drift
 - Release process documentation (`docs/RELEASING.md`) covering prerequisites, checklist, pipeline walkthrough, attestation verification, rollback, and future signing options
@@ -33,12 +33,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - **Serilog extension**: Added `CreateLogger(ILoggerFactory)` overload for host MEL integration; `CreateLogger(SerilogLoggerOptions?)` remains available
 - CI/CD moved to GitHub Actions with SonarCloud analysis, artifact reuse for publish, and package signing flow
-- Core orchestration and operation infrastructure hardened: compensation path consistency, defensive options cloning, stricter disposal/event cleanup, and reduced mutable surface area
-- Middleware and persistence internals streamlined with index-based operation tracking and consolidated internal key constants
+- Core orchestration and operations: aligned compensation paths, defensive options cloning, stricter disposal and event cleanup, smaller mutable surface
+- Middleware and persistence internals simplified with index-based operation tracking and consolidated internal key constants
 - Repository-wide multi-target validation expanded to `net48`, `net8.0`, and `net10.0` across tests/samples/benchmarks
-- All GitHub Actions in the CI/CD pipeline pinned to immutable commit SHAs (supply-chain integrity hardening)
+- All GitHub Actions in the CI/CD pipeline pinned to immutable commit SHAs
 - Publish job now protected by a `nuget-publish` GitHub Environment requiring human approval before any push to NuGet.org
-- `PublishRepositoryUrl` and `DebugType` (embedded PDB) centralized into `src/Directory.Build.props`, ensuring all 13 packages uniformly carry SourceLink metadata
+- `PublishRepositoryUrl` and `DebugType` (embedded PDB) centralized into `src/Directory.Build.props` so every package carries SourceLink metadata the same way
 - Coverage reports uploaded as a separate retained artifact alongside test results for independent auditing
 
 ### Removed

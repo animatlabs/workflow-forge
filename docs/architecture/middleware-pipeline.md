@@ -5,9 +5,7 @@ description: How WorkflowForge implements the Russian Doll middleware pattern fo
 
 # Middleware Pipeline Architecture
 
-## Overview
-
-WorkflowForge implements the **Russian Doll Pattern** for middleware execution, which is an industry-standard approach used by ASP.NET Core, Express.js, and other modern frameworks. This document explains how the middleware pipeline works and provides best practices for middleware ordering.
+WorkflowForge chains **Russian Doll** middleware: each layer wraps the rest. Below: ordering, how the loop builds `next`, and common mistakes.
 
 ## The Russian Doll Pattern
 
@@ -46,7 +44,7 @@ The reverse iteration builds the execution chain from inside-out:
 
 **Final execution path:** timing → error → retry → operation → retry → error → timing
 
-## Best Practices for Middleware Ordering
+## Middleware Ordering Guidelines
 
 Add middleware in order of desired outer-to-inner wrapping:
 
@@ -69,21 +67,13 @@ foundry.UseValidation<OrderDto>(f => f.GetPropertyOrDefault<OrderDto>("Order"));
 foundry.UseAudit(auditProvider);
 ```
 
-This ensures:
-- Timing includes error handling time
-- Error handlers can catch retry failures
-- Validation and audit are closest to the operation
-- All layers benefit from resilience
+With that stack, outer timing/logging sees failures, handlers still see retry errors, and validation/audit sit closest to the op.
 
 ## Technical Implementation Details
 
 ### Why Reverse Iteration?
 
-The code iterates backwards (`_middlewares.Count - 1` down to `0`) because:
-
-- **Last middleware added should wrap first** (innermost)
-- **Each iteration wraps the previous 'next' delegate** creating the chain
-- **Results in correct execution order:** first added → first executed (outermost)
+The loop walks from `_middlewares.Count - 1` down to `0` so the most recently added middleware becomes the innermost wrapper, each pass substitutes a new `next` delegate, and the first registration you make ends up executing first on the way in (outermost layer).
 
 ### Code Structure
 
@@ -167,10 +157,10 @@ foundry.AddMiddleware(new LoggingMiddleware("INNER"));
 
 ## Performance Considerations
 
-- **Minimal overhead:** Each middleware adds one delegate invocation (~10ns)
-- **Zero allocations:** The chain is built once per operation execution
-- **Async-friendly:** Full support for async/await throughout the chain
-- **Cancellation support:** CancellationToken threading through all layers
+- Each layer costs roughly one extra delegate hop (nanoseconds in typical runs).
+- The wrapped delegate chain is assembled per operation execution without retaining throwaway collections.
+- The pipeline is async-first end to end.
+- `CancellationToken` flows through every middleware hop.
 
 ---
 
@@ -178,4 +168,4 @@ foundry.AddMiddleware(new LoggingMiddleware("INNER"));
 
 - [Operations Guide](../core/operations.md) - Middleware and operation patterns
 - [Samples Guide](../getting-started/samples-guide.md) - Sample 12: Middleware
-- [Performance](../performance/performance.md) - Performance best practices
+- [Performance](../performance/performance.md) - Performance guidelines

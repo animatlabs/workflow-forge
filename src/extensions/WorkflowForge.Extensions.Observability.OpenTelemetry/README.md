@@ -1,29 +1,16 @@
 # WorkflowForge.Extensions.Observability.OpenTelemetry
 
-Distributed tracing extension for WorkflowForge with OpenTelemetry integration for comprehensive observability.
+Emit `ActivitySource` traces and metrics for workflows and operations; OpenTelemetry bits are ILRepacked so apps see fewer dependency conflicts.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Observability.OpenTelemetry.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Observability.OpenTelemetry/)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 
-## Dependency Isolation
-
-**This extension internalizes OpenTelemetry with ILRepack.** This means:
-
-- Reduced dependency conflicts for OpenTelemetry
-- Public APIs stay WorkflowForge/BCL only
-- Microsoft/System assemblies remain external
-
-## Installation
+## Install
 
 ```bash
 dotnet add package WorkflowForge.Extensions.Observability.OpenTelemetry
 ```
 
-**Requires**: .NET Standard 2.0 or later
+Targets .NET Standard 2.0 or later.
 
 ## Quick Start
 
@@ -53,14 +40,12 @@ var otelService = foundry.GetOpenTelemetryService();
 using var activity = foundry.StartActivity("CustomOperation");
 ```
 
-## Key Features
+## Key points
 
-- **Distributed Tracing**: Track workflows across services
-- **Automatic Spans**: Operation-level span creation
-- **Context Propagation**: W3C Trace Context support
-- **Multiple Exporters**: Jaeger, Zipkin, Console, OTLP
-- **Rich Metadata**: Operation names, durations, results
-- **Full OpenTelemetry API**: Access entire ecosystem
+- One span per operation by default; W3C Trace Context for propagation.
+- Tags cover names, durations, and success or failure.
+- Host-level OpenTelemetry SDK exporters (Jaeger, Zipkin, OTLP, console, etc.) pick up `WorkflowForge` activities.
+- Public API remains WorkflowForge and BCL; OTEL is merged internally.
 
 ## Configuration
 
@@ -82,11 +67,11 @@ foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions
 // collect activities emitted by WorkflowForge.
 ```
 
-See [Configuration Guide](../../../docs/core/configuration.md#opentelemetry-extension) for complete options.
+[OpenTelemetry extension options](../../../docs/core/configuration.md#opentelemetry-extension)
 
-## Host-Level Exporter Configuration
+## Host-level exporter configuration
 
-WorkflowForge emits `ActivitySource` events that any OpenTelemetry exporter can collect. Configure exporters at the host application level:
+WorkflowForge emits `ActivitySource` events that any OpenTelemetry exporter can collect. Configure exporters in the host:
 
 ```csharp
 // In your application startup (requires OpenTelemetry SDK packages)
@@ -97,13 +82,14 @@ builder.Services.AddOpenTelemetry()
         .AddOtlpExporter());
 ```
 
-Supported exporters (via separate OpenTelemetry packages):
+Supported exporters (separate OpenTelemetry packages):
+
 - **Jaeger**: `OpenTelemetry.Exporter.Jaeger`
 - **Zipkin**: `OpenTelemetry.Exporter.Zipkin`
 - **OTLP**: `OpenTelemetry.Exporter.OpenTelemetryProtocol`
 - **Console**: `OpenTelemetry.Exporter.Console`
 
-## Span Structure
+## Span structure
 
 WorkflowForge creates the following span hierarchy:
 
@@ -116,13 +102,14 @@ Workflow: OrderProcessing
 ```
 
 Each span includes:
+
 - Operation name
 - Duration
 - Success/failure status
 - Custom tags (workflow properties)
 - Error details (if failed)
 
-## Custom Spans
+## Custom spans
 
 ```csharp
 using var activity = foundry.StartActivity("CustomOperation");
@@ -141,9 +128,10 @@ catch (Exception ex)
 }
 ```
 
-## Context Propagation
+## Context propagation
 
-WorkflowForge automatically propagates trace context across:
+WorkflowForge propagates trace context across:
+
 - Operations within a workflow
 - Nested workflows
 - HTTP calls (with propagation headers)
@@ -152,17 +140,15 @@ WorkflowForge automatically propagates trace context across:
 ## Visualization
 
 View traces in:
+
 - **Jaeger UI**: http://localhost:16686
 - **Zipkin UI**: http://localhost:9411
 - **Application Insights**: Azure Portal
 - **Grafana Tempo**: Grafana dashboard
 
-## Documentation
+## Links
 
-- **[Getting Started](../../../docs/getting-started/getting-started.md)**
-- **[Configuration Guide](../../../docs/core/configuration.md#opentelemetry-extension)**
-- **[Extensions Overview](../../../docs/extensions/index.md)**
-- **[Sample 15: OpenTelemetry](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
-
----
-
+- [Getting Started](../../../docs/getting-started/getting-started.md)
+- [Configuration Guide](../../../docs/core/configuration.md#opentelemetry-extension)
+- [Extensions Overview](../../../docs/extensions/index.md)
+- [Sample 15: OpenTelemetry](../../samples/WorkflowForge.Samples.BasicConsole/README.md)

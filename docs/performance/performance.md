@@ -1,11 +1,11 @@
 ---
 title: Performance & Benchmarks
-description: WorkflowForge delivers 13-511x faster execution and 6-575x less memory than alternatives. Microsecond-scale workflows, minimal footprint, near-linear scaling.
+description: "Performance overview and benchmarks: comparative speedups and allocation ratios from BenchmarkDotNet, plus targets and tuning notes."
 ---
 
 # Performance & Benchmarks
 
-This document provides a comprehensive overview of WorkflowForge's performance characteristics, including internal benchmarks, competitive comparisons, targets, and optimization guidance.
+Where WorkflowForge sits on BenchmarkDotNet runs: internal numbers, comparisons, targets, and tuning notes.
 
 **Version**: 2.1.1  
 **Test System**: Windows 11 (25H2), Intel 11th Gen i7-1185G7, .NET SDK 10.0.103  
@@ -30,15 +30,15 @@ This document provides a comprehensive overview of WorkflowForge's performance c
 
 ## Overview
 
-WorkflowForge is designed for **high-performance workflow orchestration**. Its architecture prioritizes:
+The engine optimizes for **low-latency in-process orchestration**:
 
-- **Microsecond-scale execution** — CPU-bound operations complete in 11–80μs median
-- **Minimal memory footprint** — 3.33KB baseline, constant regardless of iteration count
-- **Near-linear concurrent scaling** — 8.0x speedup with 8 workflows, 15.9x with 16
-- **Zero serialization overhead** — Dictionary-based data flow, no reflection per operation
-- **No background threads** — Synchronous execution model with explicit parallelism
+- **Microseconds on the hot path**: simple ops median about 11–80μs in the harness.
+- **Small baseline**: ~3.33KB, flat from 10 through 500 iterations in the minimal workflow test.
+- **Concurrency**: about 8.0x with 8 workflows and 15.9x with 16 in the same suite.
+- **Property bag data flow**: no per-step serialization or reflection on that path.
+- **No host-owned worker pool**: parallelism is explicit (`ForEachWorkflowOperation`, your schedulers).
 
-These design choices yield **13–511x faster execution** and **6–575x less memory allocation** compared to Workflow Core and Elsa Workflows across 12 real-world scenarios on .NET 10.0, .NET 8.0, and .NET Framework 4.8. Benchmarks are factual measurements from BenchmarkDotNet on representative hardware.
+On .NET 10, 8, and .NET Framework 4.8 the comparative harness reports **13–511x faster wall times** and **6–575x lower allocations** than Workflow Core and Elsa for the scripted scenarios we mirrored. Ratios are tied to those scripts and hardware, not every app.
 
 {% if site.url %}
 <div class="perf-stats">
@@ -65,7 +65,7 @@ These design choices yield **13–511x faster execution** and **6–575x less me
 
 ## Internal Performance Benchmarks
 
-Internal benchmarks validate WorkflowForge's intrinsic performance in isolation across all three runtimes:
+These internal benchmarks measure WorkflowForge in isolation across all three runtimes:
 
 | Metric | .NET 8.0 | .NET 10.0 | .NET FX 4.8 |
 |--------|----------|-----------|-------------|
@@ -77,27 +77,27 @@ Internal benchmarks validate WorkflowForge's intrinsic performance in isolation 
 
 ‡ .NET Framework 4.8 does not report memory allocation metrics in BenchmarkDotNet.
 
-**Key findings**:
+**Observations**
 
-- Custom operations are the most memory-efficient (456–592 B per execution)
-- Logging operations are fastest (10.85–12.1μs)
-- Minimal allocation workflow maintains constant 3,408 B across 10–500 allocations
-- No Gen2 GC collections in typical workloads
+- Custom operations allocate the least here (456–592 B per run in the harness).
+- Logging operations post the shortest times (10.85–12.1μs).
+- The minimal-allocation workflow holds 3,408 B from 10 through 500 iterations.
+- Ordinary paths in this matrix stayed off Gen2.
 
-For full operation-by-operation results, throughput scaling, memory patterns, and concurrency charts, see [Internal Benchmarks](internal-benchmarks.md).
+For operation-by-operation results, throughput scaling, memory patterns, and concurrency charts, see [Internal Benchmarks](internal-benchmarks.md).
 
 ---
 
 ## Competitive Performance Summary
 
-WorkflowForge is compared against Workflow Core and Elsa Workflows across **12 scenarios** with identical logic on .NET 10.0, .NET 8.0, and .NET Framework 4.8. Max speed: **511x faster** (State Machine vs Elsa, .NET 10.0); min execution: **7μs** (Creation Overhead, .NET FX 4.8). **Overall ranges**: **13–511x faster**, **6–575x less memory**.
+WorkflowForge is run beside Workflow Core and Elsa on **twelve shared scenarios** (same script) on .NET 10.0, 8.0, and .NET Framework 4.8. Peak ratio in our log: **511x** wall time (state machine vs Elsa, .NET 10.0). Shortest median: **7μs** (creation overhead, .NET FX 4.8). Aggregate bands from the tables: **13–511x** time, **6–575x** allocation.
 
 {% include benchmark-data.md %}
 
 {% if site.url %}
 <div class="perf-vchart">
   <div class="perf-vchart-title">State Machine Execution (25 Transitions)</div>
-  <div class="perf-vchart-subtitle">Up to 511x faster than alternatives (.NET 10.0)</div>
+  <div class="perf-vchart-subtitle">State machine, 25 transitions (.NET 10.0); values from tables below</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
@@ -149,7 +149,7 @@ WorkflowForge maintains the following performance targets:
 | GC pressure | No Gen2 collections in typical workloads | Met |
 | Concurrent scaling | Near-linear | Met (8.0x for 8, 15.9x for 16) |
 
-These targets are validated by internal and competitive benchmarks. When designing workflows, prefer patterns that align with these characteristics.
+Targets below come straight from the same BenchmarkDotNet matrix. Keep workflows on custom ops, modest property payloads, and tight middleware stacks if you need the same envelope.
 
 ---
 
@@ -157,13 +157,13 @@ These targets are validated by internal and competitive benchmarks. When designi
 
 ### 1. Choose the Right Operation Type
 
-- **Custom class-based operations** — Most memory-efficient (456–592 B), recommended for production
-- **Logging operations** — Fastest execution (10.85–12.1μs) for lightweight tasks
-- **Delegate operations** — Convenient but add ~5–10μs overhead vs custom
+- **Custom class-based operations** use the least memory in benchmarks (456–592 B); they are the default choice when you care about allocation.
+- **Logging operations** measure fastest (10.85–12.1μs) for tiny steps.
+- **Delegate operations** are handy but add roughly 5–10μs versus a custom operation in the same harness.
 
 ### 2. Reuse Workflow Definitions
 
-Build workflows once and execute many times. Creation overhead is minimal (1.4–1.9μs) but reuse remains best practice for high-throughput scenarios.
+Build workflows once and execute many times. Creation overhead is minimal (1.4–1.9μs) but reuse is still recommended for high-throughput scenarios.
 
 ### 3. Optimize Data Passing
 
@@ -171,7 +171,7 @@ Build workflows once and execute many times. Creation overhead is minimal (1.4�
 - Cache property reads in loops instead of repeated lookups
 - Avoid large object allocations in hot paths
 
-### 4. Leverage Concurrency
+### 4. Use Concurrency
 
 Use `ForEachWorkflowOperation` for parallel execution of independent operations. Concurrency scales near-linearly (8.0x for 8 workflows, 15.9x for 16).
 
@@ -230,13 +230,13 @@ cd src/benchmarks/WorkflowForge.Benchmarks.Comparative
 dotnet run -c Release
 ```
 
-Results are written to `BenchmarkDotNet.Artifacts/results/`. Full runs may take 30–60 minutes.
+BenchmarkDotNet writes output under `BenchmarkDotNet.Artifacts/results/`. Expect full comparative runs to take about 30–60 minutes.
 
 ---
 
 ## Version History
 
-### Version 2.1.1 (Current — March 2026)
+### Version 2.1.1 (current, March 2026)
 
 - Multi-target .NET 10.0, .NET 8.0, .NET Framework 4.8
 - Sealed operation classes
@@ -252,7 +252,7 @@ Results are written to `BenchmarkDotNet.Artifacts/results/`. Full runs may take 
 
 ## Related Documentation
 
-- [Internal Benchmarks](internal-benchmarks.md) — Operation performance, throughput, memory, concurrency
-- [Competitive Analysis](competitive-analysis.md) — Scenario breakdowns, parameter sweeps, architectural differences
-- [Architecture Overview](../architecture/overview.md) — Design principles and execution model
-- [Operations](../core/operations.md) — Operation types and middleware pipeline
+- [Internal Benchmarks](internal-benchmarks.md): operation performance, throughput, memory, concurrency
+- [Competitive Analysis](competitive-analysis.md): scenario breakdowns, parameter sweeps, architectural differences
+- [Architecture Overview](../architecture/overview.md): design principles and execution model
+- [Operations](../core/operations.md): operation types and middleware pipeline

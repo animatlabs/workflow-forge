@@ -1,31 +1,16 @@
 # WorkflowForge.Extensions.Resilience
 
-Base resilience patterns extension for WorkflowForge with fundamental retry logic and resilience strategies.
+Wrap operations with retry decorators and small strategy classes (exponential, fixed, jittered). No third-party policy library: only WorkflowForge core.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Resilience.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Resilience/)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 
-## Zero Dependencies - Zero Conflicts
-
-**This extension has ZERO external dependencies.** This means:
-
-- NO DLL Hell - No third-party dependencies to conflict with
-- NO Version Conflicts - Works with any versions of your application dependencies
-- Clean Deployment - Pure WorkflowForge extension with no baggage
-
-**Lightweight architecture**: Built entirely on WorkflowForge core with no external libraries.
-
-## Installation
+## Install
 
 ```bash
 dotnet add package WorkflowForge.Extensions.Resilience
 ```
 
-**Requires**: .NET Standard 2.0 or later
+Targets .NET Standard 2.0 or later.
 
 ## Quick Start
 
@@ -49,18 +34,16 @@ var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
 await smith.ForgeAsync(workflow, foundry);
 ```
 
-## Key Features
+## Key points
 
-- **Retry Strategies**: Exponential backoff, fixed interval, random interval
-- **Standardized Patterns**: Unified `IWorkflowResilienceStrategy` interface
-- **Flexible Configuration**: Rich configuration through `RetryPolicySettings`
-- **Operation Wrappers**: Easy-to-use resilient operation wrappers
-- **Foundation for Advanced**: Base for Polly extension
-- **Zero Dependencies**: Pure WorkflowForge implementation
+- `IWorkflowResilienceStrategy` is the single extension point for delay and retry decisions.
+- Ships exponential backoff, fixed interval, and random (jitter) helpers.
+- `RetryPolicySettings` centralizes attempt counts and delay bounds.
+- For circuit breaker, bulkheads, or Polly pipelines, see **WorkflowForge.Extensions.Resilience.Polly**.
 
-## Retry Strategies
+## Retry strategies
 
-### 1. Exponential Backoff (Best for External Services)
+### 1. Exponential backoff (external services)
 
 ```csharp
 var strategy = new ExponentialBackoffStrategy(
@@ -72,9 +55,9 @@ var strategy = new ExponentialBackoffStrategy(
 var resilientOp = new RetryWorkflowOperation(myOperation, strategy);
 ```
 
-**Use when**: Calling external APIs, databases, or services that may be temporarily unavailable.
+**Use when**: External APIs, databases, or partners that drop connections briefly.
 
-### 2. Fixed Interval (Best for Databases)
+### 2. Fixed interval (predictable spacing)
 
 ```csharp
 var retryOp = RetryWorkflowOperation.WithFixedInterval(
@@ -83,9 +66,9 @@ var retryOp = RetryWorkflowOperation.WithFixedInterval(
     maxAttempts: 5);
 ```
 
-**Use when**: Database queries, file operations, or scenarios where consistent retry timing is needed.
+**Use when**: You want the same delay between every attempt (files, simple DB retries).
 
-### 3. Random Interval (Prevents Thundering Herd)
+### 3. Random interval (spread retries)
 
 ```csharp
 var retryOp = RetryWorkflowOperation.WithRandomInterval(
@@ -95,11 +78,11 @@ var retryOp = RetryWorkflowOperation.WithRandomInterval(
     maxAttempts: 3);
 ```
 
-**Use when**: Multiple concurrent workflows might retry simultaneously.
+**Use when**: Many workflows might retry at once; jitter spreads the load.
 
-## Advanced Configuration
+## Advanced configuration
 
-### Custom Retry Strategy
+### Custom retry strategy
 
 ```csharp
 public class CustomRetryStrategy : ResilienceStrategyBase
@@ -131,7 +114,7 @@ public class CustomRetryStrategy : ResilienceStrategyBase
 }
 ```
 
-### Retry Policy Settings
+### Retry policy settings
 
 ```csharp
 var settings = new RetryPolicySettings
@@ -146,7 +129,7 @@ var settings = new RetryPolicySettings
 
 ## Configuration
 
-**This extension uses programmatic configuration only.** There is no `appsettings.json` support. For file-based configuration, use **WorkflowForge.Extensions.Resilience.Polly**.
+**Programmatic only.** There is no `appsettings.json` support in this package. For file-based policy wiring, use **WorkflowForge.Extensions.Resilience.Polly**.
 
 ### Usage
 
@@ -181,7 +164,7 @@ var workflow = WorkflowForge.CreateWorkflow("ResilientProcess")
 - `FixedIntervalStrategy` - Best for databases
 - `RandomIntervalStrategy` - Prevents thundering herd
 
-See [Configuration Guide](../../../docs/core/configuration.md#resilience-extension) for complete options.
+[Resilience configuration](../../../docs/core/configuration.md#resilience-extension)
 
 ## Interfaces
 
@@ -198,34 +181,20 @@ public interface IWorkflowResilienceStrategy
 }
 ```
 
-## When to Use vs Polly Extension
+## When to use this package vs Polly
 
-**Use Resilience (this extension) when**:
-- You want zero external dependencies
-- Basic retry patterns are sufficient
-- You need lightweight resilience
+**This package** fits when you want no extra dependencies and simple retry timing is enough.
 
-**Use Resilience.Polly extension when**:
-- You need advanced patterns (circuit breaker, bulkhead, rate limiting)
-- You want to leverage Polly's ecosystem
-- You need complex policy combinations
+**WorkflowForge.Extensions.Resilience.Polly** fits when you need circuit breakers, bulkheads, rate limits, or stacked policies. Polly is ILRepacked there; this package stays dependency-free.
 
-Resilience.Polly internalizes Polly with ILRepack; this extension has no third-party dependencies.
+## Links
 
-## Documentation
-
-- **[Getting Started](../../../docs/getting-started/getting-started.md)** - Basic tutorial
-- **[Configuration Guide](../../../docs/core/configuration.md#resilience-extension)** - Full configuration options
-- **[Extensions Overview](../../../docs/extensions/index.md)** - All extensions
-- **[Samples](../../samples/WorkflowForge.Samples.BasicConsole/)** - Sample 14: Polly Resilience (demonstrates patterns)
-
-## Sample Usage
-
-See [Sample 14: PollyResilienceSample](../../samples/WorkflowForge.Samples.BasicConsole/Samples/PollyResilienceSample.cs) for complete examples of resilience patterns.
+- [Getting Started](../../../docs/getting-started/getting-started.md)
+- [Configuration Guide](../../../docs/core/configuration.md#resilience-extension)
+- [Extensions Overview](../../../docs/extensions/index.md)
+- [Samples](../../samples/WorkflowForge.Samples.BasicConsole/) (see Sample 14: Polly Resilience for related patterns)
+- [Sample source (PollyResilienceSample)](../../samples/WorkflowForge.Samples.BasicConsole/Samples/PollyResilienceSample.cs)
 
 ## License
 
 MIT License - see [LICENSE](../../../LICENSE) for details.
-
----
-

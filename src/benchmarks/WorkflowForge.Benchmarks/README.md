@@ -1,126 +1,104 @@
-# WorkflowForge Internal Benchmarks
+# WorkflowForge internal benchmarks
 
-**Internal performance benchmarks for WorkflowForge core**
+**Last updated:** March 2026  
+**Published write-up:** [Internal benchmarks](../../../docs/performance/internal-benchmarks.md)
 
-**Last Updated**: March 2026  
-**Published Results**: [Internal Benchmarks Documentation](../../../docs/performance/internal-benchmarks.md)
+BenchmarkDotNet lives here to measure WorkflowForge across scenarios and configuration profiles and to watch how those numbers move over time.
 
-## Overview
+`ConfigurationProfilesBenchmark` may be missing from the latest `BenchmarkDotNet.Artifacts` output; check the artifacts folder if you expect it.
 
-This project contains comprehensive internal performance benchmarks using BenchmarkDotNet to measure and track WorkflowForge's performance characteristics across different scenarios and configuration profiles.
+## Categories
 
-**Note**: ConfigurationProfilesBenchmark is not in the latest run results at BenchmarkDotNet.Artifacts.
+### Operation performance (`OperationPerformanceBenchmark`)
 
-## Benchmark Categories
+Per-type execution time and allocations:
 
-### 1. Operation Performance (`OperationPerformanceBenchmark`)
+- **DelegateOperationExecution**, **ActionOperationExecution**, **CustomOperationExecution**, **LoggingOperationExecution**
+- **DelegateOperationCreation**, **ActionOperationCreation**, **CustomOperationCreation**
 
-Measures execution time and memory allocation for different operation types:
+**Results:** about **8.75–82 μs** per run (CPU-bound), **56–8,536 B** allocated.
 
-- **DelegateOperationExecution**: Lambda-based operations
-- **ActionOperationExecution**: Action-based operations
-- **CustomOperationExecution**: Custom `IWorkflowOperation` implementations
-- **LoggingOperationExecution**: Built-in logging operations
-- **DelegateOperationCreation**: Operation creation overhead
-- **ActionOperationCreation**: Action creation overhead
-- **CustomOperationCreation**: Custom operation instantiation
+### Workflow throughput (`WorkflowThroughputBenchmark`)
 
-**Results**: 8.75-82 μs execution (CPU-bound), 56-8,536 bytes allocated
+End-to-end workflows with varying operation counts:
 
-### 2. Workflow Throughput (`WorkflowThroughputBenchmark`)
+- **SequentialDelegateOperations** / **SequentialCustomOperations**
+- **HighPerformanceConfiguration**
+- **ForEachLoopWorkflow**
 
-Measures complete workflow execution with varying operation counts:
+**Results:** about **38–272 μs** for CPU-bound workflows (1–50 operations).
 
-- **SequentialDelegateOperations**: Delegate operations in sequence
-- **SequentialCustomOperations**: Custom operations in sequence
-- **HighPerformanceConfiguration**: Optimized configuration
-- **ForEachLoopWorkflow**: Collection processing workflows
+### Concurrency (`ConcurrencyBenchmark`)
 
-**Results**: 38-272 μs for CPU-bound workflows (1-50 operations)
+Eight workflows, sequential vs parallel:
 
-### 3. Concurrency Performance (`ConcurrencyBenchmark`)
+- **SequentialWorkflows**, **ConcurrentWorkflows**, **ParallelWorkflows** (`Parallel.ForEach`)
 
-Measures parallel vs sequential workflow execution:
+**Results:** concurrent/parallel runs land near **~8×** faster than strictly sequential (**~79 ms** vs **~627 ms** in the recorded run).
 
-- **SequentialWorkflows**: Execute 8 workflows sequentially
-- **ConcurrentWorkflows**: Execute 8 workflows concurrently
-- **ParallelWorkflows**: Execute using `Parallel.ForEach`
+### Memory (`MemoryAllocationBenchmark`)
 
-**Results**: ~8x faster with concurrent/parallel execution (79ms vs 627ms)
+Allocation and GC shapes:
 
-### 4. Memory Allocation (`MemoryAllocationBenchmark`)
+- **MinimalAllocationWorkflow**, **LargeObjectAllocation**, **MemoryPressureScenario**
 
-Tracks memory usage and GC behavior:
+**Results:** **~3,408 B** on the minimal path; large-object paths up to about **~1 MB**.
 
-- **MinimalAllocationWorkflow**: Optimized for low memory
-- **LargeObjectAllocation**: Handling large objects
-- **MemoryPressureScenario**: High memory scenarios
+## Running
 
-**Results**: 3,408 B (3.3 KB) for minimal, up to ~1 MB for large objects
-
-## Running Benchmarks
-
-### Run All Benchmarks
+All benchmarks:
 
 ```bash
 cd src/benchmarks/WorkflowForge.Benchmarks
 dotnet run -c Release
 ```
 
-### Run Specific Benchmark
+Filter:
 
 ```bash
 dotnet run -c Release --filter *OperationPerformanceBenchmark*
 ```
 
-### Run with Memory Diagnoser
+Memory diagnoser:
 
 ```bash
 dotnet run -c Release --memory
 ```
 
-## Benchmark Results
+## Outputs
 
-Results are saved to `BenchmarkDotNet.Artifacts/results/` in multiple formats:
+Under `BenchmarkDotNet.Artifacts/results/`:
 
-- `*-report.html` - Visual HTML report
-- `*-report.csv` - CSV for analysis
-- `*-report.md` - Markdown summary
-- `*-report-github.md` - GitHub-flavored markdown
+- `*-report.html`, `*-report.csv`, `*-report.md`, `*-report-github.md`
 
-## Performance Targets
+## Targets (sanity checks)
 
-| Category | Target | Actual |
-|----------|--------|--------|
-| Operation Execution | < 50 μs | 8.75-82 μs ✅ |
-| Workflow Creation | < 25 μs | 1.2-1.9 μs ✅ |
-| Memory per Operation | < 2 KB | 56-8,536 B ✅ |
-| Concurrent Speedup | > 5x | 8x ✅ |
+| Area | Target | Observed |
+|------|--------|----------|
+| Operation execution | < 50 μs | 8.75–82 μs |
+| Workflow creation | < 25 μs | 1.2–1.9 μs |
+| Memory / op | < 2 KB | 56–8,536 B |
+| Concurrent speedup | > 5× | ~8× |
 
-## Test System
+## Test rig
 
-- **OS**: Windows 11 (25H2)
-- **CPU**: Intel 11th Gen i7-1185G7
-- **Runtimes**: .NET 10.0.3, .NET 8.0.24, .NET Framework 4.8.1
-- **BenchmarkDotNet**: v0.15.8
+- **OS:** Windows 11 (25H2)
+- **CPU:** Intel 11th Gen i7-1185G7
+- **Runtimes:** .NET 10.0.3, .NET 8.0.24, .NET Framework 4.8.1
+- **BenchmarkDotNet:** v0.15.8
 
-## Documentation
+## Docs
 
-- **[Performance Documentation](../../../docs/performance/performance.md)** - Detailed analysis and interpretation
-- **[Competitive Analysis](../../../docs/performance/competitive-analysis.md)** - Comparison with other frameworks
-- **[Architecture](../../../docs/architecture/overview.md)** - Design decisions affecting performance
+- [Performance](../../../docs/performance/performance.md)
+- [Competitive analysis](../../../docs/performance/competitive-analysis.md)
+- [Architecture](../../../docs/architecture/overview.md)
 
-## Benchmark Best Practices
+## Adding a benchmark
 
-When writing new benchmarks:
-
-1. Use `[GlobalSetup]` for one-time initialization
-2. Use `[IterationSetup]` for per-iteration setup
-3. Implement `IDisposable` for cleanup
-4. Mark hot paths with `[MethodImpl(MethodImplOptions.AggressiveInlining)]`
-5. Use realistic scenarios, not microbenchmarks
-6. Run with Release configuration
-7. Close all other applications during benchmarking
-
----
-
+1. One-time setup in `[GlobalSetup]`.
+2. Per-iteration resets in `[IterationSetup]`.
+3. Dispose expensive resources with `IDisposable` when needed.
+4. `[MethodImpl(MethodImplOptions.AggressiveInlining)]` only on truly hot paths.
+5. Prefer realistic workloads over toy microbenchmarks.
+6. Always **Release**.
+7. Close noisy background work for clean CPU numbers.

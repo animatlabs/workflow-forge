@@ -1,11 +1,11 @@
 ---
 title: Configuration Guide
-description: Complete configuration reference for WorkflowForge workflows including error handling, compensation, and environment-specific settings.
+description: WorkflowForgeOptions, appsettings binding, programmatic setup, and per-extension settings.
 ---
 
 # WorkflowForge Configuration
 
-Complete configuration guide for WorkflowForge workflows across all environments.
+Options bind from JSON or code. Extensions read nested sections under `WorkflowForge:Extensions`.
 
 ---
 
@@ -19,32 +19,32 @@ Complete configuration guide for WorkflowForge workflows across all environments
 - [Configuration Patterns](#configuration-patterns)
 - [Extension Configuration](#extension-configuration)
 - [Environment Strategies](#environment-strategies)
-- [Best Practices](#best-practices)
+- [Configuration Guidelines](#configuration-guidelines)
 
 ---
 
 ## Overview
 
-WorkflowForge provides flexible configuration through multiple mechanisms:
+Config can come from JSON, code, or both.
 
-1. **appsettings.json Configuration**: Options pattern with strongly-typed classes (recommended for production)
-2. **Programmatic Configuration**: Direct API calls for dynamic scenarios
-3. **Service Provider Integration**: DI-based configuration
-4. **Extension Configuration**: Per-extension settings
+1. **appsettings.json**: Typed options (typical in production)
+2. **Programmatic**: Set `WorkflowForgeOptions` and extension types in code
+3. **Service provider**: Resolve options through DI
+4. **Extensions**: Optional sections under `WorkflowForge:Extensions`
 
-### Configuration Philosophy
+### Configuration philosophy
 
-- **Explicit over Implicit**: Clear, compile-time configuration
-- **Code over Config Files**: Type-safe programmatic configuration
-- **Sensible Defaults**: Zero-config for simple scenarios
-- **Extension Points**: Customization without modification
+- Prefer settings you can search and diff in source control
+- Keep hot paths typed whether values come from config or constructors
+- Defaults should be enough for small demos without a file
+- Prefer options types and middleware over forking the library
 
 ---
 
 ## Core Settings
 
-WorkflowForge configuration is defined in `WorkflowForgeOptions` and can be configured via `appsettings.json` or programmatically.
-`WorkflowForgeOptions` inherits from `WorkflowForgeOptionsBase`, which provides `Enabled`, `SectionName`, `Validate()`, and `Clone()` for a consistent options pattern.
+Bind `WorkflowForgeOptions` from `appsettings.json` or set properties in code.
+It derives from `WorkflowForgeOptionsBase` (`Enabled`, `SectionName`, `Validate()`, `Clone()`).
 
 ### WorkflowForgeOptions Properties
 
@@ -209,24 +209,22 @@ public class OrderWorkflowService
 }
 ```
 
-#### Benefits of appsettings.json Configuration
+#### Why appsettings.json
 
-- **Environment-specific**: Different settings for dev/test/prod without code changes
-- **Container-friendly**: Override via environment variables in Docker/Kubernetes
-- **Strongly-typed**: Compile-time type safety with configuration classes
-- **Validation**: Built-in validation with `IOptions<T>.Value`
-- **Reloadable**: Hot-reload configuration without restarting application
-- **Centralized**: All settings in one place
+- Swap `appsettings.{Environment}.json` without rebuilding
+- Override keys from environment variables in containers
+- Bind to POCOs the compiler understands
+- Call `Validate()` where you register options
+- Reload on change when the host supports it
+- One place for core flags and extension toggles
 
 ### Method 2: Programmatic Configuration
 
-**Best for**: Dynamic scenarios, testing, simple console applications
+**Best for**: Dynamic scenarios, tests, and small console apps.
 
----
+### WorkflowForgeOptions in code
 
-## Core Settings
-
-WorkflowForge core uses `WorkflowForgeOptions` for execution behavior:
+Execution behavior comes from `WorkflowForgeOptions`:
 
 ```csharp
 public sealed class WorkflowForgeOptions : WorkflowForgeOptionsBase
@@ -243,9 +241,9 @@ public sealed class WorkflowForgeOptions : WorkflowForgeOptionsBase
 }
 ```
 
-### Default Behavior
+### Default behavior
 
-Without explicit settings, WorkflowForge operates with:
+If you do not set options, you get:
 
 - **Automatic compensation**: On failure, `WorkflowSmith` triggers `RestoreAsync` on all completed operations (no-op base class default handles non-restorable operations)
 - **Stop-on-first-error**: Execution stops at the first failed operation
@@ -261,9 +259,9 @@ Without explicit settings, WorkflowForge operates with:
 
 ### When to Use Each Switch
 
-- **ContinueOnError**: Use for batch workflows where partial success is acceptable and you want a full failure report at the end.
-- **FailFastCompensation**: Use when a single failed rollback should halt further compensation to avoid compounding damage.
-- **ThrowOnCompensationError**: Use when compensation failures must be visible to callers for alerting and remediation.
+- **`ContinueOnError`**: Batch-style runs where you finish the list, then inspect an `AggregateException`.
+- **`FailFastCompensation`**: Stop restore after the first failed rollback when going further would make things worse.
+- **`ThrowOnCompensationError`**: Bubble restore failures so monitors and callers can react.
 
 ---
 
@@ -409,7 +407,7 @@ var logger = SerilogLoggerFactory.CreateLogger(new SerilogLoggerOptions
 using var foundry = WorkflowForge.CreateFoundry("MyWorkflow");
 ```
 
-**Dependency Isolation**: Serilog is internalized with ILRepack; Microsoft/System assemblies remain external.
+**Bundling**: ILRepack ships Serilog inside the extension assembly; Microsoft/System stay external.
 
 ### Resilience Extension
 
@@ -476,7 +474,7 @@ var workflow = WorkflowForge.CreateWorkflow("ResilientWorkflow")
     .Build();
 ```
 
-**Dependency Isolation**: Polly is internalized with ILRepack; Microsoft/System assemblies remain external.
+**Bundling**: ILRepack embeds Polly; Microsoft/System stay external.
 
 ### OpenTelemetry Extension
 
@@ -504,7 +502,7 @@ var tracer = tracerProvider.GetTracer("WorkflowForge");
 await smith.ForgeAsync(workflow, foundry);
 ```
 
-**Dependency Isolation**: OpenTelemetry is internalized with ILRepack; Microsoft/System assemblies remain external.
+**Bundling**: ILRepack embeds OpenTelemetry; Microsoft/System stay external.
 
 ### Validation Extension
 
@@ -537,7 +535,7 @@ foundry.UseValidation(
 await smith.ForgeAsync(workflow, foundry);
 ```
 
-**Dependency Isolation**: Validation uses DataAnnotations and does not add third-party dependencies.
+**Dependencies**: DataAnnotations only; no extra third-party packages.
 
 ### Audit Extension
 
@@ -680,7 +678,7 @@ public static class ProductionConfiguration
 
 ---
 
-## Best Practices
+## Configuration Guidelines
 
 ### 1. Use Service Provider for Dependencies
 
@@ -843,9 +841,9 @@ var operation = new TimeSensitiveOperation(mockTime);
 
 ## Related Documentation
 
-- [Getting Started](../getting-started/getting-started.md) - Initial setup and first workflow
-- [Architecture](../architecture/overview.md) - Understanding the configuration model
-- [Operations](operations.md) - Creating configurable operations
-- [Events](events.md) - Event-based configuration
-- [Extensions](../extensions/index.md) - All 13 packages with configuration examples
-- [Samples Guide](../getting-started/samples-guide.md) - Practical examples including configuration
+- [Getting Started](../getting-started/getting-started.md)
+- [Architecture](../architecture/overview.md)
+- [Operations](operations.md)
+- [Events](events.md)
+- [Extensions](../extensions/index.md)
+- [Samples Guide](../getting-started/samples-guide.md)

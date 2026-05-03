@@ -1,11 +1,11 @@
 ---
 title: Event System
-description: Workflow monitoring and observability through WorkflowForge's event system for lifecycle tracking and diagnostics.
+description: Subscribe to workflow, operation, and compensation lifecycle events for logging, metrics, and audits.
 ---
 
 # WorkflowForge Event System
 
-Comprehensive guide to the WorkflowForge event system for workflow monitoring and observability.
+Smith and foundry events for runs, ops, and compensation.
 
 ---
 
@@ -17,32 +17,32 @@ Comprehensive guide to the WorkflowForge event system for workflow monitoring an
 - [Event Args](#event-args)
 - [Subscribing to Events](#subscribing-to-events)
 - [Event Patterns](#event-patterns)
-- [Best Practices](#best-practices)
+- [Guidelines](#guidelines)
 
 ---
 
 ## Overview
 
-WorkflowForge provides a comprehensive event system for monitoring workflow execution, tracking operations, and handling compensation scenarios. The event system follows the **Single Responsibility Principle (SRP)** with three focused interfaces.
+Workflow-, operation-, and compensation-level hooks live on different surfaces so subscribers stay small.
 
-### Why Events?
+### Why events?
 
-- **Observability**: Monitor workflow execution in real-time
-- **Auditing**: Track all workflow activities for compliance
-- **Error Handling**: React to failures and compensation
-- **Metrics**: Collect performance data
-- **Integration**: Connect to external monitoring systems
+- **Observability**: See runs as they happen
+- **Auditing**: Trails for compliance
+- **Errors**: Inspect failures and rollbacks
+- **Metrics**: Durations and counts from args
+- **Integrations**: Forward to APM, queues, dashboards
 
 ---
 
 ## Event System Design
 
-### SRP-Compliant Architecture
+### Three interfaces
 
-WorkflowForge evolved from a single monolithic event interface to three focused interfaces, each with a single responsibility:
+`IWorkflowEvents` mixed every hook together. WorkflowForge 2.x split that into three contracts:
 
 ```
-Old Design (Violates SRP):
+Old Design:
 IWorkflowEvents
 ├── WorkflowStarted
 ├── WorkflowCompleted
@@ -51,23 +51,23 @@ IWorkflowEvents
 ├── CompensationTriggered
 └── ... (all events mixed together)
 
-New Design (SRP-Compliant):
+New Design:
 ├── IWorkflowLifecycleEvents    (Workflow-level events)
 ├── IOperationLifecycleEvents   (Operation-level events)
 └── ICompensationLifecycleEvents (Compensation events)
 ```
 
-### Interface Mapping
+### Who raises what
 
 | Component | Implements | Events Exposed |
 |-----------|------------|----------------|
 | `IWorkflowSmith` | `IWorkflowLifecycleEvents`, `ICompensationLifecycleEvents` | Workflow and compensation events |
 | `IWorkflowFoundry` | `IOperationLifecycleEvents` | Operation execution events |
 
-**Design Rationale**:
-- Smith manages workflows → fires workflow events
-- Foundry hosts operations → fires operation events
-- Compensation is workflow-level concern → smith fires compensation events
+**Split reasoning**:
+- `IWorkflowSmith` runs the graph: workflow + compensation events.
+- `IWorkflowFoundry` runs each operation: operation events.
+- Compensation stays at workflow scope on the smith.
 
 ---
 
@@ -88,10 +88,9 @@ public interface IWorkflowLifecycleEvents
 
 **Implemented By**: `IWorkflowSmith`
 
-**When Events Fire**:
-- `WorkflowStarted`: Before first operation executes
-- `WorkflowCompleted`: After all operations complete successfully
-- `WorkflowFailed`: When workflow execution fails
+- `WorkflowStarted` runs before the first operation.
+- `WorkflowCompleted` after a successful finish.
+- `WorkflowFailed` when execution fails.
 
 ### 2. IOperationLifecycleEvents
 
@@ -108,10 +107,11 @@ public interface IOperationLifecycleEvents
 
 **Implemented By**: `IWorkflowFoundry`
 
-**When Events Fire**:
-- `OperationStarted`: Before operation executes
-- `OperationCompleted`: After operation completes successfully
-- `OperationFailed`: When operation execution fails
+| Event | When |
+|-------|------|
+| `OperationStarted` | Immediately before the operation body runs |
+| `OperationCompleted` | After the operation returns without throwing |
+| `OperationFailed` | After the operation throws |
 
 ### 3. ICompensationLifecycleEvents
 
@@ -130,12 +130,13 @@ public interface ICompensationLifecycleEvents
 
 **Implemented By**: `IWorkflowSmith`
 
-**When Events Fire**:
-- `CompensationTriggered`: When workflow failure triggers compensation
-- `CompensationCompleted`: After all compensations complete
-- `OperationRestoreStarted`: Before each completed operation's RestoreAsync executes (all operations are attempted; no-op base class default for non-restorable operations)
-- `OperationRestoreCompleted`: After successful operation restoration
-- `OperationRestoreFailed`: When operation restoration fails
+**Compensation and restore events**
+
+- **`CompensationTriggered`**: Failure started compensation.
+- **`CompensationCompleted`**: All restore attempts finished; args include success and failure counts.
+- **`OperationRestoreStarted`**: Before each completed operation's `RestoreAsync` (every completed op is attempted; non-restorable ops use the base no-op).
+- **`OperationRestoreCompleted`**: That operation's restore succeeded.
+- **`OperationRestoreFailed`**: That operation's restore threw.
 
 ---
 
@@ -504,7 +505,7 @@ public class ErrorNotificationHandler
 
 ---
 
-## Best Practices
+## Guidelines
 
 ### 1. Always Unsubscribe
 
@@ -636,7 +637,7 @@ foundry.OperationCompleted += (s, e) => {
 
 ## Related Documentation
 
-- [Architecture](../architecture/overview.md) - Understanding event system design
+- [Architecture](../architecture/overview.md) - How smith, foundry, and workflows fit together
 - [Operations](operations.md) - Creating operations that fire events
 - [Samples Guide](../getting-started/samples-guide.md) - See events in action (Sample 11: Workflow Events)
 - [Extensions](../extensions/index.md) - Audit and Performance extensions use events

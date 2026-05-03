@@ -1,25 +1,16 @@
 # WorkflowForge.Extensions.Validation
 
-Validation extension for WorkflowForge with DataAnnotations-based validation for comprehensive input validation.
+Run `System.ComponentModel.DataAnnotations` validation before each operation, using a function that reads the object to validate from the foundry.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Validation.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Validation/)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 
-## No External Validation Dependencies
-
-This extension uses **System.ComponentModel.DataAnnotations**, so you get validation without additional third-party validation libraries.
-
-## Installation
+## Install
 
 ```bash
 dotnet add package WorkflowForge.Extensions.Validation
 ```
 
-**Requires**: .NET Standard 2.0 or later
+Targets .NET Standard 2.0 or later. Validation uses the BCL annotations assembly only.
 
 ## Quick Start
 
@@ -59,14 +50,11 @@ foundry.UseValidation(f => f.GetPropertyOrDefault<Order>("Order"));
 await smith.ForgeAsync(workflow, foundry);
 ```
 
-## Key Features
+## Key points
 
-- **DataAnnotations Validation**: Attributes and IValidatableObject support
-- **Middleware-Based**: Validates before operations execute
-- **Flexible Extraction**: Custom data extraction from foundry
-- **Configurable Behavior**: Throw or log validation failures
-- **Property Validation**: Validate foundry properties
-- **Rich Error Messages**: Detailed validation error information
+- Middleware runs the extractor before each operation; failures can throw, log, or stash results based on options.
+- Supports attributes plus `IValidatableObject` for cross-field rules.
+- `ValidationMiddlewareOptions` controls throw vs log vs store behavior.
 
 ## Configuration
 
@@ -88,7 +76,7 @@ await smith.ForgeAsync(workflow, foundry);
 }
 ```
 
-### Via Code
+### Via code
 
 ```csharp
 using WorkflowForge.Extensions.Validation.Options;
@@ -104,7 +92,7 @@ var options = new ValidationMiddlewareOptions
 foundry.UseValidation(f => f.GetPropertyOrDefault<Order>("Order"), options);
 ```
 
-### Via Dependency Injection
+### Via dependency injection
 
 ```csharp
 using Microsoft.Extensions.Configuration;
@@ -115,11 +103,11 @@ services.AddValidationConfiguration(configuration);
 var options = serviceProvider.GetRequiredService<IOptions<ValidationMiddlewareOptions>>().Value;
 ```
 
-See [Configuration Guide](../../../docs/core/configuration.md#validation-extension) for complete options.
+[Validation configuration](../../../docs/core/configuration.md#validation-extension)
 
-## Validation Examples
+## Validation examples
 
-### Complex Validation Rules
+### Complex validation rules
 
 ```csharp
 public class Order : IValidatableObject
@@ -143,7 +131,7 @@ public class Order : IValidatableObject
 }
 ```
 
-### Custom Error Handling
+### Custom error handling
 
 ```csharp
 foundry.UseValidation(
@@ -151,12 +139,9 @@ foundry.UseValidation(
     new ValidationMiddlewareOptions { ThrowOnValidationError = false });
 ```
 
-## Documentation
+## Links
 
-- **[Getting Started](../../../docs/getting-started/getting-started.md)**
-- **[Configuration Guide](../../../docs/core/configuration.md#validation-extension)**
-- **[Extensions Overview](../../../docs/extensions/index.md)**
-- **[Sample 23: Validation](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
-
----
-
+- [Getting Started](../../../docs/getting-started/getting-started.md)
+- [Configuration Guide](../../../docs/core/configuration.md#validation-extension)
+- [Extensions Overview](../../../docs/extensions/index.md)
+- [Sample 23: Validation](../../samples/WorkflowForge.Samples.BasicConsole/README.md)

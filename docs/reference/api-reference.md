@@ -1,11 +1,11 @@
 ---
 title: API Reference
-description: Complete API reference for WorkflowForge core types, interfaces, builders, and extension points.
+description: Reference for WorkflowForge core types, interfaces, builders, and extension points.
 ---
 
 # WorkflowForge API Reference
 
-Complete API reference for WorkflowForge core types and abstractions.
+Types, interfaces, builders, and extension points in the core library.
 
 ---
 
@@ -26,7 +26,7 @@ Complete API reference for WorkflowForge core types and abstractions.
 
 ### WorkflowForge
 
-The main entry point for creating workflows and components.
+Factories for workflows, foundries, and smiths.
 
 ```csharp
 public static class WorkflowForge
@@ -38,7 +38,7 @@ public static class WorkflowForge
 ```csharp
 public static WorkflowBuilder CreateWorkflow(string? workflowName = null, IServiceProvider? serviceProvider = null)
 ```
-Creates a new workflow builder for fluent workflow construction.
+Creates a `WorkflowBuilder`. Name and `IServiceProvider` are optional.
 
 **Parameters**:
 - `workflowName`: Optional workflow name (null lets you call `WithName` later)
@@ -63,7 +63,7 @@ public static IWorkflowFoundry CreateFoundry(
     IDictionary<string, object?>? initialProperties = null,
     WorkflowForgeOptions? options = null)
 ```
-Creates a new foundry (execution context) for workflow operations.
+Returns a foundry: logger, initial properties, and options are optional.
 
 **Parameters**:
 - `workflowName`: Foundry name for identification
@@ -87,7 +87,7 @@ public static IWorkflowSmith CreateSmith(
     IServiceProvider? serviceProvider = null,
     WorkflowForgeOptions? options = null)
 ```
-Creates a new smith (workflow executor).
+Returns a smith: logger, `IServiceProvider`, and options are optional.
 
 **Returns**: `IWorkflowSmith` workflow executor
 
@@ -103,7 +103,7 @@ await smith.ForgeAsync(workflow, foundry);
 
 ### IWorkflow
 
-Represents an immutable workflow definition.
+Immutable workflow definition. Dispose when you are done holding native resources (rare).
 
 ```csharp
 public interface IWorkflow : IDisposable
@@ -127,7 +127,7 @@ public interface IWorkflow : IDisposable
 
 ### WorkflowBuilder
 
-Fluent builder for constructing workflows.
+Fluent constructor for `IWorkflow`.
 
 ```csharp
 public sealed class WorkflowBuilder
@@ -161,7 +161,7 @@ public sealed class WorkflowBuilder
 
 Base interface for all workflow operations.
 
-> **Recommended**: Use `WorkflowOperationBase` as the base class for custom operations instead of implementing this interface directly. The base class provides automatic ID generation, default RestoreAsync/Dispose implementations, lifecycle hooks, and the ForgeAsyncCore pattern.
+> Prefer subclassing `WorkflowOperationBase`. You get IDs, default restore, hooks, and `ForgeAsyncCore` without reimplementing the interface.
 
 ```csharp
 public interface IWorkflowOperation : IDisposable
@@ -203,7 +203,7 @@ Executes the operation's main logic.
 
 **Returns**: Operation result (optional)
 
-**Best Practice**: Read from and write to `foundry.Properties` using `SetProperty`/`GetPropertyOrDefault` helpers instead of relying on `inputData`/return values.
+**Tip**: Read from and write to `foundry.Properties` using `SetProperty`/`GetPropertyOrDefault` helpers instead of relying on `inputData`/return values.
 
 ---
 
@@ -263,15 +263,14 @@ public abstract class WorkflowOperationBase : IWorkflowOperation
 }
 ```
 
-**Features**:
-- Auto-generates unique `Id` for each operation instance
-- `RestoreAsync` provides a no-op default — override it to implement compensation. Operations that don't override are safely skipped during compensation.
-- Override `Dispose()` if your operation holds unmanaged resources
+**Features:**
+- Per-instance `Id`
+- Default `RestoreAsync` is a no-op unless you override
+- Override `Dispose` only when you hold unmanaged resources
 
-**Lifecycle Hooks** (new in v2.0):
-- `OnBeforeExecuteAsync`: Called before the operation executes (setup, validation, logging)
-- `OnAfterExecuteAsync`: Called after the operation completes successfully (cleanup, metrics)
-- Implement `ForgeAsyncCore` instead of `ForgeAsync` for your operation logic
+**Lifecycle hooks** (v2.0+):
+- `OnBeforeExecuteAsync`, `OnAfterExecuteAsync` for cross-cutting work
+- Implement `ForgeAsyncCore` for the real step body
 
 **Example with Hooks**:
 ```csharp
@@ -299,13 +298,13 @@ public class AuditedOperation : WorkflowOperationBase
 }
 ```
 
-**Recommended Base Class**: Use `WorkflowOperationBase` for most operations.
+**Recommended base**: `WorkflowOperationBase` fits most custom steps.
 
 ---
 
 ### IWorkflowOperation<TInput, TOutput>
 
-Generic interface for type-safe operations (advanced use case).
+Typed input and output. Prefer the foundry for shared context anyway.
 
 ```csharp
 public interface IWorkflowOperation<TInput, TOutput> : IWorkflowOperation
@@ -322,9 +321,7 @@ public interface IWorkflowOperation<TInput, TOutput> : IWorkflowOperation
 }
 ```
 
-**Use Case**: When you need strongly-typed input/output contracts.
-
-**Note**: Most operations should use `WorkflowOperationBase` with foundry properties instead.
+**Use when** you want typed inputs and outputs. Most code paths should still pass context through the foundry.
 
 ---
 
@@ -443,9 +440,9 @@ public interface IWorkflowLifecycleEvents
 **Implemented By**: `IWorkflowSmith`
 
 **Events**:
-- `WorkflowStarted`: Fired before first operation executes
-- `WorkflowCompleted`: Fired after all operations complete successfully
-- `WorkflowFailed`: Fired when workflow execution fails
+- `WorkflowStarted`: raised immediately before the first operation runs
+- `WorkflowCompleted`: raised after the last operation succeeds
+- `WorkflowFailed`: raised when execution aborts with an error
 
 **Example**:
 ```csharp
@@ -473,9 +470,9 @@ public interface IOperationLifecycleEvents
 **Implemented By**: `IWorkflowFoundry`
 
 **Events**:
-- `OperationStarted`: Fired before each operation executes
-- `OperationCompleted`: Fired after operation completes successfully
-- `OperationFailed`: Fired when operation execution fails
+- `OperationStarted`: raised as each operation begins
+- `OperationCompleted`: raised after a successful operation finishes
+- `OperationFailed`: raised when an operation throws or faults
 
 **Example**:
 ```csharp
@@ -505,11 +502,11 @@ public interface ICompensationLifecycleEvents
 **Implemented By**: `IWorkflowSmith`
 
 **Events**:
-- `CompensationTriggered`: Fired when workflow failure triggers compensation
-- `CompensationCompleted`: Fired after all compensations complete
-- `OperationRestoreStarted`: Fired before each operation's `RestoreAsync`
-- `OperationRestoreCompleted`: Fired after successful restoration
-- `OperationRestoreFailed`: Fired when restoration fails
+- `CompensationTriggered`: raised when a failure kicks off the compensation pass
+- `CompensationCompleted`: raised after every `RestoreAsync` attempt finishes
+- `OperationRestoreStarted`: raised immediately before a given `RestoreAsync`
+- `OperationRestoreCompleted`: raised after `RestoreAsync` succeeds
+- `OperationRestoreFailed`: raised when `RestoreAsync` throws
 
 **Example**:
 ```csharp
@@ -547,7 +544,7 @@ public sealed class WorkflowForgeOptions : WorkflowForgeOptionsBase
 
 ### FakeWorkflowFoundry
 
-A lightweight fake implementation of `IWorkflowFoundry` for unit testing operations.
+Test double implementing `IWorkflowFoundry`.
 
 **Package**: `WorkflowForge.Testing`
 
@@ -572,11 +569,10 @@ public class FakeWorkflowFoundry : IWorkflowFoundry
 }
 ```
 
-**Features**:
-- Implements full `IWorkflowFoundry` interface
-- Tracks executed operations for assertions
-- Configurable logger, options, and service provider
-- `Reset()` method for reusing between tests
+**Behavior:**
+- Records operations for assertions
+- Swap logger, options, and `IServiceProvider`
+- `Reset()` clears state between tests
 
 **Example Usage**:
 ```csharp
@@ -696,12 +692,9 @@ public interface IWorkflowForgeLogger
 }
 ```
 
-**Methods**: Standard logging levels (Trace, Debug, Information, Warning, Error, Critical)
+**Standard levels:** Trace through Critical
 
-**Implementations**:
-- `ConsoleLogger`: Default implementation (console output)
-- `NullLogger`: No-op logger
-- `SerilogAdapter`: Bridges to Serilog (Extension)
+**Shipped implementations:** `ConsoleLogger`, `NullLogger`, plus Serilog via the logging extension
 
 ---
 
@@ -716,11 +709,7 @@ public interface ISystemTimeProvider
 }
 ```
 
-**Purpose**: Enables time mocking in tests
-
-**Implementations**:
-- `SystemTimeProvider`: Returns `DateTimeOffset.UtcNow`
-- Mock implementations for testing
+Lets tests fix the clock. Production code normally uses `SystemTimeProvider`.
 
 **Example**:
 ```csharp
@@ -882,8 +871,8 @@ var throttledOp = ForEachWorkflowOperation.CreateSplitInput(
 
 ## Related Documentation
 
-- [Architecture](../architecture/overview.md) - Understanding the design
-- [Operations](../core/operations.md) - Creating operations
-- [Events](../core/events.md) - Event system details
-- [Configuration](../core/configuration.md) - Configuring workflows
-- [Extensions](../extensions/index.md) - Extension ecosystem
+- [Architecture](../architecture/overview.md)
+- [Operations](../core/operations.md)
+- [Events](../core/events.md)
+- [Configuration](../core/configuration.md)
+- [Extensions](../extensions/index.md)

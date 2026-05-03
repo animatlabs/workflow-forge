@@ -11,11 +11,11 @@ description: 13 NuGet packages for logging, resilience, observability, persisten
 <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating" alt="Security Rating" /></a>
 <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating" alt="Maintainability Rating" /></a>
 
-WorkflowForge follows an extension-first architecture where the core library provides minimal functionality, and rich features are delivered through a comprehensive extension ecosystem.
+The core stays small. Optional packages add logging, resilience, observability, persistence, and more, without dependency version fights.
 
 ## Table of Contents
 
-- [Dependency-Free Core and Zero Version Conflicts](#dependency-free-core-and-zero-version-conflicts)
+- [Dependency-Free Core and Dependency Isolation](#dependency-free-core-and-dependency-isolation)
 - [Extension Architecture](#extension-architecture)
 - [Available Packages](#available-packages)
   - [Testing Package](#testing-package)
@@ -28,35 +28,35 @@ WorkflowForge follows an extension-first architecture where the core library pro
   - [Audit Extension](#audit-extension)
 - [Extension Configuration Patterns](#extension-configuration-patterns)
 - [Creating Custom Extensions](#creating-custom-extensions)
-- [Extension Best Practices](#extension-best-practices)
+- [Extension Guidelines](#extension-guidelines)
 - [Extension Testing](#extension-testing)
 
 ---
 
 ## Dependency-Free Core and Dependency Isolation
 
-WorkflowForge core is zero-dependency. Extensions isolate third-party libraries where it makes sense, while keeping Microsoft/System dependencies external to avoid runtime conflicts.
+Core has no package dependencies. Extensions bundle third-party libs where that helps. Microsoft and System assemblies stay external so the runtime can unify versions.
 
 - **Internalized with ILRepack**: Serilog, Polly, OpenTelemetry
 - **Always external**: Microsoft/System assemblies (runtime unification)
 - **Validation**: DataAnnotations (no third-party dependency)
 
-### How It Works
+### How it works
 
-Extensions that depend on non-BCL packages use ILRepack to internalize those libraries into the extension assembly. This keeps the public API clean (only WorkflowForge or BCL types) while avoiding version conflicts.
+Non-BCL dependencies are often merged into the extension assembly with ILRepack. The surface area you code against stays WorkflowForge plus BCL types.
 
-Microsoft/System assemblies are never embedded; those are resolved by the runtime using the application's dependency graph.
+Microsoft and System assemblies are not embedded; they follow the app’s normal reference graph.
 
 ## Extension Architecture
 
 ### Core Principles
 
-1. **Dependency-Free Core** - The core library has zero dependencies
-2. **Isolated Extensions** - Third-party dependencies are internalized where appropriate
-3. **Optional Extensions** - Add only what you need
-4. **Composable Features** - Extensions work together seamlessly
-5. **Configuration-Driven** - Extensions are configured, not hard-coded
-6. **Production-Ready** - Professional features for production use
+1. **Dependency-free core**: zero NuGet dependencies on the main package.
+2. **Isolated extensions**: ILRepack hides many third-party implementations inside the extension assembly.
+3. **Optional packages**: take only what you use.
+4. **Composable**: Serilog, Polly, OpenTelemetry, and others can coexist without type clashes.
+5. **Explicit config**: options and `appsettings` drive behavior; surprises are rare on purpose.
+6. **Operational extras**: logging, health, persistence, and audit map to how teams actually run services.
 
 ### Extension Categories
 
@@ -87,14 +87,14 @@ WorkflowForge Packages
 
 #### WorkflowForge.Testing
 
-Unit testing utilities for WorkflowForge operations and workflows.
+Fakes and helpers for testing operations and workflows in isolation.
 
-**Installation:**
+**Add with NuGet:**
 ```bash
 dotnet add package WorkflowForge.Testing
 ```
 
-**Features:**
+**Includes:**
 - `FakeWorkflowFoundry` - Lightweight fake for unit testing operations in isolation
 - Execution tracking - Assert which operations executed
 - Property management - Test data flow between operations
@@ -156,18 +156,18 @@ public class MyOperationTests
 
 #### WorkflowForge.Extensions.DependencyInjection
 
-Microsoft.Extensions.DependencyInjection integration for ASP.NET Core and hosted applications.
+Registers WorkflowForge with `Microsoft.Extensions.DependencyInjection` (ASP.NET Core and generic hosts).
 
-**Installation:**
+**Package reference:**
 ```bash
 dotnet add package WorkflowForge.Extensions.DependencyInjection
 ```
 
-**Features:**
-- `IServiceCollection` extension methods for registration
-- IOptions pattern support with automatic validation
-- Seamless integration with ASP.NET Core DI container
-- Scoped and singleton lifetime management
+**Includes:**
+- `IServiceCollection` registration helpers
+- `IOptions` binding and validation hooks
+- Works with the stock ASP.NET Core container
+- Scoped and singleton lifetimes as you configure them
 
 **Usage:**
 ```csharp
@@ -229,19 +229,17 @@ services.AddWorkflowForge(configuration.GetSection("WorkflowForge"));
 
 #### WorkflowForge.Extensions.Logging.Serilog
 
-Professional structured logging with Serilog integration.
+Serilog-backed `IWorkflowForgeLogger` and sinks you configure yourself.
 
 **Installation:**
 ```bash
 dotnet add package WorkflowForge.Extensions.Logging.Serilog
 ```
 
-**Features:**
-- Structured logging with rich context
-- Correlation ID tracking
-- Property enrichment
-- Scope management
-- Multiple output targets (Console, File, Database, etc.)
+**Includes:**
+- Structured events, scopes, and enrichment
+- Correlation-friendly property bags
+- Any Serilog sink the host loads
 
 **Usage:**
 ```csharp
@@ -286,18 +284,18 @@ var foundry = WorkflowForge.CreateFoundry("ProcessOrder", logger, options: optio
 
 #### WorkflowForge.Extensions.Resilience
 
-Basic resilience patterns and retry middleware.
+Retry, breaker, timeout, and throttling without pulling in Polly.
 
 **Installation:**
 ```bash
 dotnet add package WorkflowForge.Extensions.Resilience
 ```
 
-**Features:**
-- Retry middleware with configurable policies
-- Circuit breaker patterns
-- Timeout management
-- Basic rate limiting
+**Includes:**
+- Retry middleware
+- Circuit breaker
+- Timeouts
+- Simple rate limiting
 
 **Usage:**
 ```csharp
@@ -306,20 +304,20 @@ dotnet add package WorkflowForge.Extensions.Resilience
 
 #### WorkflowForge.Extensions.Resilience.Polly
 
-Advanced resilience patterns using the Polly library.
+Polly policies wired to the foundry.
 
 **Installation:**
 ```bash
 dotnet add package WorkflowForge.Extensions.Resilience.Polly
 ```
 
-**Features:**
-- Comprehensive retry strategies (exponential backoff, jitter)
-- Circuit breakers with failure thresholds
-- Rate limiting and throttling
-- Timeout policies
-- Policy combination and chaining
-- Environment-specific configurations
+**Includes:**
+- Retry with backoff and jitter
+- Circuit breaker thresholds
+- Rate limits and bulkheads
+- Timeouts
+- Chained or combined policies
+- Bind settings per environment from config
 
 **Usage:**
 ```csharp
@@ -364,19 +362,17 @@ foundry
 
 #### WorkflowForge.Extensions.Persistence
 
-Core workflow state persistence abstraction with bring-your-own-storage pattern.
+Snapshots and middleware only; you supply storage behind `IWorkflowPersistenceProvider`.
 
 **Installation:**
 ```bash
 dotnet add package WorkflowForge.Extensions.Persistence
 ```
 
-**Features:**
-- Abstract persistence layer
-- State snapshot and restoration
-- Pluggable storage providers
-- Metadata management
-- Operation state tracking
+**Includes:**
+- Snapshot model and save hooks
+- Restore path that skips completed steps
+- Your database, file store, or blob implementation
 
 **Usage:**
 ```csharp
@@ -413,19 +409,17 @@ foundry.UsePersistence(provider);
 
 #### WorkflowForge.Extensions.Persistence.Recovery
 
-Resume interrupted workflows from saved state.
+Try resume from a snapshot, then run a fresh attempt with retry options.
 
 **Installation:**
 ```bash
 dotnet add package WorkflowForge.Extensions.Persistence.Recovery
 ```
 
-**Features:**
-- Automatic workflow resumption
-- Skip completed operations
-- State validation and integrity checks
-- Recovery point management
-- Failure recovery strategies
+**Includes:**
+- Resume merges snapshot state before the next step
+- Skips operations already marked complete
+- Configurable retry/backoff after a failed resume or run
 
 **Usage:**
 ```csharp
@@ -457,19 +451,17 @@ await smith.ForgeWithRecoveryAsync(
 
 #### WorkflowForge.Extensions.Observability.Performance
 
-Comprehensive performance monitoring and metrics collection.
+Per-operation timings and aggregates on the foundry.
 
 **Installation:**
 ```bash
 dotnet add package WorkflowForge.Extensions.Observability.Performance
 ```
 
-**Features:**
-- Operation timing and throughput metrics
-- Memory allocation tracking
-- Success/failure rate monitoring
-- Performance baseline establishment
-- Real-time statistics collection
+**Includes:**
+- Durations and throughput counters
+- Success vs failure counts
+- `GetPerformanceStatistics()` after a run
 
 **Usage:**
 ```csharp
@@ -498,7 +490,8 @@ foreach (var opStats in stats.GetAllOperationStatistics())
 
 ### Persistence (Bring Your Own Storage)
 
-Enable resumable workflows without adding dependencies by providing your own storage implementation.
+For package install, `IWorkflowPersistenceProvider`, and the sample `MyStorageProvider` flow, see [Persistence Extensions](#persistence-extensions) above. This subsection describes checkpoint behavior and stable keys.
+
 Package: `WorkflowForge.Extensions.Persistence`
 
 1) Implement the provider interface and plug it in via middleware:
@@ -521,7 +514,7 @@ using var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
 foundry.UsePersistence(provider);
 ```
 
-This middleware checkpoints after each operation and attempts to resume by skipping already-completed operations. Snapshot data includes:
+Persistence middleware writes a snapshot after each operation and, on resume, skips steps already marked complete. Snapshot data includes:
 - `FoundryExecutionId`, `WorkflowId`, `WorkflowName`
 - `NextOperationIndex` (next op to run)
 - `Properties` captured from the foundry
@@ -579,9 +572,9 @@ Key points:
 - After resume, a fresh execution is attempted with retries (policy).
 - If resume or execution ultimately fails, the last exception is surfaced to the caller.
 
-##### Using Resilience With Recovery (Unified Experience)
+##### Using resilience with recovery
 
-You can combine base Resilience retry middleware with Recovery for a unified experience. The retry middleware handles transient failures during a single run; Recovery resumes from the last checkpoint across runs.
+You can combine base Resilience retry middleware with Recovery: retries cover transient failures inside one run, while Recovery picks up from the last checkpoint across runs.
 
 ```csharp
 using WorkflowForge.Extensions.Resilience;
@@ -636,19 +629,17 @@ int recovered = await coordinator.ResumeAllAsync(
 
 #### WorkflowForge.Extensions.Observability.HealthChecks
 
-System health monitoring and diagnostics.
+Host-style checks (memory, thread pool) plus your own `IHealthCheck` types.
 
 **Installation:**
 ```bash
 dotnet add package WorkflowForge.Extensions.Observability.HealthChecks
 ```
 
-**Features:**
-- Built-in health checks (memory, GC, thread pool)
-- Custom health check support
-- Health status aggregation
-- Integration with monitoring systems
-- Performance impact assessment
+**Includes:**
+- Built-in probes for GC, memory, thread pool
+- Register custom checks
+- One aggregated status per round
 
 **Usage:**
 ```csharp
@@ -671,19 +662,17 @@ results = await healthService.CheckHealthAsync();
 
 #### WorkflowForge.Extensions.Observability.OpenTelemetry
 
-Distributed tracing and telemetry using OpenTelemetry.
+Activities and tags for OTel exporters you already configure.
 
 **Installation:**
 ```bash
 dotnet add package WorkflowForge.Extensions.Observability.OpenTelemetry
 ```
 
-**Features:**
-- Distributed tracing with span creation
-- Activity source integration
-- Custom metrics and events
-- Integration with observability backends (Jaeger, Zipkin, etc.)
-- Correlation context propagation
+**Includes:**
+- `Activity` creation around operations
+- Tags and events you add from workflow code
+- Works with whatever exporter the app registers
 
 **Usage:**
 ```csharp
@@ -714,8 +703,7 @@ activity?.SetTag("amount", order.Amount.ToString());
 
 ### Environment-Specific Configuration
 
-Prefer explicit configuration per environment using `appsettings.{Environment}.json` or programmatic options.
-This keeps extension behavior predictable and avoids preset helper methods that hide configuration details.
+Use `appsettings.{Environment}.json` or code per environment. Names and toggles should be obvious in diffs, not buried in defaults.
 
 ### Configuration-Driven Setup
 
@@ -755,20 +743,17 @@ var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
 
 #### WorkflowForge.Extensions.Validation
 
-Input validation and business rule enforcement using DataAnnotations.
+DataAnnotations before each operation; optional manual `ValidateAsync`.
 
 **Installation:**
 ```bash
 dotnet add package WorkflowForge.Extensions.Validation
 ```
 
-**Features:**
-- DataAnnotations validation
-- Automatic middleware-based validation
-- Manual validation support
-- Comprehensive error reporting
-- Property-level error details
-- Validation result caching
+**Includes:**
+- Middleware runs validators from attributes
+- Manual validation API when you need it
+- Errors land in foundry properties for inspection
 
 **Usage:**
 ```csharp
@@ -840,21 +825,17 @@ var errors = foundry.GetPropertyOrDefault<IReadOnlyList<ValidationError>>(
 
 #### WorkflowForge.Extensions.Audit
 
-Comprehensive audit logging for compliance and operational monitoring.
+Append-only audit entries through `IAuditProvider` (your store).
 
 **Installation:**
 ```bash
 dotnet add package WorkflowForge.Extensions.Audit
 ```
 
-**Features:**
-- Automatic operation auditing
-- Pluggable storage providers (bring your own)
-- In-memory provider for testing
-- Immutable audit entries
-- Performance timing capture
-- Metadata enrichment
-- User context tracking
+**Includes:**
+- Hooks for operation start / complete / fail
+- `InMemoryAuditProvider` for tests
+- You choose retention, PII rules, and storage
 
 **Usage:**
 ```csharp
@@ -1075,7 +1056,7 @@ public static class CustomMiddlewareExtensions
 }
 ```
 
-## Extension Best Practices
+## Extension Guidelines
 
 ### 1. Configuration Management
 
@@ -1251,8 +1232,8 @@ public class ExtensionIntegrationTests
 
 ## Related Documentation
 
-- [Getting Started](../getting-started/getting-started.md) - Basic extension usage
-- [Architecture](../architecture/overview.md) - Extension architecture details
-- [Configuration](../core/configuration.md) - Configuration patterns
-- [Operations Guide](../core/operations.md) - Custom operation patterns
-- [Events System](../core/events.md) - Event-driven integration
+- [Getting Started](../getting-started/getting-started.md)
+- [Architecture](../architecture/overview.md)
+- [Configuration](../core/configuration.md)
+- [Operations Guide](../core/operations.md)
+- [Events System](../core/events.md)

@@ -1,35 +1,20 @@
 # WorkflowForge.Extensions.Observability.Performance
 
-Performance monitoring extension for WorkflowForge with operation timing and metrics collection.
+Measure per-operation timing and memory from middleware, and read aggregate stats when the foundry exposes `IFoundryPerformanceStatistics`.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Observability.Performance.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Observability.Performance/)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 
-## Zero Dependencies - Zero Conflicts
-
-**This extension has ZERO external dependencies.** This means:
-
-- NO DLL Hell - No third-party dependencies to conflict with
-- NO Version Conflicts - Works with any versions of your application dependencies
-- Clean Deployment - Pure WorkflowForge extension
-
-**Lightweight architecture**: Built entirely on WorkflowForge core with no external libraries.
-
-## Installation
+## Install
 
 ```bash
 dotnet add package WorkflowForge.Extensions.Observability.Performance
 ```
 
-**Requires**: .NET Standard 2.0 or later
+Targets .NET Standard 2.0 or later. Beyond WorkflowForge core, the package adds no extra NuGet dependencies.
 
 ## Quick Start
 
-The recommended approach is to use custom timing middleware for performance monitoring:
+Add timing middleware on the foundry for performance monitoring:
 
 ```csharp
 using WorkflowForge;
@@ -50,29 +35,29 @@ await smith.ForgeAsync(workflow, foundry);
 
 > **Note:** The `EnablePerformanceMonitoring()` and `GetPerformanceStatistics()` extension methods require a foundry that implements `IPerformanceMonitoredFoundry`. Standard foundries created via `WorkflowForge.CreateFoundry()` use the middleware pattern shown above instead.
 
-## Key Features
+## Key points
 
-- **Operation Timing**: Precise timing for each operation
-- **Per-Operation Statistics**: Drill into individual operation metrics
-- **Memory Tracking**: Track memory allocation per operation
-- **Success/Failure Rates**: Monitor operation reliability
-- **Enable/Disable at Runtime**: Toggle monitoring without restarting
-- **Zero Dependencies**: Pure WorkflowForge extension
+- Middleware can log durations, flag slow calls, and track allocations per operation.
+- `IFoundryPerformanceStatistics` and `IOperationStatistics` describe the contract when a foundry exposes built-in counters.
+- Toggle or tune behavior in code; there is no separate JSON schema in this package.
 
 ## Configuration
 
-**This extension provides middleware components and interfaces for performance monitoring.** The primary approach is to add timing middleware to your foundry:
+- Ships middleware types and `IFoundryPerformanceStatistics` / `IOperationStatistics` for foundries that expose statistics.
+- Typical pattern: timing middleware on the foundry:
 
 ```csharp
 using var foundry = WorkflowForge.CreateFoundry("PerformanceMonitored");
 foundry.AddMiddleware(new DetailedTimingMiddleware(foundry.Logger, TimeSpan.FromMilliseconds(500)));
 ```
 
-The `IFoundryPerformanceStatistics` and `IOperationStatistics` interfaces define the contract for foundries that provide built-in performance statistics.
+- `IFoundryPerformanceStatistics` and `IOperationStatistics` define the contract for built-in performance statistics on a foundry.
 
-## Advanced Usage
+[Performance extension](../../../docs/core/configuration.md#performance-extension)
 
-### Custom Timing Middleware
+## Advanced usage
+
+### Custom timing middleware
 
 ```csharp
 public class DetailedTimingMiddleware : IWorkflowOperationMiddleware
@@ -131,7 +116,7 @@ public class DetailedTimingMiddleware : IWorkflowOperationMiddleware
 }
 ```
 
-### Memory Tracking
+### Memory tracking
 
 ```csharp
 public class MemoryTrackingMiddleware : IWorkflowOperationMiddleware
@@ -162,9 +147,9 @@ public class MemoryTrackingMiddleware : IWorkflowOperationMiddleware
 }
 ```
 
-## Available Statistics
+## Available statistics
 
-### Foundry-Level (`IFoundryPerformanceStatistics`)
+### Foundry-level (`IFoundryPerformanceStatistics`)
 
 - **TotalOperations / SuccessfulOperations / FailedOperations**: Operation counts
 - **SuccessRate**: Percentage of successful operations
@@ -173,7 +158,7 @@ public class MemoryTrackingMiddleware : IWorkflowOperationMiddleware
 - **OperationsPerSecond**: Throughput
 - **StartTime / EndTime / TotalDuration**: Workflow timing
 
-### Per-Operation (`IOperationStatistics`)
+### Per-operation (`IOperationStatistics`)
 
 ```csharp
 var stats = foundry.GetPerformanceStatistics();
@@ -183,12 +168,9 @@ foreach (var opStats in stats.GetAllOperationStatistics())
 }
 ```
 
-## Documentation
+## Links
 
-- **[Getting Started](../../../docs/getting-started/getting-started.md)**
-- **[Configuration Guide](../../../docs/core/configuration.md#performance-extension)**
-- **[Extensions Overview](../../../docs/extensions/index.md)**
-- **[Sample 17: Performance Monitoring](../../samples/WorkflowForge.Samples.BasicConsole/)**
-
----
-
+- [Getting Started](../../../docs/getting-started/getting-started.md)
+- [Configuration Guide](../../../docs/core/configuration.md#performance-extension)
+- [Extensions Overview](../../../docs/extensions/index.md)
+- [Sample 17: Performance Monitoring](../../samples/WorkflowForge.Samples.BasicConsole/)

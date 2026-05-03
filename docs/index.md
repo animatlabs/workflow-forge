@@ -1,14 +1,14 @@
 ---
 layout: default
 title: WorkflowForge Documentation
-description: Build high-performance workflows in .NET with zero dependencies, microsecond execution, and a comprehensive extension ecosystem.
+description: Build .NET workflows with a zero-dependency core, microsecond-scale benchmarks in our harness, and optional extension packages.
 ---
 
 <div class="wf-hero">
   <img src="https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png" alt="WorkflowForge logo">
   <div>
     <h1>WorkflowForge Documentation</h1>
-    <p>Build high-performance workflows in .NET with clear guidance, focused examples, and a zero-dependency core.</p>
+    <p>Build .NET workflows with clear guidance, focused examples, and a zero-dependency core.</p>
     <p class="wf-badges">
       <a href="https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml"><img src="https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml/badge.svg?branch=main" alt="Build and Test"></a>
       <a href="https://www.nuget.org/packages/WorkflowForge/"><img src="https://img.shields.io/nuget/v/WorkflowForge.svg" alt="NuGet"></a>
@@ -47,29 +47,29 @@ description: Build high-performance workflows in .NET with zero dependencies, mi
 
 ## What is WorkflowForge?
 
-WorkflowForge is a **zero-dependency workflow orchestration framework** for .NET with **microsecond-level performance** and **minimal memory footprint**. It provides a clean, industrial metaphor for building workflows that are fast, maintainable, and production-ready.
+WorkflowForge is a **zero-dependency workflow orchestration framework** for .NET. Twelve BenchmarkDotNet scenarios against Workflow Core and Elsa (same scripted logic) show **microsecond-level** medians and **small heaps** on our harness. **Forge**, **foundry**, and **smith** name the pieces so composition and tests read the same everywhere.
 
 ### Key Features
 
-- **High Performance**: 13-511x faster than alternatives in benchmarks
-- **Minimal Memory**: 6-575x less memory usage
-- **Zero Dependencies**: Core package with no external dependencies
-- **Production Ready**: Built-in compensation (saga pattern), comprehensive testing
-- **Extension Ecosystem**: 13 packages (11 extensions + Testing) with zero version conflicts
-- **Developer Experience**: Fluent API, clear metaphor, 33 progressive samples
+- **13x–511x** faster than those libraries on the scenarios we measured (runtime and scenario matter).
+- **About 6x–575x** less memory in the same runs, case by case.
+- **Zero package dependencies** on the core assembly; extensions are optional NuGet add-ons.
+- **Compensation hooks** on every operation (saga-style rollback when you implement `RestoreAsync`).
+- **Thirteen packages** total: one core, eleven extensions, plus `WorkflowForge.Testing`, with ILRepack isolating third-party bits.
+- **Fluent builders**, the industrial metaphor, and **33 samples** that ramp from hello world to persistence and recovery.
 
 ---
 
 ## The Industrial Metaphor
 
-WorkflowForge uses an industrial metaphor that makes workflows intuitive:
+WorkflowForge names pieces with a simple industrial metaphor:
 
-- **The Forge** (`WorkflowForge` static class) - Main factory for creating workflows
-- **Foundries** (`IWorkflowFoundry`) - Execution environments where operations run
-- **Smiths** (`IWorkflowSmith`) - Orchestration engines managing workflow execution
-- **Operations** (`IWorkflowOperation`) - Individual tasks within workflows
+- **The Forge** (`WorkflowForge` static class) is the entry point for building workflows.
+- **Foundries** (`IWorkflowFoundry`) hold mutable state and services while operations run.
+- **Smiths** (`IWorkflowSmith`) drive execution order, compensation, and lifecycle events.
+- **Operations** (`IWorkflowOperation`) are the individual units of work in the graph.
 
-This metaphor provides clarity: *data (raw materials) flows through operations (tools) in a foundry (workspace), orchestrated by a smith (craftsman)*.
+Read it literally: *data (raw material) moves through operations (tools) inside a foundry (workspace), while the smith (orchestrator) runs the sequence*.
 
 ---
 
@@ -151,7 +151,7 @@ public interface IWorkflowOperation : IDisposable
 }
 ```
 
-Override `RestoreAsync` in your operation to support compensation. The base class provides a no-op default — operations that don't override it are safely skipped during compensation.
+Override `RestoreAsync` when you need compensation behavior. The base class default is a no-op, and WorkflowForge skips those operations during compensation.
 
 ---
 
@@ -219,7 +219,7 @@ Based on BenchmarkDotNet testing (12 scenarios, 50 iterations) against Workflow 
 {% if site.url %}
 <div class="perf-vchart">
   <div class="perf-vchart-title">State Machine Execution (25 Transitions)</div>
-  <div class="perf-vchart-subtitle">Up to 511x faster than alternatives (.NET 10.0)</div>
+  <div class="perf-vchart-subtitle">State machine scenario, .NET 10.0 median (see competitive analysis for caveats)</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">

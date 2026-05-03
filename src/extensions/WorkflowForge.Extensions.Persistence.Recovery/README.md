@@ -1,31 +1,16 @@
 # WorkflowForge.Extensions.Persistence.Recovery
 
-Recovery orchestration extension for WorkflowForge to resume persisted workflows from the last checkpoint with configurable retry and backoff.
+After a failure or restart, pick up persisted checkpoints again: `RecoveryCoordinator` loads state, restores foundry properties, and retries with configurable backoff.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Persistence.Recovery.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Persistence.Recovery/)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 
-## Zero Dependencies - Zero Conflicts
-
-**This extension has ZERO external dependencies.** This means:
-
-- NO DLL Hell - No third-party dependencies to conflict with
-- NO Version Conflicts - Works with any versions of your application dependencies
-- Clean Deployment - Pure WorkflowForge extension
-
-**Lightweight architecture**: Built entirely on WorkflowForge core and Persistence abstractions.
-
-## Installation
+## Install
 
 ```bash
 dotnet add package WorkflowForge.Extensions.Persistence.Recovery
 ```
 
-**Requires**: .NET Standard 2.0 or later
+Targets .NET Standard 2.0 or later. You need a shared `IWorkflowPersistenceProvider` with the main persistence middleware.
 
 ## Quick Start
 
@@ -52,14 +37,12 @@ await coordinator.ResumeAsync(
     workflowKey: stableWorkflowKey);
 ```
 
-## Key Features
+## Key points
 
-- **Resume from Checkpoint**: Continue workflows from last saved state
-- **Exponential Backoff**: Configurable retry with backoff
-- **Skip Completed**: Automatically skip already-completed operations
-- **Catalog-Based**: Batch resume for multiple workflows
-- **Minimal Retry**: Resilient recovery on resume failures
-- **Zero Dependencies**: Pure WorkflowForge extension
+- Replays from the last saved `NextOperationIndex` and skips finished operations.
+- Retries resume with exponential or fixed backoff; options match what you use at runtime.
+- `IRecoveryCatalog` supports batch resume over many pending executions.
+- Depends on WorkflowForge core and the persistence contracts only.
 
 ## Configuration
 
@@ -82,7 +65,7 @@ await coordinator.ResumeAsync(
 }
 ```
 
-### Via Code
+### Via code
 
 ```csharp
 using WorkflowForge;
@@ -108,7 +91,7 @@ await smith.ForgeWithRecoveryAsync(
     options);
 ```
 
-### Via Dependency Injection
+### Via dependency injection
 
 ```csharp
 using Microsoft.Extensions.Configuration;
@@ -119,11 +102,11 @@ services.AddRecoveryConfiguration(configuration);
 var options = serviceProvider.GetRequiredService<IOptions<RecoveryMiddlewareOptions>>().Value;
 ```
 
-See [Configuration Guide](../../../docs/core/configuration.md#recovery-extension) for complete options.
+[Recovery configuration](../../../docs/core/configuration.md#recovery-extension)
 
-## Usage Patterns
+## Usage patterns
 
-### Single Workflow Recovery
+### Single workflow recovery
 
 ```csharp
 // Resume from last checkpoint
@@ -134,7 +117,7 @@ await coordinator.ResumeAsync(
     workflowKey: stableWorkflowKey);
 ```
 
-### Batch Recovery
+### Batch recovery
 
 ```csharp
 using WorkflowForge.Extensions.Persistence.Abstractions;
@@ -163,9 +146,9 @@ int resumedCount = await coordinator.ResumeAllAsync(
     catalog: catalog);
 ```
 
-## Important Notes
+## Stable keys and invariants
 
-### Stable Keys
+### Stable keys
 
 **Critical**: Use stable, deterministic keys for foundry and workflow:
 
@@ -178,7 +161,7 @@ var workflowKey = Guid.Parse("b2c3d4e5-f6a7-8901-bcde-f12345678901");
 var foundryKey = Guid.NewGuid();  // Different every time!
 ```
 
-### Operation Order
+### Operation order
 
 Keep workflow operation order stable across versions:
 
@@ -195,7 +178,7 @@ workflow: [ValidateOrder] → [ChargePayment] → [SendNotification]
 workflow: [ChargePayment] → [ValidateOrder]  // Recovery will break!
 ```
 
-### State Restoration
+### State restoration
 
 Ensure necessary state is in `foundry.Properties`:
 
@@ -209,15 +192,15 @@ foundry.SetProperty("PaymentId", paymentId);
 var orderId = foundry.GetPropertyOrDefault<string>("OrderId");
 ```
 
-## Recovery Flow
+## Recovery flow
 
-1. **Load Snapshot**: Retrieve saved workflow state from provider
-2. **Restore Properties**: Populate foundry with saved properties
-3. **Skip Completed**: Start from `NextOperationIndex`
-4. **Resume Execution**: Continue workflow from checkpoint
-5. **Retry on Failure**: Use RecoveryMiddlewareOptions for transient failures
+1. **Load Snapshot**: read state from the provider
+2. **Restore Properties**: copy saved keys into the foundry
+3. **Skip Completed**: begin at `NextOperationIndex`
+4. **Resume Execution**: run remaining operations
+5. **Retry on Failure**: `RecoveryMiddlewareOptions` controls backoff and attempts
 
-## Error Handling
+## Error handling
 
 ```csharp
 try
@@ -231,13 +214,10 @@ catch (Exception ex)
 }
 ```
 
-## Documentation
+## Links
 
-- **[Getting Started](../../../docs/getting-started/getting-started.md)**
-- **[Configuration Guide](../../../docs/core/configuration.md#recovery-extension)**
-- **[Extensions Overview](../../../docs/extensions/index.md)**
-- **[Persistence Extension](../WorkflowForge.Extensions.Persistence/README.md)** - Required for state storage
-- **[Sample 21: Recovery](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
-
----
-
+- [Getting Started](../../../docs/getting-started/getting-started.md)
+- [Configuration Guide](../../../docs/core/configuration.md#recovery-extension)
+- [Extensions Overview](../../../docs/extensions/index.md)
+- [Persistence Extension](../WorkflowForge.Extensions.Persistence/README.md)
+- [Sample 21: Recovery](../../samples/WorkflowForge.Samples.BasicConsole/README.md)

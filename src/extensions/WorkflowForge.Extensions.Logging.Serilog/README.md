@@ -1,29 +1,16 @@
 # WorkflowForge.Extensions.Logging.Serilog
 
-Structured logging extension for WorkflowForge with Serilog integration for rich, queryable logs.
+Hooks WorkflowForge to Serilog for structured logs; Serilog is merged in with ILRepack so your public surface stays small.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Logging.Serilog.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Logging.Serilog/)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 
-## Dependency Isolation
-
-**This extension internalizes Serilog with ILRepack.** This means:
-
-- Reduced dependency conflicts for Serilog
-- Public APIs stay WorkflowForge/BCL only
-- Microsoft/System assemblies remain external
-
-## Installation
+## Install
 
 ```bash
 dotnet add package WorkflowForge.Extensions.Logging.Serilog
 ```
 
-**Requires**: .NET Standard 2.0 or later
+Targets .NET Standard 2.0 or later.
 
 ## Quick Start
 
@@ -40,14 +27,11 @@ var logger = SerilogLoggerFactory.CreateLogger(new SerilogLoggerOptions
 using var foundry = WorkflowForge.CreateFoundry("MyWorkflow", logger);
 ```
 
-## Key Features
+## Key points
 
-- **Structured Logging**: Rich, queryable log data
-- **Multiple Sinks**: Console, File, Elasticsearch, Seq, etc.
-- **Contextual Properties**: Automatic workflow/operation context
-- **Log Levels**: Fine-grained control (Verbose, Debug, Information, Warning, Error, Fatal)
-- **Performance**: Minimal overhead with async logging
-- **Full Serilog Ecosystem**: Access all Serilog sinks and enrichers
+- Serilog is internalized to cut down version clashes; your code still talks to WorkflowForge and BCL types.
+- Console sink is available from the package; host apps can add File, Seq, Elasticsearch, and others via `ILoggerFactory`.
+- Log levels from Verbose through Fatal; optional workflow and operation context on events.
 
 ## Configuration
 
@@ -83,11 +67,11 @@ using var foundry = WorkflowForge.CreateFoundry("MyWorkflow", logger);
 }
 ```
 
-See [Configuration Guide](../../../docs/core/configuration.md#serilog-extension) for complete options.
+[Serilog extension options](../../../docs/core/configuration.md#serilog-extension)
 
-## Structured Logging Examples
+## Structured logging examples
 
-### With Context
+### With context
 
 ```csharp
 foundry.Logger.LogInformation(
@@ -96,7 +80,7 @@ foundry.Logger.LogInformation(
     customerId);
 ```
 
-### With Properties
+### With properties
 
 ```csharp
 foundry.Logger.LogInformation(
@@ -105,7 +89,7 @@ foundry.Logger.LogInformation(
 // Or use foundry.Logger.BeginScope(state, properties) for scoped context
 ```
 
-### Performance Metrics
+### Performance metrics
 
 ```csharp
 var sw = Stopwatch.StartNew();
@@ -118,9 +102,9 @@ foundry.Logger.LogInformation(
     sw.Elapsed.TotalMilliseconds);
 ```
 
-## Sink Configuration
+## Sink configuration
 
-### Built-in Console Sink
+### Built-in console sink
 
 The extension includes a built-in console sink configured via `SerilogLoggerOptions`:
 
@@ -132,9 +116,9 @@ var logger = SerilogLoggerFactory.CreateLogger(new SerilogLoggerOptions
 });
 ```
 
-### Advanced Sinks (Host Integration)
+### Advanced sinks (host integration)
 
-For advanced sinks (File, Seq, Elasticsearch, etc.), use the `CreateLogger(ILoggerFactory)` overload with your host application's Serilog configuration:
+For File, Seq, Elasticsearch, and similar sinks, use `CreateLogger(ILoggerFactory)` with your host Serilog setup:
 
 ```csharp
 // Configure Serilog in your host application (requires Serilog packages)
@@ -149,14 +133,11 @@ var hostLoggerFactory = LoggerFactory.Create(builder => builder.AddSerilog());
 var logger = SerilogLoggerFactory.CreateLogger(hostLoggerFactory);
 ```
 
-This approach gives you access to the full Serilog sink ecosystem while keeping the extension dependency-free.
+That path uses every sink you configure in the host while this package stays light.
 
-## Documentation
+## Links
 
-- **[Getting Started](../../../docs/getting-started/getting-started.md)**
-- **[Configuration Guide](../../../docs/core/configuration.md#serilog-extension)**
-- **[Extensions Overview](../../../docs/extensions/index.md)**
-- **[Sample 13: Serilog Integration](../../samples/WorkflowForge.Samples.BasicConsole/README.md)**
-
----
-
+- [Getting Started](../../../docs/getting-started/getting-started.md)
+- [Configuration Guide](../../../docs/core/configuration.md#serilog-extension)
+- [Extensions Overview](../../../docs/extensions/index.md)
+- [Sample 13: Serilog](../../samples/WorkflowForge.Samples.BasicConsole/README.md)

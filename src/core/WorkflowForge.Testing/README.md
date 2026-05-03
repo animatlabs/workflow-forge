@@ -1,14 +1,8 @@
 # WorkflowForge.Testing
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Testing.svg)](https://www.nuget.org/packages/WorkflowForge.Testing/)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/WorkflowForge.Testing.svg)](https://www.nuget.org/packages/WorkflowForge.Testing/)
 
-Testing utilities for WorkflowForge. This package provides test doubles and helpers for unit testing workflow operations without requiring the full workflow infrastructure.
+Test doubles and helpers for WorkflowForge. Exercise operations with **`FakeWorkflowFoundry`** instead of spinning up the full runtime.
 
 ## Installation
 
@@ -18,13 +12,13 @@ dotnet add package WorkflowForge.Testing
 
 ## Features
 
-- **FakeWorkflowFoundry**: A lightweight fake implementation of `IWorkflowFoundry` for unit testing
-- **Execution Tracking**: Track which operations were executed for assertions
-- **Configurable Behavior**: Set up custom logger, options, and service provider
+- **`FakeWorkflowFoundry`:** implements `IWorkflowFoundry` for unit tests
+- **Execution tracking:** `ExecutedOperations` for order and coverage assertions
+- **Plumbing:** swap in logger, `WorkflowForgeOptions`, and `IServiceProvider` when you need them
 
-## Quick Start
+## Quick start
 
-### Testing Individual Operations
+### Single operation
 
 ```csharp
 using WorkflowForge.Testing;
@@ -35,100 +29,77 @@ public class MyOperationTests
     [Fact]
     public async Task Operation_Should_SetProperty()
     {
-        // Arrange
         var foundry = new FakeWorkflowFoundry();
         var operation = new MyCustomOperation();
-        
-        // Act
+
         await operation.ForgeAsync("input", foundry, CancellationToken.None);
-        
-        // Assert
+
         Assert.True(foundry.Properties.ContainsKey("myKey"));
         Assert.Equal("expectedValue", foundry.Properties["myKey"]);
     }
 }
 ```
 
-### Testing Workflow Execution
+### Full foundry run
 
 ```csharp
 [Fact]
 public async Task Workflow_Should_ExecuteAllOperations()
 {
-    // Arrange
     var foundry = new FakeWorkflowFoundry();
     var op1 = new LoggingOperation("Step 1");
     var op2 = new LoggingOperation("Step 2");
-    
+
     foundry.AddOperation(op1);
     foundry.AddOperation(op2);
-    
-    // Act
+
     await foundry.ForgeAsync();
-    
-    // Assert
+
     Assert.Equal(2, foundry.ExecutedOperations.Count);
     Assert.Contains(op1, foundry.ExecutedOperations);
     Assert.Contains(op2, foundry.ExecutedOperations);
 }
 ```
 
-### Using with Custom Logger
+### Logger and reset
 
 ```csharp
 [Fact]
 public async Task Operation_Should_Log_Messages()
 {
-    // Arrange
-    var testLogger = new TestLogger(); // Your custom test logger
-    var foundry = new FakeWorkflowFoundry
-    {
-        Logger = testLogger
-    };
-    
+    var testLogger = new TestLogger();
+    var foundry = new FakeWorkflowFoundry { Logger = testLogger };
     var operation = new LoggingOperation("Test");
-    
-    // Act
+
     await operation.ForgeAsync(null, foundry, CancellationToken.None);
-    
-    // Assert
+
     Assert.Contains(testLogger.Messages, m => m.Contains("Test"));
 }
 ```
 
-### Resetting Between Tests
-
 ```csharp
-private readonly FakeWorkflowFoundry _foundry = new FakeWorkflowFoundry();
+private readonly FakeWorkflowFoundry _foundry = new();
 
-public void Cleanup()
-{
-    _foundry.Reset(); // Clears all state
-}
+public void Cleanup() => _foundry.Reset();
 ```
 
-## API Reference
+## `FakeWorkflowFoundry` API
 
-### FakeWorkflowFoundry
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `ExecutionId` | `Guid` | Unique execution identifier (auto-generated, settable) |
-| `Properties` | `ConcurrentDictionary<string, object?>` | Thread-safe property storage |
-| `CurrentWorkflow` | `IWorkflow?` | Current workflow reference |
-| `Logger` | `IWorkflowForgeLogger` | Logger instance (defaults to NullLogger) |
-| `Options` | `WorkflowForgeOptions` | Execution options |
-| `ServiceProvider` | `IServiceProvider?` | DI service provider |
-| `Operations` | `IReadOnlyList<IWorkflowOperation>` | Added operations |
-| `Middlewares` | `IReadOnlyList<IWorkflowOperationMiddleware>` | Added middleware |
-| `ExecutedOperations` | `IReadOnlyList<IWorkflowOperation>` | Operations executed during ForgeAsync |
-
-| Method | Description |
-|--------|-------------|
-| `ForgeAsync()` | Executes all operations sequentially |
-| `Reset()` | Clears all state for test reuse |
-| `TrackExecution(operation)` | Manually track an operation as executed |
+| Property / method | Notes |
+|-------------------|--------|
+| `ExecutionId` | `Guid` (generated; you can set it) |
+| `Properties` | `ConcurrentDictionary<string, object?>` |
+| `CurrentWorkflow` | `IWorkflow?` |
+| `Logger` | `IWorkflowForgeLogger` (defaults to null logger) |
+| `Options` | `WorkflowForgeOptions` |
+| `ServiceProvider` | `IServiceProvider?` |
+| `Operations` | Operations queued on the fake |
+| `Middlewares` | Middleware list |
+| `ExecutedOperations` | What ran during `ForgeAsync` |
+| `ForgeAsync()` | Runs operations in order |
+| `Reset()` | Clears state between tests |
+| `TrackExecution(operation)` | Marks an op as executed (manual) |
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT. See the repository [LICENSE](../../../LICENSE).

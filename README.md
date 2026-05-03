@@ -12,79 +12,50 @@
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-support-ff5e5b?logo=ko-fi)](https://ko-fi.com/animat089)
 
-High-performance, dependency-free workflow orchestration library for .NET. Execute thousands of workflows per second with microsecond-level operation latency and minimal memory footprint.
+Workflow orchestration for .NET. The core package has no dependencies. Benchmarks show high workflow throughput, microsecond-scale operation latency, and modest steady-state allocation.
 
 **Version**: 2.1.1  
 **License**: MIT  
 **Compatibility**: .NET Standard 2.0
 
-## Sonar Coverage Scope
-
-For pull requests, use the SonarCloud PR dashboard/new-code view (linked from each CI run summary) to evaluate the quality gate. The top-level README coverage badge reflects the main project context and can lag PR analysis results.
-
----
-
-## Performance at a Glance
-
-**Internal Benchmarks** (.NET 8.0.24, .NET 10.0.3, .NET FX 4.8.1, Windows 11, 50 iterations):
-- **Operation Execution**: 8.75-82μs median latency
-- **Workflow Throughput**: 33-272μs for custom operations (1-50 ops, all runtimes)
-- **Memory Footprint**: 3.4-256KB across scenarios
-- **Concurrent Scaling**: Near-linear (~8x speedup for 8 workflows)
-
-**Competitive Benchmarks** (12 scenarios vs. Workflow Core, Elsa):
-- **13-511x faster** execution (State Machine: up to 511x on .NET 10.0)
-- **6-575x less** memory allocation
-- **Microsecond-scale** execution vs. millisecond-scale competitors
-
-[Full Performance Details](docs/performance/performance.md) | [Competitive Analysis](docs/performance/competitive-analysis.md)
+Against Workflow Core and Elsa, published runs hit **13-511×** faster execution and **6-575×** lower allocation in covered scenarios. [Internal metrics](docs/performance/performance.md) and [competitive methodology](docs/performance/competitive-analysis.md) live in the docs.
 
 ---
 
 ## Key Features
 
-### Core Engine
+### Core engine
 
-- **Dependency-Free Core**: Zero external dependencies for core library
-- **Microsecond Execution**: Sub-100μs operation execution
-- **Minimal Memory**: Linear memory scaling, no memory leaks
-- **Thread-Safe**: Concurrent workflow execution via `ConcurrentDictionary`
-- **Fluent API**: Clean, readable workflow definition with `AddOperations()` and `AddParallelOperations()`
-- **Saga Pattern**: Built-in compensation — override `RestoreAsync` in your operation; base class no-op skips non-restorable operations
-- **Lifecycle Hooks**: `OnBeforeExecuteAsync`/`OnAfterExecuteAsync` for setup/teardown without middleware
-- **Middleware Pipeline**: Russian Doll pattern for cross-cutting concerns
-- **Event System**: SRP-compliant lifecycle events for workflows, operations, and compensation
-- **Testing Support**: `FakeWorkflowFoundry` for unit testing operations in isolation
+- **Zero external dependencies** in the core library
+- Typical operations finish in **sub-100μs**
+- Memory grows roughly linearly with workflow size
+- Shared-state workflows use **`ConcurrentDictionary`**
+- **Fluent API**: `AddOperations()`, `AddParallelOperations()`
+- **Sagas**: override `RestoreAsync`; the default skips operations that do not restore
+- **`OnBeforeExecuteAsync` / `OnAfterExecuteAsync`** for setup and teardown (no separate middleware requirement for that)
+- **Russian Doll** operation middleware pipeline
+- **Lifecycle events** for workflows, operations, and compensation (SRP-friendly splits)
+- **`FakeWorkflowFoundry`** for unit tests focused on single operations
 
-### Dependency Boundaries
+### Dependency boundaries
 
-Extensions declare explicit NuGet dependencies where needed. The validation extension uses **DataAnnotations** from the BCL, so no third‑party validation library is required.
+Extensions pull in NuGet packages only where needed. Validation uses **DataAnnotations** from the BCL.
 
-### Package Ecosystem (13 Packages: 1 Core + 11 Extensions + Testing)
+### Packages (1 core + 11 extensions + Testing)
 
-**Logging**:
-- Serilog integration for structured logging
+**Logging**: Serilog (structured)
 
-**Resilience**:
-- Base resilience abstractions (dependency-free)
-- Polly integration for retry, circuit breaker, timeout policies
+**Resilience**: base abstractions in-extension; Polly for retry, circuit breaker, timeout
 
-**Observability**:
-- Health checks (ASP.NET Core integration)
-- OpenTelemetry (distributed tracing and metrics)
-- Performance monitoring (dependency-free)
+**Observability**: ASP.NET Core health checks; OpenTelemetry; performance monitoring extension
 
-**Persistence**:
-- State persistence abstractions (dependency-free)
-- Recovery and resume capabilities (dependency-free)
+**Persistence**: abstractions; recovery and resume
 
-**Validation**:
-- DataAnnotations-based workflow validation
+**Validation**: DataAnnotations on workflows
 
-**Audit**:
-- Comprehensive audit logging with pluggable providers (dependency-free)
+**Audit**: logging with pluggable providers
 
-[Extension Documentation](docs/extensions/index.md)
+[Extensions](docs/extensions/index.md)
 
 ---
 
@@ -114,7 +85,7 @@ using var smith = WorkflowForge.CreateSmith();
 await smith.ForgeAsync(workflow);
 ```
 
-### Data Passing Between Operations
+### Data passing between operations
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
@@ -138,107 +109,69 @@ using var smith = WorkflowForge.CreateSmith();
 await smith.ForgeAsync(workflow);
 ```
 
-[Getting Started Guide](docs/getting-started/getting-started.md)
+[Getting started](docs/getting-started/getting-started.md)
 
 ---
 
 ## Architecture
 
-WorkflowForge follows **production-grade design patterns**:
+**Patterns**: Factory (`CreateWorkflow`, `CreateSmith`, `CreateFoundry`), fluent **Builder**, **Saga** via `RestoreAsync`, **Middleware** (Russian Doll), **event-driven** lifecycle, **DI** via `IServiceProvider` on foundry/builder.
 
-- **Factory Pattern**: `WorkflowForge.CreateWorkflow()`, `CreateSmith()`, `CreateFoundry()`
-- **Builder Pattern**: Fluent API for workflow construction
-- **Saga Pattern**: Override `RestoreAsync` for compensation; operations that don't override are safely skipped
-- **Middleware Pattern**: Russian Doll pipeline for operations
-- **Event-Driven**: Lifecycle events for monitoring and integration
-- **Dependency Injection**: Full support for `IServiceProvider`
+**Core types**: `IWorkflow`, `IWorkflowOperation`, `IWorkflowFoundry`, `IWorkflowSmith`, `IWorkflowOperationMiddleware`
 
-**Core Abstractions**:
-- `IWorkflow`: Workflow definition
-- `IWorkflowOperation`: Executable operation
-- `IWorkflowFoundry`: Execution context (properties, logging, services)
-- `IWorkflowSmith`: Orchestration engine
-- `IWorkflowOperationMiddleware`: Middleware abstraction
-
-[Architecture Documentation](docs/architecture/overview.md)
+Details: [Architecture](docs/architecture/overview.md)
 
 ---
 
-## Use Cases
+## Use cases
 
-WorkflowForge excels at:
+**Good fits**: throughput-heavy pipelines, latency-sensitive orchestration, light coordination between services.
 
-1. **High-Throughput Processing**: Thousands of workflows per second
-2. **Real-Time Orchestration**: Sub-millisecond execution requirements
-3. **Microservices**: Lightweight, stateless orchestration
-4. **API Orchestration**: Coordinate multiple service calls efficiently
-5. **Business Rules Execution**: Fast, testable business logic
-6. **ETL Pipelines**: High-performance data transformation
-7. **Event Processing**: Low-latency event handling
-8. **Request/Response Workflows**: API request processing
+| Scenario | Notes |
+|----------|--------|
+| High throughput | Thousands of workflows per second in benchmark setups |
+| Real-time orchestration | Sub-millisecond targets where operation count stays bounded |
+| Microservices | Stateless coordination without a heavy workflow host |
+| API orchestration | Multiple outbound calls with shared context |
+| Business rules | Fast, testable logic with clear operation boundaries |
+| ETL-style flows | Streaming or batched transforms when allocation stays controlled |
+| Event processing | Low-latency handlers that map cleanly to operations |
+| Request/response APIs | Per-request workflows with middleware and hooks |
 
-[Competitive Comparison](docs/performance/competitive-analysis.md)
+[Competitive comparison](docs/performance/competitive-analysis.md)
 
 ---
 
 ## Examples
 
-**33 comprehensive samples** covering all features:
+**33 samples** across basics, control flow, configuration, middleware, events, all packages, and integration-style demos.
 
-- Basic workflows (Hello World, data passing, inline operations)
-- Control flow (conditionals, loops, error handling)
-- Configuration (options pattern, environment profiles)
-- Middleware and events
-- All 13 packages (Serilog, Polly, OpenTelemetry, Validation, Audit, Testing, etc.)
-- Advanced patterns (comprehensive integration, operation creation patterns)
-
-[Sample Applications](src/samples/WorkflowForge.Samples.BasicConsole/README.md) | [Samples Guide](docs/getting-started/samples-guide.md)
+[Basic console sample](src/samples/WorkflowForge.Samples.BasicConsole/README.md) · [Samples guide](docs/getting-started/samples-guide.md)
 
 ---
 
 ## Documentation
 
-- [Getting Started](docs/getting-started/getting-started.md) - Installation and first workflow
-- [Architecture](docs/architecture/overview.md) - Design patterns and core concepts
-- [Operations](docs/core/operations.md) - Built-in and custom operations
-- [Events](docs/core/events.md) - Lifecycle event system
-- [Extensions](docs/extensions/index.md) - All 13 packages (11 extensions + Testing) with examples
-- [Configuration](docs/core/configuration.md) - Environment-specific setup
-- [API Reference](docs/reference/api-reference.md) - Complete API documentation
-- [Performance](docs/performance/performance.md) - Benchmark results and optimization
-- [Competitive Analysis](docs/performance/competitive-analysis.md) - vs. Workflow Core and Elsa
-- [Samples Guide](docs/getting-started/samples-guide.md) - Learning path through 33 samples
+| Topic | Link |
+|--------|------|
+| Install and first workflow | [Getting started](docs/getting-started/getting-started.md) |
+| Design and components | [Architecture](docs/architecture/overview.md) |
+| Operations | [Operations](docs/core/operations.md) |
+| Lifecycle events | [Events](docs/core/events.md) |
+| Extensions (11 + Testing) | [Extensions](docs/extensions/index.md) |
+| Configuration | [Configuration](docs/core/configuration.md) |
+| API reference | [API Reference](docs/reference/api-reference.md) |
+| Benchmarks and tuning | [Performance](docs/performance/performance.md) |
+| vs. Workflow Core and Elsa | [Competitive analysis](docs/performance/competitive-analysis.md) |
+| Sample index | [Samples guide](docs/getting-started/samples-guide.md) |
 
-[Full Documentation](docs/index.md)
+[Index](docs/index.md)
 
 ---
 
 ## Benchmarks
 
-### Internal Performance
-
-**Operation Performance** (.NET 8.0 medians):
-- Custom: 33.65μs median
-- Delegate: 33.15μs median
-- Logging: 12.1μs median
-
-**Workflow Throughput** (10 custom operations, .NET 8.0):
-- Sequential custom: 88.55μs median
-- ForEach loop: 60.50μs median
-
-**Concurrency** (8 workflows, 5 ops each, .NET 8.0):
-- Sequential: 626ms
-- Concurrent: 79ms (8x speedup)
-
-**Memory Allocation**:
-- Minimal workflow: 3.4KB (3,408 B, constant across iteration counts)
-- No Gen2 collections in typical workloads
-
-[Internal Benchmarks](docs/performance/performance.md#internal-performance-benchmarks)
-
-### Competitive Performance
-
-**State Machine** (25 transitions):
+**State machine** (25 transitions):
 
 | Runtime | WorkflowForge | Workflow Core | Elsa |
 |---------|---------------|---------------|------|
@@ -246,7 +179,7 @@ WorkflowForge excels at:
 | .NET 8.0 | 71μs | 21,683μs (305x) | 34,426μs (485x) |
 | .NET FX 4.8 | 61μs | 18,486μs (303x) | N/A |
 
-**Sequential Workflow** (10 operations):
+**Sequential workflow** (10 operations):
 
 | Runtime | WorkflowForge | Workflow Core | Elsa |
 |---------|---------------|---------------|------|
@@ -254,42 +187,30 @@ WorkflowForge excels at:
 | .NET 8.0 | 377μs | 9,879μs (26x) | 19,168μs (51x) |
 | .NET FX 4.8 | 122μs | 6,743μs (55x) | N/A |
 
-On **.NET 10.0**, State Machine advantage reaches **511x** vs Elsa.
-
-[Competitive Benchmarks](docs/performance/competitive-analysis.md)
+On **.NET 10.0**, state machine vs. Elsa reaches **511×**. For internal latency, throughput, and allocation, see [Performance](docs/performance/performance.md). The full competitive set is in [Competitive analysis](docs/performance/competitive-analysis.md).
 
 ---
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-**Key Areas**:
-- Performance optimizations
-- New built-in operations
-- Extension development
-- Documentation improvements
-- Bug fixes and testing
+PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Performance work, built-in operations, extensions, docs, tests, and fixes all help.
 
 ---
 
 ## Support
 
-- **GitHub Issues**: Bug reports and feature requests
-- **Discussions**: Questions and community support
-- **Documentation**: Comprehensive guides and API reference
-- **Ko-fi**: If this project helps you, consider [supporting on Ko-fi](https://ko-fi.com/animat089)
+[Issues](https://github.com/animatlabs/workflow-forge/issues) for bugs and features. [Discussions](https://github.com/animatlabs/workflow-forge/discussions) for questions. If the project saves you time, [Ko-fi](https://ko-fi.com/animat089) is appreciated.
 
 ---
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT. See [LICENSE](LICENSE).
 
 ---
 
 ## Acknowledgments
 
-Built with passion for performance and developer experience. Special thanks to the .NET community for inspiration and feedback.
+Thanks to everyone who filed issues, tried the samples, and suggested improvements.
 
 ---

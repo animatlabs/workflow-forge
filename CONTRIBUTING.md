@@ -6,7 +6,11 @@
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 
-Thank you for your interest in improving WorkflowForge. Contributions are welcome and appreciated.
+Thank you for helping improve WorkflowForge.
+
+## Sonar coverage and PRs
+
+For pull requests, use the SonarCloud PR dashboard or new-code view (from each CI run summary) when you need the quality gate for that change. The README coverage badge tracks the main branch and may not match a fresh PR analysis yet.
 
 ## Ways to Contribute
 
@@ -49,7 +53,7 @@ dotnet test -c Release
 - **Tone**: Professional, factual, concise (no emojis)
 - **Code examples**: Ensure all code snippets compile or mark as pseudocode
 - **Links**: Use relative links within repo; verify external links are valid
-- **SEO**: Use descriptive headings and keywords for discoverability
+- **SEO**: Descriptive headings and keywords where they help discovery
 - **Accuracy**: Verify all claims against actual codebase behavior
 
 ## Testing Requirements

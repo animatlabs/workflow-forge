@@ -1,15 +1,15 @@
 ---
 title: Operations Guide
-description: Complete guide to creating workflow operations including class-based, delegate, inline, and parallel operations in WorkflowForge.
+description: Built-in operation types, custom `WorkflowOperationBase` subclasses, data flow, compensation, and `restoreAction` patterns.
 ---
 
 # WorkflowForge Operations Guide
 
-Complete guide to creating and using operations in WorkflowForge.
+Built-in helpers, custom `WorkflowOperationBase` types, and how data plus rollback move through a graph.
 
 ---
 
-> **Recommended**: For most scenarios, extend `WorkflowOperationBase` instead of implementing `IWorkflowOperation` directly. The base class provides automatic ID generation, default no-op RestoreAsync/Dispose, lifecycle hooks, and the ForgeAsyncCore pattern — eliminating boilerplate and reducing errors.
+> Prefer **`WorkflowOperationBase`** over raw **`IWorkflowOperation`**: ids, default `RestoreAsync`/`Dispose`, hooks, and **`ForgeAsyncCore`** are already wired.
 
 ---
 
@@ -22,17 +22,17 @@ Complete guide to creating and using operations in WorkflowForge.
 - [Data Flow Between Operations](#data-flow-between-operations)
 - [Compensation and Rollback](#compensation-and-rollback)
 - [Inline Compensation with restoreAction](#inline-compensation-with-restoreaction)
-- [Best Practices](#best-practices)
+- [Guidelines](#guidelines)
 
 ---
 
 ## Overview
 
-Operations are the fundamental building blocks of WorkflowForge workflows. Each operation represents a discrete task that transforms data, performs side effects, or makes decisions.
+One operation is one step: transform, side effect, or branch.
 
 ### IWorkflowOperation Interface
 
-> **For production code, prefer `WorkflowOperationBase`** — the interface below is shown for reference; most custom operations should inherit from the base class.
+> Production code should inherit **`WorkflowOperationBase`**. The interface is the contract reference.
 
 ```csharp
 public interface IWorkflowOperation : IDisposable
@@ -45,21 +45,21 @@ public interface IWorkflowOperation : IDisposable
 }
 ```
 
-### Key Concepts
+### Key concepts
 
-- **ForgeAsync**: Main execution method
-- **RestoreAsync**: Compensation/rollback logic — override in your operation to support compensation. The base class provides a no-op default; operations that don't override it are safely skipped during compensation.
-- **Foundry**: Provides execution context, logging, and services
+- **ForgeAsync**: Forward work
+- **RestoreAsync**: Undo path; override when needed (base is no-op; engine skips safely)
+- **Foundry**: Context, logging, services
 
 ---
 
 ## Built-in Operations
 
-WorkflowForge provides 7 built-in operation types:
+Seven built-in operation types:
 
 ### 1. DelegateWorkflowOperation
 
-Lambda-based operations for quick, inline logic.
+Lambdas for quick glue.
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
@@ -79,16 +79,13 @@ var workflow = WorkflowForge.CreateWorkflow()
     .Build();
 ```
 
-**When to Use**: Simple operations, prototyping, one-off logic
+**When**: Spikes, small transforms, throwaway helpers.
 
-**Features**:
-- Inline lambda syntax
-- Quick to write
-- Good for simple transformations
+- Minimal ceremony.
 
 ### 2. ActionWorkflowOperation
 
-Side-effect operations that don't return values.
+Fire-and-forget body; no return value.
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
@@ -104,16 +101,13 @@ var workflow = WorkflowForge.CreateWorkflow()
     .Build();
 ```
 
-**When to Use**: Logging, notifications, audit trails, cleanup
+**When**: Logging, email, cleanup.
 
-**Features**:
-- No return value (returns input unchanged)
-- Focus on side effects
-- Clean separation of concerns
+- Input passes through unchanged.
 
 ### 3. ConditionalWorkflowOperation
 
-If-then-else decision logic.
+Predicate picks one of two child ops.
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
@@ -143,16 +137,13 @@ var workflow = WorkflowForge.CreateWorkflow()
     .Build();
 ```
 
-**When to Use**: Branching logic, routing, decision points
+**When**: Branching on runtime state.
 
-**Features**:
-- Clean if-then-else semantics
-- Nested operations
-- Condition evaluation with foundry access
+- True/false arms are normal `IWorkflowOperation` instances.
 
 ### 4. ForEachWorkflowOperation
 
-Execute multiple operations concurrently with configurable data distribution.
+Runs child ops concurrently with a shared input, split collection, or null input.
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
@@ -178,22 +169,16 @@ var splitWorkflow = WorkflowForge.CreateWorkflow()
     .Build();
 ```
 
-**Factory Methods**:
-- `CreateSharedInput`: All operations receive the same input data
-- `CreateSplitInput`: Input collection is split and distributed among operations
-- `CreateNoInput`: Operations receive null input
+**Factories**:
+- `CreateSharedInput` — same input everywhere
+- `CreateSplitInput` — partition a collection
+- `CreateNoInput` — `null` input per child
 
-**When to Use**: Parallel processing, batch operations, concurrent tasks
+**When**: Fan-out or batch work with a concurrency cap.
 
-**Features**:
-- Configurable concurrency (`maxConcurrency`)
-- Timeout support
-- Data distribution strategies
-- Result aggregation
+### 4b. AddParallelOperations (builder helper)
 
-### 4b. AddParallelOperations (WorkflowBuilder Helper)
-
-A convenient fluent API for adding parallel operations directly on the workflow builder.
+Fluent shortcut over `ForEachWorkflowOperation.CreateSharedInput`.
 
 ```csharp
 // Simple parallel execution (all operations get the same input)
@@ -232,17 +217,13 @@ WorkflowBuilder AddParallelOperations(
     string? name = null)
 ```
 
-**When to Use**: Quick parallel operation setup without manually creating `ForEachWorkflowOperation`
+**When**: Parallel segments straight on `WorkflowBuilder`.
 
-**Features**:
-- Fluent API integration
-- Uses `ForEachWorkflowOperation.CreateSharedInput` internally
-- Concurrency and timeout control
-- Named operation groups for debugging
+- Wraps `ForEachWorkflowOperation.CreateSharedInput` with optional concurrency, timeout, name.
 
 ### 5. DelayOperation
 
-Introduce async delays into workflows.
+`Task.Delay` as an op.
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
@@ -266,16 +247,13 @@ var workflow = WorkflowForge.CreateWorkflow()
     .Build();
 ```
 
-**When to Use**: Polling, rate limiting, scheduled delays
+**When**: Polling gaps, rate limits, fixed waits.
 
-**Features**:
-- Configurable delay duration
-- Async/await compatible
-- Cancellation token support
+- Honors `CancellationToken`.
 
 ### 6. LoggingOperation
 
-Structured logging at specific workflow points.
+Emits a log at a point in the graph.
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
@@ -317,16 +295,13 @@ LoggingOperation(string message, WorkflowForgeLogLevel logLevel = Information, s
 - `LoggingOperation.Error(message)`
 - `LoggingOperation.Critical(message)`
 
-**When to Use**: Audit points, debugging, progress tracking
+**When**: Checkpoints, breadcrumbs.
 
-**Features**:
-- Structured logging
-- Log level control
-- Property access for dynamic messages
+- Pick level via `WorkflowForgeLogLevel` or helpers like `LoggingOperation.Info`.
 
 ### 7. Custom Operations (WorkflowOperationBase)
 
-For complex business logic, create custom operation classes.
+Class-based steps with DI and tests.
 
 ```csharp
 public class ValidateOrderOperation : WorkflowOperationBase<Order, ValidationResult>
@@ -362,13 +337,9 @@ var workflow = WorkflowForge.CreateWorkflow()
     .Build();
 ```
 
-**When to Use**: Complex business logic, testable operations, reusable components
+**When**: Real domain rules, injected services, unit tests.
 
-**Features**:
-- Type safety
-- Dependency injection
-- Unit testable
-- Clean separation of concerns
+- Typed `ForgeAsyncCore`, narrow surface.
 
 ---
 
@@ -376,7 +347,7 @@ var workflow = WorkflowForge.CreateWorkflow()
 
 ### Method 1: Inherit from WorkflowOperationBase
 
-For untyped operations, implement `ForgeAsyncCore`:
+Implement **`ForgeAsyncCore`** for untyped ops:
 
 ```csharp
 public class CustomOperation : WorkflowOperationBase
@@ -411,9 +382,9 @@ public class CustomOperation : WorkflowOperationBase
 }
 ```
 
-### Method 1b: Using Lifecycle Hooks
+### Method 1b: Lifecycle hooks
 
-Add setup/teardown logic without polluting your core business logic:
+`OnBeforeExecuteAsync` / `OnAfterExecuteAsync` for cross-cutting setup without bloating `ForgeAsyncCore`.
 
 ```csharp
 public class AuditedOperation : WorkflowOperationBase
@@ -452,9 +423,9 @@ public class AuditedOperation : WorkflowOperationBase
 }
 ```
 
-### Method 2: Inherit from WorkflowOperationBase<TInput, TOutput>
+### Method 2: `WorkflowOperationBase<TInput, TOutput>`
 
-For typed operations, implement `ForgeAsyncCore` with typed parameters:
+Typed input/output:
 
 ```csharp
 public class ProcessOrderOperation : WorkflowOperationBase<Order, ProcessResult>
@@ -498,8 +469,6 @@ public class ProcessOrderOperation : WorkflowOperationBase<Order, ProcessResult>
 
 ### Pattern 1: Chain of Transformations
 
-Each operation transforms data and passes it to the next.
-
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
     .WithName("DataPipeline")
@@ -532,8 +501,6 @@ var workflow = WorkflowForge.CreateWorkflow()
 ```
 
 ### Pattern 2: Aggregation
-
-Collect results from multiple operations.
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
@@ -574,8 +541,6 @@ var workflow = WorkflowForge.CreateWorkflow()
 
 ### Pattern 3: Conditional Routing
 
-Route workflow based on runtime conditions.
-
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
     .WithName("ConditionalRouting")
@@ -606,8 +571,6 @@ var workflow = WorkflowForge.CreateWorkflow()
 ```
 
 ### Pattern 4: Fork-Join
-
-Process items in parallel then join results.
 
 ```csharp
 // Create multiple processing operations
@@ -644,9 +607,7 @@ var workflow = WorkflowForge.CreateWorkflow()
 
 ## Data Flow Between Operations
 
-### Primary: Dictionary-Based (Recommended)
-
-Store all workflow data in `foundry.Properties`:
+### Primary: dictionary (default bag)
 
 ```csharp
 // Operation 1: Store data
@@ -660,19 +621,16 @@ var orderDate = (DateTime)foundry.Properties["OrderDate"];
 var items = foundry.Properties["Items"] as List<OrderItem>;
 ```
 
-**Advantages**:
-- Flexible - add/remove properties dynamically
-- No type constraints
-- Easy debugging
+**Pros**:
+- Keys evolve without type churn
+- Loose coupling
+- Easy to dump while debugging
 
-**Best Practices**:
-- Use consistent key names
-- Store primitive types or serializable objects
-- Consider using constants for key names
+**Tip**: Stable key names; primitives or serializable objects; constants beat magic strings.
 
-### Secondary: Type-Safe Input/Output
+### Secondary: typed calls
 
-Pass data directly between typed operations:
+Chaining `ForgeAsync` manually when you want compile-time flow:
 
 ```csharp
 // This pattern chains operations with type safety
@@ -680,22 +638,11 @@ var result1 = await operation1.ForgeAsync(input, foundry, ct);   // Returns Orde
 var result2 = await operation2.ForgeAsync(result1, foundry, ct); // Takes Order, returns ValidationResult
 ```
 
-**Advantages**:
-- Compile-time type safety
-- IntelliSense support
-- Clear contracts
-
-**Best Practices**:
-- Use for operations with stable contracts
-- Document expected input/output types
-- Consider immutable types for safety
+**Pros**: compile-time flow, IntelliSense, obvious contracts. **Use when** shapes stay stable.
 
 ### Output Chaining Behavior
 
-By default, the foundry passes each operation's output as the next operation's input.
-This enables explicit chaining without additional plumbing.
-
-You can disable chaining when operations should always receive `null` input:
+Default: each op's output feeds the next op's `inputData`. Turn it off so every op always sees `null`:
 
 ```csharp
 var options = new WorkflowForgeOptions
@@ -711,7 +658,7 @@ var foundry = WorkflowForge.CreateFoundry("NoChaining", options: options);
 
 ### Implementing Compensation
 
-Override `RestoreAsync` in your operation to support compensation. The base class provides a no-op default — operations that don't override it are safely skipped during compensation.
+Override **`RestoreAsync`** for undo. Base default is no-op; skipped safely when unchanged.
 
 ```csharp
 public class CreateOrderOperation : WorkflowOperationBase
@@ -761,7 +708,7 @@ public class CreateOrderOperation : WorkflowOperationBase
 
 ## Inline Compensation with restoreAction
 
-You can add inline compensation logic directly when defining operations with the builder or foundry API, without creating a separate operation class.
+Inline `restoreAction` / `restoreFunc` on builder or foundry APIs when you do not want a separate class.
 
 ### Builder API
 
@@ -800,13 +747,13 @@ foundry.WithOperation("ChargeCard",
 
 ### Notes
 
-- `restoreAction` is optional — if not provided, `RestoreAsync` is a no-op (base class default).
-- When a workflow fails, compensation runs in reverse order on completed operations.
-- Use foundry properties to pass data between the main action and its restore action.
+- Omit `restoreAction` to keep the base no-op.
+- Compensation still walks completed ops in reverse.
+- Share state through foundry properties between forward and restore paths.
 
 ---
 
-## Best Practices
+## Guidelines
 
 ### 1. Keep Operations Focused
 
@@ -923,7 +870,7 @@ public class ResourceOperation : WorkflowOperationBase
 
 ## Related Documentation
 
-- [Architecture](../architecture/overview.md) - Understanding WorkflowForge design
+- [Architecture](../architecture/overview.md) - Metaphor, components, and layering
 - [Event System](../core/events.md) - Monitoring operation execution
 - [Samples Guide](../getting-started/samples-guide.md) - See operations in action
-- [API Reference](../reference/api-reference.md) - Complete API documentation
+- [API Reference](../reference/api-reference.md) - Member-level reference

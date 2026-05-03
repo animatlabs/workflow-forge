@@ -1,6 +1,6 @@
 ---
 title: Architecture Overview
-description: Design principles, patterns, and implementation details behind WorkflowForge's high-performance workflow orchestration.
+description: Design principles, patterns, and implementation details behind WorkflowForge workflow orchestration.
 ---
 
 # WorkflowForge Architecture
@@ -11,7 +11,7 @@ description: Design principles, patterns, and implementation details behind Work
 <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating" alt="Security Rating" /></a>
 <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating" alt="Maintainability Rating" /></a>
 
-Complete architectural overview of WorkflowForge's design principles, patterns, and implementation.
+WorkflowForge keeps a small core, fast paths, and names that stay memorable in large solutions.
 
 ---
 
@@ -24,7 +24,7 @@ Complete architectural overview of WorkflowForge's design principles, patterns, 
 - [Data Flow Patterns](#data-flow-patterns)
 - [Event System Design](#event-system-design)
 - [Middleware Pipeline](#middleware-pipeline)
-- [Compensation Pattern](#compensation-pattern)
+- [Compensation Pattern (Saga)](#compensation-pattern-saga)
 - [Performance Optimizations](#performance-optimizations)
 - [Extension Architecture](#extension-architecture)
 
@@ -32,36 +32,38 @@ Complete architectural overview of WorkflowForge's design principles, patterns, 
 
 ## Design Philosophy
 
-WorkflowForge is built on three core principles:
+Three ideas drive the core:
 
 ### 1. Zero Dependencies
-The core package has **no external dependencies**. This ensures:
-- No version conflicts
-- Minimal deployment footprint (~50KB)
-- Maximum compatibility across .NET versions
-- Predictable behavior without third-party surprises
+
+- **No external packages** on the core assembly.
+- Fewer version clashes.
+- Small binary (~50KB).
+- Runs anywhere .NET Standard 2.0 runs.
+- No surprise transitive stacks.
 
 ### 2. Performance First
-Every design decision considers performance impact:
-- Microsecond-level operation execution
-- Minimal memory allocations
-- Efficient use of `ConcurrentDictionary` for thread safety
-- Struct-based event args where possible
-- Object pooling for internal structures
+
+- Prefer low overhead in hot paths.
+- Microsecond-scale op execution in benchmarks.
+- Tight allocations.
+- `ConcurrentDictionary` for shared bag state.
+- Struct event args where it pays.
+- Pooling for hot internal objects.
 
 ### 3. Developer Experience
-Clean, intuitive API with industrial metaphor:
-- Fluent builder pattern for workflow construction
-- Clear separation of concerns (Forge, Foundry, Smith, Operations)
-- Type-safe operations when needed
-- Dictionary-based context for flexibility
-- Comprehensive event system for observability
+
+- Forge / foundry / smith map cleanly to orchestration.
+- Fluent builders.
+- Optional typed operations.
+- Dictionary bag when schemas move.
+- Events for telemetry and tests.
 
 ---
 
 ## Core Metaphor
 
-WorkflowForge uses an **industrial metalworking metaphor** that makes complex orchestration intuitive:
+WorkflowForge uses an **industrial metalworking metaphor** so big graphs stay legible:
 
 ```
 The Forge (Factory)
@@ -88,7 +90,7 @@ To transform Data (Raw Materials → Finished Products)
 | **IWorkflow** | Blueprint | Complete workflow definition with operations |
 | **Properties** | Raw Materials | Data flowing through the workflow |
 
-This metaphor provides intuitive understanding: *just as a smith uses tools in a foundry to shape raw materials into finished products, WorkflowForge uses operations in a foundry to transform data through a workflow*.
+*A smith shapes stock in a workshop; WorkflowForge runs operations in a foundry to move data through a blueprint.*
 
 ---
 
@@ -133,11 +135,10 @@ public sealed class DelegateWorkflowOperation : IWorkflowOperation { }
 
 ### Open/Closed Principle
 
-Open for extension, closed for modification:
-- Custom operations via `WorkflowOperationBase` with lifecycle hooks
-- Middleware pipeline for cross-cutting concerns
-- Extension packages for additional capabilities
-- No modification of core required
+- Add behavior without forking core types.
+- Subclass `WorkflowOperationBase`.
+- Register middleware.
+- Add extension packages; the core assembly stays stable.
 
 ---
 
@@ -145,7 +146,7 @@ Open for extension, closed for modification:
 
 ### The Forge (Static Factory)
 
-`WorkflowForge` is the main entry point providing factory methods:
+`WorkflowForge` is the main entry point; it exposes factory methods for workflows, foundries, and smiths:
 
 ```csharp
 public static class WorkflowForge
@@ -168,11 +169,11 @@ public static class WorkflowForge
 }
 ```
 
-**Design Rationale**: Centralized factory provides discoverability and consistency.
+**Why one static type**: Creation APIs stay in one place; names stay consistent across hosts.
 
 ### IWorkflowFoundry (Execution Context)
 
-The foundry provides the execution environment:
+The foundry holds runtime context for a workflow run:
 
 ```csharp
 public interface IWorkflowFoundry :
@@ -187,7 +188,7 @@ public interface IWorkflowFoundry :
 }
 ```
 
-**Key Design Decisions**:
+**Design choices**:
 - `ConcurrentDictionary` for thread-safe property access
 - `IServiceProvider` for dependency injection integration
 - Implements `IOperationLifecycleEvents` for operation monitoring
@@ -220,7 +221,7 @@ public interface IWorkflowSmith : IDisposable, IWorkflowLifecycleEvents, ICompen
 }
 ```
 
-**Execution Flow**:
+**Flow**:
 1. Validate workflow and foundry
 2. Fire `WorkflowStarted` event
 3. For each operation:
@@ -245,7 +246,7 @@ public interface IWorkflowOperation : IDisposable
 }
 ```
 
-**Compensation**: Override `RestoreAsync` in your operation to support compensation. The base class provides a no-op default — operations that don't override it are safely skipped during compensation.
+**Undo**: Override `RestoreAsync` when an op joins compensation. Base default is no-op; safe to skip.
 
 **Type-Safe Variant**:
 ```csharp
@@ -270,9 +271,9 @@ public interface IWorkflowOperation<TInput, TOutput> : IWorkflowOperation
 
 WorkflowForge supports two data flow patterns, each with specific use cases.
 
-### Primary Pattern: Dictionary-Based Context
+### Primary: dictionary context
 
-**When to Use**: Most workflows, especially those with dynamic or evolving data structures.
+**Use when**: Most workflows, especially shifting shapes.
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow()
@@ -292,20 +293,22 @@ var workflow = WorkflowForge.CreateWorkflow()
     .Build();
 ```
 
-**Advantages**:
-- Flexible - add/remove properties as needed
-- No type constraints between operations
-- Easy to debug (inspect `Properties` dictionary)
-- Natural for dynamic workflows
+**Pros**:
 
-**Considerations**:
-- Requires casting when retrieving values
-- No compile-time type safety
-- Property names must be consistent
+- Keys can appear or disappear as the workflow evolves.
+- Loose coupling between ops.
+- Inspect `Properties` at runtime.
+- Fits dynamic payloads.
 
-### Secondary Pattern: Type-Safe Operations
+**Cons**:
 
-**When to Use**: Operations with clear contracts that benefit from compile-time safety.
+- Casts at read time.
+- Keys are not compile-time checked.
+- Typos show up when you run.
+
+### Secondary: type-safe ops
+
+**Use when**: Stable contracts and compile-time checks help.
 
 ```csharp
 public class ValidateOrderOperation : WorkflowOperationBase<Order, ValidationResult>
@@ -334,30 +337,26 @@ var workflow = WorkflowForge.CreateWorkflow()
     .Build();
 ```
 
-**Advantages**:
-- Compile-time type safety
-- Clear contracts between operations
-- IntelliSense support
-- Refactoring-friendly
+**Compared to the bag**:
 
-**Considerations**:
-- Less flexible than dictionary pattern
-- Operations tightly coupled by types
-- Requires more upfront design
+- Compile-time checks; obvious contracts.
+- Safer refactors.
 
-**Best Practice**: Use dictionary pattern by default, type-safe operations for critical business logic with stable contracts.
+**Costs**:
+
+- Tighter coupling; more upfront modeling.
+
+**Practical default**: Start with the dictionary pattern; add typed ops when contracts settle.
 
 ---
 
 ## Event System Design
 
-WorkflowForge implements a **Single Responsibility Principle (SRP)-compliant event system** with three focused interfaces.
+WorkflowForge splits lifecycle notifications across **three interfaces** so workflow, operation, and compensation hooks are not one megatype.
 
-### Design Evolution
+### How it evolved
 
-**Problem**: Original design had one interface handling all events, violating SRP.
-
-**Solution**: Split into three focused interfaces based on lifecycle concerns:
+The first cut put every hook on `IWorkflowEvents`. Now they group by lifecycle:
 
 ```csharp
 // Workflow lifecycle
@@ -392,7 +391,7 @@ public interface ICompensationLifecycleEvents
 - `IWorkflowSmith` implements `IWorkflowLifecycleEvents` + `ICompensationLifecycleEvents`
 - `IWorkflowFoundry` implements `IOperationLifecycleEvents`
 
-**Rationale**: Smith manages workflow and compensation, Foundry manages operations.
+**Why**: The smith owns the run (workflow + compensation). The foundry owns each operation invocation.
 
 ### Event Data
 
@@ -407,17 +406,17 @@ public abstract class BaseWorkflowForgeEventArgs : EventArgs
 
 Access `ExecutionId` and workflow name via `e.Foundry.ExecutionId` and `e.Foundry.CurrentWorkflow?.Name`.
 
-For complete event documentation, see [Event System Guide](../core/events.md).
+For event wiring details, see [Event System Guide](../core/events.md).
 
 ---
 
 ## Middleware Pipeline
 
-WorkflowForge supports a **middleware pipeline** for cross-cutting concerns.
+A **middleware pipeline** wraps each operation so logging, resilience, and validation stay out of the op body.
 
-### Design Pattern: Russian Doll
+### Russian doll layout
 
-Each middleware wraps the next in the chain:
+Each middleware wraps the next:
 
 ```
 Request → Middleware 1 → Middleware 2 → Operation → Middleware 2 → Middleware 1 → Response
@@ -466,11 +465,12 @@ public class TimingMiddleware : IWorkflowOperationMiddleware
 }
 ```
 
-### Middleware Order
+### Middleware order
 
-Middleware executes in the order they are added:
-- First added = outermost layer
-- Last added = innermost layer (wraps the operation)
+Registration order defines nesting (see [Middleware Pipeline](middleware-pipeline.md) for the exact wrap rules):
+
+- First added runs as the outer layer on the way in.
+- Last added hugs the operation.
 
 ---
 
@@ -515,7 +515,7 @@ public class CreateOrderOperation : WorkflowOperationBase
 4. Executes `RestoreAsync` in **reverse order** on completed operations
 5. Fires `CompensationTriggered`, `CompensationCompleted` events
 
-**Design Decision**: Compensation runs on all completed operations. Override `RestoreAsync` to implement rollback logic; the base class no-op safely skips operations that don't need compensation.
+**Design choice**: Compensation visits every completed op. Implement `RestoreAsync` where rollback is real; base no-op steps are skipped.
 
 ---
 
@@ -547,7 +547,7 @@ All operations are async-first:
 - Direct execution paths
 - No reflection in hot paths
 
-**Result**: 13-511x faster than competitors, 6-575x less memory (12 scenarios tested across .NET 10.0, .NET 8.0, and .NET Framework 4.8).
+**Benchmarks (12 scenarios, .NET 10 / 8 / FX 4.8)**: about **13x–511x** faster than the libraries we compared against, and **6x–575x** less memory, depending on scenario and runtime.
 
 ---
 
@@ -555,15 +555,10 @@ All operations are async-first:
 
 ### Dependency Isolation with ILRepack
 
-Extensions that depend on third-party libraries use **ILRepack** to internalize those assemblies:
-
-**How it Works**:
-1. Extension references third-party libraries (Serilog, Polly, OpenTelemetry)
-2. ILRepack merges those DLLs into the extension assembly
-3. Public APIs expose only WorkflowForge or BCL types
-4. Microsoft/System assemblies remain external and are resolved by the runtime
-
-**Benefit**: Reduced dependency conflicts without embedding Microsoft/System assemblies.
+- Extensions that bundle third-party libraries (Serilog, Polly, OpenTelemetry) run those bits through **ILRepack**.
+- Third-party bits ship inside the extension assembly; public surfaces stay on WorkflowForge or BCL types.
+- Microsoft/System assemblies stay external and resolve normally at runtime.
+- That cuts version clashes without inlining framework binaries.
 
 ### Extension Pattern
 
@@ -587,46 +582,30 @@ public static class SerilogExtensions
 }
 ```
 
-For complete extension documentation, see [Extensions Guide](../extensions/index.md).
+For extension setup, see [Extensions Guide](../extensions/index.md).
 
 ---
 
 ## Design Patterns Used
 
-### Creational Patterns
-- **Factory Pattern**: `WorkflowForge` static factory
-- **Builder Pattern**: `WorkflowBuilder` fluent API
-
-### Structural Patterns
-- **Facade Pattern**: `WorkflowForge` simplifies complex subsystems
-- **Decorator Pattern**: Middleware pipeline
-
-### Behavioral Patterns
-- **Strategy Pattern**: Different operation types
-- **Observer Pattern**: Event system
-- **Chain of Responsibility**: Middleware pipeline
-- **Saga Pattern**: Compensation flow
+- Creation flows use the static **factory** on `WorkflowForge` and the fluent **builder** on `WorkflowBuilder`.
+- `WorkflowForge` is a **facade** over the internal subsystems.
+- Middleware is a **decorator** / **chain-of-responsibility** stack.
+- Distinct operation implementations follow **strategy**.
+- Lifecycle hooks surface through **observer**-style events.
+- Compensation follows **saga** semantics.
 
 ---
 
 ## Thread Safety
 
-### Thread-Safe Components
-- `ConcurrentDictionary` in foundry properties
-- Immutable workflow definitions
-- Event subscriptions (standard .NET events)
-
-### Not Thread-Safe
-- Foundry reuse across concurrent workflows (use separate foundries)
-- Smith reuse across concurrent workflows (create per-workflow or use locking)
-
-**Best Practice**: Create new foundry and smith instances for concurrent workflows.
+Foundry properties rely on `ConcurrentDictionary`; workflow graphs are immutable after build; events behave like standard .NET multicast delegates. **Do not** share one foundry or smith across concurrent workflow runs unless you add your own synchronization: spin up separate instances per parallel unit of work.
 
 ---
 
 ## Related Documentation
 
-- [API Reference](../reference/api-reference.md) - Complete API documentation
+- [API Reference](../reference/api-reference.md) - Type and member reference
 - [Operations Guide](../core/operations.md) - Creating custom operations
 - [Event System](../core/events.md) - Working with events
 - [Performance](../performance/performance.md) - Optimization techniques

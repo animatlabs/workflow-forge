@@ -6,7 +6,7 @@
 <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating" alt="Security Rating" /></a>
 <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating" alt="Maintainability Rating" /></a>
 
-This folder is the GitHub Pages source for WorkflowForge documentation.
+This folder powers the GitHub Pages site for WorkflowForge.
 
 ## Local Preview
 

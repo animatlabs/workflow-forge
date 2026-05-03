@@ -1,34 +1,18 @@
 # WorkflowForge.Extensions.DependencyInjection
 
+Registers WorkflowForge in `Microsoft.Extensions.DependencyInjection`, binds options from configuration, and fails startup when settings are invalid.
+
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.DependencyInjection.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.DependencyInjection/)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/WorkflowForge.Extensions.DependencyInjection.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.DependencyInjection/)
 
-**Microsoft.Extensions.DependencyInjection integration for WorkflowForge**
-
-This extension provides seamless integration with Microsoft's dependency injection container, enabling:
-- IOptions<T> pattern support
-- Automatic configuration validation on startup
-- ASP.NET Core integration
-- Configuration binding from appsettings.json
-
----
-
-## 📦 Installation
+## Install
 
 ```bash
 dotnet add package WorkflowForge.Extensions.DependencyInjection
 ```
 
-**Note**: This package is **optional**. WorkflowForge core has zero dependencies and can be used standalone.
+Targets .NET Standard 2.0 or later. WorkflowForge core has no DI dependency; add this package only when you want `IOptions<T>`, `appsettings.json`, and hosted app wiring.
 
----
-
-## 🚀 Quick Start
+## Quick Start
 
 ### ASP.NET Core
 
@@ -78,7 +62,7 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
-### Usage in Controllers/Services
+### Usage in controllers or services
 
 ```csharp
 public class WorkflowService
@@ -102,11 +86,15 @@ public class WorkflowService
 }
 ```
 
----
+## Key points
 
-## 🔧 Manual Configuration
+- `AddWorkflowForge(IConfiguration)` binds and validates options at startup.
+- `AddWorkflowSmith()` needs `IWorkflowForgeLogger` and a prior `AddWorkflowForge` call.
+- Invalid `appsettings.json` values throw during startup instead of mid-run.
 
-If you don't use appsettings.json, you can configure options manually:
+## Configuration
+
+### Without appsettings.json
 
 ```csharp
 services.AddWorkflowForge(
@@ -122,12 +110,9 @@ services.AddWorkflowForge(
 );
 ```
 
----
+### Startup validation
 
-## ✅ Automatic Validation
-
-This extension **validates configuration on startup** using the `Validate()` methods from options classes
-and registers `IValidateOptions<WorkflowForgeOptions>` for startup-time checks:
+`Validate()` runs on options; `IValidateOptions<WorkflowForgeOptions>` is registered so bad config fails fast:
 
 ```csharp
 // This will throw on startup if configuration is invalid
@@ -146,21 +131,17 @@ services.AddWorkflowForge(configuration);
 }
 ```
 
-**Validation errors are caught at startup, not at runtime!**
+### Registration API
 
----
-
-## 📚 API Reference
-
-### AddWorkflowForge(IConfiguration)
-Binds configuration from appsettings.json and validates.
+**`AddWorkflowForge(IConfiguration)`**  
+Binds configuration from `appsettings.json` and validates.
 
 ```csharp
 services.AddWorkflowForge(Configuration);
 ```
 
-### AddWorkflowForge(Actions)
-Manually configure options.
+**`AddWorkflowForge` with delegates**  
+Configure options in code.
 
 ```csharp
 services.AddWorkflowForge(
@@ -171,12 +152,10 @@ services.AddWorkflowForge(
 );
 ```
 
-### AddWorkflowSmith()
+**`AddWorkflowSmith()`**  
 Registers `IWorkflowSmith` as a singleton.
 
-**Requirements**:
-- `IWorkflowForgeLogger` must be registered
-- `AddWorkflowForge()` must be called first
+Requirements: register `IWorkflowForgeLogger`, call `AddWorkflowForge()` first.
 
 ```csharp
 services.AddSingleton<IWorkflowForgeLogger>(/* ... */);
@@ -184,49 +163,26 @@ services.AddWorkflowForge(Configuration);
 services.AddWorkflowSmith(); // ✅ Now WorkflowSmith is available
 ```
 
----
+### Configuration sections
 
-## 🎯 Configuration Sections
-
-| Section | Options Class | Validated |
+| Section | Options class | Validated |
 |---------|---------------|-----------|
-| `WorkflowForge` | `WorkflowForgeOptions` | ✅ Yes |
-| `WorkflowForge:Middleware:Timing` | `TimingMiddlewareOptions` | ❌ No |
-| `WorkflowForge:Middleware:Logging` | `LoggingMiddlewareOptions` | ✅ Yes |
-| `WorkflowForge:Middleware:ErrorHandling` | `ErrorHandlingMiddlewareOptions` | ❌ No |
+| `WorkflowForge` | `WorkflowForgeOptions` | Yes |
+| `WorkflowForge:Middleware:Timing` | `TimingMiddlewareOptions` | No |
+| `WorkflowForge:Middleware:Logging` | `LoggingMiddlewareOptions` | Yes |
+| `WorkflowForge:Middleware:ErrorHandling` | `ErrorHandlingMiddlewareOptions` | No |
 
----
+[WorkflowForge configuration](../../../docs/core/configuration.md)
 
-## 🔍 Why This Extension Exists
+## Links
 
-**WorkflowForge core has ZERO dependencies** to avoid version conflicts when using extensions.
+- [Getting Started](../../../docs/getting-started/getting-started.md)
+- [Extensions Overview](../../../docs/extensions/index.md)
+- **WorkflowForge**: core workflow engine (zero dependencies)
+- **WorkflowForge.Extensions.Logging.Serilog**: Serilog integration
+- **WorkflowForge.Extensions.Resilience.Polly**: Polly resilience patterns
+- **WorkflowForge.Extensions.Observability.Performance**: performance metrics
 
-This extension provides **optional** DI integration for users who want:
-- IOptions<T> pattern
-- Configuration validation on startup
-- ASP.NET Core integration
-- appsettings.json binding
-
-**If you don't need these features, use WorkflowForge core directly!**
-
----
-
-## 📖 Related Packages
-
-- **WorkflowForge** - Core workflow engine (zero dependencies)
-- **WorkflowForge.Extensions.Logging.Serilog** - Serilog integration
-- **WorkflowForge.Extensions.Resilience.Polly** - Polly resilience patterns
-- **WorkflowForge.Extensions.Observability.Performance** - Performance metrics
-
----
-
-## 📄 License
+## License
 
 MIT License - Copyright © 2025-2026 AnimatLabs
-
-
-
-
-
-
-

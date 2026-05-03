@@ -1,11 +1,11 @@
 ---
 title: Internal Benchmarks
-description: Internal performance benchmarks validating WorkflowForge's microsecond execution, minimal allocations, and linear scaling characteristics.
+description: "Internal BenchmarkDotNet results for WorkflowForge: microsecond execution, small allocations, and concurrency scaling."
 ---
 
 # WorkflowForge Internal Benchmarks
 
-This document presents WorkflowForge's internal performance benchmarks—comprehensive self-testing that validates the framework's performance characteristics independently of competitor comparisons.
+WorkflowForge-only BenchmarkDotNet results: per-operation cost, throughput sweeps, memory, concurrency. No competitor mix-ins.
 
 **Version**: 2.1.1  
 **Test System**: Windows 11 (25H2), Intel 11th Gen i7-1185G7, .NET SDK 10.0.103  
@@ -30,7 +30,7 @@ This document presents WorkflowForge's internal performance benchmarks—compreh
 
 ## Executive Summary
 
-WorkflowForge internal benchmarks demonstrate (50 iterations, median values):
+Median numbers (50 iterations):
 
 | Metric | Result |
 |--------|--------|
@@ -38,7 +38,7 @@ WorkflowForge internal benchmarks demonstrate (50 iterations, median values):
 | **Operation Creation** | 1.2-1.9μs median |
 | **Workflow Throughput** | 35-272μs for custom operations (1-50 ops, all runtimes) |
 | **Memory Baseline** | 3,408 B minimal allocation (constant) |
-| **Concurrency Scaling** | Near-perfect (8.0x for 8 workers, 15.9x for 16 workers) |
+| **Concurrency Scaling** | Roughly linear (8.0x for 8 workers, 15.9x for 16 workers) |
 | **GC Pressure** | Gen0 only for typical workloads |
 
 {% if site.url %}
@@ -66,7 +66,7 @@ WorkflowForge internal benchmarks demonstrate (50 iterations, median values):
 
 ## Operation Performance
 
-Tests individual operation types for execution time and memory allocation across .NET 8.0, .NET 10.0, and .NET Framework 4.8.
+Per-operation timings and allocations on .NET 8.0, 10.0, and .NET Framework 4.8.
 
 ### Operation Execution (Median Times)
 
@@ -99,7 +99,7 @@ Tests individual operation types for execution time and memory allocation across
 {% if site.url %}
 <div class="perf-vchart">
   <div class="perf-vchart-title">Operation Execution Times (Median, Lower is Better)</div>
-  <div class="perf-vchart-subtitle">CPU-bound operations execute in under 82 microseconds across all runtimes</div>
+  <div class="perf-vchart-subtitle">CPU-bound ops stay under 82μs median in this slice</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
@@ -149,18 +149,18 @@ Tests individual operation types for execution time and memory allocation across
 </div>
 {% endif %}
 
-**Key Findings**:
+**Observations**
 
-- Custom operations are the most memory-efficient (456 B)
-- Logging operations are fastest (8.8-12.1μs)
-- Operation creation is extremely fast (1.2-1.9μs)
-- Exception handling adds moderate overhead; .NET 10.0 improves it significantly (59.3μs vs 81.7μs)
+- Custom ops remain the cheapest allocation (456 B here).
+- Logging ops are fastest (8.8–12.1μs).
+- Construction costs ~1.2–1.9μs median.
+- Exception handling is visible; .NET 10.0 trims it (59.3μs vs 81.7μs on .NET 8.0 for the same benchmark).
 
 ---
 
 ## Workflow Throughput
 
-Tests complete workflow execution patterns with varying operation counts. Delay-bound workflows contain built-in delay operations (~1ms per operation).
+End-to-end workflow shapes with increasing operation counts. Delay-heavy cases still include the intentional ~1ms sleeps.
 
 ### Workflow Patterns (OperationCount=1, Median by Runtime)
 
@@ -190,7 +190,7 @@ Tests complete workflow execution patterns with varying operation counts. Delay-
 {% if site.url %}
 <div class="perf-vchart">
   <div class="perf-vchart-title">Custom Operation Throughput Scaling (1-50 Operations)</div>
-  <div class="perf-vchart-subtitle">Sub-272μs execution at 50 operations with linear memory growth across runtimes</div>
+  <div class="perf-vchart-subtitle">50 custom ops finish under 272μs median; memory rises linearly with op count</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
@@ -231,17 +231,17 @@ Tests complete workflow execution patterns with varying operation counts. Delay-
 </div>
 {% endif %}
 
-**Key Findings**:
+**Numbers**:
 
-- CPU-bound workflows execute in 35-272μs for 1-50 operations across runtimes
-- Memory scales linearly with operation count
-- Delay-bound workflows (~1ms) are dominated by delay duration, not framework overhead
+- CPU-bound workflows finish in about 35–272μs for 1–50 operations across the tested runtimes.
+- Allocations grow in step with operation count in the sequential custom-op sweep.
+- Delay-heavy rows are dominated by the sleeps, not the orchestration loop.
 
 ---
 
 ## Memory Allocation
 
-Tests memory allocation patterns and GC behavior. All values are median for 10 allocations unless noted.
+Allocation and GC behavior (median over 10 allocations unless noted).
 
 ### Allocation Patterns (10 Allocations, Median by Runtime)
 
@@ -269,12 +269,12 @@ Tests memory allocation patterns and GC behavior. All values are median for 10 a
 | 100 | 3,408 B | 3,408 B |
 | 500 | 3,408 B | 3,408 B |
 
-The minimal allocation workflow maintains a **constant footprint** of 3,408 B regardless of allocation count—demonstrating effective object reuse and pooling within the framework. .NET Framework 4.8 does not report allocation metrics.
+The minimal allocation workflow holds a **flat 3,408 B** across 10–500 allocations in this benchmark, which matches the table above. .NET Framework 4.8 does not report allocation metrics here.
 
 {% if site.url %}
 <div class="perf-vchart">
   <div class="perf-vchart-title">Memory Allocation Patterns (10 Allocations)</div>
-  <div class="perf-vchart-subtitle">Minimal workflow stays at 3.3KB; large objects trigger full GC. .NET FX 4.8 allocation metrics NA.</div>
+  <div class="perf-vchart-subtitle">Minimal workflow holds ~3.3KB; large-object path stresses Gen2. .NET FX 4.8 skips alloc metrics.</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
@@ -308,18 +308,18 @@ The minimal allocation workflow maintains a **constant footprint** of 3,408 B re
 </div>
 {% endif %}
 
-**Key Findings**:
+**Observations**
 
-- Minimal allocation baseline is constant at 3,408 B across 10-500 allocations
-- No GC pressure for typical workflows
-- Large object allocations trigger full GC (Gen0/1/2)
-- StringBuilder optimization saves ~640 B vs concatenation at 10 allocations (17,264 B vs 17,904 B)
+- Still 3,408 B from 10 through 500 iterations in the minimal row.
+- Typical patterns skipped GC pressure in the minimal scenario.
+- `LargeObjectAllocation` hits Gen0+1+2 as expected.
+- `StringBuilderOptimization` saves ~640 B vs raw concatenation at ten passes (17,264 B vs 17,904 B).
 
 ---
 
 ## Concurrency Scaling
 
-Tests concurrent workflow execution patterns across .NET 8.0, .NET 10.0, and .NET Framework 4.8.
+Concurrent workflow fan-out versus sequential baselines on .NET 8.0, 10.0, and .NET Framework 4.8.
 
 ### Scaling with 8 Workflows (5 ops per workflow)
 
@@ -346,7 +346,7 @@ Tests concurrent workflow execution patterns across .NET 8.0, .NET 10.0, and .NE
 {% if site.url %}
 <div class="perf-vchart">
   <div class="perf-vchart-title">Concurrency Scaling (Sequential vs Concurrent Time)</div>
-  <div class="perf-vchart-subtitle">Near-perfect linear scaling across runtimes: 8.0x for 8 workflows, 15.9x for 16 workflows</div>
+  <div class="perf-vchart-subtitle">8 workflows ≈8.0x, 16 workflows ≈15.9x vs sequential in this harness</div>
   <div class="perf-vchart-container">
     <div class="perf-vchart-group">
       <div class="perf-vchart-bars">
@@ -403,26 +403,26 @@ Tests concurrent workflow execution patterns across .NET 8.0, .NET 10.0, and .NE
 </div>
 {% endif %}
 
-**Key Findings**:
+**What matters**:
 
-- Near-perfect scaling: 8.0x speedup for 8 workflows, 15.9x for 16 workflows
-- Memory overhead scales linearly with workflow count
-- Heavier workflows (25 ops) maintain ~7.8x speedup with 8 concurrent workers
+- Measured speedups land at 8.0x for eight workflows and 15.9x for sixteen versus sequential baselines in this harness.
+- Reported memory rises in proportion to workflow count.
+- With 25 operations per workflow, eight concurrent workers still reach about 7.8x versus sequential.
 
 ---
 
 ## Optimization Recommendations
 
-1. **Use Custom Operations** for production—most memory-efficient (456 B per execution).
-2. **Prefer Logging operations** for lightweight tasks—fastest at 8.8-12.1μs.
-3. **Avoid large object allocations** in operations—triggers Gen2 GC and degrades throughput.
-4. **Scale horizontally**—concurrency shows near-perfect linear scaling (8.0x for 8 workers, 15.9x for 16).
-5. **Minimize allocation in hot paths**—MinimalAllocationWorkflow demonstrates constant 3,408 B footprint.
-6. **Use .NET 10.0** where available—improved exception handling (59.3μs vs 81.7μs) and some operation gains.
+1. **Custom operations** for the smallest allocations in this matrix (456 B per execution).
+2. **Logging operations** when the step is tiny; they lead the timing table at 8.8–12.1μs.
+3. **Avoid LOH churn** in hot loops; big allocations invite Gen2 pauses.
+4. **Parallelize deliberately**; scaling here is roughly linear (8.0x for 8 workers, 15.9x for 16).
+5. **Reuse buffers and properties**; `MinimalAllocationWorkflow` flatlines at 3,408 B from 10 through 500 iterations.
+6. **Use .NET 10.0** where you can; several ops and exception paths improve vs .NET 8.0 in the same harness.
 
 ---
 
 ## Related Documentation
 
-- [Performance Overview](performance.md) - Summary and production targets
-- [Competitive Analysis](competitive-analysis.md) - Head-to-head comparisons with Workflow Core and Elsa Workflows
+- [Performance Overview](performance.md)
+- [Competitive Analysis](competitive-analysis.md)

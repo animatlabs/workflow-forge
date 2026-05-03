@@ -1,103 +1,98 @@
-# WorkflowForge Basic Console Samples
+# WorkflowForge Basic Console samples
 
-Interactive examples demonstrating the core features and capabilities of WorkflowForge 2.1.1.
+Console menu for **WorkflowForge 2.1.1**. Run a single sample or queue them all.
 
-## Getting Started
+## Run
 
 ```bash
 cd src/samples/WorkflowForge.Samples.BasicConsole
 dotnet run
 ```
 
-## Available Samples (33 Total)
+## Samples (33)
 
-### Basic Workflows (1-4)
-- **1. Hello World** - Simple workflow demonstration
-- **2. Data Passing** - Pass data between operations via foundry properties
-- **3. Multiple Outcomes** - Workflows with different results
-- **4. Class-Based Operations** - Preferred class-based operations pattern
+### Basic (1–4)
 
-### Control Flow (5-8)
-- **5. Conditional Workflows** - If/else logic using ConditionalWorkflowOperation
-- **6. ForEach Loops** - Process collections in parallel or sequential
-- **7. Error Handling** - Exception handling and automatic compensation
-- **8. Built-in Operations** - Use logging, delays, and more
+- **1. Hello world:** smallest workflow  
+- **2. Data passing:** `foundry.Properties` between steps  
+- **3. Multiple outcomes:** branching results  
+- **4. Class-based operations:** preferred default for real code  
 
-### Configuration & Middleware (9-12)
-- **9. Options Pattern** - ASP.NET Core IOptions<T> integration
-- **10. Configuration Profiles** - Environment-specific settings (Dev/Prod)
-- **11. Workflow Events** - SRP event system (Lifecycle, Operation, Compensation)
-- **12. Middleware** - Cross-cutting concerns with operation middleware
+### Control flow (5–8)
 
-### Extensions (13-18, 21-25)
-- **13. Serilog Logging** - Structured logging with Serilog (zero conflicts)
-- **14. Polly Resilience** - Retry, circuit breaker, timeout policies (zero conflicts)
-- **15. OpenTelemetry** - Distributed tracing with Jaeger (zero conflicts)
-- **16. Health Checks** - ASP.NET Core health monitoring integration
-- **17. Performance Monitoring** - Operation timing and metrics
-- **18. Persistence** - Workflow state checkpointing (BYO storage provider)
-- **21. Recovery Only** - Retry workflows without persistence
-- **22. Resilience + Recovery** - Combined Polly resilience and recovery
-- **23. Validation** - DataAnnotations-based validation
-- **24. Audit** - Compliance audit logging with pluggable providers
-- **25. Configuration-Driven** - Enable/disable extensions via appsettings.json
+- **5. Conditional workflows:** `ConditionalWorkflowOperation`  
+- **6. ForEach loops:** parallel or sequential over collections  
+- **7. Error handling:** exceptions and compensation  
+- **8. Built-in operations:** logging, delays, helpers  
 
-### Onboarding & Best Practices (26-33)
-- **26. Dependency Injection** - Configure via DI and run with IWorkflowSmith
-- **27. Workflow Middleware** - Workflow-level middleware behavior
-- **28. Cancellation + Timeout** - Cancellation tokens and timeout middleware
-- **29. Continue On Error** - Aggregate errors and continue execution
-- **30. Compensation Behaviors** - Compensation success vs failures
-- **31. Foundry Reuse** - Reuse foundry across workflows
-- **32. Output Chaining** - Operation output to next input
-- **33. Service Provider Access** - Resolve services inside operations
+### Configuration and middleware (9–12)
 
-### Advanced (19-20)
-- **19. Comprehensive Integration** - Full production workflow with all extensions
-- **20. Operation Creation Patterns** - All operation creation methods
+- **9. Options pattern:** `IOptions<T>` wiring  
+- **10. Configuration profiles:** dev vs prod style toggles  
+- **11. Workflow events:** lifecycle, operations, compensation  
+- **12. Middleware:** operation-level cross-cutting  
 
-## Interactive Menu
+### Extensions (13–18, 21–25)
 
-The console application provides an easy-to-use menu system:
+- **13. Serilog logging:** structured logs (ILRepack-isolated Serilog)  
+- **14. Polly resilience:** retry, breaker, timeout (ILRepack-isolated Polly)  
+- **15. OpenTelemetry:** traces toward Jaeger and friends  
+- **16. Health checks:** host health integration  
+- **17. Performance monitoring:** per-operation timing  
+- **18. Persistence:** checkpoints with your storage provider  
+- **21. Recovery only:** resume without standing up the full persistence stack  
+- **22. Resilience + recovery:** Polly combined with recovery paths  
+- **23. Validation:** DataAnnotations against foundry state  
+- **24. Audit:** pluggable audit sinks  
+- **25. Configuration-driven:** turn extensions on or off from `appsettings.json`  
 
-- **1-33**: Run specific samples by number
-- **A**: Run ALL samples sequentially
-- **B**: Run Basic samples only (1-4)
-- **Q**: Quit the application
+### Onboarding (26–33)
 
-Each sample includes:
-- Clear explanations of what's being demonstrated
-- Real-time console output showing execution flow
-- Performance metrics and timing information
-- Error handling demonstrations
+- **26. Dependency injection:** register and resolve `IWorkflowSmith`  
+- **27. Workflow middleware:** scope middleware to the whole workflow  
+- **28. Cancellation + timeout:** tokens and timeout middleware  
+- **29. Continue on error:** collect failures, keep moving  
+- **30. Compensation behaviors:** success vs failure rollback  
+- **31. Foundry reuse:** one foundry, many workflows  
+- **32. Output chaining:** feed one operation’s output into the next  
+- **33. Service provider access:** resolve dependencies inside operations  
+
+### Advanced (19–20)
+
+- **19. Full integration run:** every extension exercised together  
+- **20. Operation creation patterns:** each supported way to build operations  
+
+## Menu
+
+- **1–33:** single sample  
+- **A:** run all samples in order  
+- **B:** basics only (1–4)  
+- **Q:** quit  
+
+Most samples narrate on the console, print timings where it matters, and failure-oriented demos actually fail on purpose.
 
 ## Configuration
 
-Samples use `appsettings.json` for environment-specific configuration including logging levels, resilience policies, and extension settings.
+`appsettings.json` holds environment-specific knobs: logging levels, resilience policies, extension switches.
 
-## Learning Path
+## Path through the menu
 
-**Beginners**: Start with samples 1-4 (Basic Workflows)  
-**Intermediate**: Try samples 5-12 (Control Flow & Configuration)  
-**Advanced Users**: Explore samples 13-33 (Extensions, Onboarding & Best Practices)  
-**Production**: Study samples 19-20 (Comprehensive Integration & Patterns)
+Start with **1–4**, add **5–12** for control flow and wiring, then **13–33** for extensions and hosting notes. **19–20** are the widest end-to-end passes.
 
-## Features Demonstrated
+## What is covered
 
-- **Core Engine**: Workflow creation, operation execution, data flow via foundry properties
-- **Control Flow**: Conditionals, loops (ForEach), error handling with compensation
-- **Configuration**: IOptions<T> pattern, environment profiles, middleware
-- **Events**: SRP-compliant event system (Workflow, Operation, Compensation)
-- **Extensions**: All 13 packages (11 extensions + Testing) with focused dependency boundaries
-- **Resilience**: Retry, circuit breaker, timeout policies with Polly
-- **Observability**: Logging, tracing, health checks, performance monitoring
-- **Persistence**: Workflow state checkpointing and recovery
-- **Validation**: DataAnnotations-based input validation
-- **Audit**: Compliance audit logging with pluggable storage
-- **Best Practices**: Production-grade patterns and proven architectures
+- **Core:** workflows, operations, `foundry.Properties`  
+- **Control flow:** conditionals, `ForEach`, errors, compensation  
+- **Configuration:** `IOptions<T>`, profiles, middleware  
+- **Events:** workflow, operation, and compensation hooks  
+- **Extensions:** eleven extension packages plus Testing, each with a clear dependency boundary  
+- **Resilience:** Polly retry, breaker, timeout samples  
+- **Observability:** logging, tracing, health, timing  
+- **Persistence:** checkpoint and resume  
+- **Validation:** annotations against foundry state  
+- **Audit:** swappable audit sinks  
+- **Guidance:** DI, reuse, chaining, service resolution  
 
-## Documentation
+## Docs
 
-For detailed explanations of all samples, see [Samples Guide](../../../docs/getting-started/samples-guide.md)
-
----
+[Samples guide](../../../docs/getting-started/samples-guide.md) for a full walkthrough of every number in the menu.

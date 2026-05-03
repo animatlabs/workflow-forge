@@ -99,13 +99,13 @@ Elsa does not support .NET Framework 4.8 and is excluded from this comparison.
 
 Elsa does not support .NET Framework 4.8 and is excluded. Memory allocation metrics are not reported by BenchmarkDotNet for .NET Framework 4.8 in all scenarios.
 
-## Key Insights
+## Key takeaways
 
-- **Concurrent Execution**: Up to **289x faster** than Elsa with parallel workloads
-- **State Machine**: Up to **511x faster** with complex state transitions (.NET 10.0)
-- **Sequential Workflows**: **26-57x faster** across all runtimes with minimal memory
-- **Memory Baseline**: **3.48 KB** (Competitive, Event-Driven scenario); **3.33 KB** (Internal, MinimalAllocationWorkflow)
-- **Cross-Runtime**: Consistent advantage on .NET 10.0, .NET 8.0, and .NET Framework 4.8
+- **Concurrent execution:** up to **289x** faster than Elsa in the concurrent scenario on this setup
+- **State machine:** up to **511x** on .NET 10.0 for the 25-transition sweep
+- **Sequential workflows:** **26–57x** across runtimes with small reported allocations
+- **Memory baseline:** **3.48 KB** (event-driven competitive scenario) and **3.33 KB** (`MinimalAllocationWorkflow` internal suite)
+- **Cross-runtime:** numbers below repeat on .NET 10.0, 8.0, and .NET Framework 4.8 on the same machine
 
 Notes:
 - Results captured on Windows 11 (25H2), Intel i7-1185G7, 50 iterations.

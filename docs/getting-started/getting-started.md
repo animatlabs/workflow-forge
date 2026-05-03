@@ -11,7 +11,7 @@ description: Install, configure, and create your first high-performance .NET wor
 <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=security_rating" alt="Security Rating" /></a>
 <a href="https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge"><img src="https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=sqale_rating" alt="Maintainability Rating" /></a>
 
-Welcome to WorkflowForge! This guide will walk you through installing, configuring, and creating your first workflow in just a few minutes.
+Install the package, model a short pipeline, run it with a smith and foundry.
 
 ## Table of Contents
 
@@ -28,61 +28,25 @@ Welcome to WorkflowForge! This guide will walk you through installing, configuri
 
 ## What's New in 2.1.1
 
-**WorkflowForge 2.1.1** introduces multi-framework support, compensation improvements, and infrastructure hardening:
-
-### Multi-Target Framework Support
-All libraries, tests, samples, and benchmarks now target **.NET 10.0**, **.NET 8.0**, and **.NET Framework 4.8** for broad runtime coverage.
-
-### Compensation Improvements (Breaking)
-- `SupportsRestore` property removed from `IWorkflowOperation` and `IWorkflow` interfaces
-- Compensation always attempts `RestoreAsync` on all operations; the base class provides a no-op default for non-restorable operations
-- Optional `restoreAction` / `restoreFunc` parameters added to builder and factory methods for inline compensation
-
-### Performance and Reliability
-- All EventArgs and exception classes sealed for JIT devirtualization
-- `ConfigureAwait(false)` added to all library await calls
-- `GC.SuppressFinalize` applied consistently across disposables
-- Thread-safety fixes for `ConditionalWorkflowOperation`, `HealthCheckService`, and `WorkflowSmith` disposal
-
-### New APIs
-- `GetOperationOutput` / `GetOperationOutput<T>` for orchestrator-level output inspection
-- `FoundryPropertyKeys` constants replacing magic strings
-
-See the full [CHANGELOG](https://github.com/animatlabs/workflow-forge/blob/main/CHANGELOG.md) for complete details.
+**2.1.1** multi-targets **.NET 10**, **.NET 8**, and **.NET Framework 4.8**, removes `SupportsRestore` in favor of always calling `RestoreAsync` (base no-op when unused), adds inline `restoreAction` / `restoreFunc`, seals event/exception types, hardens threading and disposal, and adds `GetOperationOutput` / `FoundryPropertyKeys`. Full notes: [CHANGELOG.md](https://github.com/animatlabs/workflow-forge/blob/main/CHANGELOG.md).
 
 ---
 
 ## What's New in 2.0.0
 
-**WorkflowForge 2.0.0** introduced major improvements:
-
-### Dependency Isolation
-Extensions internalize third-party dependencies with **ILRepack** where appropriate, while keeping Microsoft/System assemblies external for runtime unification.
-
-### New Extensions
-- **Validation**: DataAnnotations-based validation for comprehensive input rules
-- **Audit**: Production-ready audit logging with pluggable providers
-
-### Breaking Changes
-- **Event System**: Refactored from single `IWorkflowEvents` to three focused interfaces (`IWorkflowLifecycleEvents`, `IOperationLifecycleEvents`, `ICompensationLifecycleEvents`) for SRP compliance. See [Events Guide](../core/events.md) for migration.
-- **ISystemTimeProvider**: Now injected via DI instead of static instance
-
-### Enhancements
-- Comprehensive test suite (>90% coverage)
-- Improved documentation and samples
-- Better testability with DI throughout
+**2.0.0** isolated extension dependencies with **ILRepack**, shipped **Validation** and **Audit** packages, split lifecycle events into three interfaces (see [Events Guide](../core/events.md)), and moved **`ISystemTimeProvider`** behind DI. Full notes: [CHANGELOG.md](https://github.com/animatlabs/workflow-forge/blob/main/CHANGELOG.md).
 
 ## Prerequisites
 
-Before you begin, ensure you have:
+You need:
 
 - **.NET SDK**: .NET 8.0+ or .NET Framework 4.8 (WorkflowForge targets .NET Standard 2.0)
 - **IDE**: Visual Studio 2022, VS Code, or JetBrains Rider
-- **Basic C# knowledge**: Understanding of async/await patterns
+- **Basic C#**: Comfortable using `async`/`await` in console or web apps
 
 ## Installation
 
-### Step 1: Create a New Project
+### Step 1: Create a project
 
 ```bash
 # Create a new console application
@@ -90,31 +54,29 @@ dotnet new console -n MyWorkflowApp
 cd MyWorkflowApp
 ```
 
-### Step 2: Install WorkflowForge
+### Step 2: Add packages
 
 ```bash
-# Install the core package
 dotnet add package WorkflowForge
 
-# Optional: Install extensions for enhanced capabilities
+# Optional
 dotnet add package WorkflowForge.Extensions.Logging.Serilog
 dotnet add package WorkflowForge.Extensions.Resilience.Polly
 dotnet add package WorkflowForge.Extensions.Validation
 dotnet add package WorkflowForge.Extensions.Audit
 ```
 
-### Step 3: Verify Installation
+### Step 3: Build
 
 ```bash
-# Build to ensure everything is installed correctly
 dotnet build
 ```
 
 ## Your First Workflow
 
-Let's create a simple order processing workflow to demonstrate core concepts.
+Validate, pay, fulfill.
 
-### Step 1: Define the Domain Model
+### Step 1: Models
 
 ```csharp
 // Models/Order.cs
@@ -135,11 +97,9 @@ public class PaymentResult
 }
 ```
 
-### Step 2: Create Custom Operations
+### Step 2: Operations
 
-> **Recommended**: Always extend `WorkflowOperationBase` instead of implementing `IWorkflowOperation` directly. The base class eliminates boilerplate and provides lifecycle hooks.
-
-**Best Practice**: Use class-based operations for production scenarios (better performance, testability, and maintainability).
+> Extend **`WorkflowOperationBase`**, not **`IWorkflowOperation`**, unless you have a reason. Use classes when the step will grow or needs tests.
 
 ```csharp
 // Operations/ValidateOrderOperation.cs
@@ -281,7 +241,7 @@ public class FulfillOrderOperation : WorkflowOperationBase
 }
 ```
 
-### Step 3: Build the Workflow
+### Step 3: Wire and run
 
 ```csharp
 // Program.cs
@@ -337,13 +297,13 @@ catch (Exception ex)
 }
 ```
 
-### Step 4: Run the Application
+### Step 4: Run
 
 ```bash
 dotnet run
 ```
 
-**Expected Output**:
+Sample console output:
 ```
 Processing order abc123...
 
@@ -361,21 +321,21 @@ Transaction ID: def456
 
 ## Core Concepts Explained
 
-### The Metaphor
+### The metaphor
 
-WorkflowForge uses an industrial manufacturing metaphor where workflows are "forged" through operations.
+Terms map to orchestration: forge builds graphs; foundry holds state; smith runs steps; each **operation** is one tool.
 
-**Core Components**:
+**Pieces**:
 - **Forge**: Main factory for creating workflows
 - **Foundry**: Execution environment with shared data
 - **Smith**: Orchestrator that executes workflows
 - **Operation**: Individual executable task
 
-For detailed explanation of the metaphor and architecture, see [Architecture Guide](../architecture/overview.md#core-metaphor).
+More detail: [Architecture Guide](../architecture/overview.md#core-metaphor).
 
-### Data Flow Pattern
+### Data flow
 
-**PRIMARY**: Dictionary-based via `foundry.Properties`
+**Primary**: `foundry.Properties`
 
 ```csharp
 // Store data
@@ -388,7 +348,7 @@ var value = foundry.GetPropertyOrDefault<T>("Key");
 var value = foundry.GetPropertyOrDefault<T>("Key", defaultValue);
 ```
 
-**SECONDARY**: Type-safe via `WorkflowOperationBase<TInput, TOutput>` (for explicit input/output contracts)
+**Optional**: `WorkflowOperationBase<TInput, TOutput>` for fixed contracts
 
 ```csharp
 public class MyOperation : WorkflowOperationBase<Order, OrderResult>
@@ -406,13 +366,11 @@ public class MyOperation : WorkflowOperationBase<Order, OrderResult>
 }
 ```
 
-**Recommendation**: Use dictionary-based data flow for most scenarios. Type-safe operations are useful when you need explicit compile-time contracts.
+Prefer the bag for most flows. Typed ops help when the contract is stable.
 
-### Compensation (Saga Pattern)
+### Compensation
 
-WorkflowForge supports automatic rollback on failure. Override `RestoreAsync` in your operation to support compensation. The base class provides a no-op default — operations that don't override it are safely skipped during compensation.
-
-For inline operations, use the optional `restoreAction` parameter:
+Implement **`RestoreAsync`** where undo matters; the base no-op is skipped safely on failure. Inline ops can pass **`restoreAction`**:
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow("OrderWorkflow")
@@ -429,7 +387,7 @@ var workflow = WorkflowForge.CreateWorkflow("OrderWorkflow")
     .Build();
 ```
 
-For class-based operations, override `RestoreAsync`:
+Class-based steps: override `RestoreAsync`.
 
 ```csharp
 public class MyOperation : WorkflowOperationBase
@@ -446,7 +404,7 @@ public class MyOperation : WorkflowOperationBase
 }
 ```
 
-Configure execution behavior via options:
+Behavior flags:
 ```csharp
 var options = new WorkflowForgeOptions
 {
@@ -462,9 +420,9 @@ var foundry = WorkflowForge.CreateFoundry("MyWorkflow", options: options);
 
 ## Next Steps
 
-### Explore Samples
+### Samples
 
-WorkflowForge includes 33 comprehensive samples covering all features:
+Repo has 33 samples:
 
 ```bash
 # Clone the repository
@@ -478,9 +436,9 @@ dotnet run
 
 [Samples Guide](samples-guide.md)
 
-### Run Operations in Parallel
+### Parallel steps
 
-Use `AddParallelOperations` to execute operations concurrently:
+`AddParallelOperations`:
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow("ParallelProcessing")
@@ -503,9 +461,9 @@ var workflow2 = WorkflowForge.CreateWorkflow("ControlledParallel")
     .Build();
 ```
 
-### Unit Testing Operations
+### Tests
 
-Use `WorkflowForge.Testing` to test operations in isolation:
+`WorkflowForge.Testing` + `FakeWorkflowFoundry`:
 
 ```csharp
 // Install testing package
@@ -534,11 +492,9 @@ public class MyOperationTests
 }
 ```
 
-### Add Extensions
+### Extensions
 
-Enhance your workflows with extensions:
-
-**Structured Logging (Serilog)**:
+**Serilog**:
 ```csharp
 using WorkflowForge.Extensions.Logging.Serilog;
 
@@ -550,22 +506,22 @@ var logger = SerilogLoggerFactory.CreateLogger(new SerilogLoggerOptions
 var smith = WorkflowForge.CreateSmith(logger);
 ```
 
-**Resilience (Polly)**:
+**Polly**:
 ```csharp
 using WorkflowForge.Extensions.Resilience.Polly;
 
-// Comprehensive policy with retry, circuit breaker, and timeout
+// Retry, breaker, timeout together
 foundry.UsePollyComprehensive(
     maxRetryAttempts: 3,
     circuitBreakerThreshold: 5,
     circuitBreakerDuration: TimeSpan.FromSeconds(30));
 
-// Or use individual policies
+// Or one policy at a time
 foundry.UsePollyRetry(maxRetryAttempts: 3);
 foundry.UsePollyCircuitBreaker(failureThreshold: 5, durationOfBreak: TimeSpan.FromSeconds(30));
 ```
 
-**Validation (DataAnnotations)**:
+**Validation**:
 ```csharp
 using WorkflowForge.Extensions.Validation;
 
@@ -575,29 +531,29 @@ foundry.UseValidation(
 
 [Extensions Guide](../extensions/index.md)
 
-### Learn Advanced Patterns
+### Read next
 
-- **[Architecture Overview](../architecture/overview.md)** - Design patterns and principles
+- **[Architecture Overview](../architecture/overview.md)** - Layout and patterns
 - **[Operations Guide](../core/operations.md)** - Built-in and custom operations
 - **[Event System](../core/events.md)** - Lifecycle events and monitoring
 - **[Configuration](../core/configuration.md)** - Environment-specific settings
-- **[API Reference](../reference/api-reference.md)** - Complete API documentation
+- **[API Reference](../reference/api-reference.md)** - Member-level reference
 
 ## Troubleshooting
 
-### Common Issues
+### Common issues
 
-**Issue**: "Workflow name is required" exception
-**Solution**: Always set a workflow name via `.WithName()` or `CreateWorkflow(name)`.
+**"Workflow name is required"**  
+Use `.WithName()` or `CreateWorkflow(name)`.
 
-**Issue**: Operations not executing
-**Solution**: Verify you called `.Build()` on the workflow builder and `await smith.ForgeAsync()`.
+**Nothing runs**  
+Call `.Build()` and `await smith.ForgeAsync(...)`.
 
-**Issue**: Data not passing between operations
-**Solution**: Use `foundry.SetProperty()` to store and `foundry.GetPropertyOrDefault()` to retrieve data.
+**Data missing between steps**  
+Write with `foundry.SetProperty`, read with `foundry.GetPropertyOrDefault`.
 
-**Issue**: Compensation not running
-**Solution**: Override `RestoreAsync` in your operation to implement compensation logic. Compensation runs automatically when a workflow fails — operations that override `RestoreAsync` run their rollback; operations that don't override are safely skipped.
+**Compensation never does anything**  
+Override `RestoreAsync` where rollback is real; on failure the smith walks completed ops in reverse and skips base no-ops.
 
 ### Getting Help
 
@@ -607,24 +563,17 @@ foundry.UseValidation(
 
 ## Summary
 
-You've learned:
+You added packages, three `WorkflowOperationBase` steps, a smith, a foundry, and saw properties and `RestoreAsync`.
 
-- How to install WorkflowForge
-- How to create custom operations (class-based, recommended)
-- How to build and execute workflows
-- Core concepts (Forge, Workflow, Operation, Foundry, Smith)
-- Data flow patterns (dictionary-based preferred)
-- Compensation/rollback (Saga pattern)
-
-**Next**: Explore the [33 samples](samples-guide.md) to see WorkflowForge in action.
+**Next**: [Samples catalog](samples-guide.md), project `WorkflowForge.Samples.BasicConsole`.
 
 ---
 
 ## Related Documentation
 
-- [Architecture Overview](../architecture/overview.md) - Design patterns and core concepts
-- [Operations Guide](../core/operations.md) - All operation types and patterns
-- [Events System](../core/events.md) - Monitoring and observability
-- [Extensions](../extensions/index.md) - Available extensions
-- [Configuration](../core/configuration.md) - Environment-specific setup
-- [API Reference](../reference/api-reference.md) - Complete API documentation
+- [Architecture Overview](../architecture/overview.md) - Metaphor and layout
+- [Operations Guide](../core/operations.md) - Built-in ops and patterns
+- [Events System](../core/events.md) - Lifecycle hooks
+- [Extensions](../extensions/index.md) - Optional packages
+- [Configuration](../core/configuration.md) - Options and appsettings
+- [API Reference](../reference/api-reference.md) - Member listings
