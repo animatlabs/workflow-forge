@@ -7,13 +7,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [2.1.2] - 2026-07-21
 
 ### Fixed
-- **Resilience.Polly**: declared the transitive `Microsoft.Bcl.TimeProvider` (and `System.ComponentModel.Annotations`, `System.Threading.Tasks.Extensions`) dependencies so they flow to consumers. Previously the ILRepack-merged Polly referenced `Microsoft.Bcl.TimeProvider` but it was never declared in the package, causing a runtime `FileNotFoundException` (e.g. calling `UsePollyComprehensive` on .NET 8+).
+- **Resilience.Polly**: declared Polly's transitive dependencies (`Microsoft.Bcl.TimeProvider`, `Microsoft.Bcl.AsyncInterfaces`, `System.ComponentModel.Annotations`, `System.Threading.Tasks.Extensions`, and the `Microsoft.Extensions.DependencyInjection`/`Configuration` abstractions) so they flow to consumers. Previously the ILRepack-merged Polly referenced `Microsoft.Bcl.TimeProvider` but it was never declared in the package, causing a runtime `FileNotFoundException` (e.g. calling `UsePollyComprehensive` on .NET 8+).
 - **Observability.OpenTelemetry** and **Logging.Serilog**: fixed the same class of missing transitive dependency (`Microsoft.Extensions.*`, `System.Diagnostics.DiagnosticSource`, `System.Threading.Channels`) for their ILRepack-merged libraries.
 - **Observability.Performance**: `EnablePerformanceMonitoring()` / `GetPerformanceStatistics()` now work on standard foundries. Added `FoundryPerformanceStatistics`, `OperationStatistics`, and `PerformanceStatisticsMiddleware`; previously the API was a no-op (it required an interface nothing implemented) and always returned `null`.
 - **Core**: pooled foundries no longer leak `Properties` between executions; `WorkflowFoundry.Reset()` now clears per-execution state, preventing a stale operation index from crashing compensation on a subsequent (smaller) workflow.
 - **Audit**: audit entries now record the real workflow name from the foundry's current workflow instead of always `"Unknown"`.
 - **Core**: lifecycle-event subscribers throwing no longer mask the workflow's real exception or abort compensation mid-loop; `WorkflowSmith.Dispose()` iterates middleware under its lock; a check-then-act race that could leak a foundry on concurrent dispose is closed.
 - Guarded the ILRepack extensions so packing outside `Release` fails fast instead of shipping an unmerged package.
+- **Persistence**: suppressed the SonarAnalyzer `S4790` build error on the SHA1 used to derive snapshot keys (scoped `#pragma` with rationale); SHA1 here is a non-cryptographic key digest, and changing it would break existing persisted snapshot keys.
 
 ### Changed
 - Package version and shared package metadata (`Copyright`, `PackageReleaseNotes`) are centralized in `src/Directory.Build.props`; all packages release under one version. The release workflow now overrides both `Version` and `PackageVersion` so assembly and package versions stay in lockstep.
