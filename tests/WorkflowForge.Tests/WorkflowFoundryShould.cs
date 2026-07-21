@@ -769,6 +769,24 @@ public class WorkflowFoundryShould
         Assert.True(operationExecuted);
     }
 
+    [Fact]
+    public async Task SurfaceOperationException_GivenOperationFailedHandlerThrows()
+    {
+        // Arrange: the operation fails AND the OperationFailed subscriber throws.
+        var foundry = CreateTestFoundry();
+
+        foundry.OperationFailed += (_, _) => throw new InvalidOperationException("failed-handler-error");
+        foundry.AddOperation(new DelegateWorkflowOperation<object, string>("Op1", (input, f, ct) =>
+            throw new InvalidOperationException("real-operation-error")));
+
+        // Act
+        var ex = await Assert.ThrowsAnyAsync<Exception>(() => foundry.ForgeAsync());
+
+        // Assert: the operation's real exception surfaces; the handler's exception is isolated.
+        Assert.Contains("real-operation-error", ex.ToString());
+        Assert.DoesNotContain("failed-handler-error", ex.ToString());
+    }
+
     #endregion Operation Management Tests
 
     #region Middleware Tests

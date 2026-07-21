@@ -42,7 +42,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Polly" Version="8.6.5" PrivateAssets="all" />
+    <PackageReference Include="Polly" Version="8.7.0" PrivateAssets="all" />
     <!--
       Polly is ILRepack-merged (PrivateAssets="all"), so its transitive dependencies are NOT
       written to this package's nuspec. The merged Polly.Core IL still references these BCL
@@ -50,14 +50,14 @@
       or consumers hit FileNotFoundException (e.g. Microsoft.Bcl.TimeProvider on .NET 8+).
       These are BCL polyfills and must NOT be ILRepacked (System.* type-identity conflicts).
     -->
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Bcl.TimeProvider" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Bcl.TimeProvider" Version="10.0.10" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.3" />
-    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.44.1" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.10" />
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.46" PrivateAssets="all" />
     <PackageReference Include="SonarAnalyzer.CSharp" Version="10.29.0.143774">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

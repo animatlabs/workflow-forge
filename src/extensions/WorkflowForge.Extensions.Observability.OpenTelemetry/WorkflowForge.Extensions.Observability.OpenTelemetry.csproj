@@ -45,19 +45,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenTelemetry.Api" Version="1.15.3" PrivateAssets="all" />
-    <PackageReference Include="OpenTelemetry" Version="1.15.3" PrivateAssets="all" />
+    <PackageReference Include="OpenTelemetry.Api" Version="1.17.0" PrivateAssets="all" />
+    <PackageReference Include="OpenTelemetry" Version="1.17.0" PrivateAssets="all" />
     <!--
       OpenTelemetry* assemblies are ILRepack-merged (PrivateAssets="all"), so their transitive
       dependencies are NOT written to this package's nuspec. The merged IL still references these
       at runtime; declare them as regular (flowing) dependencies so consumers don't hit
       FileNotFoundException. Do NOT ILRepack these (System.*/Microsoft.Extensions.* identity).
     -->
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.3" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.3" />
-    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.44.1" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.10" />
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.46" PrivateAssets="all" />
     <PackageReference Include="SonarAnalyzer.CSharp" Version="10.29.0.143774">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

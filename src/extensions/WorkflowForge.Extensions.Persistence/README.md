@@ -90,7 +90,7 @@ When `InstanceId` and `WorkflowKey` are set, deterministic GUIDs are derived fro
 
 ## Key points
 
-- No default provider on purpose: stay storage-neutral and dependency-free.
+- No default provider on purpose: stay storage-neutral (you implement `IWorkflowPersistenceProvider`). Beyond core, depends only on `Microsoft.Extensions.*` for options/DI.
 - Checkpoints after each successful operation; resume skips completed steps via `NextOperationIndex`.
 - Optional stable keys tie executions to logical instances across restarts.
 - Middleware is written to be safe under concurrent workflows.

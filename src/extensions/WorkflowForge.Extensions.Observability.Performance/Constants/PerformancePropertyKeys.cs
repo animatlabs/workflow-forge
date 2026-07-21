@@ -9,8 +9,8 @@ namespace WorkflowForge.Extensions.Observability.Performance.Constants
         internal const string PerformanceStatistics = "PerformanceStatistics";
 
         /// <summary>
-        /// Property key for storing the performance middleware instance on the foundry, so that
-        /// <c>DisablePerformanceMonitoring</c> can remove it again.
+        /// Property key marking that the performance middleware has already been registered on the
+        /// foundry, so repeated <c>EnablePerformanceMonitoring</c> calls do not register it twice.
         /// </summary>
         internal const string PerformanceMiddleware = "PerformanceMiddleware";
     }

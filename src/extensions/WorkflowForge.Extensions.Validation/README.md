@@ -10,7 +10,7 @@ Run `System.ComponentModel.DataAnnotations` validation before each operation, us
 dotnet add package WorkflowForge.Extensions.Validation
 ```
 
-Targets .NET Standard 2.0 or later. Validation uses the BCL annotations assembly only.
+Targets .NET Standard 2.0. Validation uses BCL DataAnnotations plus `Microsoft.Extensions.*` (options/DI integration); no third-party validation library.
 
 ## Quick Start
 

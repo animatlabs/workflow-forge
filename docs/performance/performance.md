@@ -236,7 +236,14 @@ BenchmarkDotNet writes output under `BenchmarkDotNet.Artifacts/results/`. Expect
 
 ## Version History
 
-### Version 2.1.1 (current, March 2026)
+### Version 2.1.2 (current, July 2026)
+
+- Fixed ILRepacked extensions (Polly/OpenTelemetry/Serilog) missing transitive dependencies
+- Implemented foundry performance monitoring (`EnablePerformanceMonitoring` / `GetPerformanceStatistics`)
+- Fixed pooled-foundry state leak and audit workflow-name resolution
+- Centralized package versioning and shared metadata
+
+### Version 2.1.1 (March 2026)
 
 - Multi-target .NET 10.0, .NET 8.0, .NET Framework 4.8
 - Sealed operation classes

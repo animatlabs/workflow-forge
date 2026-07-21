@@ -213,5 +213,28 @@ namespace WorkflowForge.Tests.ExtensionsTests.PerformanceTests
             Assert.NotNull(stats);
             Assert.Equal(1, stats!.TotalOperations);
         }
+
+        [Fact]
+        public async Task NotDoubleRegisterMiddleware_WhenEnabledConcurrently()
+        {
+            using var foundry = WorkflowForge.CreateFoundry("PerfConcurrentEnable");
+
+            // Hammer EnablePerformanceMonitoring from many threads; the middleware must register
+            // exactly once (a TOCTOU race would register it twice and double-count operations).
+            await Task.WhenAll(Enumerable.Range(0, 32)
+                .Select(_ => Task.Run(() => foundry.EnablePerformanceMonitoring())));
+
+            using var smith = WorkflowForge.CreateSmith();
+            var workflow = WorkflowForge.CreateWorkflow("PerfConcurrentEnable")
+                .AddOperation(new ActionWorkflowOperation("Only", (input, f, ct) => Task.CompletedTask))
+                .Build();
+
+            await smith.ForgeAsync(workflow, foundry);
+
+            var stats = foundry.GetPerformanceStatistics();
+            Assert.NotNull(stats);
+            // Would be 2+ if the middleware were registered more than once.
+            Assert.Equal(1, stats!.TotalOperations);
+        }
     }
 }

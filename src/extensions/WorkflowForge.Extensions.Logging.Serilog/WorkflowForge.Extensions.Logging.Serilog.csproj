@@ -44,8 +44,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
-    <PackageReference Include="Serilog" Version="4.3.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
+    <PackageReference Include="Serilog" Version="4.4.0" PrivateAssets="all" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" PrivateAssets="all" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" PrivateAssets="all" />
     <!--
@@ -55,10 +55,10 @@
       FileNotFoundException. Microsoft.Extensions.Logging (full) is distinct from the .Abstractions
       reference above and pulls its own subtree. Do NOT ILRepack these (System.* identity).
     -->
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.3" />
-    <PackageReference Include="System.Threading.Channels" Version="8.0.0" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.3" />
-    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.44.1" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.10" />
+    <PackageReference Include="System.Threading.Channels" Version="10.0.10" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.10" />
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.46" PrivateAssets="all" />
     <PackageReference Include="SonarAnalyzer.CSharp" Version="10.29.0.143774">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
