@@ -51,9 +51,13 @@ namespace WorkflowForge.Extensions.Audit
             var startTime = _timeProvider.UtcNow;
             var stopwatch = Stopwatch.StartNew();
 
-            var workflowName = foundry.Properties.TryGetValue(FoundryPropertyKeys.WorkflowName, out var wfName)
-                ? wfName?.ToString() ?? FoundryPropertyKeys.UnknownValue
-                : FoundryPropertyKeys.UnknownValue;
+            // Prefer the live workflow name from the foundry (the framework never writes the
+            // WorkflowName property key). Fall back to the property (if a caller set it) then Unknown.
+            var workflowName = foundry.CurrentWorkflow?.Name
+                ?? (foundry.Properties.TryGetValue(FoundryPropertyKeys.WorkflowName, out var wfName)
+                    ? wfName?.ToString()
+                    : null)
+                ?? FoundryPropertyKeys.UnknownValue;
 
             // Log operation started
             await WriteAuditEntryAsync(

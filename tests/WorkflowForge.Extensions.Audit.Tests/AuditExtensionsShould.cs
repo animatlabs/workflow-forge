@@ -116,6 +116,27 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
+        public async Task UseCurrentWorkflowName_GivenWriteCustomAuditAsyncWithCurrentWorkflowSet()
+        {
+            var foundry = WF.WorkflowForge.CreateFoundry("Ignored");
+            var workflow = WF.WorkflowForge.CreateWorkflow("RealWorkflowName")
+                .AddOperation("Op", (f, ct) => Task.CompletedTask)
+                .Build();
+            foundry.SetCurrentWorkflow(workflow);
+
+            await foundry.WriteCustomAuditAsync(
+                _auditProvider,
+                "Op",
+                AuditEventType.Custom,
+                "Status");
+
+            Assert.Single(_auditProvider.Entries);
+            // The framework does not write the Workflow.Name property; the name must come from the
+            // live CurrentWorkflow on the foundry.
+            Assert.Equal("RealWorkflowName", _auditProvider.Entries[0].WorkflowName);
+        }
+
+        [Fact]
         public async Task ThrowArgumentException_GivenWriteCustomAuditAsyncWithWhitespaceOperationName()
         {
             await Assert.ThrowsAsync<ArgumentException>(() =>

@@ -102,7 +102,7 @@ services.AddRecoveryConfiguration(configuration);
 var options = serviceProvider.GetRequiredService<IOptions<RecoveryMiddlewareOptions>>().Value;
 ```
 
-[Recovery configuration](../../../docs/core/configuration.md#recovery-extension)
+[Recovery configuration](../../../docs/core/configuration.md)
 
 ## Usage patterns
 
@@ -217,7 +217,7 @@ catch (Exception ex)
 ## Links
 
 - [Getting Started](../../../docs/getting-started/getting-started.md)
-- [Configuration Guide](../../../docs/core/configuration.md#recovery-extension)
+- [Configuration Guide](../../../docs/core/configuration.md)
 - [Extensions Overview](../../../docs/extensions/index.md)
 - [Persistence Extension](../WorkflowForge.Extensions.Persistence/README.md)
 - [Sample 21: Recovery](../../samples/WorkflowForge.Samples.BasicConsole/README.md)

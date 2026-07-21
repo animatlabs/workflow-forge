@@ -37,6 +37,31 @@ namespace WorkflowForge.Tests.OrchestrationTests
         }
 
         [Fact]
+        public async Task NotLeakStalePropertiesAcrossPooledRuns_WhenSmallerWorkflowFails()
+        {
+            using var smith = WorkflowForge.CreateSmith();
+
+            // First run: a 3-operation workflow that completes, leaving LastCompletedIndex = 2 on the
+            // pooled foundry's Properties.
+            await smith.ForgeAsync(CreateNoOpWorkflow($"Leak-Big-{_uniqueTestId}", 3));
+
+            // Reuse the pooled foundry for a 1-operation workflow whose only op fails. If stale
+            // Properties leaked, compensation would walk from the stale index (2) and hit
+            // operations[2] on a 1-element list, throwing ArgumentOutOfRangeException and masking
+            // the operation's real exception.
+            var failing = new Workflow(
+                $"Leak-Small-{_uniqueTestId}",
+                "fails on its only operation",
+                "1.0.0",
+                new List<IWorkflowOperation> { new ThrowingOperation() },
+                new Dictionary<string, object?>());
+
+            var ex = await Record.ExceptionAsync(() => smith.ForgeAsync(failing));
+
+            Assert.IsType<InvalidOperationException>(ex);
+        }
+
+        [Fact]
         public async Task DrainPoolWithoutException_GivenDisposeAfterForgeAsync()
         {
             var smith = WorkflowForge.CreateSmith();
@@ -125,14 +150,36 @@ namespace WorkflowForge.Tests.OrchestrationTests
             Assert.Null(ex2);
         }
 
-        private static Workflow CreateNoOpWorkflow(string name)
+        private static Workflow CreateNoOpWorkflow(string name, int operationCount = 1)
         {
+            var operations = new List<IWorkflowOperation>();
+            for (var i = 0; i < operationCount; i++)
+            {
+                operations.Add(new NoOpOperation());
+            }
+
             return new Workflow(
                 name,
                 "Pool test workflow",
                 "1.0.0",
-                new List<IWorkflowOperation> { new NoOpOperation() },
+                operations,
                 new Dictionary<string, object?>());
+        }
+
+        private sealed class ThrowingOperation : IWorkflowOperation
+        {
+            public Guid Id { get; } = Guid.NewGuid();
+            public string Name => "Throwing";
+            public string? Description => null;
+
+            public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+                => throw new InvalidOperationException("Intentional failure for pool-reuse test.");
+
+            public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+                => Task.CompletedTask;
+
+            public void Dispose()
+            { }
         }
 
         private sealed class NoOpOperation : IWorkflowOperation

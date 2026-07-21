@@ -10,30 +10,38 @@ Measure per-operation timing and memory from middleware, and read aggregate stat
 dotnet add package WorkflowForge.Extensions.Observability.Performance
 ```
 
-Targets .NET Standard 2.0 or later. Beyond WorkflowForge core, the package adds no extra NuGet dependencies.
+Targets .NET Standard 2.0. Beyond WorkflowForge core, it depends on `System.Diagnostics.DiagnosticSource` and `System.ComponentModel.Annotations` (both provided by the runtime on modern .NET).
 
 ## Quick Start
 
-Add timing middleware on the foundry for performance monitoring:
+Call `EnablePerformanceMonitoring()` before running the workflow, then read the aggregated
+statistics afterward with `GetPerformanceStatistics()`:
 
 ```csharp
 using WorkflowForge;
 using WorkflowForge.Extensions.Observability.Performance;
 
 using var foundry = WorkflowForge.CreateFoundry("PerformanceMonitored");
+foundry.EnablePerformanceMonitoring();
 
-// Add timing middleware to track operation performance (see Custom Timing Middleware section below)
-foundry.AddMiddleware(new DetailedTimingMiddleware(foundry.Logger, TimeSpan.FromMilliseconds(100)));
-
-var smith = WorkflowForge.CreateSmith();
+using var smith = WorkflowForge.CreateSmith();
 var workflow = WorkflowForge.CreateWorkflow("PerformanceMonitored")
     .AddOperation(new ActionWorkflowOperation("Step1", async (input, foundry, ct) => { /* ... */ }))
     .Build();
 
+// Pass the SAME foundry you enabled monitoring on so the stats survive the run.
 await smith.ForgeAsync(workflow, foundry);
+
+var stats = foundry.GetPerformanceStatistics();
+Console.WriteLine($"Operations: {stats!.TotalOperations}, success rate: {stats.SuccessRate:P0}");
+foreach (var op in stats.GetAllOperationStatistics())
+    Console.WriteLine($"{op.OperationName}: avg {op.AverageExecutionTime.TotalMilliseconds:F2} ms");
 ```
 
-> **Note:** The `EnablePerformanceMonitoring()` and `GetPerformanceStatistics()` extension methods require a foundry that implements `IPerformanceMonitoredFoundry`. Standard foundries created via `WorkflowForge.CreateFoundry()` use the middleware pattern shown above instead.
+`EnablePerformanceMonitoring()` registers a `PerformanceStatisticsMiddleware` and stores a
+`FoundryPerformanceStatistics` on the foundry; the middleware records timing, success/failure, and
+approximate memory per operation. For custom needs you can add your own middleware instead (see
+[Custom Timing Middleware](#custom-timing-middleware)).
 
 ## Key points
 
@@ -53,7 +61,7 @@ foundry.AddMiddleware(new DetailedTimingMiddleware(foundry.Logger, TimeSpan.From
 
 - `IFoundryPerformanceStatistics` and `IOperationStatistics` define the contract for built-in performance statistics on a foundry.
 
-[Performance extension](../../../docs/core/configuration.md#performance-extension)
+[Performance extension](../../../docs/core/configuration.md)
 
 ## Advanced usage
 
@@ -171,6 +179,6 @@ foreach (var opStats in stats.GetAllOperationStatistics())
 ## Links
 
 - [Getting Started](../../../docs/getting-started/getting-started.md)
-- [Configuration Guide](../../../docs/core/configuration.md#performance-extension)
+- [Configuration Guide](../../../docs/core/configuration.md)
 - [Extensions Overview](../../../docs/extensions/index.md)
 - [Sample 17: Performance Monitoring](../../samples/WorkflowForge.Samples.BasicConsole/)

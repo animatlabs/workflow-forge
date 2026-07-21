@@ -1,5 +1,15 @@
 <Project>
   <PropertyGroup>
+    <!-- Single source of truth for the version of every packable project (core + all extensions).
+         All packages release under this one number. PackageVersion is derived from Version by
+         MSBuild unless a project/CLI overrides it. Bump here when releasing. -->
+    <Version>2.1.2</Version>
+    <!-- Shared package metadata for every packable project (single source of truth). Per-project
+         values (e.g. Product, Description, PackageId) stay in each .csproj. -->
+    <Copyright>Copyright © 2025-2026 AnimatLabs</Copyright>
+    <PackageReleaseNotes>
+v2.1.2: Fixed ILRepacked extensions (Polly, OpenTelemetry, Serilog) that were missing transitive dependencies and threw a runtime FileNotFoundException (e.g. Microsoft.Bcl.TimeProvider) — the required BCL/Microsoft.Extensions packages now flow to consumers. Implemented foundry performance monitoring so EnablePerformanceMonitoring()/GetPerformanceStatistics() work end-to-end. Fixed pooled-foundry state leaking across executions and audit entries recording "Unknown" workflow names. Centralized package versioning and shared metadata. Hardened lifecycle-event exception isolation and smith disposal.
+    </PackageReleaseNotes>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <Deterministic>true</Deterministic>

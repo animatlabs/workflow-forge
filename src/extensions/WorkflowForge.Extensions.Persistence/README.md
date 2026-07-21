@@ -173,7 +173,7 @@ services.AddPersistenceConfiguration(configuration);
 var options = serviceProvider.GetRequiredService<IOptions<PersistenceOptions>>().Value;
 ```
 
-[Persistence configuration](../../../docs/core/configuration.md#persistence-extensions)
+[Persistence configuration](../../../docs/core/configuration.md#persistence-extension)
 
 ## Provider interface
 
@@ -193,7 +193,7 @@ public interface IWorkflowPersistenceProvider
 ## Links
 
 - [Getting Started](../../../docs/getting-started/getting-started.md)
-- [Configuration Guide](../../../docs/core/configuration.md#persistence-extensions)
+- [Configuration Guide](../../../docs/core/configuration.md#persistence-extension)
 - [Extensions Overview](../../../docs/extensions/index.md)
 - [Recovery Extension](../WorkflowForge.Extensions.Persistence.Recovery/README.md)
 - [Sample 18: Persistence](../../samples/WorkflowForge.Samples.BasicConsole/README.md)

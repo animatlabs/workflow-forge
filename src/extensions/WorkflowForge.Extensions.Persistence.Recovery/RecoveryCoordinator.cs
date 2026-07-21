@@ -28,6 +28,16 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
         }
 
         /// <inheritdoc />
+        /// <remarks>
+        /// IMPORTANT: resume replays the workflow from operation index 0 — the foundry always runs
+        /// its full operation list. Completed operations are skipped ONLY by a
+        /// <c>PersistenceMiddleware</c> (from WorkflowForge.Extensions.Persistence) attached to the
+        /// foundry, which reloads the snapshot and short-circuits operations whose index is below the
+        /// snapshot's <c>NextOperationIndex</c>. The <paramref name="foundryFactory"/> MUST attach
+        /// that middleware (with the same persistence provider). Without it, every operation — including
+        /// ones that already completed and had side effects before the crash — is re-executed, which
+        /// can cause duplicate side effects (e.g. double-charging a payment).
+        /// </remarks>
         public async Task ResumeAsync(
             Func<IWorkflowFoundry> foundryFactory,
             Func<IWorkflow> workflowFactory,
@@ -50,7 +60,8 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
                 foundry.Properties[kv.Key] = kv.Value;
             }
 
-            // Execute starting from NextOperationIndex (middleware will also skip as safety net)
+            // The foundry runs its full operation list; a PersistenceMiddleware attached by the
+            // foundryFactory is what skips operations already completed before the crash (see remarks).
             var smith = WorkflowForge.CreateSmith(foundry.Logger, foundry.ServiceProvider);
             foundry.SetCurrentWorkflow(workflow);
 

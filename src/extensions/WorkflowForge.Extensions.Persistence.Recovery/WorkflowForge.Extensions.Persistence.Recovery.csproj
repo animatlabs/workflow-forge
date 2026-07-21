@@ -24,11 +24,7 @@
     <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Version>2.1.1</Version>
-    <PackageVersion>2.1.1</PackageVersion>
-    <PackageReleaseNotes>
-v2.1.0: Updated for WorkflowForge v2.1.0 compatibility. Removed SupportsRestore references. Added ConfigureAwait(false) to all await calls. Improved error handling and resource disposal.
-    </PackageReleaseNotes>
+    <!-- Version is centralized in src/Directory.Build.props -->
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../WorkflowForge.Extensions.Persistence/WorkflowForge.Extensions.Persistence.csproj" />
@@ -45,7 +41,7 @@ v2.1.0: Updated for WorkflowForge v2.1.0 compatibility. Removed SupportsRestore 
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3" />
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.19.0.132793">
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.29.0.143774">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

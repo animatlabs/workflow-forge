@@ -97,13 +97,13 @@ if (result?.Status == HealthStatus.Unhealthy)
 }
 ```
 
-[Health checks configuration](../../../docs/core/configuration.md#health-checks-extension)
+[Health checks configuration](../../../docs/core/configuration.md)
 
 You can surface results over ASP.NET Core `/health`, Application Insights, Prometheus, or your own dashboards.
 
 ## Links
 
 - [Getting Started](../../../docs/getting-started/getting-started.md)
-- [Configuration Guide](../../../docs/core/configuration.md#health-checks-extension)
+- [Configuration Guide](../../../docs/core/configuration.md)
 - [Extensions Overview](../../../docs/extensions/index.md)
 - [Sample 16: Health Checks](../../samples/WorkflowForge.Samples.BasicConsole/README.md)

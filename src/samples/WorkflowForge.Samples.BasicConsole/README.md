@@ -1,6 +1,6 @@
 # WorkflowForge Basic Console samples
 
-Console menu for **WorkflowForge 2.1.1**. Run a single sample or queue them all.
+Console menu for **WorkflowForge 2.1.2**. Run a single sample or queue them all.
 
 ## Run
 

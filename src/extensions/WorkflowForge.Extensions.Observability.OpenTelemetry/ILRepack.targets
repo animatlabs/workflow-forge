@@ -25,4 +25,11 @@
     <Delete Files="$(OutputPath)OpenTelemetry.Api.dll" Condition="Exists('$(OutputPath)OpenTelemetry.Api.dll')" />
     <Delete Files="$(OutputPath)OpenTelemetry.Api.ProviderBuilderExtensions.dll" Condition="Exists('$(OutputPath)OpenTelemetry.Api.ProviderBuilderExtensions.dll')" />
   </Target>
+
+  <!-- Guard: ILRepack only runs in Release. Packing in any other configuration would produce a
+       package whose merged OpenTelemetry assemblies were never merged in, causing runtime load
+       failures. Fail fast so a stray `dotnet pack` (Debug by default) cannot ship a broken package. -->
+  <Target Name="WorkflowForgeGuardReleasePack" BeforeTargets="Pack" Condition="!$(Configuration.Contains('Release'))">
+    <Error Text="WorkflowForge.Extensions.Observability.OpenTelemetry uses ILRepack, which only runs in Release. Pack with 'dotnet pack -c Release' to produce a valid package." />
+  </Target>
 </Project>
