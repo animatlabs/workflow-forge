@@ -131,11 +131,17 @@ jobs:
     - name: Pack
       if: github.event_name == 'workflow_dispatch'
       run: |
-        $versionArg = @()
+        $packArgs = @("--configuration", "Release", "--output", "./packages")
         if ("${{ github.event.inputs.version }}") {
-          $versionArg = @("-p:PackageVersion=${{ github.event.inputs.version }}")
+          # Override the assembly version AND the package version so they stay in lockstep.
+          # -p:Version must be applied at build time, so do NOT use --no-build here.
+          $packArgs += @("-p:Version=${{ github.event.inputs.version }}", "-p:PackageVersion=${{ github.event.inputs.version }}")
+        } else {
+          # No override: pack the already-built assemblies at the version centralized in
+          # src/Directory.Build.props.
+          $packArgs += "--no-build"
         }
-        dotnet pack WorkflowForge.sln --configuration Release --no-build --output ./packages @versionArg
+        dotnet pack WorkflowForge.sln @packArgs
 
     - name: Generate CycloneDX SBOM
       if: github.event_name == 'workflow_dispatch'

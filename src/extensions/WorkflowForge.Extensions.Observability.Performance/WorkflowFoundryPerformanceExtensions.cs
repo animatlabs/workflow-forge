@@ -21,6 +21,12 @@ namespace WorkflowForge.Extensions.Observability.Performance
             if (foundry == null)
                 throw new ArgumentNullException(nameof(foundry));
 
+            // A foundry with native support wins; otherwise read the stats recorded by the middleware.
+            if (foundry is IPerformanceMonitoredFoundry performanceFoundry)
+            {
+                return performanceFoundry.GetPerformanceStatistics();
+            }
+
             return foundry.Properties.TryGetValue(PerformancePropertyKeys.PerformanceStatistics, out var statsObj) && statsObj is IFoundryPerformanceStatistics stats
                 ? stats
                 : null;
@@ -38,12 +44,26 @@ namespace WorkflowForge.Extensions.Observability.Performance
             if (foundry == null)
                 throw new ArgumentNullException(nameof(foundry));
 
+            // A foundry with native support handles it directly.
             if (foundry is IPerformanceMonitoredFoundry performanceFoundry)
             {
                 return performanceFoundry.EnablePerformanceMonitoring();
             }
 
-            return false;
+            // Standard foundry: store a fresh statistics accumulator under the well-known key. The
+            // PerformanceStatisticsMiddleware resolves that key on each operation and records into it.
+            foundry.Properties[PerformancePropertyKeys.PerformanceStatistics] = new FoundryPerformanceStatistics();
+
+            // Register the middleware exactly once per foundry, even under concurrent EnablePerformanceMonitoring
+            // calls. TryAdd is atomic; a ContainsKey-then-add check would be a race that could register the
+            // middleware twice and permanently double-count every operation.
+            var middleware = new PerformanceStatisticsMiddleware();
+            if (foundry.Properties.TryAdd(PerformancePropertyKeys.PerformanceMiddleware, middleware))
+            {
+                foundry.AddMiddleware(middleware);
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -63,7 +83,10 @@ namespace WorkflowForge.Extensions.Observability.Performance
                 return performanceFoundry.DisablePerformanceMonitoring();
             }
 
-            return false;
+            // Removing the statistics deactivates recording. The middleware stays registered but
+            // becomes a no-op pass-through until monitoring is enabled again. Returns whether
+            // monitoring was active.
+            return foundry.Properties.TryRemove(PerformancePropertyKeys.PerformanceStatistics, out _);
         }
     }
 

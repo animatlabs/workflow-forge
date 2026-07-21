@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>2.1.1</Version>
-    <PackageVersion>2.1.1</PackageVersion>
+    <!-- Version is centralized in src/Directory.Build.props -->
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -25,7 +24,6 @@
     <RepositoryBranch>main</RepositoryBranch>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Copyright>Copyright © 2025 AnimatLabs</Copyright>
     
     <!-- NuGet Package Settings -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -37,9 +35,6 @@
     <!-- Documentation -->
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageReleaseNotes>
-v2.1.0: Updated for WorkflowForge v2.1.0 compatibility. Removed SupportsRestore references. Added ConfigureAwait(false) to all await calls. Improved error handling and resource disposal.
-    </PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -47,13 +42,23 @@ v2.1.0: Updated for WorkflowForge v2.1.0 compatibility. Removed SupportsRestore 
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Polly" Version="8.6.5" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.3" />
-    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.44.1" PrivateAssets="all" />
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.19.0.132793">
+    <PackageReference Include="Polly" Version="8.7.0" PrivateAssets="all" />
+    <!--
+      Polly is ILRepack-merged (PrivateAssets="all"), so its transitive dependencies are NOT
+      written to this package's nuspec. The merged Polly.Core IL still references these BCL
+      assemblies at runtime, so they must be declared here as regular (flowing) dependencies
+      or consumers hit FileNotFoundException (e.g. Microsoft.Bcl.TimeProvider on .NET 8+).
+      These are BCL polyfills and must NOT be ILRepacked (System.* type-identity conflicts).
+    -->
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Bcl.TimeProvider" Version="10.0.10" />
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.10" />
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.46" PrivateAssets="all" />
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.29.0.143774">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

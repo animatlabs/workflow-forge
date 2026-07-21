@@ -118,8 +118,8 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
                 if (foundry.Properties.TryGetValue(OpenTelemetryServiceKey, out var serviceObj) && serviceObj is WorkflowForgeOpenTelemetryService service)
                 {
                     service.Dispose();
-                    // Remove from foundry properties
-                    foundry.Properties[OpenTelemetryServiceKey] = null;
+                    // Remove the key entirely (rather than leaving a null value behind).
+                    foundry.Properties.TryRemove(OpenTelemetryServiceKey, out _);
                     foundry.Logger.LogInformation("OpenTelemetry disabled for foundry");
                     return true;
                 }

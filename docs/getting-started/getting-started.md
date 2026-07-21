@@ -15,6 +15,7 @@ Install the package, model a short pipeline, run it with a smith and foundry.
 
 ## Table of Contents
 
+- [What's New in 2.1.2](#whats-new-in-212)
 - [What's New in 2.1.1](#whats-new-in-211)
 - [What's New in 2.0.0](#whats-new-in-200)
 - [Prerequisites](#prerequisites)
@@ -23,6 +24,12 @@ Install the package, model a short pipeline, run it with a smith and foundry.
 - [Core Concepts Explained](#core-concepts-explained)
 - [Next Steps](#next-steps)
 - [Troubleshooting](#troubleshooting)
+
+---
+
+## What's New in 2.1.2
+
+**2.1.2** is a bug-fix release: it fixes the Polly extension's missing `Microsoft.Bcl.TimeProvider` dependency (and the same class of issue in the OpenTelemetry/Serilog extensions), makes `EnablePerformanceMonitoring()` / `GetPerformanceStatistics()` work end-to-end, fixes a pooled-foundry state leak and audit workflow-name resolution, and centralizes package versioning. Full notes: [CHANGELOG.md](https://github.com/animatlabs/workflow-forge/blob/main/CHANGELOG.md).
 
 ---
 

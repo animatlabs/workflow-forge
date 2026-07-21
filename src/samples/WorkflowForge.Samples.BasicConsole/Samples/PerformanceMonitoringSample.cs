@@ -53,8 +53,17 @@ public class PerformanceMonitoringSample : ISample
         if (stats != null)
         {
             Console.WriteLine($"   Total operations executed: {stats.TotalOperations}");
+            Console.WriteLine($"   Success rate: {stats.SuccessRate:P0}");
             Console.WriteLine($"   Average execution time: {stats.AverageDuration.TotalMilliseconds:F2}ms");
-            Console.WriteLine($"   Total memory allocated: {stats.TotalMemoryAllocated / (1024 * 1024):F2} MB");
+            Console.WriteLine($"   Operations per second: {stats.OperationsPerSecond:F1}");
+            Console.WriteLine($"   Total memory allocated: {stats.TotalMemoryAllocated / (1024.0 * 1024.0):F2} MB");
+
+            // Per-operation breakdown (demonstrates GetAllOperationStatistics)
+            Console.WriteLine("   Per-operation breakdown:");
+            foreach (var op in stats.GetAllOperationStatistics())
+            {
+                Console.WriteLine($"     - {op.OperationName}: {op.AverageExecutionTime.TotalMilliseconds:F2}ms avg, {op.SuccessRate:P0} success ({op.ExecutionCount}x)");
+            }
         }
         else
         {

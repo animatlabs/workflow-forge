@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Version>2.1.1</Version>
-    <PackageVersion>2.1.1</PackageVersion>
+    <!-- Version is centralized in src/Directory.Build.props -->
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -26,7 +25,6 @@
     <RepositoryBranch>main</RepositoryBranch>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Copyright>Copyright © 2025 AnimatLabs</Copyright>
     
     <!-- NuGet Package Settings -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -38,9 +36,6 @@
     <!-- Documentation -->
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageReleaseNotes>
-v2.1.0: Updated for WorkflowForge v2.1.0 compatibility. Removed SupportsRestore references. Added ConfigureAwait(false) to all await calls. Improved error handling and resource disposal.
-    </PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -49,12 +44,22 @@ v2.1.0: Updated for WorkflowForge v2.1.0 compatibility. Removed SupportsRestore 
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
-    <PackageReference Include="Serilog" Version="4.3.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
+    <PackageReference Include="Serilog" Version="4.4.0" PrivateAssets="all" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" PrivateAssets="all" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" PrivateAssets="all" />
-    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.44.1" PrivateAssets="all" />
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.19.0.132793">
+    <!--
+      Serilog* assemblies are ILRepack-merged (PrivateAssets="all"), so their transitive
+      dependencies are NOT written to this package's nuspec. The merged IL still references these
+      at runtime; declare them as regular (flowing) dependencies so consumers don't hit
+      FileNotFoundException. Microsoft.Extensions.Logging (full) is distinct from the .Abstractions
+      reference above and pulls its own subtree. Do NOT ILRepack these (System.* identity).
+    -->
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.10" />
+    <PackageReference Include="System.Threading.Channels" Version="10.0.10" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.10" />
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.46" PrivateAssets="all" />
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.29.0.143774">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

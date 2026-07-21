@@ -1,6 +1,6 @@
 # WorkflowForge.Extensions.Resilience
 
-Wrap operations with retry decorators and small strategy classes (exponential, fixed, jittered). No third-party policy library: only WorkflowForge core.
+Wrap operations with retry decorators and small strategy classes (exponential, fixed, jittered). No third-party policy library (Polly-free) — just WorkflowForge core plus small BCL polyfills (`System.Threading.Tasks.Extensions`, `System.ComponentModel.Annotations`).
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Resilience.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Resilience/)
 
@@ -183,9 +183,9 @@ public interface IWorkflowResilienceStrategy
 
 ## When to use this package vs Polly
 
-**This package** fits when you want no extra dependencies and simple retry timing is enough.
+**This package** fits when you want to avoid a third-party policy library and simple retry timing is enough.
 
-**WorkflowForge.Extensions.Resilience.Polly** fits when you need circuit breakers, bulkheads, rate limits, or stacked policies. Polly is ILRepacked there; this package stays dependency-free.
+**WorkflowForge.Extensions.Resilience.Polly** fits when you need circuit breakers, bulkheads, rate limits, or stacked policies. Polly is ILRepacked there; this package pulls in no third-party policy library (only small BCL polyfills).
 
 ## Links
 

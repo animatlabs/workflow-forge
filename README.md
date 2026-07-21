@@ -14,7 +14,7 @@
 
 Workflow orchestration for .NET. The core package has no dependencies. Benchmarks show high workflow throughput, microsecond-scale operation latency, and modest steady-state allocation.
 
-**Version**: 2.1.1  
+**Version**: 2.1.2  
 **License**: MIT  
 **Compatibility**: .NET Standard 2.0
 

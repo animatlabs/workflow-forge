@@ -350,9 +350,18 @@ namespace WorkflowForge
             Properties[FoundryPropertyKeys.LastFailedId] = operation.Id;
 
             var operationDuration = _timeProvider.UtcNow - operationStartTime;
-            OperationFailed?.Invoke(this, new OperationFailedEventArgs(
-                operation, this, null, ex,
-                TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
+            try
+            {
+                OperationFailed?.Invoke(this, new OperationFailedEventArgs(
+                    operation, this, null, ex,
+                    TimeSpan.FromMilliseconds(operationDuration.TotalMilliseconds)));
+            }
+            catch (Exception handlerEx)
+            {
+                // A throwing event subscriber must not replace or mask the operation's real
+                // exception (which is re-thrown below). Log and continue.
+                Logger.LogError(Logger.CreateErrorProperties(handlerEx, "OperationFailed"), handlerEx, "OperationFailed event handler error");
+            }
 
             if (ex is OperationCanceledException)
             {
@@ -475,8 +484,23 @@ namespace WorkflowForge
             _executionState = 0;
             _isFrozen = false;
 
-            // Dispose handles full cleanup of collections/properties,
-            // so this just needs to reset the flags.
+            // Clear all per-execution state. This foundry is being reused from a pool, and Dispose
+            // is NOT called on the pooled path — so unless we clear here, a previous workflow's
+            // Properties (including operation-tracking keys such as LastCompletedIndex and cached
+            // operation outputs) leak into the next, unrelated workflow. That both bleeds data
+            // across executions and can crash compensation with a stale index when a later, smaller
+            // workflow fails.
+            lock (_operations)
+            {
+                _operations.Clear();
+                _cachedOperations = null;
+            }
+            lock (_middlewareLock)
+            {
+                _middlewares.Clear();
+                _cachedMiddlewares = null;
+            }
+            Properties.Clear();
         }
     }
 }

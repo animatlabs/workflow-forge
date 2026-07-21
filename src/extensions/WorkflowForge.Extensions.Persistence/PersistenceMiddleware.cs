@@ -203,7 +203,12 @@ namespace WorkflowForge.Extensions.Persistence
 
         private static Guid DeterministicGuid(string input)
         {
-            using var sha1 = System.Security.Cryptography.SHA1.Create(); // NOSONAR - SHA1 used for deterministic GUID derivation, not for cryptographic security
+            // SHA1 is used purely to derive a stable GUID from a caller-supplied key string; it is
+            // NOT used for any security/cryptographic purpose. The algorithm must stay stable so
+            // persisted snapshot keys remain resolvable across versions, so it is intentionally SHA1.
+#pragma warning disable S4790 // "Use a stronger hashing algorithm" — not applicable, see above.
+            using var sha1 = System.Security.Cryptography.SHA1.Create();
+#pragma warning restore S4790
             var bytes = System.Text.Encoding.UTF8.GetBytes(input);
             var hash = sha1.ComputeHash(bytes);
             var guidBytes = new byte[16];

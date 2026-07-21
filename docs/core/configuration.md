@@ -442,7 +442,7 @@ var workflow = WorkflowForge.CreateWorkflow("ResilientProcess")
 - `FixedIntervalStrategy` - Best for databases
 - `RandomIntervalStrategy` - Prevents thundering herd
 
-**Zero Dependencies**: Pure WorkflowForge extension with no external dependencies.  
+**Dependencies**: no third-party policy library — only WorkflowForge core plus small BCL polyfills (`System.Threading.Tasks.Extensions`, `System.ComponentModel.Annotations`).  
 **Configuration**: Programmatic only (via code). For `appsettings.json` support, use WorkflowForge.Extensions.Resilience.Polly.
 
 ### Polly Extension
@@ -535,7 +535,7 @@ foundry.UseValidation(
 await smith.ForgeAsync(workflow, foundry);
 ```
 
-**Dependencies**: DataAnnotations only; no extra third-party packages.
+**Dependencies**: BCL DataAnnotations plus `Microsoft.Extensions.*` (options/DI integration); no third-party validation library.
 
 ### Audit Extension
 
@@ -575,26 +575,22 @@ public class FileAuditProvider : IAuditProvider
     }
 }
 
-// Configure audit logging
+// Register the audit middleware on the foundry; it writes an entry per operation.
 var auditProvider = new FileAuditProvider("audit.log");
-var auditLogger = new AuditLogger(
+using var foundry = WorkflowForge.CreateFoundry("AuditedWorkflow");
+foundry.UseAudit(
     auditProvider,
-    userId: "user@example.com",
-    sessionId: Guid.NewGuid().ToString(),
-    timeProvider: new SystemTimeProvider());
-
-// Subscribe to events
-smith.WorkflowStarted += async (s, e) => 
-    await auditLogger.LogWorkflowStartedAsync(e);
-smith.WorkflowCompleted += async (s, e) => 
-    await auditLogger.LogWorkflowCompletedAsync(e);
-foundry.OperationCompleted += async (s, e) => 
-    await auditLogger.LogOperationCompletedAsync(e);
+    new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Verbose },
+    initiatedBy: "user@example.com");
 
 await smith.ForgeAsync(workflow, foundry);
+
+// Or write a one-off custom entry directly:
+await foundry.WriteCustomAuditAsync(
+    auditProvider, "ManualCheckpoint", AuditEventType.Custom, "Completed");
 ```
 
-**Zero Dependencies**: Pure WorkflowForge extension. Implement `IAuditProvider` for your storage.
+**Dependencies**: `Microsoft.Extensions.*` (options/DI integration); no storage library — implement `IAuditProvider` for your backend.
 
 ### Persistence Extension
 
@@ -631,7 +627,7 @@ using var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
 foundry.UsePersistence(provider);
 ```
 
-**Zero Dependencies**: Bring-your-own-storage pattern with no external dependencies.
+**Dependencies**: `Microsoft.Extensions.*` (options/DI integration); no storage library — bring your own via `IWorkflowPersistenceProvider`.
 
 ---
 

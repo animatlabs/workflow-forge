@@ -369,16 +369,20 @@ namespace WorkflowForge.Tests.OrchestrationTests
             using var smith = WorkflowForge.CreateSmith();
             var compensationTriggered = false;
             var compensationCompleted = false;
+            // Capture args and assert AFTER ForgeAsync: assertions inside event handlers are swallowed
+            // by the smith's subscriber-exception isolation and can never fail the test.
+            string? failedOperationName = null;
+            var successCount = -1;
 
             smith.CompensationTriggered += (_, args) =>
             {
                 compensationTriggered = true;
-                Assert.NotNull(args.FailedOperationName);
+                failedOperationName = args.FailedOperationName;
             };
             smith.CompensationCompleted += (_, args) =>
             {
                 compensationCompleted = true;
-                Assert.True(args.SuccessCount >= 0);
+                successCount = args.SuccessCount;
             };
 
             var workflow = WorkflowForge.CreateWorkflow($"CompEvents-{_uniqueTestId}")
@@ -390,6 +394,8 @@ namespace WorkflowForge.Tests.OrchestrationTests
 
             Assert.True(compensationTriggered);
             Assert.True(compensationCompleted);
+            Assert.NotNull(failedOperationName);
+            Assert.True(successCount >= 0);
         }
 
         [Fact]
@@ -415,16 +421,19 @@ namespace WorkflowForge.Tests.OrchestrationTests
             using var smith = WorkflowForge.CreateSmith();
             var restoreStarted = false;
             var restoreCompleted = false;
+            // Capture args and assert AFTER ForgeAsync (handler exceptions are isolated by the smith).
+            object? restoredOperation = null;
+            var restoreDuration = TimeSpan.FromSeconds(-1);
 
             smith.OperationRestoreStarted += (_, args) =>
             {
                 restoreStarted = true;
-                Assert.NotNull(args.Operation);
+                restoredOperation = args.Operation;
             };
             smith.OperationRestoreCompleted += (_, args) =>
             {
                 restoreCompleted = true;
-                Assert.True(args.Duration >= TimeSpan.Zero);
+                restoreDuration = args.Duration;
             };
 
             var workflow = WorkflowForge.CreateWorkflow($"RestoreEvents-{_uniqueTestId}")
@@ -436,6 +445,8 @@ namespace WorkflowForge.Tests.OrchestrationTests
 
             Assert.True(restoreStarted);
             Assert.True(restoreCompleted);
+            Assert.NotNull(restoredOperation);
+            Assert.True(restoreDuration >= TimeSpan.Zero);
         }
 
         [Fact]
@@ -513,11 +524,13 @@ namespace WorkflowForge.Tests.OrchestrationTests
 
             using var smith = WorkflowForge.CreateSmith(options: options);
             var restoreFailedEventRaised = false;
+            // Capture args and assert AFTER ForgeAsync (handler exceptions are isolated by the smith).
+            Exception? restoreException = null;
 
             smith.OperationRestoreFailed += (_, args) =>
             {
                 restoreFailedEventRaised = true;
-                Assert.NotNull(args.Exception);
+                restoreException = args.Exception;
             };
 
             var op1 = new BranchTestOperation("Op1",
@@ -536,6 +549,37 @@ namespace WorkflowForge.Tests.OrchestrationTests
             await Assert.ThrowsAsync<AggregateException>(() => smith.ForgeAsync(workflow));
 
             Assert.True(restoreFailedEventRaised);
+            Assert.NotNull(restoreException);
+        }
+
+        [Fact]
+        public async Task IsolateThrowingSubscribers_WithoutMaskingExceptionOrAbortingCompensation()
+        {
+            using var smith = WorkflowForge.CreateSmith();
+            var restored = false;
+
+            // Subscribers that throw must neither replace the workflow's real exception nor abort
+            // the compensation loop.
+            smith.WorkflowFailed += (_, _) => throw new InvalidOperationException("handler-should-be-isolated");
+            smith.OperationRestoreStarted += (_, _) => throw new InvalidOperationException("handler-should-be-isolated");
+
+            var op1 = new BranchTestOperation("Op1",
+                forge: () => Task.FromResult<object?>("one"),
+                restore: () => { restored = true; return Task.CompletedTask; });
+            var fail = new BranchTestOperation("Fail",
+                forge: () => throw new InvalidOperationException("real-failure"),
+                restore: () => Task.CompletedTask);
+
+            var workflow = WorkflowForge.CreateWorkflow($"IsolateSubs-{_uniqueTestId}")
+                .AddOperation(op1)
+                .AddOperation(fail)
+                .Build();
+
+            // The original operation exception propagates — NOT a subscriber's exception.
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => smith.ForgeAsync(workflow));
+            Assert.Equal("real-failure", ex.Message);
+            // Compensation still ran despite the throwing OperationRestoreStarted subscriber.
+            Assert.True(restored);
         }
 
         private sealed class BranchTestOperation : IWorkflowOperation

@@ -43,7 +43,7 @@ await smith.ForgeAsync(workflow, foundry);
 
 ## Key points
 
-- Only pulls in WorkflowForge core; you supply storage by implementing `IAuditProvider`.
+- Depends on WorkflowForge core plus `Microsoft.Extensions.*` (options/DI integration); no storage library — you supply storage by implementing `IAuditProvider`.
 - Covers workflow and operation lifecycle events in one stream.
 - Optional initiator/session-style context and timestamps; detail level is configurable.
 - `ISystemTimeProvider` helps keep tests deterministic.

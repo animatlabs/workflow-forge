@@ -284,7 +284,8 @@ var foundry = WorkflowForge.CreateFoundry("ProcessOrder", logger, options: optio
 
 #### WorkflowForge.Extensions.Resilience
 
-Retry, breaker, timeout, and throttling without pulling in Polly.
+Retry with pluggable backoff strategies, without pulling in a third-party policy library. For circuit
+breakers, bulkheads, rate limiting, or stacked policies, use `WorkflowForge.Extensions.Resilience.Polly`.
 
 **Installation:**
 ```bash
@@ -292,14 +293,25 @@ dotnet add package WorkflowForge.Extensions.Resilience
 ```
 
 **Includes:**
-- Retry middleware
-- Circuit breaker
-- Timeouts
-- Simple rate limiting
+- Retry operations (`RetryWorkflowOperation`)
+- Backoff strategies: exponential, fixed interval, random (jitter)
+- `RetryPolicySettings` for attempt counts and delay bounds
 
 **Usage:**
 ```csharp
-// See package README for current API; base resilience is covered by Polly extension.
+using WorkflowForge.Extensions.Resilience;
+using WorkflowForge.Extensions.Resilience.Strategies;
+
+// Wrap an operation with exponential-backoff retry
+var resilientOperation = RetryWorkflowOperation.WithExponentialBackoff(
+    operation: myOperation,
+    baseDelay: TimeSpan.FromMilliseconds(100),
+    maxDelay: TimeSpan.FromSeconds(30),
+    maxAttempts: 3);
+
+var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
+    .AddOperation(resilientOperation)
+    .Build();
 ```
 
 #### WorkflowForge.Extensions.Resilience.Polly
@@ -498,8 +510,7 @@ Package: `WorkflowForge.Extensions.Persistence`
 
 ```csharp
 using WorkflowForge.Extensions; // UsePersistence
-using WorkflowForge.Extensions.Persistence.Abstractions; // IWorkflowPersistenceProvider
-using WorkflowForge.Extensions.Persistence.Abstractions; // WorkflowExecutionSnapshot
+using WorkflowForge.Extensions.Persistence.Abstractions; // IWorkflowPersistenceProvider, WorkflowExecutionSnapshot
 
 public sealed class MyPersistenceProvider : IWorkflowPersistenceProvider
 {
@@ -848,8 +859,8 @@ var auditProvider = new InMemoryAuditProvider();
 var foundry = WorkflowForge.CreateFoundry("OrderProcessing");
 foundry.UseAudit(
     auditProvider,
-    initiatedBy: "admin@company.com",
-    includeMetadata: true);
+    new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Verbose },
+    initiatedBy: "admin@company.com");
 
 // Workflow operations are automatically audited
 var workflow = WorkflowForge.CreateWorkflow()
@@ -883,15 +894,15 @@ public class DatabaseAuditProvider : IAuditProvider
 {
     private readonly DbContext _context;
 
-    public async Task WriteAuditEntryAsync(AuditEntry entry)
+    public async Task WriteAuditEntryAsync(AuditEntry entry, CancellationToken cancellationToken = default)
     {
         _context.AuditLog.Add(entry);
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task FlushAsync()
+    public async Task FlushAsync(CancellationToken cancellationToken = default)
     {
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }
 
@@ -902,17 +913,21 @@ foundry.UseAudit(auditProvider);
 
 **Audit Entry Structure:**
 ```csharp
-public class AuditEntry
+public sealed class AuditEntry
 {
-    public Guid AuditId { get; init; }
-    public DateTimeOffset Timestamp { get; init; }
-    public string WorkflowName { get; init; }
-    public string OperationName { get; init; }
-    public AuditEventType EventType { get; init; }
-    public string Status { get; init; }
-    public long? DurationMs { get; init; }
-    public string InitiatedBy { get; init; }
-    public IReadOnlyDictionary<string, string> Metadata { get; init; }
+    public Guid AuditId { get; }
+    public DateTimeOffset Timestamp { get; }
+    public Guid ExecutionId { get; }
+    public string WorkflowName { get; }
+    public string OperationName { get; }
+    public AuditEventType EventType { get; }
+    public string? InitiatedBy { get; }
+    public IReadOnlyDictionary<string, object?> Metadata { get; }
+    public string Status { get; }
+    public string? ErrorMessage { get; }
+    public long? DurationMs { get; }
+
+    // Populated via constructor (see the Audit extension source for the full signature).
 }
 ```
 

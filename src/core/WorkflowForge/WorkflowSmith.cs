@@ -130,6 +130,13 @@ namespace WorkflowForge
                 {
                     ((WorkflowFoundry)foundry).Reset(Guid.NewGuid(), _logger, _serviceProvider, _options, null);
                     _foundryPool.Add(foundry);
+
+                    // Guard against a Dispose() that ran after the _disposed check above and already
+                    // drained the pool: re-drain so this just-added foundry cannot leak un-disposed.
+                    if (_disposed)
+                    {
+                        DrainFoundryPool();
+                    }
                 }
                 else
                 {
@@ -213,7 +220,7 @@ namespace WorkflowForge
                 _logger.LogInformation(WorkflowLogMessageConstants.WorkflowExecutionStarted);
 
                 // FIRE: WorkflowStarted event
-                WorkflowStarted?.Invoke(this, new WorkflowStartedEventArgs(foundry, _timeProvider.UtcNow));
+                RaiseEvent(() => WorkflowStarted?.Invoke(this, new WorkflowStartedEventArgs(foundry, _timeProvider.UtcNow)), "WorkflowStarted");
 
                 try
                 {
@@ -226,12 +233,15 @@ namespace WorkflowForge
 
                     // FIRE: WorkflowCompleted event
                     var duration = _timeProvider.UtcNow - startTime;
-                    var finalProperties = new Dictionary<string, object?>(foundry.Properties);
-                    WorkflowCompleted?.Invoke(this, new WorkflowCompletedEventArgs(
-                        foundry,
-                        _timeProvider.UtcNow,
-                        finalProperties,
-                        duration));
+                    RaiseEvent(() =>
+                    {
+                        var finalProperties = new Dictionary<string, object?>(foundry.Properties);
+                        WorkflowCompleted?.Invoke(this, new WorkflowCompletedEventArgs(
+                            foundry,
+                            _timeProvider.UtcNow,
+                            finalProperties,
+                            duration));
+                    }, "WorkflowCompleted");
                 }
                 catch (OperationCanceledException)
                 {
@@ -284,12 +294,12 @@ namespace WorkflowForge
             var failedOperationName = foundry.Properties.TryGetValue(FoundryPropertyKeys.LastFailedName, out var failedNameValue)
                 ? failedNameValue?.ToString() ?? FoundryPropertyKeys.UnknownValue
                 : FoundryPropertyKeys.UnknownValue;
-            WorkflowFailed?.Invoke(this, new WorkflowFailedEventArgs(
+            RaiseEvent(() => WorkflowFailed?.Invoke(this, new WorkflowFailedEventArgs(
                 foundry,
                 _timeProvider.UtcNow,
                 ex,
                 failedOperationName,
-                duration));
+                duration)), "WorkflowFailed");
 
             // Always attempt compensation — the base class no-op handles non-restorable operations
             var lastForgedIndex = -1;
@@ -398,12 +408,12 @@ namespace WorkflowForge
             _logger.LogInformation(WorkflowLogMessageConstants.CompensationProcessStarted);
 
             // FIRE: CompensationTriggered event
-            CompensationTriggered?.Invoke(this, new CompensationTriggeredEventArgs(
+            RaiseEvent(() => CompensationTriggered?.Invoke(this, new CompensationTriggeredEventArgs(
                 foundry,
                 _timeProvider.UtcNow,
                 "Operation failed, initiating compensation",
                 lastForgedIndex < operations.Count ? operations[lastForgedIndex].Name : FoundryPropertyKeys.UnknownValue,
-                null));
+                null)), "CompensationTriggered");
 
             int successCount = 0;
             int failureCount = 0;
@@ -430,7 +440,7 @@ namespace WorkflowForge
                     _logger.LogDebug(WorkflowLogMessageConstants.CompensationActionStarted);
 
                     // FIRE: OperationRestoreStarted event
-                    OperationRestoreStarted?.Invoke(this, new OperationRestoreStartedEventArgs(operation, foundry));
+                    RaiseEvent(() => OperationRestoreStarted?.Invoke(this, new OperationRestoreStartedEventArgs(operation, foundry)), "OperationRestoreStarted");
 
                     object? outputData = null;
                     var outputKey = string.Format(FoundryPropertyKeys.OperationOutputFormat, i, operation.Name);
@@ -446,10 +456,10 @@ namespace WorkflowForge
                     var restoreDuration = _timeProvider.UtcNow - restoreStartTime;
 
                     // FIRE: OperationRestoreCompleted event
-                    OperationRestoreCompleted?.Invoke(this, new OperationRestoreCompletedEventArgs(
+                    RaiseEvent(() => OperationRestoreCompleted?.Invoke(this, new OperationRestoreCompletedEventArgs(
                         operation,
                         foundry,
-                        restoreDuration));
+                        restoreDuration)), "OperationRestoreCompleted");
 
                     successCount++;
                 }
@@ -468,11 +478,11 @@ namespace WorkflowForge
                     var restoreDuration = _timeProvider.UtcNow - restoreStartTime;
 
                     // FIRE: OperationRestoreFailed event
-                    OperationRestoreFailed?.Invoke(this, new OperationRestoreFailedEventArgs(
+                    RaiseEvent(() => OperationRestoreFailed?.Invoke(this, new OperationRestoreFailedEventArgs(
                         operation,
                         foundry,
                         compensationEx,
-                        restoreDuration));
+                        restoreDuration)), "OperationRestoreFailed");
 
                     failureCount++;
                     errors.Add(compensationEx);
@@ -491,12 +501,12 @@ namespace WorkflowForge
             var totalCompensationDuration = _timeProvider.UtcNow - compensationStartTime;
 
             // FIRE: CompensationCompleted event
-            CompensationCompleted?.Invoke(this, new CompensationCompletedEventArgs(
+            RaiseEvent(() => CompensationCompleted?.Invoke(this, new CompensationCompletedEventArgs(
                 foundry,
                 _timeProvider.UtcNow,
                 successCount,
                 failureCount,
-                TimeSpan.FromMilliseconds(totalCompensationDuration.TotalMilliseconds)));
+                TimeSpan.FromMilliseconds(totalCompensationDuration.TotalMilliseconds))), "CompensationCompleted");
 
             return errors;
         }
@@ -551,6 +561,23 @@ namespace WorkflowForge
         }
 
         /// <summary>
+        /// Raises a lifecycle event, isolating subscriber exceptions. A throwing handler must not
+        /// replace the workflow's real outcome, nor abort the compensation loop partway through.
+        /// Handler failures are logged and swallowed.
+        /// </summary>
+        private void RaiseEvent(Action raise, string eventName)
+        {
+            try
+            {
+                raise();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(_logger.CreateErrorProperties(ex, eventName), ex, eventName + " event handler error");
+            }
+        }
+
+        /// <summary>
         /// Releases all resources used by the WorkflowSmith.
         /// </summary>
         public void Dispose()
@@ -562,12 +589,7 @@ namespace WorkflowForge
 
             _concurrencyLimiter?.Dispose();
 
-            while (_foundryPool.TryTake(out var pooledFoundry))
-            {
-                try
-                { pooledFoundry.Dispose(); }
-                catch (Exception ex) { _logger.LogWarning(ex, "Pooled foundry disposal failed"); }
-            }
+            DrainFoundryPool();
 
             WorkflowStarted = null;
             WorkflowCompleted = null;
@@ -578,10 +600,26 @@ namespace WorkflowForge
             OperationRestoreCompleted = null;
             OperationRestoreFailed = null;
 
-            foreach (var middleware in _workflowMiddlewares)
-                (middleware as IDisposable)?.Dispose();
+            // Take the same lock every other access to _workflowMiddlewares uses, to avoid a
+            // torn read / "collection modified" if AddWorkflowMiddleware runs concurrently.
+            lock (_workflowMiddlewareLock)
+            {
+                foreach (var middleware in _workflowMiddlewares)
+                    (middleware as IDisposable)?.Dispose();
+            }
 
             GC.SuppressFinalize(this);
+        }
+
+        private void DrainFoundryPool()
+        {
+            while (_foundryPool.TryTake(out var pooledFoundry))
+            {
+                Interlocked.Decrement(ref _poolCount);
+                try
+                { pooledFoundry.Dispose(); }
+                catch (Exception ex) { _logger.LogWarning(ex, "Pooled foundry disposal failed"); }
+            }
         }
 
         private void ThrowIfDisposed()
