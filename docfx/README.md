@@ -15,7 +15,7 @@ cd docs && bundle install
 python scripts/build_docs.py --serve
 ```
 
-Output is written to `docs/api/` (gitignored). Jekyll site output is `docs/_site/`. GitHub Pages runs `scripts/build_docs.py` in `.github/workflows/pages.yml`.
+Output is written to `docs/api/` (gitignored). Jekyll site output is `docs/_site/`. GitHub Pages runs `scripts/build_docs.py` in [`.github/workflows/pages.yml`](../.github/workflows/pages.yml).
 
 API-only (no Jekyll):
 

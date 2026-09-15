@@ -16,10 +16,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@67a3573c9a986a3fe9ddb5d55189d2a6fa9c01d4 # v4
+      - name: Setup .NET 8.0
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
         with:
-          global-json-file: global.json
+          dotnet-version: 8.0.x
+
+      - name: Setup .NET 10.0
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
+        with:
+          dotnet-version: 10.0.x
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
@@ -34,6 +39,11 @@ jobs:
 
       - name: Build documentation (DocFX + Jekyll)
         run: python scripts/build_docs.py --baseurl "${{ steps.pages.outputs.base_path }}"
+
+      - name: Verify .NET API in site output
+        run: |
+          test -f docs/_site/api/WorkflowForge.html
+          test -f docs/_site/api/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0

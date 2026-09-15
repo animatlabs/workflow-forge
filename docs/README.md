@@ -33,7 +33,7 @@ Same pipeline as [`.github/workflows/pages.yml`](../.github/workflows/pages.yml)
 python scripts/verify_docs_ci.py
 ```
 
-See [RELEASING.md](RELEASING.md#documentation-github-pages) before dispatching **Deploy Docs**.
+See [RELEASING.md](RELEASING.md#documentation-github-pages) before deploying docs.
 
 ## Build only
 
@@ -65,5 +65,7 @@ The site documents **current** WorkflowForge only (not versioned doc sets). Do n
 
 ## GitHub Pages
 
-1. **Settings → Pages** → Source: **GitHub Actions**.
-2. Run **Deploy Docs (GitHub Pages)** via `workflow_dispatch`.
+1. **Settings → Pages** → Source: **GitHub Actions** (required for **Deploy Docs**; branch `/docs` only runs Jekyll and skips DocFX).
+2. **Actions → Deploy Docs (GitHub Pages)** — [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) — `workflow_dispatch` on `main`. Approve **`github-pages`** if your environment requires it.
+
+Pushes to `main` run **Build and Test** only (build/test), not docs deploy.

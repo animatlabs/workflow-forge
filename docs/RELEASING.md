@@ -21,7 +21,8 @@ committed in `src/Directory.Build.props`.
 ## Prerequisites
 
 - Maintainer access to run the `Build and Test` workflow via **Run workflow** (`workflow_dispatch`).
-- Approval rights on the `nuget-publish` GitHub Environment (publishing is gated on human approval).
+- Approval rights on the `nuget-publish` GitHub Environment (NuGet publishing is gated on human approval).
+- Approval rights on the `github-pages` GitHub Environment when running **Deploy Docs (GitHub Pages)**.
 - `NUGET_API_KEY` and `SONAR_TOKEN` configured as repository secrets.
 - A green `main` build: **`build-linux`** (net8 + net10 + Sonar) and **`build-windows-net48`**.
 
@@ -129,13 +130,13 @@ Documentation deploy is separate: [`.github/workflows/pages.yml`](../.github/wor
 
 ### Release (`workflow_dispatch`)
 
-Same workflow file:
+Same [`.github/workflows/build-test.yml`](../.github/workflows/build-test.yml) file:
 
-1. **`release-pack`** (`ubuntu-latest`) — Release build and pack to `./packages`, package verify
+1. **`release-pack`** (`ubuntu-latest`, every manual run) — Release build and pack to `./packages`, package verify
    (`verify_nuget_packages.py --skip-pack`), CycloneDX SBOM to `bom.json` (`dotnet tool restore` then
    `dotnet tool run dotnet-CycloneDX`, pinned in `.config/dotnet-tools.json`), upload `nuget-packages`.
 2. **`publish`** (`windows-latest`, `needs: release-pack`) — when `publish=true`: download artifact,
-   optional signing, provenance attestations, push to NuGet.org.
+   optional signing, provenance attestations, push to NuGet.org. Requires **`nuget-publish`** approval.
 
 ## Verifying artifacts and attestation
 
@@ -165,11 +166,13 @@ attestation) can be added to the publish step when a code-signing certificate is
 
 ## Documentation (GitHub Pages)
 
-Before dispatching **Deploy Docs (GitHub Pages)** on `main` or a release branch:
+Use **Settings → Pages → Source: GitHub Actions** so **Deploy Docs** can publish the full site (DocFX + Jekyll). If **Deploy from a branch** (`main` / `docs`) is selected, **`pages build and deployment`** runs Jekyll only on push and `/api/` will not match CI.
+
+Before **Deploy Docs (GitHub Pages)** on `main` or a release branch:
 
 ```bash
 python scripts/verify_docs_ci.py
 ```
 
-This runs the same DocFX + Jekyll pipeline as CI and checks API URL layout and branding regressions.
+This runs the same DocFX + Jekyll pipeline as `pages.yml` and checks API URL layout and branding regressions.
 See `docs/README.md` for local preview (`python scripts/serve_docs_docker.py`) and `docfx/README.md` for DocFX-only details.
