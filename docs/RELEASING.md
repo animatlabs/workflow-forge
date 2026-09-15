@@ -131,8 +131,9 @@ Documentation deploy is separate: [`.github/workflows/pages.yml`](../.github/wor
 
 Same workflow file:
 
-1. **`release-pack`** (`ubuntu-latest`) — `dotnet pack` into `./packages`, CycloneDX SBOM, upload
-   `nuget-packages` artifact. Uses a full Release build (required for ILRepack).
+1. **`release-pack`** (`ubuntu-latest`) — Release build and pack to `./packages`, package verify
+   (`verify_nuget_packages.py --skip-pack`), CycloneDX SBOM to `bom.json` (`dotnet tool restore` then
+   `dotnet tool run dotnet-CycloneDX`, pinned in `.config/dotnet-tools.json`), upload `nuget-packages`.
 2. **`publish`** (`windows-latest`, `needs: release-pack`) — when `publish=true`: download artifact,
    optional signing, provenance attestations, push to NuGet.org.
 

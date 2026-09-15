@@ -187,23 +187,20 @@ jobs:
 
     - name: Pack
       run: |
+        VERSION_ARGS=()
         if [ -n "${{ github.event.inputs.version }}" ]; then
-          dotnet pack WorkflowForge.sln --configuration Release --output ./packages \
-            -p:Version="${{ github.event.inputs.version }}" \
-            -p:PackageVersion="${{ github.event.inputs.version }}"
-        else
-          dotnet build WorkflowForge.sln --configuration Release --no-restore
-          dotnet pack WorkflowForge.sln --configuration Release --no-build --output ./packages
+          VERSION_ARGS=(-p:Version="${{ github.event.inputs.version }}" -p:PackageVersion="${{ github.event.inputs.version }}")
         fi
+        dotnet build WorkflowForge.sln --configuration Release --no-restore "${VERSION_ARGS[@]}"
+        dotnet pack WorkflowForge.sln --configuration Release --no-build --output ./packages "${VERSION_ARGS[@]}"
 
     - name: Verify package contents
       run: python scripts/verify_nuget_packages.py --output ./packages --skip-pack
 
     - name: Generate CycloneDX SBOM
       run: |
-        dotnet tool install --global CycloneDX
-        export PATH="$PATH:$HOME/.dotnet/tools"
-        dotnet cyclonedx WorkflowForge.sln -o ./packages --json
+        dotnet tool restore
+        dotnet tool run dotnet-CycloneDX -- WorkflowForge.sln -o ./packages --json -t
 
     - name: Upload packages
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
