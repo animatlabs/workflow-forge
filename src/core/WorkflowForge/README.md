@@ -19,7 +19,7 @@ Foundational orchestration with **zero external NuGet dependencies** and the for
 dotnet add package WorkflowForge  # .NET Standard 2.0+
 ```
 
-Inline delegates: [Operations](../../../docs/core/operations.md).
+Inline delegates: [Operations](https://animatlabs.com/workflow-forge/core/operations/).
 
 ```csharp
 using WorkflowForge;
@@ -50,7 +50,7 @@ var shipmentId = foundry.GetPropertyOrDefault<string>("ShipmentId");
 
 **Forge** creates runtime pieces. **Foundry** (`IWorkflowFoundry`) holds context; **Smith** (`IWorkflowSmith`) runs the workflow; each **operation** (`IWorkflowOperation`) is one step, with shared data in `foundry.Properties`. Interface sources: [`IWorkflowFoundry`](Abstractions/IWorkflowFoundry.cs) · [`IWorkflowSmith`](Abstractions/IWorkflowSmith.cs) · [`IWorkflowOperation`](Abstractions/IWorkflowOperation.cs)
 
-## Built-in operations ([guide](../../../docs/core/operations.md))
+## Built-in operations ([guide](https://animatlabs.com/workflow-forge/core/operations/))
 
 - **DelegateWorkflowOperation:** delegate/lambda steps
 - **ActionWorkflowOperation:** action-style steps
@@ -61,7 +61,7 @@ var shipmentId = foundry.GetPropertyOrDefault<string>("ShipmentId");
 
 ## Custom operations
 
-Subclass `WorkflowOperationBase`, override `ForgeAsyncCore`; add `RestoreAsync` when you need compensation. Typed bases: [Operations](../../../docs/core/operations.md).
+Subclass `WorkflowOperationBase`, override `ForgeAsyncCore`; add `RestoreAsync` when you need compensation. Typed bases: [Operations](https://animatlabs.com/workflow-forge/core/operations/).
 
 ```csharp
 public class CalculateTotalOperation : WorkflowOperationBase
@@ -130,18 +130,18 @@ foundry.UseTiming();
 foundry.UseErrorHandling(rethrowExceptions: true);
 ```
 
-Custom `IWorkflowOperationMiddleware`: [Architecture](../../../docs/architecture/overview.md) · [Operations](../../../docs/core/operations.md)
+Custom `IWorkflowOperationMiddleware`: [Architecture](https://animatlabs.com/workflow-forge/architecture/overview/) · [Operations](https://animatlabs.com/workflow-forge/core/operations/)
 
 ## Event system
 
 - **Smith:** `WorkflowStarted`, `WorkflowCompleted`, `WorkflowFailed`, `CompensationTriggered`, `OperationRestoreStarted`, and related compensation hooks
 - **Foundry:** `OperationStarted`, `OperationCompleted`, `OperationFailed`
 
-[Events](../../../docs/core/events.md)
+[Events](https://animatlabs.com/workflow-forge/core/events/)
 
 ## Configuration
 
-`WorkflowForgeOptions` extends `WorkflowForgeOptionsBase` (`Enabled`, `SectionName`, `Validate()`, `Clone()`). Bind JSON with **WorkflowForge.Extensions.DependencyInjection**. [Configuration](../../../docs/core/configuration.md).
+`WorkflowForgeOptions` extends `WorkflowForgeOptionsBase` (`Enabled`, `SectionName`, `Validate()`, `Clone()`). Bind JSON with **WorkflowForge.Extensions.DependencyInjection**. [Configuration](https://animatlabs.com/workflow-forge/core/configuration/).
 
 **Programmatic:**
 
@@ -176,21 +176,21 @@ var foundry = WorkflowForge.CreateFoundry("MyWorkflow", options: options);
 
 ## Performance
 
-12 scenarios (50 iterations each) vs Workflow Core and Elsa: **13–511×** execution, **6–575×** allocation, up to **511×** (.NET 10.0 state machine), **~15.9×** at 16 concurrent workflows.
+12 scenarios (10 iterations per job each) vs Workflow Core and Elsa: **2–583×** execution, **1–533×** allocation, up to **584×** (.NET 10.0 state machine vs Elsa), **~15.9×** at 16 concurrent workflows.
 
 | Scenario | WorkflowForge | Workflow Core | Elsa | Advantage |
 |----------|---------------|---------------|------|-----------|
-| Sequential (10 ops) | 314μs | 15,997μs | 26,881μs | 51–86× |
-| State machine (25) | 111μs | 39,500μs | 45,714μs | 356–412× |
-| Concurrent (8 workers) | 482μs | 59,141μs | 137,342μs | 123–285× |
+| Sequential (10 ops) | 127μs | 5661μs | 18257μs | 45-144x |
+| State machine (25) | 59.7μs | 13798μs | 33184μs | 231–555× |
+| Concurrent (8 workers) | 284μs | 39289μs | 110279μs | 138-388x |
 
-*Benchmark data from .NET 8.0; up to 511× on .NET 10.0 (state machine).* [All scenarios](../../../docs/performance/performance.md).
+*Benchmark data from .NET 8.0; up to 584× on .NET 10.0 (state machine vs Elsa).* [All scenarios](https://animatlabs.com/workflow-forge/performance/performance/).
 
 ## Documentation
 
-- [Getting started](../../../docs/getting-started/getting-started.md) · [Samples (33)](../../samples/WorkflowForge.Samples.BasicConsole/README.md)
-- [Architecture](../../../docs/architecture/overview.md) · [Operations](../../../docs/core/operations.md) · [Events](../../../docs/core/events.md) · [Configuration](../../../docs/core/configuration.md)
-- [Extensions](../../../docs/extensions/index.md) · [API reference](../../../docs/reference/api-reference.md) · [WorkflowForge.Testing](../WorkflowForge.Testing/README.md) (`FakeWorkflowFoundry`)
+- [Getting started](https://animatlabs.com/workflow-forge/getting-started/getting-started/) · [Samples (37)](https://github.com/animatlabs/workflow-forge/blob/main/src/samples/WorkflowForge.Samples.BasicConsole/README.md)
+- [Architecture](https://animatlabs.com/workflow-forge/architecture/overview/) · [Operations](https://animatlabs.com/workflow-forge/core/operations/) · [Events](https://animatlabs.com/workflow-forge/core/events/) · [Configuration](https://animatlabs.com/workflow-forge/core/configuration/)
+- [Extensions](https://animatlabs.com/workflow-forge/extensions/) · [API hub](https://animatlabs.com/workflow-forge/reference/api-reference/) · [WorkflowForge.Testing](https://github.com/animatlabs/workflow-forge/blob/main/src/core/WorkflowForge.Testing/README.md) (`FakeWorkflowFoundry`)
 
 ## Extensions
 
@@ -206,4 +206,4 @@ var foundry = WorkflowForge.CreateFoundry("MyWorkflow", options: options);
 - **WorkflowForge.Extensions.Observability.HealthChecks:** health checks
 - **WorkflowForge.Extensions.Observability.OpenTelemetry:** tracing
 
-Third-party assemblies are often merged with ILRepack; Microsoft/runtime refs stay external. **License:** MIT ([LICENSE](../../../LICENSE)).
+`Resilience.Polly` and `Logging.Serilog` merge their third-party library with ILRepack; every other extension depends only on Microsoft/runtime packages, which stay external. **License:** MIT ([LICENSE](https://github.com/animatlabs/workflow-forge/blob/main/LICENSE)).

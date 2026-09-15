@@ -34,8 +34,7 @@ public class HealthChecksSample : ISample
 
         using var foundry = WorkflowForge.CreateFoundry("HealthCheckDemo");
 
-        // Create health check service
-        var healthCheckService = foundry.CreateHealthCheckService();
+        using var healthCheckService = foundry.CreateHealthCheckService();
 
         foundry
             .WithOperation(LoggingOperation.Info("Starting basic health check demonstration"))
@@ -60,8 +59,7 @@ public class HealthChecksSample : ISample
 
         using var foundry = WorkflowForge.CreateFoundry("PeriodicHealthCheckDemo");
 
-        // Create health check service with periodic monitoring (every 500ms)
-        var healthCheckService = foundry.CreateHealthCheckService(TimeSpan.FromMilliseconds(500));
+        using var healthCheckService = foundry.CreateHealthCheckService(TimeSpan.FromMilliseconds(500));
 
         foundry
             .WithOperation(LoggingOperation.Info("Starting periodic health monitoring demonstration"))
@@ -71,13 +69,13 @@ public class HealthChecksSample : ISample
             .WithOperation(DelayOperation.FromMilliseconds(750)) // Allow time for more periodic checks
             .WithOperation(LoggingOperation.Info("Periodic health monitoring demonstration completed"));
 
-        // Monitor health status during execution
-        _ = MonitorHealthStatusAsync(healthCheckService, foundry);
+        // Monitor health status during execution. Awaited before the service is disposed so the
+        // monitor never runs against a disposed service.
+        var monitoring = MonitorHealthStatusAsync(healthCheckService, foundry);
 
         await foundry.ForgeAsync();
+        await monitoring;
 
-        // Stop health monitoring
-        await Task.Delay(100); // Allow final health check
         Console.WriteLine("   Periodic health monitoring completed");
     }
 
@@ -87,7 +85,7 @@ public class HealthChecksSample : ISample
 
         using var foundry = WorkflowForge.CreateFoundry("WorkflowHealthCheckDemo");
 
-        var healthCheckService = foundry.CreateHealthCheckService();
+        using var healthCheckService = foundry.CreateHealthCheckService();
 
         foundry.SetProperty("health_check_service", healthCheckService);
 

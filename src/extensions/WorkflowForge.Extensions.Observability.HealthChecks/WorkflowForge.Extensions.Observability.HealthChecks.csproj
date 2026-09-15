@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <!-- Version is centralized in src/Directory.Build.props -->
-    <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -33,8 +32,7 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     
-    <!-- Documentation -->
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- Documentation (NuGet readme generated; see src/build/Packaging/NuGetReadme.targets) -->
     <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
@@ -43,12 +41,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="../../../icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.29.0.143774">
+    <PackageReference Include="SonarAnalyzer.CSharp">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

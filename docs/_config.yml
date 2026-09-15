@@ -46,9 +46,14 @@ defaults:
     values:
       layout: default
 
+# DocFX API reference (generated via docfx/docfx.json → docs/api)
+include:
+  - api
+
 # Exclude from build
 exclude:
   - Gemfile
   - Gemfile.lock
   - README.md
   - vendor
+  - _site

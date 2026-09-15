@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using Serilog.Context;
 using Serilog.Core;
 using Serilog.Core.Enrichers;
+using Serilog.Events;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Operations;
 using ILogger = Serilog.ILogger;
 
 namespace WorkflowForge.Extensions.Logging.Serilog
@@ -11,18 +13,36 @@ namespace WorkflowForge.Extensions.Logging.Serilog
     /// <summary>
     /// Serilog adapter for WorkflowForge logging that implements IWorkflowForgeLogger.
     /// </summary>
-    internal sealed class SerilogWorkflowForgeLogger : IWorkflowForgeLogger
+    internal sealed class SerilogWorkflowForgeLogger : IWorkflowForgeLogger, IDisposable
     {
         private readonly ILogger _logger;
+        private readonly bool _ownsLogger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SerilogWorkflowForgeLogger"/> class.
         /// </summary>
         /// <param name="logger">The Serilog ILogger instance.</param>
-        public SerilogWorkflowForgeLogger(ILogger logger)
+        /// <param name="ownsLogger">Whether disposing this adapter should dispose <paramref name="logger"/>.</param>
+        public SerilogWorkflowForgeLogger(ILogger logger, bool ownsLogger = false)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _ownsLogger = ownsLogger;
         }
+
+        /// <summary>
+        /// Disposes the underlying Serilog logger when this adapter created it.
+        /// </summary>
+        public void Dispose()
+        {
+            if (_ownsLogger && _logger is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+        }
+
+        /// <inheritdoc />
+        public bool IsEnabled(WorkflowForgeLogLevel level)
+            => _logger.IsEnabled(WorkflowForgeSerilogLogLevelMapper.ToSerilogLevel(level));
 
         /// <inheritdoc />
         public void LogTrace(string message, params object[] args)

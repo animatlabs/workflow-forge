@@ -69,6 +69,21 @@ namespace WorkflowForge.Extensions.Audit.Tests
         }
 
         [Fact]
+        public async Task DiscardOldestEntries_GivenWriteBeyondMaxEntries()
+        {
+            const int maxEntries = 3;
+            var provider = new InMemoryAuditProvider(maxEntries);
+
+            for (int i = 0; i < 5; i++)
+            {
+                await provider.WriteAuditEntryAsync(CreateTestEntry(), CancellationToken.None);
+            }
+
+            Assert.Equal(maxEntries, provider.Entries.Count);
+            Assert.Equal(maxEntries, provider.MaxEntries);
+        }
+
+        [Fact]
         public async Task HandleThreadSafely_GivenWriteAuditEntryAsyncConcurrentWrites()
         {
             var provider = new InMemoryAuditProvider();

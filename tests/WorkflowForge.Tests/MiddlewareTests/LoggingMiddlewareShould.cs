@@ -2,6 +2,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Loggers;
+using WorkflowForge.Operations;
 using WorkflowForge.Options.Middleware;
 using LoggingMiddlewareImpl = WorkflowForge.Middleware.LoggingMiddleware;
 
@@ -33,7 +35,7 @@ public class LoggingMiddlewareShould : IDisposable
     [Fact]
     public void ThrowArgumentNullException_GivenNullOptions()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         Assert.Throws<ArgumentNullException>(() =>
             new LoggingMiddlewareImpl(logger, null!));
     }
@@ -41,7 +43,7 @@ public class LoggingMiddlewareShould : IDisposable
     [Fact]
     public void CreateInstance_GivenLoggerOnly()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         var middleware = new LoggingMiddlewareImpl(logger);
 
         Assert.NotNull(middleware);
@@ -50,7 +52,7 @@ public class LoggingMiddlewareShould : IDisposable
     [Fact]
     public void CreateInstance_GivenLoggerAndOptions()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         var options = new LoggingMiddlewareOptions();
         var middleware = new LoggingMiddlewareImpl(logger, options);
 
@@ -60,7 +62,7 @@ public class LoggingMiddlewareShould : IDisposable
     [Fact]
     public async Task ReturnResult_GivenExecuteAsyncWithSuccessfulExecution()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         var middleware = new LoggingMiddlewareImpl(logger);
 
         const string expectedResult = "test-result";
@@ -74,7 +76,7 @@ public class LoggingMiddlewareShould : IDisposable
     [Fact]
     public async Task LogDataPayloads_GivenOptionsEnabled()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         var options = new LoggingMiddlewareOptions { LogDataPayloads = true };
         var middleware = new LoggingMiddlewareImpl(logger, options);
 
@@ -90,7 +92,7 @@ public class LoggingMiddlewareShould : IDisposable
     [Fact]
     public async Task LogDataPayloads_GivenNullInputAndResult()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         var options = new LoggingMiddlewareOptions { LogDataPayloads = true };
         var middleware = new LoggingMiddlewareImpl(logger, options);
 
@@ -104,7 +106,7 @@ public class LoggingMiddlewareShould : IDisposable
     [Fact]
     public async Task RethrowException_GivenExecuteAsyncWhenNextThrows()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         var middleware = new LoggingMiddlewareImpl(logger);
 
         Task<object?> Next(CancellationToken _) => throw new InvalidOperationException("test error");
@@ -126,5 +128,130 @@ public class LoggingMiddlewareShould : IDisposable
 
         public void Dispose()
         { }
+    }
+
+    [Fact]
+    public async Task LogOperationFailure_GivenDefaultOptions()
+    {
+        var logger = new RecordingLogger();
+        var middleware = new LoggingMiddlewareImpl(logger, new LoggingMiddlewareOptions());
+        var failure = new InvalidOperationException("boom");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => middleware.ExecuteAsync(
+            _operation,
+            _foundry,
+            inputData: null,
+            next: _ => throw failure));
+
+        Assert.Contains(logger.Errors, e => ReferenceEquals(e, failure));
+    }
+
+    [Fact]
+    public async Task EstablishOperationScope_GivenDefaultOptions()
+    {
+        var logger = new RecordingLogger();
+        var middleware = new LoggingMiddlewareImpl(logger, new LoggingMiddlewareOptions());
+
+        await middleware.ExecuteAsync(_operation, _foundry, inputData: null, next: _ => Task.FromResult<object?>(null));
+
+        Assert.Contains("MiddlewareExecution", logger.Scopes);
+    }
+
+    [Fact]
+    public async Task NotEmitTraceMessages_GivenDefaultMinimumLevel()
+    {
+        var logger = new RecordingLogger();
+        var middleware = new LoggingMiddlewareImpl(logger, new LoggingMiddlewareOptions());
+
+        await middleware.ExecuteAsync(_operation, _foundry, inputData: null, next: _ => Task.FromResult<object?>(null));
+
+        Assert.Empty(logger.TraceMessages);
+    }
+
+    [Fact]
+    public async Task EmitTraceMessages_GivenTraceMinimumLevel()
+    {
+        var logger = new RecordingLogger();
+        var options = new LoggingMiddlewareOptions { MinimumLevel = "Trace" };
+        var middleware = new LoggingMiddlewareImpl(logger, options);
+
+        await middleware.ExecuteAsync(_operation, _foundry, inputData: null, next: _ => Task.FromResult<object?>(null));
+
+        Assert.Equal(2, logger.TraceMessages.Count);
+    }
+
+    private sealed class RecordingLogger : IWorkflowForgeLogger
+    {
+        public System.Collections.Generic.List<string> TraceMessages { get; } = new();
+
+        public System.Collections.Generic.List<Exception> Errors { get; } = new();
+
+        public System.Collections.Generic.List<string> Scopes { get; } = new();
+
+        public bool IsEnabled(WorkflowForgeLogLevel level) => true;
+
+        public IDisposable BeginScope<TState>(TState state, System.Collections.Generic.IDictionary<string, string>? properties = null)
+        {
+            Scopes.Add(state?.ToString() ?? string.Empty);
+            return new NoOpScope();
+        }
+
+        public void LogTrace(string message, params object[] args) => TraceMessages.Add(message);
+
+        public void LogTrace(System.Collections.Generic.IDictionary<string, string> properties, string message, params object[] args)
+            => TraceMessages.Add(message);
+
+        public void LogTrace(Exception exception, string message, params object[] args) => TraceMessages.Add(message);
+
+        public void LogTrace(System.Collections.Generic.IDictionary<string, string> properties, Exception exception, string message, params object[] args)
+            => TraceMessages.Add(message);
+
+        public void LogDebug(string message, params object[] args) { }
+
+        public void LogDebug(System.Collections.Generic.IDictionary<string, string> properties, string message, params object[] args) { }
+
+        public void LogDebug(Exception exception, string message, params object[] args) { }
+
+        public void LogDebug(System.Collections.Generic.IDictionary<string, string> properties, Exception exception, string message, params object[] args) { }
+
+        public void LogInformation(string message, params object[] args) { }
+
+        public void LogInformation(System.Collections.Generic.IDictionary<string, string> properties, string message, params object[] args) { }
+
+        public void LogInformation(Exception exception, string message, params object[] args) { }
+
+        public void LogInformation(System.Collections.Generic.IDictionary<string, string> properties, Exception exception, string message, params object[] args) { }
+
+        public void LogWarning(string message, params object[] args) { }
+
+        public void LogWarning(System.Collections.Generic.IDictionary<string, string> properties, string message, params object[] args) { }
+
+        public void LogWarning(Exception exception, string message, params object[] args) { }
+
+        public void LogWarning(System.Collections.Generic.IDictionary<string, string> properties, Exception exception, string message, params object[] args) { }
+
+        public void LogError(string message, params object[] args) { }
+
+        public void LogError(System.Collections.Generic.IDictionary<string, string> properties, string message, params object[] args) { }
+
+        public void LogError(Exception exception, string message, params object[] args) => Errors.Add(exception);
+
+        public void LogError(System.Collections.Generic.IDictionary<string, string> properties, Exception exception, string message, params object[] args)
+            => Errors.Add(exception);
+
+        public void LogCritical(string message, params object[] args) { }
+
+        public void LogCritical(System.Collections.Generic.IDictionary<string, string> properties, string message, params object[] args) { }
+
+        public void LogCritical(Exception exception, string message, params object[] args) { }
+
+        public void LogCritical(System.Collections.Generic.IDictionary<string, string> properties, Exception exception, string message, params object[] args) { }
+
+        private sealed class NoOpScope : IDisposable
+        {
+            public void Dispose()
+            {
+            }
+        }
     }
 }

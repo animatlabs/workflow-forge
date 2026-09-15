@@ -2,15 +2,15 @@
   <Target Name="WorkflowForgeILRepack" AfterTargets="Build" Condition="$(Configuration.Contains('Release'))">
     <Message Importance="high" Text="ILRepack: merging Polly dependencies" />
     <ItemGroup>
-      <InputAssemblies Include="$(OutputPath)$(TargetName)$(TargetExt)" />
-      <InputAssemblies Include="$(OutputPath)Polly.dll" Condition="Exists('$(OutputPath)Polly.dll')" />
-      <InputAssemblies Include="$(OutputPath)Polly.Core.dll" Condition="Exists('$(OutputPath)Polly.Core.dll')" />
+      <InputAssemblies Include="$(TargetDir)$(TargetName)$(TargetExt)" />
+      <InputAssemblies Include="$(TargetDir)Polly.dll" Condition="Exists('$(TargetDir)Polly.dll')" />
+      <InputAssemblies Include="$(TargetDir)Polly.Core.dll" Condition="Exists('$(TargetDir)Polly.Core.dll')" />
     </ItemGroup>
 
     <ILRepack
       InputAssemblies="@(InputAssemblies)"
-      OutputFile="$(OutputPath)$(TargetName)$(TargetExt)"
-      LibraryPath="$(OutputPath)"
+      OutputFile="$(TargetDir)$(TargetName)$(TargetExt)"
+      LibraryPath="$(TargetDir)"
       TargetKind="SameAsPrimaryAssembly"
       Internalize="true"
       Parallel="true"
@@ -20,8 +20,8 @@
 
   <Target Name="ILRepackCleanup" AfterTargets="WorkflowForgeILRepack" Condition="$(Configuration.Contains('Release'))">
     <Message Importance="high" Text="ILRepack: cleaning Polly dependency DLLs" />
-    <Delete Files="$(OutputPath)Polly.dll" Condition="Exists('$(OutputPath)Polly.dll')" />
-    <Delete Files="$(OutputPath)Polly.Core.dll" Condition="Exists('$(OutputPath)Polly.Core.dll')" />
+    <Delete Files="$(TargetDir)Polly.dll" Condition="Exists('$(TargetDir)Polly.dll')" />
+    <Delete Files="$(TargetDir)Polly.Core.dll" Condition="Exists('$(TargetDir)Polly.Core.dll')" />
   </Target>
 
   <!-- Guard: ILRepack only runs in Release. Packing in any other configuration would produce a

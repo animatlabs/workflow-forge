@@ -48,7 +48,7 @@ Three ideas drive the core:
 - Microsecond-scale op execution in benchmarks.
 - Tight allocations.
 - `ConcurrentDictionary` for shared bag state.
-- Struct event args where it pays.
+- Sealed event args with no per-listener copying.
 - Pooling for hot internal objects.
 
 ### 3. Developer Experience
@@ -246,7 +246,7 @@ public interface IWorkflowOperation : IDisposable
 }
 ```
 
-**Undo**: Override `RestoreAsync` when an op joins compensation. Base default is no-op; safe to skip.
+**Undo**: Override `RestoreAsync` when an op joins compensation. Base default is a no-op, so unoverridden ops do nothing.
 
 **Type-Safe Variant**:
 ```csharp
@@ -515,7 +515,7 @@ public class CreateOrderOperation : WorkflowOperationBase
 4. Executes `RestoreAsync` in **reverse order** on completed operations
 5. Fires `CompensationTriggered`, `CompensationCompleted` events
 
-**Design choice**: Compensation visits every completed op. Implement `RestoreAsync` where rollback is real; base no-op steps are skipped.
+**Design choice**: Compensation visits every completed op and calls `RestoreAsync` on each. Implement it where rollback is real; base no-op steps do nothing and count as compensated.
 
 ---
 
@@ -524,7 +524,7 @@ public class CreateOrderOperation : WorkflowOperationBase
 ### 1. Minimal Allocations
 
 - Use `ConcurrentDictionary` (no unnecessary copying)
-- Struct-based event args where possible
+- Sealed event-args classes raised once per subscriber list
 - Object pooling for frequently created objects
 - Efficient builder pattern without intermediate collections
 
@@ -538,7 +538,7 @@ All operations are async-first:
 ### 3. Thread Safety
 
 - `ConcurrentDictionary` for foundry properties
-- No locks in hot paths
+- Locks confined to pipeline mutation and jitter generation, not to per-operation execution
 - Immutable workflow definitions after build
 
 ### 4. Zero Unnecessary Abstractions
@@ -547,7 +547,7 @@ All operations are async-first:
 - Direct execution paths
 - No reflection in hot paths
 
-**Benchmarks (12 scenarios, .NET 10 / 8 / FX 4.8)**: about **13x–511x** faster than the libraries we compared against, and **6x–575x** less memory, depending on scenario and runtime.
+**Benchmarks (12 scenarios, .NET 10 / 8 / FX 4.8)**: about **2-583x** faster than the libraries we compared against, and **1-533x** less memory, depending on scenario and runtime.
 
 ---
 
@@ -555,7 +555,7 @@ All operations are async-first:
 
 ### Dependency Isolation with ILRepack
 
-- Extensions that bundle third-party libraries (Serilog, Polly, OpenTelemetry) run those bits through **ILRepack**.
+- The two extensions that bundle a third-party library — `Resilience.Polly` (Polly) and `Logging.Serilog` (Serilog) — run those bits through **ILRepack**. Every other extension depends only on Microsoft/System packages.
 - Third-party bits ship inside the extension assembly; public surfaces stay on WorkflowForge or BCL types.
 - Microsoft/System assemblies stay external and resolve normally at runtime.
 - That cuts version clashes without inlining framework binaries.
@@ -565,19 +565,21 @@ All operations are async-first:
 All extensions follow a consistent pattern:
 
 ```csharp
-// Extension provides middleware or services
-public class SerilogWorkflowMiddleware : IWorkflowOperationMiddleware
+// An extension either supplies middleware for the foundry pipeline...
+public sealed class OpenTelemetryOperationMiddleware : IWorkflowOperationMiddleware
 {
-    // Implementation uses embedded Serilog
+    // One span and one set of metrics per operation
 }
 
-// Extension methods for easy integration
-public static class SerilogExtensions
+// ...or an extension method that registers it on the foundry.
+public static class WorkflowFoundryOpenTelemetryExtensions
 {
-    public static IWorkflowFoundry WithSerilog(this IWorkflowFoundry foundry)
+    public static bool EnableOpenTelemetry(
+        this IWorkflowFoundry foundry,
+        WorkflowForgeOpenTelemetryOptions? options = null)
     {
-        // Setup Serilog logging
-        return foundry;
+        // Registers the service on foundry.Services and adds the middleware
+        return true;
     }
 }
 ```
@@ -599,13 +601,13 @@ For extension setup, see [Extensions Guide](../extensions/index.md).
 
 ## Thread Safety
 
-Foundry properties rely on `ConcurrentDictionary`; workflow graphs are immutable after build; events behave like standard .NET multicast delegates. **Do not** share one foundry or smith across concurrent workflow runs unless you add your own synchronization: spin up separate instances per parallel unit of work.
+Foundry properties rely on `ConcurrentDictionary`; workflow graphs are immutable after build; events behave like standard .NET multicast delegates. **Do not** share one foundry across concurrent workflow runs unless you add your own synchronization: spin up a separate foundry per parallel unit of work. The smith is safe to share — it pools foundries, gates concurrency with a semaphore, and `AddWorkflowSmith()` registers it as a singleton.
 
 ---
 
 ## Related Documentation
 
-- [API Reference](../reference/api-reference.md) - Type and member reference
+- [API reference](../reference/api-reference.md) · [.NET API]({{ "/api/WorkflowForge.html" | relative_url }})
 - [Operations Guide](../core/operations.md) - Creating custom operations
 - [Event System](../core/events.md) - Working with events
 - [Performance](../performance/performance.md) - Optimization techniques

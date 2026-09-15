@@ -7,7 +7,9 @@ using WorkflowForge.Constants;
 namespace WorkflowForge.Middleware
 {
     /// <summary>
-    /// Middleware that enforces timeouts on entire workflow execution.
+    /// Middleware that enforces a timeout on entire workflow execution. On expiry the workflow is
+    /// cancelled and a <see cref="System.TimeoutException"/> is thrown; operations that do not
+    /// observe their cancellation token delay that by however long they take to return.
     /// Timeout can be configured globally (constructor) or per-workflow (foundry properties).
     /// </summary>
     /// <remarks>
@@ -98,34 +100,46 @@ namespace WorkflowForge.Middleware
             _logger.LogDebug("Workflow {WorkflowName} executing with {TimeoutSeconds}s timeout", workflow.Name, timeout.TotalSeconds);
 
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            foundry.Properties[FoundryPropertyKeys.WorkflowTimeoutCancellationToken] = timeoutCts.Token;
-            var executionTask = next();
-            var timeoutTask = Task.Delay(timeout, cancellationToken);
-
-            var completedTask = await Task.WhenAny(executionTask, timeoutTask).ConfigureAwait(false);
-            if (completedTask == timeoutTask)
+            try
             {
-                timeoutCts.Cancel();
-                _ = executionTask.ContinueWith(
-                    t => _ = t.Exception,
-                    TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+                foundry.Properties[FoundryPropertyKeys.WorkflowTimeoutCancellationToken] = timeoutCts.Token;
+                var executionTask = next();
+                var timeoutTask = Task.Delay(timeout, cancellationToken);
 
-                if (cancellationToken.IsCancellationRequested)
+                var completedTask = await Task.WhenAny(executionTask, timeoutTask).ConfigureAwait(false);
+                if (completedTask == timeoutTask)
                 {
-                    throw new OperationCanceledException(cancellationToken);
+                    timeoutCts.Cancel();
+                    try
+                    {
+                        await executionTask.ConfigureAwait(false);
+                    }
+                    catch (Exception ex) when (ex is OperationCanceledException or TimeoutException)
+                    {
+                        _ = ex;
+                    }
+
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        throw new OperationCanceledException(cancellationToken);
+                    }
+
+                    var errorMessage = string.Format("Workflow '{0}' execution exceeded the configured timeout of {1} seconds.", workflow.Name, timeout.TotalSeconds);
+                    _logger.LogError("Workflow '{WorkflowName}' execution exceeded the configured timeout of {TimeoutSeconds} seconds.", workflow.Name, timeout.TotalSeconds);
+
+                    foundry.Properties[FoundryPropertyKeys.WorkflowTimedOut] = true;
+                    foundry.Properties[FoundryPropertyKeys.WorkflowTimeoutDuration] = timeout;
+
+                    throw new TimeoutException(errorMessage);
                 }
 
-                var errorMessage = string.Format("Workflow '{0}' execution exceeded the configured timeout of {1} seconds.", workflow.Name, timeout.TotalSeconds);
-                _logger.LogError("Workflow '{WorkflowName}' execution exceeded the configured timeout of {TimeoutSeconds} seconds.", workflow.Name, timeout.TotalSeconds);
-
-                foundry.Properties[FoundryPropertyKeys.WorkflowTimedOut] = true;
-                foundry.Properties[FoundryPropertyKeys.WorkflowTimeoutDuration] = timeout;
-
-                throw new TimeoutException(errorMessage);
+                await executionTask.ConfigureAwait(false);
+                _logger.LogDebug("Workflow {WorkflowName} completed within timeout ({TimeoutSeconds}s)", workflow.Name, timeout.TotalSeconds);
             }
-
-            await executionTask.ConfigureAwait(false);
-            _logger.LogDebug("Workflow {WorkflowName} completed within timeout ({TimeoutSeconds}s)", workflow.Name, timeout.TotalSeconds);
+            finally
+            {
+                foundry.Properties.TryRemove(FoundryPropertyKeys.WorkflowTimeoutCancellationToken, out _);
+            }
         }
     }
 }

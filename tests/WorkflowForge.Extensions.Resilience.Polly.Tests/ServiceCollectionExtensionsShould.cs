@@ -106,9 +106,9 @@ public class ServiceCollectionExtensionsShould
     {
         var configData = new Dictionary<string, string?>
         {
-            ["WorkflowForge:Polly:Enabled"] = "false",
-            ["WorkflowForge:Polly:Retry:MaxRetryAttempts"] = "10",
-            ["WorkflowForge:Polly:EnableComprehensivePolicies"] = "true"
+            ["WorkflowForge:Custom:Polly:Enabled"] = "false",
+            ["WorkflowForge:Custom:Polly:Retry:MaxRetryAttempts"] = "10",
+            ["WorkflowForge:Custom:Polly:EnableComprehensivePolicies"] = "true"
         };
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(configData)
@@ -117,7 +117,7 @@ public class ServiceCollectionExtensionsShould
         var services = new ServiceCollection();
         services.AddSingleton<IWorkflowForgeLogger>(TestNullLogger.Instance);
 
-        services.AddWorkflowForgePolly(configuration, "WorkflowForge:Polly");
+        services.AddWorkflowForgePolly(configuration, "WorkflowForge:Custom:Polly");
 
         var provider = services.BuildServiceProvider();
         var options = provider.GetRequiredService<PollyMiddlewareOptions>();
@@ -213,7 +213,7 @@ public class ServiceCollectionExtensionsShould
     }
 
     [Fact]
-    public void ReturnDefaultRetryMiddleware_GivenAddWorkflowForgePollyWhenRetryDisabled()
+    public void ReturnMiddlewareWithNoStrategies_GivenAddWorkflowForgePollyWhenEverythingDisabled()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IWorkflowForgeLogger>(TestNullLogger.Instance);
@@ -228,6 +228,6 @@ public class ServiceCollectionExtensionsShould
         var provider = services.BuildServiceProvider();
         var middleware = provider.GetRequiredService<PollyMiddleware>();
 
-        Assert.StartsWith("PollyRetry", middleware.Name, StringComparison.Ordinal);
+        Assert.Equal("PollyNoStrategies", middleware.Name);
     }
 }

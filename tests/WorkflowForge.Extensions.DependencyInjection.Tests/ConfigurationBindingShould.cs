@@ -83,7 +83,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
                 .AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     ["WorkflowForge:Extensions:Persistence:Enabled"] = "false",
-                    ["WorkflowForge:Extensions:Persistence:MaxVersions"] = "5"
+                    ["WorkflowForge:Extensions:Persistence:PersistOnFailure"] = "false"
                 })
                 .Build();
 
@@ -92,7 +92,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
             var options = provider.GetRequiredService<IOptions<PersistenceOptions>>().Value;
 
             Assert.False(options.Enabled);
-            Assert.Equal(5, options.MaxVersions);
+            Assert.False(options.PersistOnFailure);
         }
 
         [Fact]

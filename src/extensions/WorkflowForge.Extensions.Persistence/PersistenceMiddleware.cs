@@ -20,6 +20,9 @@ namespace WorkflowForge.Extensions.Persistence
         private readonly PersistenceOptions? _options;
         private readonly Guid? _precomputedInstanceId;
         private readonly Guid? _precomputedWorkflowKey;
+        private readonly bool _persistOnOperationComplete = true;
+        private readonly bool _persistOnWorkflowComplete = true;
+        private readonly bool _persistOnFailure = true;
 
         /// <summary>
         /// Internal property key for the execution counter used to track current operation index.
@@ -60,6 +63,10 @@ namespace WorkflowForge.Extensions.Persistence
             {
                 _precomputedWorkflowKey = DeterministicGuid(_options.WorkflowKey!);
             }
+
+            _persistOnOperationComplete = _options.PersistOnOperationComplete;
+            _persistOnWorkflowComplete = _options.PersistOnWorkflowComplete;
+            _persistOnFailure = _options.PersistOnFailure;
         }
 
         /// <summary>
@@ -97,12 +104,27 @@ namespace WorkflowForge.Extensions.Persistence
                 return skippedOutput;
             }
 
-            var result = await next(cancellationToken).ConfigureAwait(false);
+            object? result;
+            try
+            {
+                result = await next(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                if (_persistOnFailure)
+                {
+                    // NextOperationIndex stays at the failed operation so a resume re-runs it.
+                    await SaveSnapshotAsync(foundryKey, workflowKey, workflow, foundry, currentIndex, cancellationToken).ConfigureAwait(false);
+                }
+
+                throw;
+            }
 
             await CheckpointAndCleanupAsync(foundryKey, workflowKey, workflow, foundry, currentIndex, cancellationToken).ConfigureAwait(false);
 
             return result;
         }
+
 
         private static int GetCurrentOperationIndex(IWorkflowFoundry foundry)
         {
@@ -170,22 +192,39 @@ namespace WorkflowForge.Extensions.Persistence
             int currentIndex,
             CancellationToken cancellationToken)
         {
-            var newSnapshot = new WorkflowExecutionSnapshot
+            var nextIndex = currentIndex + 1;
+            var isFinalOperation = nextIndex >= workflow.Operations.Count;
+            var shouldSave = isFinalOperation ? _persistOnWorkflowComplete : _persistOnOperationComplete;
+
+            if (shouldSave)
+            {
+                await SaveSnapshotAsync(foundryKey, workflowKey, workflow, foundry, nextIndex, cancellationToken).ConfigureAwait(false);
+            }
+
+            if (isFinalOperation)
+            {
+                await _provider.DeleteAsync(foundryKey, workflowKey, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        private Task SaveSnapshotAsync(
+            Guid foundryKey,
+            Guid workflowKey,
+            IWorkflow workflow,
+            IWorkflowFoundry foundry,
+            int nextOperationIndex,
+            CancellationToken cancellationToken)
+        {
+            var snapshot = new WorkflowExecutionSnapshot
             {
                 FoundryExecutionId = foundryKey,
                 WorkflowId = workflowKey,
                 WorkflowName = workflow.Name,
-                NextOperationIndex = currentIndex + 1,
+                NextOperationIndex = nextOperationIndex,
                 Properties = new Dictionary<string, object?>(foundry.Properties)
             };
 
-            await _provider.SaveAsync(newSnapshot, cancellationToken).ConfigureAwait(false);
-
-            var operationCount = workflow.Operations.Count;
-            if (newSnapshot.NextOperationIndex >= operationCount)
-            {
-                await _provider.DeleteAsync(foundryKey, workflowKey, cancellationToken).ConfigureAwait(false);
-            }
+            return _provider.SaveAsync(snapshot, cancellationToken);
         }
 
         private (Guid foundryKey, Guid workflowKey) ResolveKeys(IWorkflowFoundry foundry, IWorkflow workflow)

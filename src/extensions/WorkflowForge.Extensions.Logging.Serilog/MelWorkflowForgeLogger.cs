@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Extensions.Logging.Serilog
 {
@@ -17,6 +18,9 @@ namespace WorkflowForge.Extensions.Logging.Serilog
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
+
+        public bool IsEnabled(WorkflowForgeLogLevel level)
+            => _logger.IsEnabled(WorkflowForgeMelLogLevelMapper.ToMelLevel(level));
 
         public void LogTrace(string message, params object[] args)
             => _logger.LogTrace(message, args);

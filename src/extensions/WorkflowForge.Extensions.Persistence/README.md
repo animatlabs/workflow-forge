@@ -134,7 +134,6 @@ public sealed class WorkflowExecutionSnapshot
         "PersistOnOperationComplete": true,
         "PersistOnWorkflowComplete": true,
         "PersistOnFailure": true,
-        "MaxVersions": 10,
         "InstanceId": "my-instance-id",
         "WorkflowKey": "my-workflow-key"
       }
@@ -142,6 +141,14 @@ public sealed class WorkflowExecutionSnapshot
   }
 }
 ```
+
+Each trigger changes when a checkpoint is written:
+
+| Option | Default | Effect when `true` |
+|--------|---------|--------------------|
+| `PersistOnOperationComplete` | `true` | A checkpoint is saved after every non-final operation. |
+| `PersistOnWorkflowComplete` | `true` | A checkpoint is saved after the final operation. The resume checkpoint is deleted on completion either way. |
+| `PersistOnFailure` | `true` | A checkpoint is saved when an operation throws, with `NextOperationIndex` left at the failed operation so a resume re-runs it. |
 
 ### Via code
 
@@ -154,7 +161,6 @@ var options = new PersistenceOptions
     PersistOnOperationComplete = true,
     PersistOnWorkflowComplete = true,
     PersistOnFailure = true,
-    MaxVersions = 10,
     InstanceId = "my-instance-id",
     WorkflowKey = "my-workflow-key"
 };
@@ -173,7 +179,7 @@ services.AddPersistenceConfiguration(configuration);
 var options = serviceProvider.GetRequiredService<IOptions<PersistenceOptions>>().Value;
 ```
 
-[Persistence configuration](../../../docs/core/configuration.md#persistence-extension)
+[Persistence configuration](https://animatlabs.com/workflow-forge/core/configuration/#persistence-extension)
 
 ## Provider interface
 
@@ -192,8 +198,8 @@ public interface IWorkflowPersistenceProvider
 
 ## Links
 
-- [Getting Started](../../../docs/getting-started/getting-started.md)
-- [Configuration Guide](../../../docs/core/configuration.md#persistence-extension)
-- [Extensions Overview](../../../docs/extensions/index.md)
-- [Recovery Extension](../WorkflowForge.Extensions.Persistence.Recovery/README.md)
-- [Sample 18: Persistence](../../samples/WorkflowForge.Samples.BasicConsole/README.md)
+- [Getting Started](https://animatlabs.com/workflow-forge/getting-started/getting-started/)
+- [Configuration Guide](https://animatlabs.com/workflow-forge/core/configuration/#persistence-extension)
+- [Extensions Overview](https://animatlabs.com/workflow-forge/extensions/)
+- [Recovery Extension](https://github.com/animatlabs/workflow-forge/blob/main/src/extensions/WorkflowForge.Extensions.Persistence.Recovery/README.md)
+- [Sample 18: Persistence](https://github.com/animatlabs/workflow-forge/blob/main/src/samples/WorkflowForge.Samples.BasicConsole/README.md)

@@ -30,13 +30,13 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         // System metrics -- fields are assigned by the Meter SDK and must be kept alive
         // to prevent the observable gauges from being garbage collected.
         [SuppressMessage("CodeQuality", "S4487", Justification = "Observable instruments must be held by reference to prevent garbage collection")]
-        private readonly ObservableGauge<long> _memoryUsage;
+        private readonly ObservableGauge<long>? _memoryUsage;
 
         [SuppressMessage("CodeQuality", "S4487", Justification = "Observable instruments must be held by reference to prevent garbage collection")]
-        private readonly ObservableGauge<long> _gcCollections;
+        private readonly ObservableGauge<long>? _gcCollections;
 
         [SuppressMessage("CodeQuality", "S4487", Justification = "Observable instruments must be held by reference to prevent garbage collection")]
-        private readonly ObservableGauge<int> _threadPoolAvailable;
+        private readonly ObservableGauge<int>? _threadPoolAvailable;
 
         private volatile bool _disposed;
 
@@ -56,14 +56,38 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         public string ServiceName { get; }
 
         /// <summary>
+        /// Gets the options this service was created with.
+        /// </summary>
+        public WorkflowForgeOpenTelemetryOptions Options { get; }
+
+        /// <summary>
+        /// Gets whether system metric gauges were registered for this service.
+        /// </summary>
+        public bool SystemMetricsRegistered => _memoryUsage != null;
+
+        /// <summary>
         /// Initializes a new instance of the WorkflowForgeOpenTelemetryService.
         /// </summary>
         /// <param name="serviceName">The service name for OpenTelemetry identification.</param>
         /// <param name="serviceVersion">The service version.</param>
         /// <param name="logger">The logger instance.</param>
         public WorkflowForgeOpenTelemetryService(string serviceName, string serviceVersion = "1.0.0", IWorkflowForgeLogger? logger = null)
+            : this(BuildOptions(serviceName, serviceVersion), logger)
         {
-            ServiceName = serviceName ?? throw new ArgumentNullException(nameof(serviceName));
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the WorkflowForgeOpenTelemetryService from options.
+        /// </summary>
+        /// <param name="options">The telemetry options.</param>
+        /// <param name="logger">The logger instance.</param>
+        /// <exception cref="ArgumentNullException">Thrown when options or its service name is null.</exception>
+        public WorkflowForgeOpenTelemetryService(WorkflowForgeOpenTelemetryOptions options, IWorkflowForgeLogger? logger = null)
+        {
+            Options = options ?? throw new ArgumentNullException(nameof(options));
+            var serviceName = options.ServiceName ?? throw new ArgumentNullException(nameof(options));
+            var serviceVersion = options.ServiceVersion;
+            ServiceName = serviceName;
             _logger = logger ?? NullLogger.Instance;
 
             // Create ActivitySource for distributed tracing
@@ -98,26 +122,40 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
                 "operation",
                 "Number of currently active operations");
 
-            // System metrics
-            _memoryUsage = _meter.CreateObservableGauge<long>(
-                "workflowforge.process.memory.usage",
-                GetMemoryUsage,
-                "By",
-                "Process memory usage in bytes");
+            if (options.EnableMetrics && options.EnableSystemMetrics)
+            {
+                _memoryUsage = _meter.CreateObservableGauge<long>(
+                    "workflowforge.process.memory.usage",
+                    GetMemoryUsage,
+                    "By",
+                    "Process memory usage in bytes");
 
-            _gcCollections = _meter.CreateObservableGauge<long>(
-                "workflowforge.process.gc.collections.total",
-                GetTotalGcCollections,
-                "collection",
-                "Total garbage collections");
+                _gcCollections = _meter.CreateObservableGauge<long>(
+                    "workflowforge.process.gc.collections.total",
+                    GetTotalGcCollections,
+                    "collection",
+                    "Total garbage collections");
 
-            _threadPoolAvailable = _meter.CreateObservableGauge<int>(
-                "workflowforge.process.threadpool.threads.available",
-                GetAvailableThreadPoolThreads,
-                "thread",
-                "Available thread pool threads");
+                _threadPoolAvailable = _meter.CreateObservableGauge<int>(
+                    "workflowforge.process.threadpool.threads.available",
+                    GetAvailableThreadPoolThreads,
+                    "thread",
+                    "Available thread pool threads");
+            }
 
             _logger.LogInformation("OpenTelemetry service initialized for {ServiceName}", serviceName);
+        }
+
+        private static WorkflowForgeOpenTelemetryOptions BuildOptions(string serviceName, string serviceVersion)
+        {
+            if (serviceName == null)
+                throw new ArgumentNullException(nameof(serviceName));
+
+            return new WorkflowForgeOpenTelemetryOptions
+            {
+                ServiceName = serviceName,
+                ServiceVersion = serviceVersion
+            };
         }
 
         /// <summary>
@@ -128,6 +166,9 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <returns>The started activity or null if not sampled.</returns>
         public Activity? StartActivity(string operationName, ActivityKind kind = ActivityKind.Internal)
         {
+            if (_disposed || !Options.EnableTracing)
+                return null;
+
             return _activitySource.StartActivity(operationName, kind);
         }
 
@@ -146,7 +187,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             long memoryAllocated = 0,
             KeyValuePair<string, object?>[]? tags = null)
         {
-            if (_disposed)
+            if (_disposed || !Options.EnableMetrics || !Options.EnableOperationMetrics)
                 return;
 
             var metricTags = CreateTagsArray(operationName, success, tags);
@@ -173,7 +214,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <param name="tags">Additional tags for the metric.</param>
         public void IncrementActiveOperations(string operationName, KeyValuePair<string, object?>[]? tags = null)
         {
-            if (_disposed)
+            if (_disposed || !Options.EnableMetrics || !Options.EnableOperationMetrics)
                 return;
 
             var metricTags = CreateTagsArray(operationName, null, tags);
@@ -187,7 +228,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
         /// <param name="tags">Additional tags for the metric.</param>
         public void DecrementActiveOperations(string operationName, KeyValuePair<string, object?>[]? tags = null)
         {
-            if (_disposed)
+            if (_disposed || !Options.EnableMetrics || !Options.EnableOperationMetrics)
                 return;
 
             var metricTags = CreateTagsArray(operationName, null, tags);

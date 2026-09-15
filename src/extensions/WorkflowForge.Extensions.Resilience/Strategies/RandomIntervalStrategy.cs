@@ -17,6 +17,7 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
         private readonly TimeSpan _maxInterval;
         private static readonly Random SeedSource = new Random();
         private readonly Random _random;
+        private readonly object _randomLock = new object();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RandomIntervalStrategy"/> class.
@@ -60,7 +61,13 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
             // Generate random delay between min and max intervals
             var minMs = _minInterval.TotalMilliseconds;
             var maxMs = _maxInterval.TotalMilliseconds;
-            var randomDelayMs = minMs + (_random.NextDouble() * (maxMs - minMs));
+            double sample;
+            lock (_randomLock)
+            {
+                sample = _random.NextDouble();
+            }
+
+            var randomDelayMs = minMs + (sample * (maxMs - minMs));
             var delay = TimeSpan.FromMilliseconds(randomDelayMs);
 
             Logger?.LogDebug("Generated random retry delay of {DelayMs}ms for attempt {AttemptNumber} (range: {MinMs}ms-{MaxMs}ms)",

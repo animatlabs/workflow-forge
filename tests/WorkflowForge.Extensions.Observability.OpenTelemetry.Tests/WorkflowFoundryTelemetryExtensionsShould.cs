@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Testing;
 using Moq;
@@ -95,12 +96,12 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void ReturnFalse_GivenEnableOpenTelemetryWhenPropertiesAccessThrows()
+        public void ReturnFalse_GivenEnableOpenTelemetryWhenServicesAccessThrows()
         {
             var logger = new Mock<IWorkflowForgeLogger>();
             var foundry = new Mock<IWorkflowFoundry>();
             foundry.SetupGet(f => f.Logger).Returns(logger.Object);
-            foundry.SetupGet(f => f.Properties).Throws(new InvalidOperationException("properties-unavailable"));
+            foundry.SetupGet(f => f.Services).Throws(new InvalidOperationException("services-unavailable"));
 
             var result = foundry.Object.EnableOpenTelemetry();
 
@@ -108,12 +109,12 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void ReturnFalse_GivenDisableOpenTelemetryWhenPropertiesAccessThrows()
+        public void ReturnFalse_GivenDisableOpenTelemetryWhenServicesAccessThrows()
         {
             var logger = new Mock<IWorkflowForgeLogger>();
             var foundry = new Mock<IWorkflowFoundry>();
             foundry.SetupGet(f => f.Logger).Returns(logger.Object);
-            foundry.SetupGet(f => f.Properties).Throws(new InvalidOperationException("properties-unavailable"));
+            foundry.SetupGet(f => f.Services).Throws(new InvalidOperationException("services-unavailable"));
 
             var result = foundry.Object.DisableOpenTelemetry();
 
@@ -148,16 +149,26 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void ReturnActivityOrNull_GivenEnabledWhenNotSampled()
+        public void ReturnAStartedActivity_GivenEnabledAndSampled()
         {
+            using var listener = EnableAllActivitySampling();
             _foundry.EnableOpenTelemetry();
 
-            var activity = _foundry.StartActivity("TestOp");
+            using var activity = _foundry.StartActivity("TestOp");
 
-            if (activity != null)
+            Assert.NotNull(activity);
+            Assert.Equal("TestOp", activity!.OperationName);
+        }
+
+        private static ActivityListener EnableAllActivitySampling()
+        {
+            var listener = new ActivityListener
             {
-                Assert.Equal("TestOp", activity.OperationName);
-            }
+                ShouldListenTo = _ => true,
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            };
+            ActivitySource.AddActivityListener(listener);
+            return listener;
         }
 
         [Fact]
@@ -375,14 +386,14 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void OverwriteService_GivenEnableOpenTelemetryCalledTwice()
+        public void KeepTheFirstService_GivenEnableOpenTelemetryCalledTwice()
         {
-            _foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions { ServiceName = "First" });
-            _foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions { ServiceName = "Second" });
+            Assert.True(_foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions { ServiceName = "First" }));
+            Assert.False(_foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions { ServiceName = "Second" }));
 
             var service = _foundry.GetOpenTelemetryService();
             Assert.NotNull(service);
-            Assert.Equal("Second", service.ServiceName);
+            Assert.Equal("First", service!.ServiceName);
         }
 
         [Fact]
@@ -398,13 +409,15 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         }
 
         [Fact]
-        public void ReturnNull_GivenPropertySetToNonServiceType()
+        public void DisposeOpenTelemetryService_WhenFoundryReset_GivenServiceRegisteredOnServices()
         {
-            _foundry.Properties["_opentelemetry_service"] = "not a service";
-
+            _foundry.EnableOpenTelemetry();
             var service = _foundry.GetOpenTelemetryService();
+            Assert.NotNull(service);
 
-            Assert.Null(service);
+            _foundry.Reset();
+
+            Assert.Null(_foundry.GetOpenTelemetryService());
         }
     }
 }

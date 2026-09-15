@@ -12,8 +12,8 @@ namespace WorkflowForge.Extensions.Observability.Performance
     /// for each operation into a <see cref="FoundryPerformanceStatistics"/> instance.
     /// <para>
     /// Added automatically by <see cref="WorkflowFoundryPerformanceExtensions.EnablePerformanceMonitoring"/>.
-    /// In that mode the middleware resolves the active statistics from the foundry properties on each
-    /// call, so enabling/disabling monitoring is a matter of setting/removing that property — the
+    /// In that mode the middleware resolves the active statistics from the foundry services on each
+    /// call, so enabling/disabling monitoring is a matter of setting/removing that service — the
     /// middleware simply no-ops while no statistics object is present.
     /// </para>
     /// <para>
@@ -26,7 +26,7 @@ namespace WorkflowForge.Extensions.Observability.Performance
         private readonly FoundryPerformanceStatistics? _explicitStatistics;
 
         /// <summary>
-        /// Initializes a middleware that resolves the active statistics from the foundry properties
+        /// Initializes a middleware that resolves the active statistics from the foundry services
         /// on each call (the mode used by <c>EnablePerformanceMonitoring</c>).
         /// </summary>
         public PerformanceStatisticsMiddleware()
@@ -63,10 +63,8 @@ namespace WorkflowForge.Extensions.Observability.Performance
                 return await next(cancellationToken).ConfigureAwait(false);
             }
 
-            var stopwatch = Stopwatch.StartNew();
-            // GC.GetTotalMemory is a coarse, process-wide approximation (the only allocation API
-            // available on netstandard2.0); treated as best-effort and clamped to non-negative.
-            var memoryBefore = GC.GetTotalMemory(false);
+            var startTimestamp = Stopwatch.GetTimestamp();
+            var memoryBefore = GetAllocatedBytesSnapshot();
             var success = false;
 
             try
@@ -77,14 +75,33 @@ namespace WorkflowForge.Extensions.Observability.Performance
             }
             finally
             {
-                stopwatch.Stop();
-                var memoryDelta = GC.GetTotalMemory(false) - memoryBefore;
-                statistics.Record(operation.Name, operation.Id.ToString(), stopwatch.Elapsed, success, memoryDelta);
+                var timestampDelta = Stopwatch.GetTimestamp() - startTimestamp;
+                var elapsed = TimeSpan.FromSeconds(timestampDelta / (double)Stopwatch.Frequency);
+                var memoryDelta = GetAllocatedBytesSnapshot() - memoryBefore;
+                if (memoryDelta < 0)
+                {
+                    memoryDelta = 0;
+                }
+
+                statistics.Record(operation.Name, operation.Id.ToString(), elapsed, success, memoryDelta);
             }
         }
 
+        /// <remarks>
+        /// Process-wide, so the recorded delta is only indicative and is not attributable to a
+        /// single operation when workflows run concurrently.
+        /// </remarks>
+        private static long GetAllocatedBytesSnapshot() => GC.GetTotalMemory(false);
+
         private static FoundryPerformanceStatistics? ResolveStatistics(IWorkflowFoundry foundry)
         {
+            if (foundry.Services != null
+                && foundry.Services.TryGet<FoundryPerformanceStatistics>(PerformancePropertyKeys.PerformanceStatistics, out var fromServices))
+            {
+                return fromServices;
+            }
+
+            // Legacy: statistics may still be on Properties when Services is unavailable.
             return foundry.Properties.TryGetValue(PerformancePropertyKeys.PerformanceStatistics, out var statsObj)
                 && statsObj is FoundryPerformanceStatistics statistics
                 ? statistics

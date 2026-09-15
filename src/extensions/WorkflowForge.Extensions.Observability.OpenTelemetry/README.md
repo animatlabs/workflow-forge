@@ -1,6 +1,6 @@
 # WorkflowForge.Extensions.Observability.OpenTelemetry
 
-Emit `ActivitySource` traces and metrics for workflows and operations; OpenTelemetry bits are ILRepacked so apps see fewer dependency conflicts.
+Emit `ActivitySource` traces and `Meter` metrics for workflows and operations. Your application owns the OpenTelemetry SDK; this package depends only on `System.Diagnostics.DiagnosticSource`.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Observability.OpenTelemetry.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Observability.OpenTelemetry/)
 
@@ -27,25 +27,34 @@ foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions
     EnableMetrics = true
 });
 
-var smith = WorkflowForge.CreateSmith();
+using var smith = WorkflowForge.CreateSmith();
+
+// Optional: one workflow span that the per-operation spans nest under.
+var workflowMiddleware = foundry.CreateOpenTelemetryWorkflowMiddleware();
+if (workflowMiddleware != null)
+{
+    smith.AddWorkflowMiddleware(workflowMiddleware);
+}
+
 var workflow = WorkflowForge.CreateWorkflow("TracedWorkflow")
-    .AddOperation(new ActionWorkflowOperation("ProcessOrder", async (input, foundry, ct) => { /* ... */ }))
+    .AddOperation("ProcessOrder", (foundry, ct) => Task.CompletedTask)
     .Build();
 
-// Operations will create spans and record metrics
+// EnableOpenTelemetry registered middleware that creates a span and records
+// metrics for every operation - no instrumentation code in the operations.
 await smith.ForgeAsync(workflow, foundry);
-
-// Access the OpenTelemetry service for custom instrumentation
-var otelService = foundry.GetOpenTelemetryService();
-using var activity = foundry.StartActivity("CustomOperation");
 ```
 
 ## Key points
 
-- One span per operation by default; W3C Trace Context for propagation.
-- Tags cover names, durations, and success or failure.
-- Host-level OpenTelemetry SDK exporters (Jaeger, Zipkin, OTLP, console, etc.) pick up `WorkflowForge` activities.
-- Public API remains WorkflowForge and BCL; OTEL is merged internally.
+- `EnableOpenTelemetry` registers middleware that creates one span per operation automatically.
+- Add `CreateOpenTelemetryWorkflowMiddleware()` to the smith for a parent workflow span.
+- Tags cover operation and workflow names, execution id, and success or failure.
+- Spans and metrics are published under the `ServiceName` you configure. Subscribe with
+  `.AddSource(serviceName)` and `.AddMeter(serviceName)`.
+- `EnableSystemMetrics` adds process memory, GC and thread-pool gauges; `EnableOperationMetrics`
+  controls the per-operation counters and histograms.
+- Public API is WorkflowForge and BCL only. No OpenTelemetry SDK package is pulled in.
 
 ## Configuration
 
@@ -67,18 +76,22 @@ foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions
 // collect activities emitted by WorkflowForge.
 ```
 
-[OpenTelemetry extension options](../../../docs/core/configuration.md#opentelemetry-extension)
+[OpenTelemetry extension options](https://animatlabs.com/workflow-forge/core/configuration/#opentelemetry-extension)
 
 ## Host-level exporter configuration
 
 WorkflowForge emits `ActivitySource` events that any OpenTelemetry exporter can collect. Configure exporters in the host:
 
 ```csharp
-// In your application startup (requires OpenTelemetry SDK packages)
+// In your application startup (requires OpenTelemetry SDK packages).
+// The source and meter names are the ServiceName you passed to EnableOpenTelemetry.
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracing => tracing
-        .AddSource("WorkflowForge")
+        .AddSource("OrderService")
         .AddConsoleExporter()
+        .AddOtlpExporter())
+    .WithMetrics(metrics => metrics
+        .AddMeter("OrderService")
         .AddOtlpExporter());
 ```
 
@@ -91,23 +104,25 @@ Supported exporters (separate OpenTelemetry packages):
 
 ## Span structure
 
-WorkflowForge creates the following span hierarchy:
+With `CreateOpenTelemetryWorkflowMiddleware()` registered on the smith, operation spans nest under
+the workflow span:
 
 ```
-Workflow: OrderProcessing
-  ├─ Operation: ValidateOrder (12µs)
-  ├─ Operation: ChargePayment (145µs)
-  ├─ Operation: ReserveInventory (87µs)
-  └─ Operation: CreateShipment (234µs)
+OrderProcessing
+  ├─ ValidateOrder
+  ├─ ChargePayment
+  ├─ ReserveInventory
+  └─ CreateShipment
 ```
 
-Each span includes:
+Without it, operation spans are still created and nest under whatever `Activity.Current` your
+application has open.
 
-- Operation name
-- Duration
-- Success/failure status
-- Custom tags (workflow properties)
-- Error details (if failed)
+Each operation span carries:
+
+- `workflowforge.operation.id` and `workflowforge.operation.name`
+- `workflowforge.workflow.name` and `workflowforge.execution.id`
+- `ActivityStatusCode.Ok` or `Error`, plus `exception.type` on failure
 
 ## Custom spans
 
@@ -130,12 +145,11 @@ catch (Exception ex)
 
 ## Context propagation
 
-WorkflowForge propagates trace context across:
-
-- Operations within a workflow
-- Nested workflows
-- HTTP calls (with propagation headers)
-- Message queues (with context metadata)
+Spans are created through `ActivitySource`, so they participate in the ambient `Activity.Current`
+chain: operations nest under the workflow span, and the workflow span nests under whatever your
+application already has open. Propagation across process boundaries - HTTP headers, queue metadata -
+is handled by the OpenTelemetry SDK and the relevant instrumentation packages in your application,
+not by this package.
 
 ## Visualization
 
@@ -148,7 +162,7 @@ View traces in:
 
 ## Links
 
-- [Getting Started](../../../docs/getting-started/getting-started.md)
-- [Configuration Guide](../../../docs/core/configuration.md#opentelemetry-extension)
-- [Extensions Overview](../../../docs/extensions/index.md)
-- [Sample 15: OpenTelemetry](../../samples/WorkflowForge.Samples.BasicConsole/README.md)
+- [Getting Started](https://animatlabs.com/workflow-forge/getting-started/getting-started/)
+- [Configuration Guide](https://animatlabs.com/workflow-forge/core/configuration/#opentelemetry-extension)
+- [Extensions Overview](https://animatlabs.com/workflow-forge/extensions/)
+- [Sample 15: OpenTelemetry](https://github.com/animatlabs/workflow-forge/blob/main/src/samples/WorkflowForge.Samples.BasicConsole/README.md)

@@ -48,7 +48,7 @@ public interface IWorkflowOperation : IDisposable
 ### Key concepts
 
 - **ForgeAsync**: Forward work
-- **RestoreAsync**: Undo path; override when needed (base is no-op; engine skips safely)
+- **RestoreAsync**: Undo path; override when needed (base is a no-op, so unoverridden operations do nothing)
 - **Foundry**: Context, logging, services
 
 ---
@@ -658,7 +658,7 @@ var foundry = WorkflowForge.CreateFoundry("NoChaining", options: options);
 
 ### Implementing Compensation
 
-Override **`RestoreAsync`** for undo. Base default is no-op; skipped safely when unchanged.
+Override **`RestoreAsync`** for undo. Compensation calls it on every completed operation; the base default is a no-op.
 
 ```csharp
 public class CreateOrderOperation : WorkflowOperationBase
@@ -695,7 +695,7 @@ public class CreateOrderOperation : WorkflowOperationBase
 2. Operation fails
 3. WorkflowSmith triggers compensation
 4. Executes `RestoreAsync` in **reverse order** on completed operations
-5. Operations that override `RestoreAsync` run their compensation logic; operations that use the base class default (no-op) are safely skipped
+5. `RestoreAsync` is called on every completed operation in reverse order; operations that use the base class default (no-op) simply do nothing and count as compensated
 
 ### Execution and Compensation Modes
 
@@ -858,10 +858,15 @@ public class ResourceOperation : WorkflowOperationBase
 {
     private readonly IDisposable _resource;
     
-    public override void Dispose()
+    // Dispose() is not virtual on the base; override the protected Dispose(bool) instead.
+    protected override void Dispose(bool disposing)
     {
-        _resource?.Dispose();
-        base.Dispose();
+        if (disposing)
+        {
+            _resource?.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 }
 ```
@@ -873,4 +878,4 @@ public class ResourceOperation : WorkflowOperationBase
 - [Architecture](../architecture/overview.md) - Metaphor, components, and layering
 - [Event System](../core/events.md) - Monitoring operation execution
 - [Samples Guide](../getting-started/samples-guide.md) - See operations in action
-- [API Reference](../reference/api-reference.md) - Member-level reference
+- [API reference](../reference/api-reference.md) · [.NET API]({{ "/api/WorkflowForge.html" | relative_url }})

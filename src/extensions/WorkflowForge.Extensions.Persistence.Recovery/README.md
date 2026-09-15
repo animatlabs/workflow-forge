@@ -23,7 +23,7 @@ using WorkflowForge.Extensions.Persistence.Recovery.Options;
 // Your IWorkflowPersistenceProvider implementation (shared with runtime persistence middleware)
 IWorkflowPersistenceProvider provider = /* your provider */;
 
-var coordinator = new RecoveryCoordinator(provider, new RecoveryMiddlewareOptions
+var coordinator = new RecoveryCoordinator(provider, logger, new RecoveryMiddlewareOptions
 {
     MaxRetryAttempts = 3,
     BaseDelay = TimeSpan.FromSeconds(1),
@@ -31,15 +31,26 @@ var coordinator = new RecoveryCoordinator(provider, new RecoveryMiddlewareOption
 });
 
 await coordinator.ResumeAsync(
-    foundryFactory: () => WorkflowForge.CreateFoundry("OrderService"),
+    // The factory MUST attach PersistenceMiddleware with the same provider - see below.
+    foundryFactory: () =>
+    {
+        var foundry = WorkflowForge.CreateFoundry("OrderService");
+        foundry.UsePersistence(provider, persistenceOptions);
+        return foundry;
+    },
     workflowFactory: BuildProcessOrderWorkflow,
     foundryKey: stableFoundryKey,
     workflowKey: stableWorkflowKey);
 ```
 
+> **The foundry factory must attach `PersistenceMiddleware`.** Resume always replays the workflow
+> from operation index 0; it is that middleware, reading the same snapshot, that short-circuits the
+> operations already completed. Without it every completed operation re-executes, repeating side
+> effects such as a payment capture.
+
 ## Key points
 
-- Replays from the last saved `NextOperationIndex` and skips finished operations.
+- Replays from index 0; `PersistenceMiddleware` short-circuits operations below the saved `NextOperationIndex`.
 - Retries resume with exponential or fixed backoff; options match what you use at runtime.
 - `IRecoveryCatalog` supports batch resume over many pending executions.
 - Depends on WorkflowForge core and the persistence contracts only.
@@ -102,16 +113,22 @@ services.AddRecoveryConfiguration(configuration);
 var options = serviceProvider.GetRequiredService<IOptions<RecoveryMiddlewareOptions>>().Value;
 ```
 
-[Recovery configuration](../../../docs/core/configuration.md)
+[Recovery configuration](https://animatlabs.com/workflow-forge/core/configuration/)
 
 ## Usage patterns
 
 ### Single workflow recovery
 
 ```csharp
-// Resume from last checkpoint
+// Resume from last checkpoint. The factory attaches PersistenceMiddleware so completed
+// operations are short-circuited instead of re-executed.
 await coordinator.ResumeAsync(
-    foundryFactory: () => WorkflowForge.CreateFoundry("OrderService"),
+    foundryFactory: () =>
+    {
+        var foundry = WorkflowForge.CreateFoundry("OrderService");
+        foundry.UsePersistence(provider, persistenceOptions);
+        return foundry;
+    },
     workflowFactory: BuildProcessOrderWorkflow,
     foundryKey: stableFoundryKey,
     workflowKey: stableWorkflowKey);
@@ -141,10 +158,18 @@ public class MyCatalog : IRecoveryCatalog
 
 var catalog = new MyCatalog(provider);
 int resumedCount = await coordinator.ResumeAllAsync(
-    foundryFactory: () => WorkflowForge.CreateFoundry("BatchRecovery"),
+    foundryFactory: () =>
+    {
+        var foundry = WorkflowForge.CreateFoundry("BatchRecovery");
+        foundry.UsePersistence(provider, persistenceOptions);
+        return foundry;
+    },
     workflowFactory: BuildWorkflow,
     catalog: catalog);
 ```
+
+`ResumeAllAsync` continues past a snapshot it cannot resume and logs the failure, which is why the
+coordinator requires a logger.
 
 ## Stable keys and invariants
 
@@ -195,9 +220,10 @@ var orderId = foundry.GetPropertyOrDefault<string>("OrderId");
 ## Recovery flow
 
 1. **Load Snapshot**: read state from the provider
-2. **Restore Properties**: copy saved keys into the foundry
-3. **Skip Completed**: begin at `NextOperationIndex`
-4. **Resume Execution**: run remaining operations
+2. **Restore Properties**: `PersistenceMiddleware` copies saved keys into the foundry
+3. **Short-circuit Completed**: the workflow replays from index 0; `PersistenceMiddleware` returns the
+   cached output for every operation below `NextOperationIndex` instead of running it
+4. **Resume Execution**: remaining operations run for real
 5. **Retry on Failure**: `RecoveryMiddlewareOptions` controls backoff and attempts
 
 ## Error handling
@@ -216,8 +242,8 @@ catch (Exception ex)
 
 ## Links
 
-- [Getting Started](../../../docs/getting-started/getting-started.md)
-- [Configuration Guide](../../../docs/core/configuration.md)
-- [Extensions Overview](../../../docs/extensions/index.md)
-- [Persistence Extension](../WorkflowForge.Extensions.Persistence/README.md)
-- [Sample 21: Recovery](../../samples/WorkflowForge.Samples.BasicConsole/README.md)
+- [Getting Started](https://animatlabs.com/workflow-forge/getting-started/getting-started/)
+- [Configuration Guide](https://animatlabs.com/workflow-forge/core/configuration/)
+- [Extensions Overview](https://animatlabs.com/workflow-forge/extensions/)
+- [Persistence Extension](https://github.com/animatlabs/workflow-forge/blob/main/src/extensions/WorkflowForge.Extensions.Persistence/README.md)
+- [Sample 21: Recovery](https://github.com/animatlabs/workflow-forge/blob/main/src/samples/WorkflowForge.Samples.BasicConsole/README.md)

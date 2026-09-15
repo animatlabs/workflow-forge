@@ -3,13 +3,33 @@
     <!-- Single source of truth for the version of every packable project (core + all extensions).
          All packages release under this one number. PackageVersion is derived from Version by
          MSBuild unless a project/CLI overrides it. Bump here when releasing. -->
-    <Version>2.1.2</Version>
+    <Version>2.2.0</Version>
     <!-- Shared package metadata for every packable project (single source of truth). Per-project
          values (e.g. Product, Description, PackageId) stay in each .csproj. -->
     <Copyright>Copyright © 2025-2026 AnimatLabs</Copyright>
-    <PackageReleaseNotes>
-v2.1.2: Fixed ILRepacked extensions (Polly, OpenTelemetry, Serilog) that were missing transitive dependencies and threw a runtime FileNotFoundException (e.g. Microsoft.Bcl.TimeProvider) — the required BCL/Microsoft.Extensions packages now flow to consumers. Implemented foundry performance monitoring so EnablePerformanceMonitoring()/GetPerformanceStatistics() work end-to-end. Fixed pooled-foundry state leaking across executions and audit entries recording "Unknown" workflow names. Centralized package versioning and shared metadata. Hardened lifecycle-event exception isolation and smith disposal.
-    </PackageReleaseNotes>
+    <PackageReleaseNotes><![CDATA[WorkflowForge 2.2.0 (2026-09-15)
+
+BREAKING
+- IWorkflowExecutionContext.Services (IFoundryServices) is a new interface member. Custom IWorkflowFoundry / IWorkflowExecutionContext implementations must expose it; return new FoundryServices().
+- IWorkflowForgeLogger.IsEnabled(WorkflowForgeLogLevel) is a new interface member. Derive from the new WorkflowForgeLoggerBase to inherit an implementation.
+- IFoundryServices.DisposeAll() is a new interface member.
+- The foundry now disposes only what it owns. Reset()/Dispose() no longer dispose caller-supplied operations or middleware; register foundry-owned disposables on Services.
+- Removed the WorkflowForgeLoggers static facade, and the public PropertyNameConstants / WorkflowLogMessageConstants (now internal).
+
+Added
+- WorkflowForgeLoggerBase: optional base class supplying a MinimumLevel-driven IsEnabled.
+- Foundry-scoped Services bag with dispose-on-lease-end semantics.
+
+Fixed
+- Retried operations no longer bypass inner middleware (timeout, logging, validation, persistence were all skipped on retry).
+- LoggingMiddleware is no longer inert under default options; UseLogging() emits again and failures are always logged.
+- WorkflowTimeoutMiddleware now actually cancels the workflow instead of waiting for it to finish.
+- All extension packages ship a single netstandard2.0 asset again, so ILRepack-merged libraries and their declared dependencies can no longer disagree.
+
+Migration: https://github.com/animatlabs/workflow-forge/blob/main/docs/core/foundry-lifetime.md
+Full changelog: https://github.com/animatlabs/workflow-forge/blob/main/CHANGELOG.md#220---2026-09-15]]></PackageReleaseNotes>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <Deterministic>true</Deterministic>
@@ -26,7 +46,8 @@ v2.1.2: Fixed ILRepacked extensions (Polly, OpenTelemetry, Serilog) that were mi
     <NuGetAuditLevel>low</NuGetAuditLevel>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
-  </ItemGroup>
+  <!-- SourceLink is provided by the .NET SDK (global.json 10.x). -->
+
+  <Import Project="build\Packaging\NuGetReadme.props" Condition="'$(IsPackable)' != 'false' and '$(IsTestProject)' != 'true'" />
+  <Import Project="build\Packaging\NuGetReadme.targets" Condition="'$(IsPackable)' != 'false' and '$(IsTestProject)' != 'true'" />
 </Project>

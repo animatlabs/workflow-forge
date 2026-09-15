@@ -284,15 +284,16 @@ public class RecoveryExtensionsShould
 
         public event EventHandler<WorkflowFailedEventArgs>? WorkflowFailed;
 
-        public event EventHandler<CompensationTriggeredEventArgs>? CompensationTriggered;
+        // This stub never compensates, so the compensation events are declared but never raised.
+        public event EventHandler<CompensationTriggeredEventArgs>? CompensationTriggered { add { } remove { } }
 
-        public event EventHandler<CompensationCompletedEventArgs>? CompensationCompleted;
+        public event EventHandler<CompensationCompletedEventArgs>? CompensationCompleted { add { } remove { } }
 
-        public event EventHandler<OperationRestoreStartedEventArgs>? OperationRestoreStarted;
+        public event EventHandler<OperationRestoreStartedEventArgs>? OperationRestoreStarted { add { } remove { } }
 
-        public event EventHandler<OperationRestoreCompletedEventArgs>? OperationRestoreCompleted;
+        public event EventHandler<OperationRestoreCompletedEventArgs>? OperationRestoreCompleted { add { } remove { } }
 
-        public event EventHandler<OperationRestoreFailedEventArgs>? OperationRestoreFailed;
+        public event EventHandler<OperationRestoreFailedEventArgs>? OperationRestoreFailed { add { } remove { } }
 
         public int ForgeWithFoundryCalls { get; private set; }
         public int FailuresBeforeSuccess { get; set; }
@@ -311,15 +312,26 @@ public class RecoveryExtensionsShould
         public Task ForgeAsync(IWorkflow workflow, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
         {
             ForgeWithFoundryCalls++;
+            WorkflowStarted?.Invoke(this, new WorkflowStartedEventArgs(foundry, DateTimeOffset.UtcNow));
+
             if (ThrowOnForgeWithFoundry)
             {
-                throw new InvalidOperationException("Fresh execution should not run in this scenario");
+                var ex = new InvalidOperationException("Fresh execution should not run in this scenario");
+                WorkflowFailed?.Invoke(this, new WorkflowFailedEventArgs(
+                    foundry, DateTimeOffset.UtcNow, ex, "ForgeWithFoundry", TimeSpan.Zero));
+                throw ex;
             }
 
             if (ForgeWithFoundryCalls <= FailuresBeforeSuccess)
             {
-                throw new InvalidOperationException("Transient failure from test smith");
+                var failure = new InvalidOperationException("Transient failure from test smith");
+                WorkflowFailed?.Invoke(this, new WorkflowFailedEventArgs(
+                    foundry, DateTimeOffset.UtcNow, failure, "ForgeWithFoundry", TimeSpan.Zero));
+                throw failure;
             }
+
+            WorkflowCompleted?.Invoke(this, new WorkflowCompletedEventArgs(
+                foundry, DateTimeOffset.UtcNow, new Dictionary<string, object?>(), TimeSpan.Zero));
 
             return Task.CompletedTask;
         }

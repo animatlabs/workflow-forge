@@ -68,7 +68,9 @@ namespace WorkflowForge.Extensions.Resilience
             }
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Disposes the policy supplied to the constructor.
+        /// </summary>
         public void Dispose()
         {
             _policy?.Dispose();

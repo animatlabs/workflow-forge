@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Loggers
 {
@@ -32,6 +33,9 @@ namespace WorkflowForge.Loggers
             _prefix = prefix ?? throw new ArgumentNullException(nameof(prefix));
             _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
         }
+
+        /// <inheritdoc />
+        public bool IsEnabled(WorkflowForgeLogLevel level) => true;
 
         /// <inheritdoc />
         public void LogTrace(string message, params object[] args)

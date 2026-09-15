@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <WorkflowForgeRepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\..'))</WorkflowForgeRepoRoot>
+    <WorkflowForgeNuGetReadmeTemplate>$([System.IO.Path]::Combine('$(WorkflowForgeRepoRoot)', 'build', 'nuget-readme-template.md'))</WorkflowForgeNuGetReadmeTemplate>
+    <WorkflowForgeNuGetReadmeScript>$([System.IO.Path]::Combine('$(WorkflowForgeRepoRoot)', 'scripts', 'generate_nuget_readme.py'))</WorkflowForgeNuGetReadmeScript>
+    <WorkflowForgeNuGetReadmeOutput>$(MSBuildProjectDirectory)\nuget-readme.md</WorkflowForgeNuGetReadmeOutput>
+    <WorkflowForgeNuGetReadmeReleaseNotes>$([System.IO.Path]::Combine('$(WorkflowForgeRepoRoot)', 'build', 'nuget-package-release-notes.md'))</WorkflowForgeNuGetReadmeReleaseNotes>
+    <WorkflowForgeLongReadmeFile>$(MSBuildProjectDirectory)\README.md</WorkflowForgeLongReadmeFile>
+  </PropertyGroup>
+
+</Project>

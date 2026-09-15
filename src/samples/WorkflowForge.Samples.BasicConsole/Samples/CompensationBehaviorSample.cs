@@ -49,7 +49,7 @@ public class CompensationBehaviorSample : ISample
             .AddOperation(new FailingOperation("FailurePoint"))
             .Build();
 
-        var smith = WorkflowForge.CreateSmith();
+        using var smith = WorkflowForge.CreateSmith();
 
         try
         {

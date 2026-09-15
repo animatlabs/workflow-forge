@@ -35,7 +35,7 @@ public class OptionsPatternSample : ISample
         services.Configure<WorkflowForgeOptions>(
             configuration.GetSection(WorkflowForgeOptions.DefaultSectionName));
         services.Configure<PollyMiddlewareOptions>(
-            configuration.GetSection("WorkflowForge:Polly"));
+            configuration.GetSection(PollyMiddlewareOptions.DefaultSectionName));
         services.Configure<PerformanceSettings>(
             configuration.GetSection("WorkflowForge:Performance"));
 

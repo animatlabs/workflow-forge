@@ -51,15 +51,16 @@ namespace WorkflowForge.Middleware
             // Note: Enabled check is done at registration time (UseDefaultMiddleware)
             // If this middleware is registered, it's enabled - no need for runtime check
             // Note: Operation name is already in logging context via ExecutionName property
-            var stopwatch = Stopwatch.StartNew();
+            var startTimestamp = Stopwatch.GetTimestamp();
             var startTime = _timeProvider.UtcNow;
 
             try
             {
                 var result = await next(cancellationToken).ConfigureAwait(false);
 
-                stopwatch.Stop();
-                var elapsedMs = stopwatch.ElapsedMilliseconds;
+                var elapsed = Stopwatch.GetTimestamp() - startTimestamp;
+                var elapsedMs = (long)((elapsed * 1000.0) / Stopwatch.Frequency);
+                var elapsedTicks = elapsed;
 
                 // Store timing data based on configuration
                 // Use static property names - operation name is in logging context
@@ -68,7 +69,7 @@ namespace WorkflowForge.Middleware
                     foundry.Properties[FoundryPropertyKeys.TimingStartTime] = startTime;
                     foundry.Properties[FoundryPropertyKeys.TimingEndTime] = _timeProvider.UtcNow;
                     foundry.Properties[FoundryPropertyKeys.TimingDuration] = elapsedMs;
-                    foundry.Properties[FoundryPropertyKeys.TimingDurationTicks] = stopwatch.ElapsedTicks;
+                    foundry.Properties[FoundryPropertyKeys.TimingDurationTicks] = elapsedTicks;
                 }
                 else
                 {
@@ -80,8 +81,8 @@ namespace WorkflowForge.Middleware
             }
             catch (Exception)
             {
-                stopwatch.Stop();
-                var elapsedMs = stopwatch.ElapsedMilliseconds;
+                var elapsed = Stopwatch.GetTimestamp() - startTimestamp;
+                var elapsedMs = (long)((elapsed * 1000.0) / Stopwatch.Frequency);
 
                 // Store timing even on failure (helps identify slow failing operations)
                 foundry.Properties[FoundryPropertyKeys.TimingDuration] = elapsedMs;

@@ -1,0 +1,11 @@
+<Project>
+  <!-- Fail the build if a declared merge input is absent from the output directory before
+       ILRepack cleanup removes it. The merged assembly's own reference closure is asserted by
+       the PackageClosureShould test against the packed .nupkg. -->
+  <Target Name="WorkflowForgeVerifyIlRepackClosure" AfterTargets="WorkflowForgeILRepack" BeforeTargets="ILRepackCleanup" Condition="$(Configuration.Contains('Release')) and '$(WorkflowForgeIlRepackVerifyAssemblies)' != ''">
+    <ItemGroup>
+      <_IlRepackVerify Include="$(WorkflowForgeIlRepackVerifyAssemblies.Split(';'))" />
+    </ItemGroup>
+    <Error Condition="!Exists('$(OutputPath)%(_IlRepackVerify.Identity)')" Text="ILRepack closure check failed: missing '$(OutputPath)%(_IlRepackVerify.Identity)' before pack. Build Release first." />
+  </Target>
+</Project>

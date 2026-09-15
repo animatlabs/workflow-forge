@@ -58,7 +58,7 @@ public class ConcurrencyBenchmark
     public async Task<string> ParallelWorkflows()
     {
         var results = new string[ConcurrentWorkflowCount];
-        var semaphore = new SemaphoreSlim(Environment.ProcessorCount, Environment.ProcessorCount);
+        using var semaphore = new SemaphoreSlim(Environment.ProcessorCount, Environment.ProcessorCount);
         var tasks = new Task[ConcurrentWorkflowCount];
 
         for (int i = 0; i < ConcurrentWorkflowCount; i++)
@@ -78,14 +78,7 @@ public class ConcurrencyBenchmark
             });
         }
 
-        try
-        {
-            await Task.WhenAll(tasks);
-        }
-        finally
-        {
-            semaphore.Dispose();
-        }
+        await Task.WhenAll(tasks);
 
         return $"Completed {results.Length} workflows in parallel";
     }
@@ -109,7 +102,7 @@ public class ConcurrencyBenchmark
     [Benchmark]
     public async Task<string> TaskBasedConcurrency()
     {
-        var semaphore = new SemaphoreSlim(Environment.ProcessorCount, Environment.ProcessorCount);
+        using var semaphore = new SemaphoreSlim(Environment.ProcessorCount, Environment.ProcessorCount);
         var tasks = new List<Task<string>>();
 
         for (int i = 0; i < ConcurrentWorkflowCount; i++)
@@ -118,15 +111,8 @@ public class ConcurrencyBenchmark
             tasks.Add(ExecuteWithSemaphore(semaphore, () => RunSingleWorkflow($"Semaphore_{workflowIndex}")));
         }
 
-        try
-        {
-            var results = await Task.WhenAll(tasks);
-            return $"Completed {results.Length} workflows with semaphore control";
-        }
-        finally
-        {
-            semaphore.Dispose();
-        }
+        var results = await Task.WhenAll(tasks);
+        return $"Completed {results.Length} workflows with semaphore control";
     }
 
     [Benchmark]

@@ -8,6 +8,8 @@ namespace WorkflowForge.Benchmarks.Comparative.Implementations.WorkflowCore;
 public class Scenario7_CreationOverhead_WorkflowCore : IWorkflowScenario
 {
     private readonly ScenarioParameters _parameters;
+    private ServiceProvider? _serviceProvider;
+    private IWorkflowHost? _workflowHost;
 
     public string Name => "Creation Overhead";
     public string Description => "Measure workflow definition registration time";
@@ -15,21 +17,23 @@ public class Scenario7_CreationOverhead_WorkflowCore : IWorkflowScenario
     public Scenario7_CreationOverhead_WorkflowCore(ScenarioParameters parameters)
     { _parameters = parameters; }
 
-    public Task SetupAsync() => Task.CompletedTask;
-
-    public async Task<ScenarioResult> ExecuteAsync()
+    public Task SetupAsync()
     {
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddWorkflow();
-        var serviceProvider = services.BuildServiceProvider();
-        var workflowHost = serviceProvider.GetRequiredService<IWorkflowHost>();
+        _serviceProvider = services.BuildServiceProvider();
+        _workflowHost = _serviceProvider.GetRequiredService<IWorkflowHost>();
+        return Task.CompletedTask;
+    }
 
-        // Just register, don't start
-        workflowHost.RegisterWorkflow<CreationWorkflow, CreationData>();
-
-        if (serviceProvider is IDisposable disposable)
-            disposable.Dispose();
+    public async Task<ScenarioResult> ExecuteAsync()
+    {
+        // WorkflowCore's registry throws InvalidOperationException on a duplicate (Id, Version)
+        // registration, so a benchmark strategy that invokes this more than once per SetupAsync
+        // needs a distinct Id per call to keep measuring registration, not the exception path.
+        var id = "CreationDefinition_" + Guid.NewGuid().ToString("N");
+        _workflowHost!.Registry.RegisterWorkflow(new CreationWorkflow(id));
         await Task.CompletedTask;
 
         return new ScenarioResult
@@ -41,11 +45,23 @@ public class Scenario7_CreationOverhead_WorkflowCore : IWorkflowScenario
         };
     }
 
-    public Task CleanupAsync() => Task.CompletedTask;
+    public Task CleanupAsync()
+    {
+        if (_serviceProvider is IDisposable disposable)
+            disposable.Dispose();
+        _serviceProvider = null;
+        _workflowHost = null;
+        return Task.CompletedTask;
+    }
 
     public class CreationWorkflow : IWorkflow<CreationData>
     {
-        public string Id => "CreationDefinition";
+        public CreationWorkflow(string id)
+        {
+            Id = id;
+        }
+
+        public string Id { get; }
         public int Version => 1;
 
         public void Build(IWorkflowBuilder<CreationData> builder)

@@ -1,6 +1,6 @@
 # WorkflowForge.Extensions.Resilience.Polly
 
-Apply Polly retry, circuit breaker, timeout, and rate limiting to WorkflowForge operations. Polly is ILRepacked so your app sees fewer version conflicts.
+Apply Polly retry, circuit breaker and timeout policies to WorkflowForge operations. Polly is ILRepacked so your app sees fewer version conflicts.
 
 [![NuGet](https://img.shields.io/nuget/v/WorkflowForge.Extensions.Resilience.Polly.svg)](https://www.nuget.org/packages/WorkflowForge.Extensions.Resilience.Polly/)
 
@@ -43,7 +43,7 @@ foundry.UsePollyComprehensive(
 
 - Foundry-wide middleware or per-operation wrappers use the same policy types.
 - `PollyMiddlewareOptions` binds to `appsettings.json` and DI.
-- Exponential backoff, jitter, circuit breaker sampling, timeouts, and rate limits are all optional slices you can enable independently.
+- Exponential backoff, jitter, circuit breaker sampling and timeouts are all optional slices you can enable independently.
 
 ## Configuration
 
@@ -77,14 +77,7 @@ foundry.UsePollyComprehensive(
         },
         "Timeout": {
           "IsEnabled": true,
-          "DefaultTimeout": "00:00:30",
-          "UseOptimisticTimeout": true
-        },
-        "RateLimiter": {
-          "IsEnabled": false,
-          "PermitLimit": 100,
-          "Window": "00:01:00",
-          "QueueLimit": 0
+          "DefaultTimeout": "00:00:30"
         }
       }
     }
@@ -115,11 +108,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WorkflowForge.Extensions.Resilience.Polly;
 
-services.AddWorkflowForgePolly(configuration, PollyMiddlewareOptions.DefaultSectionName);
+services.AddWorkflowForgePolly(configuration);   // binds WorkflowForge:Extensions:Polly
 var options = serviceProvider.GetRequiredService<PollyMiddlewareOptions>();
 ```
 
-[Polly extension options](../../../docs/core/configuration.md#polly-extension)
+[Polly extension options](https://animatlabs.com/workflow-forge/core/configuration/#polly-extension)
 
 ## Usage examples
 
@@ -155,7 +148,7 @@ foundry.UsePollyFromSettings(options);
 
 ## Links
 
-- [Getting Started](../../../docs/getting-started/getting-started.md)
-- [Configuration Guide](../../../docs/core/configuration.md#polly-extension)
-- [Extensions Overview](../../../docs/extensions/index.md)
-- [Sample 14: Polly Resilience](../../samples/WorkflowForge.Samples.BasicConsole/README.md)
+- [Getting Started](https://animatlabs.com/workflow-forge/getting-started/getting-started/)
+- [Configuration Guide](https://animatlabs.com/workflow-forge/core/configuration/#polly-extension)
+- [Extensions Overview](https://animatlabs.com/workflow-forge/extensions/)
+- [Sample 14: Polly Resilience](https://github.com/animatlabs/workflow-forge/blob/main/src/samples/WorkflowForge.Samples.BasicConsole/README.md)

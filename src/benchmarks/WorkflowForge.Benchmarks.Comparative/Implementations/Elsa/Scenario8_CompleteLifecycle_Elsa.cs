@@ -10,6 +10,8 @@ namespace WorkflowForge.Benchmarks.Comparative.Implementations.Elsa;
 public class Scenario8_CompleteLifecycle_Elsa : IWorkflowScenario
 {
     private readonly ScenarioParameters _parameters;
+    private ServiceProvider? _serviceProvider;
+    private IWorkflowRunner? _workflowRunner;
 
     public string Name => "Complete Lifecycle";
     public string Description => "Full create→execute→cleanup cycle";
@@ -17,22 +19,19 @@ public class Scenario8_CompleteLifecycle_Elsa : IWorkflowScenario
     public Scenario8_CompleteLifecycle_Elsa(ScenarioParameters parameters)
     { _parameters = parameters; }
 
-    public Task SetupAsync() => Task.CompletedTask;
+    public Task SetupAsync()
+    {
+        var services = new ServiceCollection();
+        services.AddElsa();
+        _serviceProvider = services.BuildServiceProvider();
+        _workflowRunner = _serviceProvider.GetRequiredService<IWorkflowRunner>();
+        return Task.CompletedTask;
+    }
 
     public async Task<ScenarioResult> ExecuteAsync()
     {
-        // Create
-        var services = new ServiceCollection();
-        services.AddElsa();
-        var serviceProvider = services.BuildServiceProvider();
-        var workflowRunner = serviceProvider.GetRequiredService<IWorkflowRunner>();
-
-        // Execute
         var workflow = new LifecycleWorkflow();
-        var result = await workflowRunner.RunAsync(workflow);
-
-        // Cleanup
-        if (serviceProvider is IDisposable disposable) disposable.Dispose();
+        var result = await _workflowRunner!.RunAsync(workflow);
 
         return new ScenarioResult
         {
@@ -43,7 +42,14 @@ public class Scenario8_CompleteLifecycle_Elsa : IWorkflowScenario
         };
     }
 
-    public Task CleanupAsync() => Task.CompletedTask;
+    public Task CleanupAsync()
+    {
+        if (_serviceProvider is IDisposable disposable)
+            disposable.Dispose();
+        _serviceProvider = null;
+        _workflowRunner = null;
+        return Task.CompletedTask;
+    }
 
     public class LifecycleWorkflow : WorkflowBase
     {

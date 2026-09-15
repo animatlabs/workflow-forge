@@ -1,8 +1,8 @@
 <Project>
+  <Import Project="../src/Directory.Build.props" />
+
   <PropertyGroup>
     <SonarQubeExclude>true</SonarQubeExclude>
     <SonarQubeTestProject>true</SonarQubeTestProject>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\WorkflowForge.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 </Project>

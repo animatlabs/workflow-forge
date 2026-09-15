@@ -22,7 +22,7 @@ public class ServiceProviderResolutionSample : ISample
         services.AddSingleton<IPriceCalculator, PriceCalculator>();
         using var provider = services.BuildServiceProvider();
 
-        var smith = WorkflowForge.CreateSmith(provider.GetRequiredService<IWorkflowForgeLogger>(), provider);
+        using var smith = WorkflowForge.CreateSmith(provider.GetRequiredService<IWorkflowForgeLogger>(), provider);
 
         var workflow = WorkflowForge.CreateWorkflow("ServiceProviderDemo")
             .AddOperation(new CalculateTotalOperation())

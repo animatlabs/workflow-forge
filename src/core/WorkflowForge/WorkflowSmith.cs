@@ -28,6 +28,7 @@ namespace WorkflowForge
         private readonly SemaphoreSlim? _concurrencyLimiter;
         private readonly List<IWorkflowMiddleware> _workflowMiddlewares = new();
         private readonly object _workflowMiddlewareLock = new();
+        private IWorkflowMiddleware[]? _cachedWorkflowMiddlewares;
         private readonly ConcurrentBag<IWorkflowFoundry> _foundryPool = new();
         private static readonly int MaxPoolSize = Environment.ProcessorCount * 2;
         private int _poolCount;
@@ -126,22 +127,30 @@ namespace WorkflowForge
             }
             finally
             {
-                if (!_disposed && Interlocked.Increment(ref _poolCount) <= MaxPoolSize)
+                if (_disposed)
                 {
-                    ((WorkflowFoundry)foundry).Reset(Guid.NewGuid(), _logger, _serviceProvider, _options, null);
-                    _foundryPool.Add(foundry);
-
-                    // Guard against a Dispose() that ran after the _disposed check above and already
-                    // drained the pool: re-drain so this just-added foundry cannot leak un-disposed.
-                    if (_disposed)
-                    {
-                        DrainFoundryPool();
-                    }
+                    foundry.Dispose();
                 }
                 else
                 {
-                    Interlocked.Decrement(ref _poolCount);
-                    foundry.Dispose();
+                    var newPoolCount = Interlocked.Increment(ref _poolCount);
+                    if (newPoolCount <= MaxPoolSize)
+                    {
+                        ((WorkflowFoundry)foundry).Reset(Guid.NewGuid(), _logger, _serviceProvider, _options, null);
+                        _foundryPool.Add(foundry);
+
+                        // Guard against a Dispose() that ran after the _disposed check above and already
+                        // drained the pool: re-drain so this just-added foundry cannot leak un-disposed.
+                        if (_disposed)
+                        {
+                            DrainFoundryPool();
+                        }
+                    }
+                    else
+                    {
+                        Interlocked.Decrement(ref _poolCount);
+                        foundry.Dispose();
+                    }
                 }
             }
         }
@@ -199,6 +208,24 @@ namespace WorkflowForge
         }
 
         /// <summary>
+        /// Links the caller's token with a timeout token published by workflow-level middleware,
+        /// or returns null when no timeout is in effect.
+        /// </summary>
+        private static CancellationTokenSource? CreateTimeoutLink(
+            IWorkflowFoundry foundry,
+            CancellationToken cancellationToken)
+        {
+            if (foundry.Properties.TryGetValue(FoundryPropertyKeys.WorkflowTimeoutCancellationToken, out var value)
+                && value is CancellationToken timeoutToken
+                && timeoutToken.CanBeCanceled)
+            {
+                return CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutToken);
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Internal workflow execution logic (extracted for semaphore wrapping).
         /// Executes workflow through workflow-level middleware pipeline.
         /// </summary>
@@ -222,11 +249,16 @@ namespace WorkflowForge
                 // FIRE: WorkflowStarted event
                 RaiseEvent(() => WorkflowStarted?.Invoke(this, new WorkflowStartedEventArgs(foundry, _timeProvider.UtcNow)), "WorkflowStarted");
 
+                // A workflow-level middleware may have published a timeout token before calling
+                // next(); honour it so the timeout can actually stop the run.
+                using var timeoutLink = CreateTimeoutLink(foundry, cancellationToken);
+                var executionToken = timeoutLink?.Token ?? cancellationToken;
+
                 try
                 {
                     // Route execution through foundry pipeline so operation middlewares are applied
                     foundry.ReplaceOperations(workflow.Operations);
-                    await foundry.ForgeAsync(cancellationToken).ConfigureAwait(false);
+                    await foundry.ForgeAsync(executionToken).ConfigureAwait(false);
 
                     // Log workflow completion
                     _logger.LogInformation(WorkflowLogMessageConstants.WorkflowExecutionCompleted);
@@ -235,8 +267,11 @@ namespace WorkflowForge
                     var duration = _timeProvider.UtcNow - startTime;
                     RaiseEvent(() =>
                     {
+                        if (WorkflowCompleted is null)
+                            return;
+
                         var finalProperties = new Dictionary<string, object?>(foundry.Properties);
-                        WorkflowCompleted?.Invoke(this, new WorkflowCompletedEventArgs(
+                        WorkflowCompleted.Invoke(this, new WorkflowCompletedEventArgs(
                             foundry,
                             _timeProvider.UtcNow,
                             finalProperties,
@@ -260,7 +295,8 @@ namespace WorkflowForge
             IWorkflowMiddleware[] middlewareSnapshot;
             lock (_workflowMiddlewareLock)
             {
-                middlewareSnapshot = _workflowMiddlewares.ToArray();
+                _cachedWorkflowMiddlewares ??= _workflowMiddlewares.ToArray();
+                middlewareSnapshot = _cachedWorkflowMiddlewares;
             }
 
             // Wrap with workflow middlewares (Russian Doll pattern - reverse order)
@@ -303,7 +339,11 @@ namespace WorkflowForge
 
             // Always attempt compensation — the base class no-op handles non-restorable operations
             var lastForgedIndex = -1;
-            if (foundry.Properties.TryGetValue(FoundryPropertyKeys.LastCompletedIndex, out var lastCompletedValue)
+            if (foundry is WorkflowFoundry workflowFoundry && workflowFoundry.LastCompletedIndex >= 0)
+            {
+                lastForgedIndex = workflowFoundry.LastCompletedIndex;
+            }
+            else if (foundry.Properties.TryGetValue(FoundryPropertyKeys.LastCompletedIndex, out var lastCompletedValue)
                 && lastCompletedValue is int completedIndex)
             {
                 lastForgedIndex = completedIndex;
@@ -540,12 +580,15 @@ namespace WorkflowForge
 
         private IWorkflowFoundry CreateFoundryWithData(ConcurrentDictionary<string, object?> properties)
         {
+            // The dictionary belongs to the caller and stays observable after the run, so the
+            // foundry must not clear it when the lease ends.
             return new WorkflowFoundry(
                 Guid.NewGuid(),
                 properties,
                 _logger,
                 _serviceProvider,
-                options: _options);
+                options: _options,
+                ownsProperties: false);
         }
 
         /// <inheritdoc />
@@ -557,6 +600,7 @@ namespace WorkflowForge
             lock (_workflowMiddlewareLock)
             {
                 _workflowMiddlewares.Add(middleware);
+                _cachedWorkflowMiddlewares = null;
             }
         }
 

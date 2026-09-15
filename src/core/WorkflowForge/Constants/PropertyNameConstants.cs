@@ -5,7 +5,7 @@ namespace WorkflowForge.Constants
     /// and avoid conflicts with external systems (e.g., Azure OperationId).
     /// Performance metrics are handled by WorkflowForge.Extensions.Observability.Performance.
     /// </summary>
-    public static class PropertyNameConstants
+    internal static class PropertyNameConstants
     {
         #region Core Execution Properties (Base)
 

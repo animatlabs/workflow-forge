@@ -38,6 +38,13 @@ namespace WorkflowForge.Operations
             if (foundry == null)
                 throw new ArgumentNullException(nameof(foundry));
 
+            // The scope wraps nothing but this operation's own message, so both can be skipped
+            // when the configured level is disabled.
+            if (!foundry.Logger.IsEnabled(_logLevel))
+            {
+                return Task.FromResult(inputData);
+            }
+
             // Create logging properties with input data information
             var loggingProperties = new Dictionary<string, string>
             {

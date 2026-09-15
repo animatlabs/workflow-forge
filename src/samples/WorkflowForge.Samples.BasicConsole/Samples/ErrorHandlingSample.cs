@@ -30,6 +30,7 @@ public class ErrorHandlingSample : ISample
     private static async Task RunRetryScenario()
     {
         Console.WriteLine("\n--- Retry Logic Scenario ---");
+        RetryableExternalServiceOperation.ResetAttemptCount();
 
         using var foundry = WorkflowForge.CreateFoundry("RetryWorkflow");
 
@@ -136,7 +137,9 @@ public class ErrorHandlingSample : ISample
 
 public class RetryableExternalServiceOperation : WorkflowOperationBase
 {
-    private static int _attemptCount = 0;
+    private static int _attemptCount;
+
+    public static void ResetAttemptCount() => _attemptCount = 0;
 
     public override string Name => "RetryableExternalService";
 

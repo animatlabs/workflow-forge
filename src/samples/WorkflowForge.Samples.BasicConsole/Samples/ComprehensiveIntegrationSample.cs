@@ -27,6 +27,7 @@ public class ComprehensiveIntegrationSample : ISample
     {
         Console.WriteLine("Demonstrating comprehensive WorkflowForge integration...");
         Console.WriteLine("This sample combines multiple extensions in a realistic e-commerce scenario.");
+        OrderValidationWithResilienceOperation.ResetAttemptCount();
 
         var logger = SerilogLoggerFactory.CreateLogger(new SerilogLoggerOptions
         {
@@ -101,7 +102,9 @@ public class ComprehensiveIntegrationSample : ISample
 /// </summary>
 public class OrderValidationWithResilienceOperation : WorkflowOperationBase
 {
-    private static int _attemptCount = 0;
+    private static int _attemptCount;
+
+    public static void ResetAttemptCount() => _attemptCount = 0;
 
     public override string Name => "OrderValidationWithResilience";
 

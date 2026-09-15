@@ -49,25 +49,28 @@ using var foundry = WorkflowForge.CreateFoundry("MyWorkflow", logger);
 
 ### From appsettings.json
 
+The embedded pipeline reads only these three settings. Bind them to `SerilogLoggerOptions` and pass
+the result to `CreateLogger`:
+
 ```json
 {
-  "Serilog": {
-    "MinimumLevel": "Information",
-    "WriteTo": [
-      { "Name": "Console" },
-      {
-        "Name": "File",
-        "Args": {
-          "path": "logs/workflow-.txt",
-          "rollingInterval": "Day"
-        }
+  "WorkflowForge": {
+    "Extensions": {
+      "Serilog": {
+        "MinimumLevel": "Information",
+        "EnableConsoleSink": true,
+        "ConsoleOutputTemplate": "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
       }
-    ]
+    }
   }
 }
 ```
 
-[Serilog extension options](../../../docs/core/configuration.md#serilog-extension)
+A standard Serilog `WriteTo` section is **not** read by this package. For file, Seq or any other
+sink, configure Serilog in your host and use `CreateLogger(ILoggerFactory)` - see
+[Advanced sinks](#advanced-sinks-host-integration) below.
+
+[Serilog extension options](https://animatlabs.com/workflow-forge/core/configuration/#serilog-extension)
 
 ## Structured logging examples
 
@@ -137,7 +140,7 @@ That path uses every sink you configure in the host while this package stays lig
 
 ## Links
 
-- [Getting Started](../../../docs/getting-started/getting-started.md)
-- [Configuration Guide](../../../docs/core/configuration.md#serilog-extension)
-- [Extensions Overview](../../../docs/extensions/index.md)
-- [Sample 13: Serilog](../../samples/WorkflowForge.Samples.BasicConsole/README.md)
+- [Getting Started](https://animatlabs.com/workflow-forge/getting-started/getting-started/)
+- [Configuration Guide](https://animatlabs.com/workflow-forge/core/configuration/#serilog-extension)
+- [Extensions Overview](https://animatlabs.com/workflow-forge/extensions/)
+- [Sample 13: Serilog](https://github.com/animatlabs/workflow-forge/blob/main/src/samples/WorkflowForge.Samples.BasicConsole/README.md)

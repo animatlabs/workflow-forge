@@ -29,8 +29,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: windows-latest
+  build-linux:
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     env:
@@ -52,42 +52,50 @@ jobs:
         dotnet-version: 10.0.x
 
     - name: Setup Java 17
+      if: ${{ env.SONAR_TOKEN != '' }}
       uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
       with:
-        distribution: 'temurin'
+        distribution: temurin
         java-version: '17'
 
     - name: Cache SonarCloud packages
+      if: ${{ env.SONAR_TOKEN != '' }}
       uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       with:
-        path: ~\sonar\cache
+        path: ~/.sonar/cache
         key: ${{ runner.os }}-sonar
         restore-keys: ${{ runner.os }}-sonar
 
     - name: Install SonarScanner for .NET
+      if: ${{ env.SONAR_TOKEN != '' }}
       run: dotnet tool install --global dotnet-sonarscanner
+
+    - name: Add dotnet tools to PATH
+      if: ${{ env.SONAR_TOKEN != '' }}
+      run: echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
 
     - name: Restore dependencies
       run: dotnet restore WorkflowForge.sln
 
     - name: Build and Test with SonarCloud
       if: ${{ env.SONAR_TOKEN != '' }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        dotnet sonarscanner begin `
-          /k:"animatlabs_workflow-forge" `
-          /o:"animatlabs" `
-          /d:sonar.token="$env:SONAR_TOKEN" `
-          /d:sonar.host.url="https://sonarcloud.io" `
-          /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml" `
-          /d:sonar.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**,**/docs/**,**/*.js,**/*.css" `
-          /d:sonar.coverage.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**" `
-          /d:sonar.cpd.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**" `
+        dotnet sonarscanner begin \
+          /k:"animatlabs_workflow-forge" \
+          /o:"animatlabs" \
+          /d:sonar.token="${SONAR_TOKEN}" \
+          /d:sonar.host.url="https://sonarcloud.io" \
+          /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml" \
+          /d:sonar.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**,**/docs/**,**/*.js,**/*.css" \
+          /d:sonar.coverage.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**" \
+          /d:sonar.cpd.exclusions="**/src/benchmarks/**,**/src/samples/**,**/tests/**" \
           /d:sonar.scanner.scanAll=false
         dotnet build WorkflowForge.sln --configuration Release --no-restore
         dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-net8.trx" --collect:"XPlat Code Coverage" --framework net8.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-net10.trx" --collect:"XPlat Code Coverage" --framework net10.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-netfx.trx" --framework net48
-        dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
+        dotnet sonarscanner end /d:sonar.token="${SONAR_TOKEN}"
 
     - name: Build and Test (without SonarCloud)
       if: ${{ env.SONAR_TOKEN == '' }}
@@ -95,24 +103,24 @@ jobs:
         dotnet build WorkflowForge.sln --configuration Release --no-restore
         dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-net8.trx" --collect:"XPlat Code Coverage" --framework net8.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
         dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-net10.trx" --collect:"XPlat Code Coverage" --framework net10.0 -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results-netfx.trx" --framework net48
 
     - name: Publish Sonar links
-      if: ${{ always() && env.SONAR_TOKEN != '' }}
-      shell: pwsh
+      if: always() && env.SONAR_TOKEN != ''
       run: |
-        $projectKey = "animatlabs_workflow-forge"
-        if ("${{ github.event_name }}" -eq "pull_request") {
-          $prNumber = "${{ github.event.pull_request.number }}"
-          $dashboardUrl = "https://sonarcloud.io/dashboard?id=$projectKey&pullRequest=$prNumber"
-          $newCodeUrl = "https://sonarcloud.io/summary/new_code?id=$projectKey&pullRequest=$prNumber"
-          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## SonarCloud`nPR Dashboard: $dashboardUrl`nPR New Code: $newCodeUrl"
-        }
-        else {
-          $dashboardUrl = "https://sonarcloud.io/dashboard?id=$projectKey"
-          $newCodeUrl = "https://sonarcloud.io/summary/new_code?id=$projectKey"
-          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## SonarCloud`nBranch Dashboard: $dashboardUrl`nBranch New Code: $newCodeUrl"
-        }
+        project_key="animatlabs_workflow-forge"
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          pr_number="${{ github.event.pull_request.number }}"
+          dashboard_url="https://sonarcloud.io/dashboard?id=${project_key}&pullRequest=${pr_number}"
+          new_code_url="https://sonarcloud.io/summary/new_code?id=${project_key}&pullRequest=${pr_number}"
+        else
+          dashboard_url="https://sonarcloud.io/dashboard?id=${project_key}"
+          new_code_url="https://sonarcloud.io/summary/new_code?id=${project_key}"
+        fi
+        {
+          echo "## SonarCloud"
+          echo "Dashboard: ${dashboard_url}"
+          echo "New code: ${new_code_url}"
+        } >> "$GITHUB_STEP_SUMMARY"
 
     - name: Upload test results
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
@@ -128,29 +136,76 @@ jobs:
         name: coverage-reports
         path: '**/TestResults/**/coverage.opencover.xml'
 
-    - name: Pack
-      if: github.event_name == 'workflow_dispatch'
+  build-windows-net48:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+    - name: Setup .NET 8.0
+      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Setup .NET 10.0
+      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore WorkflowForge.sln
+
+    - name: Build and Test (.NET Framework 4.8)
       run: |
-        $packArgs = @("--configuration", "Release", "--output", "./packages")
-        if ("${{ github.event.inputs.version }}") {
-          # Override the assembly version AND the package version so they stay in lockstep.
-          # -p:Version must be applied at build time, so do NOT use --no-build here.
-          $packArgs += @("-p:Version=${{ github.event.inputs.version }}", "-p:PackageVersion=${{ github.event.inputs.version }}")
-        } else {
-          # No override: pack the already-built assemblies at the version centralized in
-          # src/Directory.Build.props.
-          $packArgs += "--no-build"
-        }
-        dotnet pack WorkflowForge.sln @packArgs
+        dotnet build WorkflowForge.sln --configuration Release --no-restore
+        dotnet test WorkflowForge.sln --configuration Release --no-build --verbosity minimal --framework net48
+
+  release-pack:
+    if: github.event_name == 'workflow_dispatch'
+    needs: [build-linux, build-windows-net48]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+    - name: Setup .NET 8.0
+      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Setup .NET 10.0
+      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore WorkflowForge.sln
+
+    - name: Pack
+      run: |
+        if [ -n "${{ github.event.inputs.version }}" ]; then
+          dotnet pack WorkflowForge.sln --configuration Release --output ./packages \
+            -p:Version="${{ github.event.inputs.version }}" \
+            -p:PackageVersion="${{ github.event.inputs.version }}"
+        else
+          dotnet build WorkflowForge.sln --configuration Release --no-restore
+          dotnet pack WorkflowForge.sln --configuration Release --no-build --output ./packages
+        fi
+
+    - name: Verify package contents
+      run: python scripts/verify_nuget_packages.py --output ./packages --skip-pack
 
     - name: Generate CycloneDX SBOM
-      if: github.event_name == 'workflow_dispatch'
       run: |
         dotnet tool install --global CycloneDX
+        export PATH="$PATH:$HOME/.dotnet/tools"
         dotnet cyclonedx WorkflowForge.sln -o ./packages --json
 
     - name: Upload packages
-      if: github.event_name == 'workflow_dispatch'
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
         name: nuget-packages
@@ -160,7 +215,7 @@ jobs:
           ./packages/*.json
 
   publish:
-    needs: build
+    needs: release-pack
     runs-on: windows-latest
     environment: nuget-publish
     concurrency:

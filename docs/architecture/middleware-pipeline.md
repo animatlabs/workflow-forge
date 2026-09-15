@@ -71,27 +71,40 @@ With that stack, outer timing/logging sees failures, handlers still see retry er
 
 ## Technical Implementation Details
 
-### Why Reverse Iteration?
+### How the chain is walked
 
-The loop walks from `_middlewares.Count - 1` down to `0` so the most recently added middleware becomes the innermost wrapper, each pass substitutes a new `next` delegate, and the first registration you make ends up executing first on the way in (outermost layer).
+Operation middleware is entered by forward recursion over a snapshot of the registered middleware.
+Index `0` — the first registration — is entered first and is therefore the outermost layer; the
+operation itself runs when the index passes the end of the array.
+
+The index is a parameter, not shared state. That is what lets a middleware call `next` more than
+once: a retry re-enters the *whole* remaining chain rather than jumping straight to the operation.
 
 ### Code Structure
 
 ```csharp
-// Start with the core operation
-Func<CancellationToken, Task<object?>> next = token => operation.ForgeAsync(inputData, this, token);
+// Entry point: start at the first registered middleware.
+public Task<object?> InvokeAsync(CancellationToken cancellationToken)
+    => InvokeAsync(0, cancellationToken);
 
-// Wrap each middleware in reverse order
-for (int i = _middlewares.Count - 1; i >= 0; i--)
+private Task<object?> InvokeAsync(int index, CancellationToken cancellationToken)
 {
-    var middleware = _middlewares[i];
-    var currentNext = next;
-    next = token => middleware.ExecuteAsync(operation, this, inputData, currentNext, token);
-}
+    // Past the last layer, run the operation itself.
+    if (index >= _middleware.Length)
+        return _operation.ForgeAsync(_inputData, _foundry, cancellationToken);
 
-// Execute the fully-wrapped chain
-return await next(cancellationToken).ConfigureAwait(false);
+    var middleware = _middleware[index];
+    return middleware.ExecuteAsync(
+        _operation,
+        _foundry,
+        _inputData,
+        token => InvokeAsync(index + 1, token),
+        cancellationToken);
+}
 ```
+
+Workflow-level middleware (`IWorkflowMiddleware`) is composed differently — `WorkflowSmith` builds
+the chain up front by wrapping in reverse so that, again, the first registration is outermost.
 
 ### Middleware Interface
 
@@ -138,12 +151,32 @@ foundry.UsePollyRetry();    // Innermost - wraps operation
 
 ## Debugging Middleware
 
-To understand execution order, add logging middleware:
+To understand execution order, add a small middleware of your own that prints on the way in and out:
 
 ```csharp
-foundry.AddMiddleware(new LoggingMiddleware("OUTER"));
-foundry.AddMiddleware(new LoggingMiddleware("MIDDLE"));
-foundry.AddMiddleware(new LoggingMiddleware("INNER"));
+public sealed class TraceMiddleware : IWorkflowOperationMiddleware
+{
+    private readonly string _label;
+
+    public TraceMiddleware(string label) => _label = label;
+
+    public async Task<object?> ExecuteAsync(
+        IWorkflowOperation operation,
+        IWorkflowFoundry foundry,
+        object? inputData,
+        Func<CancellationToken, Task<object?>> next,
+        CancellationToken cancellationToken = default)
+    {
+        Console.WriteLine($"{_label}: Before");
+        var result = await next(cancellationToken);
+        Console.WriteLine($"{_label}: After");
+        return result;
+    }
+}
+
+foundry.AddMiddleware(new TraceMiddleware("OUTER"));
+foundry.AddMiddleware(new TraceMiddleware("MIDDLE"));
+foundry.AddMiddleware(new TraceMiddleware("INNER"));
 
 // Output will show:
 // OUTER: Before

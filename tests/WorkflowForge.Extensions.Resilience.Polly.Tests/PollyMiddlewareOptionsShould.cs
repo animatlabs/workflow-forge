@@ -53,15 +53,6 @@ public class PollyMiddlewareOptionsShould
     }
 
     [Fact]
-    public void Default_RateLimiter_IsDisabled()
-    {
-        var options = new PollyMiddlewareOptions();
-
-        Assert.False(options.RateLimiter.IsEnabled);
-        Assert.Equal(100, options.RateLimiter.PermitLimit);
-    }
-
-    [Fact]
     public void Default_EnableComprehensivePolicies_IsFalse()
     {
         var options = new PollyMiddlewareOptions();
@@ -112,8 +103,6 @@ public class PollyMiddlewareOptionsShould
         options.CircuitBreaker.FailureThreshold = 10;
         options.Timeout.IsEnabled = true;
         options.Timeout.DefaultTimeout = TimeSpan.FromMinutes(1);
-        options.RateLimiter.IsEnabled = true;
-        options.RateLimiter.PermitLimit = 50;
 
         Assert.False(options.Enabled);
         Assert.True(options.EnableComprehensivePolicies);
@@ -126,8 +115,6 @@ public class PollyMiddlewareOptionsShould
         Assert.Equal(10, options.CircuitBreaker.FailureThreshold);
         Assert.True(options.Timeout.IsEnabled);
         Assert.Equal(TimeSpan.FromMinutes(1), options.Timeout.DefaultTimeout);
-        Assert.True(options.RateLimiter.IsEnabled);
-        Assert.Equal(50, options.RateLimiter.PermitLimit);
     }
 
     [Fact]
@@ -244,38 +231,13 @@ public class PollyMiddlewareOptionsShould
     }
 
     [Fact]
-    public void ReturnEmpty_GivenValidateWhenRateLimiterDisabled()
-    {
-        var options = new PollyMiddlewareOptions { RateLimiter = { IsEnabled = false } };
-
-        var errors = options.Validate();
-
-        Assert.Empty(errors);
-    }
-
-    [Fact]
-    public void ReturnError_GivenValidateWhenRateLimiterPermitLimitOutOfRange()
-    {
-        var options = new PollyMiddlewareOptions
-        {
-            RateLimiter = { IsEnabled = true, PermitLimit = 0 }
-        };
-
-        var errors = options.Validate();
-
-        Assert.Single(errors);
-        Assert.Contains("PermitLimit", errors[0]);
-    }
-
-    [Fact]
     public void ReturnAllErrors_GivenValidateWhenMultipleInvalid()
     {
         var options = new PollyMiddlewareOptions
         {
             Retry = { IsEnabled = true, MaxRetryAttempts = 150 },
             CircuitBreaker = { IsEnabled = true, FailureThreshold = 0 },
-            Timeout = { IsEnabled = true, DefaultTimeout = TimeSpan.Zero },
-            RateLimiter = { IsEnabled = true, PermitLimit = 2000000 }
+            Timeout = { IsEnabled = true, DefaultTimeout = TimeSpan.Zero }
         };
 
         var errors = options.Validate();
@@ -343,44 +305,6 @@ public class PollyMiddlewareOptionsShould
     }
 
     [Fact]
-    public void CreateTimeoutSettingsCopy_GivenPollyTimeoutSettingsClone()
-    {
-        var settings = new PollyTimeoutSettings
-        {
-            IsEnabled = true,
-            DefaultTimeout = TimeSpan.FromMinutes(5),
-            UseOptimisticTimeout = false
-        };
-
-        var clone = settings.Clone();
-
-        Assert.NotSame(settings, clone);
-        Assert.Equal(settings.IsEnabled, clone.IsEnabled);
-        Assert.Equal(settings.DefaultTimeout, clone.DefaultTimeout);
-        Assert.Equal(settings.UseOptimisticTimeout, clone.UseOptimisticTimeout);
-    }
-
-    [Fact]
-    public void CreateRateLimiterSettingsCopy_GivenPollyRateLimiterSettingsClone()
-    {
-        var settings = new PollyRateLimiterSettings
-        {
-            IsEnabled = true,
-            PermitLimit = 200,
-            Window = TimeSpan.FromSeconds(30),
-            QueueLimit = 10
-        };
-
-        var clone = settings.Clone();
-
-        Assert.NotSame(settings, clone);
-        Assert.Equal(settings.IsEnabled, clone.IsEnabled);
-        Assert.Equal(settings.PermitLimit, clone.PermitLimit);
-        Assert.Equal(settings.Window, clone.Window);
-        Assert.Equal(settings.QueueLimit, clone.QueueLimit);
-    }
-
-    [Fact]
     public void ProduceIndependentCopy_GivenClone()
     {
         // Arrange
@@ -390,7 +314,6 @@ public class PollyMiddlewareOptionsShould
             Retry = { IsEnabled = true, MaxRetryAttempts = 5, BaseDelay = TimeSpan.FromSeconds(2) },
             CircuitBreaker = { IsEnabled = true, FailureThreshold = 10, BreakDuration = TimeSpan.FromSeconds(60) },
             Timeout = { IsEnabled = true, DefaultTimeout = TimeSpan.FromMinutes(5) },
-            RateLimiter = { IsEnabled = true, PermitLimit = 200 },
             EnableComprehensivePolicies = true,
             EnableDetailedLogging = false,
             DefaultTags = new Dictionary<string, string> { ["env"] = "test", ["app"] = "workflow" }
@@ -410,8 +333,6 @@ public class PollyMiddlewareOptionsShould
         Assert.Equal(options.CircuitBreaker.BreakDuration, clone.CircuitBreaker.BreakDuration);
         Assert.Equal(options.Timeout.IsEnabled, clone.Timeout.IsEnabled);
         Assert.Equal(options.Timeout.DefaultTimeout, clone.Timeout.DefaultTimeout);
-        Assert.Equal(options.RateLimiter.IsEnabled, clone.RateLimiter.IsEnabled);
-        Assert.Equal(options.RateLimiter.PermitLimit, clone.RateLimiter.PermitLimit);
         Assert.Equal(options.EnableComprehensivePolicies, clone.EnableComprehensivePolicies);
         Assert.Equal(options.EnableDetailedLogging, clone.EnableDetailedLogging);
         Assert.NotSame(options.DefaultTags, clone.DefaultTags);
@@ -473,17 +394,19 @@ public class PollyMiddlewareOptionsShould
     }
 
     [Fact]
-    public void ReturnValidationError_GivenPermitLimitAboveMaximum()
+    public void CreateTimeoutSettingsCopy_GivenPollyTimeoutSettingsClone()
     {
-        var options = new PollyMiddlewareOptions
+        var settings = new PollyTimeoutSettings
         {
-            RateLimiter = { IsEnabled = true, PermitLimit = 1000001 }
+            IsEnabled = true,
+            DefaultTimeout = TimeSpan.FromMinutes(5)
         };
 
-        var errors = options.Validate();
+        var clone = settings.Clone();
 
-        Assert.NotEmpty(errors);
-        Assert.Contains(errors, e => e.Contains("PermitLimit"));
+        Assert.NotSame(settings, clone);
+        Assert.Equal(settings.IsEnabled, clone.IsEnabled);
+        Assert.Equal(settings.DefaultTimeout, clone.DefaultTimeout);
     }
 
     [Fact]

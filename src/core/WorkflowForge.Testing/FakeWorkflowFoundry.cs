@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Events;
 using WorkflowForge.Options;
+using WorkflowForge.Services;
 
 namespace WorkflowForge.Testing
 {
@@ -36,6 +37,7 @@ namespace WorkflowForge.Testing
         private readonly List<IWorkflowOperation> _operations = new List<IWorkflowOperation>();
         private readonly List<IWorkflowOperationMiddleware> _middlewares = new List<IWorkflowOperationMiddleware>();
         private readonly List<IWorkflowOperation> _executedOperations = new List<IWorkflowOperation>();
+        private readonly FoundryServices _services = new();
         private bool _disposed;
 
         /// <summary>
@@ -54,6 +56,9 @@ namespace WorkflowForge.Testing
 
         /// <inheritdoc />
         public ConcurrentDictionary<string, object?> Properties { get; }
+
+        /// <inheritdoc />
+        public IFoundryServices Services => _services;
 
         /// <inheritdoc />
         public IWorkflow? CurrentWorkflow { get; private set; }
@@ -189,13 +194,21 @@ namespace WorkflowForge.Testing
         }
 
         /// <summary>
-        /// Releases managed resources.
+        /// Releases the references this foundry holds and disposes everything registered on
+        /// <see cref="Services"/>. Caller-supplied operations and middleware are not disposed,
+        /// matching the production foundry. Safe to call more than once.
         /// </summary>
         /// <param name="disposing">True if called from <see cref="Dispose()"/>.</param>
         protected virtual void Dispose(bool disposing)
         {
+            if (_disposed)
+                return;
+
             if (disposing)
             {
+                _operations.Clear();
+                _middlewares.Clear();
+                _services.DisposeAll();
                 _disposed = true;
             }
         }
@@ -208,14 +221,16 @@ namespace WorkflowForge.Testing
         }
 
         /// <summary>
-        /// Clears all tracked state including executed operations, properties, and operations list.
-        /// Call this to reset the foundry between test cases.
+        /// Clears all tracked state - executed operations, properties, operations and middleware -
+        /// and disposes everything registered on <see cref="Services"/>. Caller-supplied operations
+        /// and middleware are not disposed. Call this between test cases.
         /// </summary>
         public void Reset()
         {
             _executedOperations.Clear();
             _operations.Clear();
             _middlewares.Clear();
+            _services.DisposeAll();
             Properties.Clear();
             CurrentWorkflow = null;
             IsFrozen = false;
@@ -267,6 +282,9 @@ namespace WorkflowForge.Testing
 
         private TestNullLogger()
         { }
+
+        /// <inheritdoc />
+        public bool IsEnabled(Operations.WorkflowForgeLogLevel level) => false;
 
         /// <inheritdoc />
         public void LogTrace(string message, params object[] args)

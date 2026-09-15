@@ -1,0 +1,44 @@
+<Project>
+  <PropertyGroup>
+    <WorkflowForgeNuGetReadmeDescriptionFile>$(IntermediateOutputPath)nuget-readme-description.txt</WorkflowForgeNuGetReadmeDescriptionFile>
+    <PackageReadmeFile>nuget-readme.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <Target Name="WorkflowForgeGenerateNuGetReadme" BeforeTargets="_GetPackageFiles">
+    <PropertyGroup>
+      <_WorkflowForgeRepositoryBranch Condition="'$(RepositoryBranch)' == ''">main</_WorkflowForgeRepositoryBranch>
+      <_WorkflowForgeRepositoryBranch Condition="'$(RepositoryBranch)' != ''">$(RepositoryBranch)</_WorkflowForgeRepositoryBranch>
+      <WorkflowForgeRepositoryUrl Condition="'$(RepositoryUrl)' != ''">$([System.String]::Copy('$(RepositoryUrl)').TrimEnd('/'))</WorkflowForgeRepositoryUrl>
+      <_WorkflowForgeLongReadmeFullPath>$([System.IO.Path]::GetFullPath('$(WorkflowForgeLongReadmeFile)'))</_WorkflowForgeLongReadmeFullPath>
+      <_WorkflowForgeLongReadmeRelativePath>$([MSBuild]::MakeRelative('$(WorkflowForgeRepoRoot)', '$(_WorkflowForgeLongReadmeFullPath)'))</_WorkflowForgeLongReadmeRelativePath>
+      <_WorkflowForgeLongReadmeRelativePath>$([System.String]::Copy('$(_WorkflowForgeLongReadmeRelativePath)').Replace('\', '/'))</_WorkflowForgeLongReadmeRelativePath>
+      <WorkflowForgeLongReadmeUrl>$(WorkflowForgeRepositoryUrl)/blob/$(_WorkflowForgeRepositoryBranch)/$(_WorkflowForgeLongReadmeRelativePath)</WorkflowForgeLongReadmeUrl>
+      <_WorkflowForgePackageTitle Condition="'$(Title)' != ''">$(Title)</_WorkflowForgePackageTitle>
+      <_WorkflowForgePackageTitle Condition="'$(Title)' == ''">$(Product)</_WorkflowForgePackageTitle>
+      <_WorkflowForgePackageTitle Condition="'$(_WorkflowForgePackageTitle)' == ''">$(PackageId)</_WorkflowForgePackageTitle>
+      <_WorkflowForgePackThirdPartyNotices Condition="'$(ILRepackTargetsFile)' != ''">true</_WorkflowForgePackThirdPartyNotices>
+      <_WorkflowForgeThirdPartyFlag Condition="'$(_WorkflowForgePackThirdPartyNotices)' == 'true'"> --include-third-party-notices</_WorkflowForgeThirdPartyFlag>
+      <_WorkflowForgeThirdPartyFlag Condition="'$(_WorkflowForgePackThirdPartyNotices)' != 'true'" />
+    </PropertyGroup>
+
+    <Error Condition="!Exists('$(WorkflowForgeNuGetReadmeTemplate)')" Text="NuGet readme template not found: $(WorkflowForgeNuGetReadmeTemplate)" />
+    <Error Condition="!Exists('$(WorkflowForgeLongReadmeFile)')" Text="Long readme not found: $(WorkflowForgeLongReadmeFile)" />
+    <Error Condition="'$(WorkflowForgeRepositoryUrl)' == ''" Text="RepositoryUrl is required to generate NuGet readme links for $(PackageId)." />
+
+    <WriteLinesToFile
+      File="$(WorkflowForgeNuGetReadmeDescriptionFile)"
+      Lines="$(Description)"
+      Overwrite="true"
+      Encoding="UTF-8" />
+
+    <Exec Command="python &quot;$(WorkflowForgeNuGetReadmeScript)&quot; --template &quot;$(WorkflowForgeNuGetReadmeTemplate)&quot; --release-notes &quot;$(WorkflowForgeNuGetReadmeReleaseNotes)&quot; --output &quot;$(WorkflowForgeNuGetReadmeOutput)&quot; --version &quot;$(Version)&quot; --package-title &quot;$(_WorkflowForgePackageTitle)&quot; --description-file &quot;$(WorkflowForgeNuGetReadmeDescriptionFile)&quot; --package-id &quot;$(PackageId)&quot; --long-readme-url &quot;$(WorkflowForgeLongReadmeUrl)&quot;$(_WorkflowForgeThirdPartyFlag)"
+          Condition="'$(OS)' == 'Windows_NT'" />
+
+    <Exec Command="python3 &quot;$(WorkflowForgeNuGetReadmeScript)&quot; --template &quot;$(WorkflowForgeNuGetReadmeTemplate)&quot; --release-notes &quot;$(WorkflowForgeNuGetReadmeReleaseNotes)&quot; --output &quot;$(WorkflowForgeNuGetReadmeOutput)&quot; --version &quot;$(Version)&quot; --package-title &quot;$(_WorkflowForgePackageTitle)&quot; --description-file &quot;$(WorkflowForgeNuGetReadmeDescriptionFile)&quot; --package-id &quot;$(PackageId)&quot; --long-readme-url &quot;$(WorkflowForgeLongReadmeUrl)&quot;$(_WorkflowForgeThirdPartyFlag)"
+          Condition="'$(OS)' != 'Windows_NT'" />
+
+    <ItemGroup>
+      <None Include="$(WorkflowForgeNuGetReadmeOutput)" Pack="true" PackagePath="\" />
+    </ItemGroup>
+  </Target>
+</Project>

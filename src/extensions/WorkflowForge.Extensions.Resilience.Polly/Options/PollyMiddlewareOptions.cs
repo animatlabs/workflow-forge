@@ -6,7 +6,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
 {
     /// <summary>
     /// Configuration options for Polly resilience middleware.
-    /// Provides comprehensive resilience configuration for workflows including retry, circuit breaker, timeout, and rate limiting.
+    /// Provides resilience configuration for workflows including retry, circuit breaker and timeout.
     /// Inherits common options functionality from <see cref="WorkflowForgeOptionsBase"/>.
     /// </summary>
     public sealed class PollyMiddlewareOptions : WorkflowForgeOptionsBase
@@ -40,9 +40,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
         /// <summary>Gets or sets the timeout configuration.</summary>
         public PollyTimeoutSettings Timeout { get; set; } = new();
 
-        /// <summary>Gets or sets the rate limiter configuration.</summary>
-        public PollyRateLimiterSettings RateLimiter { get; set; } = new();
-
         /// <summary>Gets or sets whether to enable comprehensive policies by default.</summary>
         public bool EnableComprehensivePolicies { get; set; } = false;
 
@@ -62,7 +59,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
             ValidateRetry(errors);
             ValidateCircuitBreaker(errors);
             ValidateTimeout(errors);
-            ValidateRateLimiter(errors);
             return errors;
         }
 
@@ -127,21 +123,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
             errors.Add($"{SectionName}:Timeout:DefaultTimeout must be between 0 and 24 hours (current value: {Timeout.DefaultTimeout})");
         }
 
-        private void ValidateRateLimiter(IList<string> errors)
-        {
-            if (!RateLimiter.IsEnabled)
-                return;
-
-            AddRateLimiterPermitLimitErrorIfInvalid(errors);
-        }
-
-        private void AddRateLimiterPermitLimitErrorIfInvalid(IList<string> errors)
-        {
-            if (RateLimiter.PermitLimit >= 1 && RateLimiter.PermitLimit <= 1000000)
-                return;
-            errors.Add($"{SectionName}:RateLimiter:PermitLimit must be between 1 and 1000000 (current value: {RateLimiter.PermitLimit})");
-        }
-
         /// <summary>
         /// Creates a deep copy of this options instance.
         /// </summary>
@@ -154,7 +135,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
                 Retry = Retry.Clone(),
                 CircuitBreaker = CircuitBreaker.Clone(),
                 Timeout = Timeout.Clone(),
-                RateLimiter = RateLimiter.Clone(),
                 EnableComprehensivePolicies = EnableComprehensivePolicies,
                 DefaultTags = new Dictionary<string, string>(DefaultTags),
                 EnableDetailedLogging = EnableDetailedLogging
@@ -239,42 +219,11 @@ namespace WorkflowForge.Extensions.Resilience.Polly.Options
         /// <summary>Gets or sets the default timeout duration.</summary>
         public TimeSpan DefaultTimeout { get; set; } = TimeSpan.FromSeconds(30);
 
-        /// <summary>Gets or sets whether to use optimistic timeout (cooperative cancellation).</summary>
-        public bool UseOptimisticTimeout { get; set; } = true;
-
         /// <summary>Creates a shallow copy of this <see cref="PollyTimeoutSettings"/> instance.</summary>
         public PollyTimeoutSettings Clone() => new()
         {
             IsEnabled = IsEnabled,
-            DefaultTimeout = DefaultTimeout,
-            UseOptimisticTimeout = UseOptimisticTimeout
-        };
-    }
-
-    /// <summary>
-    /// Configuration settings for Polly rate limiter.
-    /// </summary>
-    public sealed class PollyRateLimiterSettings
-    {
-        /// <summary>Gets or sets whether rate limiting is enabled.</summary>
-        public bool IsEnabled { get; set; } = false;
-
-        /// <summary>Gets or sets the maximum number of permits.</summary>
-        public int PermitLimit { get; set; } = 100;
-
-        /// <summary>Gets or sets the time window for rate limiting.</summary>
-        public TimeSpan Window { get; set; } = TimeSpan.FromMinutes(1);
-
-        /// <summary>Gets or sets the queue limit for waiting requests.</summary>
-        public int QueueLimit { get; set; } = 0;
-
-        /// <summary>Creates a shallow copy of this <see cref="PollyRateLimiterSettings"/> instance.</summary>
-        public PollyRateLimiterSettings Clone() => new()
-        {
-            IsEnabled = IsEnabled,
-            PermitLimit = PermitLimit,
-            Window = Window,
-            QueueLimit = QueueLimit
+            DefaultTimeout = DefaultTimeout
         };
     }
 

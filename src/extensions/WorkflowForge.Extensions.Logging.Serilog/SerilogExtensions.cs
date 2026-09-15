@@ -13,6 +13,9 @@ namespace WorkflowForge.Extensions.Logging.Serilog
     {
         /// <summary>
         /// Creates a standalone WorkflowForge logger using the embedded Serilog pipeline.
+        /// The returned logger owns the Serilog pipeline it creates; dispose it to flush and release sinks.
+        /// For sinks the embedded pipeline does not expose, use
+        /// <see cref="CreateLogger(MelLoggerFactory)"/> with your application's own Serilog setup.
         /// </summary>
         /// <param name="options">Serilog logger options (minimum level, console sink, template).</param>
         /// <returns>A WorkflowForge logger instance backed by the embedded Serilog.</returns>
@@ -23,7 +26,10 @@ namespace WorkflowForge.Extensions.Logging.Serilog
             var template = options.ConsoleOutputTemplate ?? SerilogLoggerOptions.DefaultConsoleOutputTemplate;
 
             var configuration = new LoggerConfiguration()
-                .MinimumLevel.Is(level);
+                .MinimumLevel.Is(level)
+                // Structured properties and scopes are pushed through LogContext, which only
+                // reaches sinks when the pipeline is enriched from it.
+                .Enrich.FromLogContext();
 
             if (options.EnableConsoleSink)
             {
@@ -31,7 +37,7 @@ namespace WorkflowForge.Extensions.Logging.Serilog
             }
 
             var logger = configuration.CreateLogger();
-            return new SerilogWorkflowForgeLogger(logger);
+            return new SerilogWorkflowForgeLogger(logger, ownsLogger: true);
         }
 
         /// <summary>

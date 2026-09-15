@@ -1,0 +1,8 @@
+<Project>
+  <!-- Nearest Directory.Build.props wins; import src-level shared settings (signing, CPM, version). -->
+  <Import Project="../Directory.Build.props" />
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+</Project>

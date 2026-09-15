@@ -17,6 +17,7 @@ namespace WorkflowForge.Abstractions
         /// <summary>
         /// Adds an operation to be executed in this foundry.
         /// Operations are executed in the order they are added.
+        /// The foundry does not take ownership: disposing it does not dispose the operation.
         /// </summary>
         /// <param name="operation">The operation to add.</param>
         /// <exception cref="ArgumentNullException">Thrown when operation is null.</exception>
@@ -27,7 +28,7 @@ namespace WorkflowForge.Abstractions
         /// Adds middleware to the execution pipeline.
         /// Middleware wraps operations in a Russian Doll pattern (reverse order execution).
         /// First middleware added = outermost layer of the pipeline.
-        /// See /docs/architecture/middleware-pipeline.md for detailed explanation.
+        /// The foundry does not take ownership: disposing it does not dispose the middleware.
         /// </summary>
         /// <param name="middleware">The middleware to add.</param>
         /// <exception cref="ArgumentNullException">Thrown when middleware is null.</exception>
@@ -38,6 +39,7 @@ namespace WorkflowForge.Abstractions
         /// Adds multiple middleware components to the execution pipeline.
         /// Middleware wraps operations in a Russian Doll pattern (reverse order execution).
         /// First middleware added = outermost layer of the pipeline.
+        /// The foundry does not take ownership: disposing it does not dispose the middleware.
         /// </summary>
         /// <param name="middlewares">The middleware components to add.</param>
         /// <exception cref="ArgumentNullException">Thrown when middlewares is null.</exception>

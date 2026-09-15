@@ -138,7 +138,7 @@ namespace WorkflowForge.Tests.OperationsTests
 
             var operation = new ActionWorkflowOperation("CancellationTest", action);
             var foundry = CreateMockFoundry();
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
             cts.Cancel();
 
             // Act

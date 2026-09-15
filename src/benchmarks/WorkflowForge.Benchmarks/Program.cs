@@ -151,26 +151,23 @@ public class Program
 
     private static IConfig CreateConfig()
     {
+        // BenchmarkDotNet refuses to run when a referenced assembly was built without optimizations.
+        // Disabled here so the suite can be run from a Debug-built tree; Release is still what the
+        // published figures come from.
         return DefaultConfig.Instance
             .WithOption(ConfigOptions.DisableOptimizationsValidator, true)
             .AddJob(Job.Default.WithRuntime(ClrRuntime.Net48)
-                .WithStrategy(RunStrategy.Monitoring)
-                .WithIterationCount(50)
-                .WithInvocationCount(1).WithUnrollFactor(1))
+                .WithStrategy(RunStrategy.Throughput)
+                .WithIterationCount(10))
             .AddJob(Job.Default.WithRuntime(CoreRuntime.Core80)
-                .WithStrategy(RunStrategy.Monitoring)
-                .WithIterationCount(50)
-                .WithInvocationCount(1).WithUnrollFactor(1))
+                .WithStrategy(RunStrategy.Throughput)
+                .WithIterationCount(10))
             .AddJob(Job.Default.WithRuntime(CoreRuntime.Core10_0)
-                .WithStrategy(RunStrategy.Monitoring)
-                .WithIterationCount(50)
-                .WithInvocationCount(1).WithUnrollFactor(1))
+                .WithStrategy(RunStrategy.Throughput)
+                .WithIterationCount(10))
             .AddDiagnoser(MemoryDiagnoser.Default)
             .AddColumn(StatisticColumn.Median)
             .AddColumn(StatisticColumn.P95)
-            .AddColumn(StatisticColumn.StdDev)
-            .AddExporter(MarkdownExporter.GitHub)
-            .AddExporter(HtmlExporter.Default)
-            .AddExporter(BenchmarkDotNet.Exporters.Csv.CsvExporter.Default);
+            .AddColumn(StatisticColumn.StdDev);
     }
 }

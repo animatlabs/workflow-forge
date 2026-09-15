@@ -8,6 +8,8 @@
     <LangVersion>latest</LangVersion>
     <SonarQubeExclude>true</SonarQubeExclude>
     <IsPackable>false</IsPackable>
+    <!-- Elsa/WorkflowCore pull mixed dependency versions; this executable is not shipped as a package. -->
+    <NuGetAudit>false</NuGetAudit>
 
     <!-- Package Information -->
     <AssemblyName>WorkflowForge.Benchmarks.Comparative</AssemblyName>
@@ -17,24 +19,19 @@
 
   <ItemGroup>
     <!-- BenchmarkDotNet for scientific performance measurement -->
-    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.8" />
-    <PackageReference Include="Snappier" Version="1.3.1" />
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" />
+    <PackageReference Include="Snappier" />
     <!-- Workflow Core - Established workflow engine (latest stable) -->
-    <PackageReference Include="WorkflowCore" Version="3.18.0" />
+    <PackageReference Include="WorkflowCore" />
     
-    <!-- Microsoft Extensions - Match Elsa's requirements -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.10" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.10" />
   </ItemGroup>
 
   <!-- Elsa only on net8.0+ (it doesn't support net48) -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net48'">
-    <PackageReference Include="Elsa" Version="3.7.1" />
-    <PackageReference Include="Elsa.Workflows.Core" Version="3.7.1" />
-    <PackageReference Include="Elsa.Workflows.Runtime" Version="3.7.1" />
+    <PackageReference Include="Elsa" />
+    <PackageReference Include="Elsa.Workflows.Core" />
+    <PackageReference Include="Elsa.Workflows.Runtime" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,14 +39,8 @@
     <ProjectReference Include="..\..\core\WorkflowForge\WorkflowForge.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" PrivateAssets="All" />
     <Using Include="System" />
     <Using Include="System.Collections.Generic" />
     <Using Include="System.IO" />

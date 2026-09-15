@@ -39,7 +39,7 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
 
             if (await TryResumeFromSnapshotAsync(
                 provider,
-                coordinator: new RecoveryCoordinator(provider, options),
+                coordinator: new RecoveryCoordinator(provider, foundry.Logger, options),
                 foundry,
                 workflow,
                 foundryKey,

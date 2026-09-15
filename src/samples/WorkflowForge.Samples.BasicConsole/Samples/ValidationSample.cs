@@ -117,7 +117,7 @@ public class ValidationSample : ISample
         var order = new Order
         {
             CustomerId = "CUST-789",
-            Amount = 1500.00m,
+            Amount = 15_000.00m,
             Currency = "GBP",
             Items = new[] { "High Value Item" }
         };
@@ -203,7 +203,7 @@ public class ValidationSample : ISample
         [MinLength(1, ErrorMessage = "At least one item is required")]
         public string[] Items { get; set; } = Array.Empty<string>();
 
-        public IEnumerable<System.ComponentModel.DataAnnotations.ValidationResult> Validate(ValidationContext validationContext)
+        public virtual IEnumerable<System.ComponentModel.DataAnnotations.ValidationResult> Validate(ValidationContext validationContext)
         {
             if (!string.IsNullOrWhiteSpace(CustomerId) && !CustomerId.StartsWith("CUST-", StringComparison.OrdinalIgnoreCase))
             {
@@ -238,14 +238,14 @@ public class ValidationSample : ISample
             Items = order.Items;
         }
 
-        public new IEnumerable<System.ComponentModel.DataAnnotations.ValidationResult> Validate(ValidationContext validationContext)
+        public override IEnumerable<System.ComponentModel.DataAnnotations.ValidationResult> Validate(ValidationContext validationContext)
         {
             foreach (var result in base.Validate(validationContext))
             {
                 yield return result;
             }
 
-            if (Amount >= 10000)
+            if (Amount > 10000)
             {
                 yield return new System.ComponentModel.DataAnnotations.ValidationResult(
                     "Orders over $10,000 require manager approval",

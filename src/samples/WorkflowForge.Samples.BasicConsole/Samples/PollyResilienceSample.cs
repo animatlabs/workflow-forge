@@ -8,7 +8,7 @@ namespace WorkflowForge.Samples.BasicConsole.Samples;
 
 /// <summary>
 /// Demonstrates advanced resilience patterns using the Polly extension with WorkflowForge.
-/// Shows retry policies, circuit breakers, timeouts, and rate limiting.
+/// Shows retry policies, circuit breakers and timeouts.
 /// </summary>
 public class PollyResilienceSample : ISample
 {
@@ -18,6 +18,7 @@ public class PollyResilienceSample : ISample
     public async Task RunAsync()
     {
         Console.WriteLine("Demonstrating Polly resilience patterns...");
+        UnreliableServiceOperation.ResetAttemptCount();
 
         // Scenario 1: Development resilience (lenient)
         await RunDevelopmentResilienceScenario();
@@ -129,7 +130,9 @@ public class PollyResilienceSample : ISample
 /// </summary>
 public class UnreliableServiceOperation : WorkflowOperationBase
 {
-    private static int _attemptCount = 0;
+    private static int _attemptCount;
+
+    public static void ResetAttemptCount() => _attemptCount = 0;
 
     public override string Name => "UnreliableService";
 
@@ -256,7 +259,7 @@ public class CompletionOperation : WorkflowOperationBase
             {
                 "development" => "Lenient retries, extended timeouts",
                 "production" => "Strict retries, circuit breakers",
-                "enterprise" => "Comprehensive policies, rate limiting",
+                "enterprise" => "Comprehensive policies",
                 _ => "Unknown pattern"
             }
         };

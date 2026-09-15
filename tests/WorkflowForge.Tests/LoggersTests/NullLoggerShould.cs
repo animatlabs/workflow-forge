@@ -1,12 +1,23 @@
 using System;
 using System.Collections.Generic;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Loggers;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Tests.LoggersTests;
 
 public class NullLoggerShould
 {
-    private readonly IWorkflowForgeLogger _logger = WorkflowForgeLoggers.Null;
+    private readonly IWorkflowForgeLogger _logger = NullLogger.Instance;
+
+    [Fact]
+    public void ReturnFalse_GivenIsEnabledForAnyLevel()
+    {
+        foreach (WorkflowForgeLogLevel level in Enum.GetValues(typeof(WorkflowForgeLogLevel)))
+        {
+            Assert.False(_logger.IsEnabled(level));
+        }
+    }
 
     [Fact]
     public void NotThrow_GivenLogTraceWithMessage()
