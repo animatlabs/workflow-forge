@@ -538,6 +538,9 @@ public class LoggingOperationShould
         var foundry = new Mock<IWorkflowFoundry>();
         var logger = new Mock<IWorkflowForgeLogger>();
 
+        // Moq returns false by default, which would report every level as disabled.
+        logger.Setup(l => l.IsEnabled(It.IsAny<WorkflowForgeLogLevel>())).Returns(true);
+
         foundry.Setup(f => f.Logger).Returns(logger.Object);
         foundry.Setup(f => f.ExecutionId).Returns(Guid.NewGuid());
 

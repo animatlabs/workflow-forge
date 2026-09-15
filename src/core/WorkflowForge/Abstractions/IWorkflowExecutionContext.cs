@@ -34,16 +34,24 @@ namespace WorkflowForge.Abstractions
         /// Gets the properties dictionary for the foundry.
         /// Thread-safe dictionary for storing and retrieving properties during workflow execution.
         ///
-        /// <para><strong>Isolation:</strong> Each foundry instance gets its OWN ConcurrentDictionary
-        /// (created via 'new ConcurrentDictionary&lt;string, object?&gt;()' in WorkflowSmith.CreateFoundry()).
-        /// This ensures parallel foundry executions never share or collide on property data.</para>
+        /// <para><strong>Isolation:</strong> A foundry lease never shares property data with a concurrent lease.
+        /// Concurrent workflow executions therefore cannot collide on property data.</para>
         ///
-        /// <para><strong>Lifecycle:</strong> Properties persist across multiple workflow executions
-        /// within the same foundry instance, but are completely isolated from other foundry instances.</para>
+        /// <para><strong>Lifecycle:</strong> On the default pooled smith path, <c>Properties</c> are cleared after each
+        /// workflow. When you pass a caller-owned foundry to <c>ForgeAsync(workflow, foundry)</c>, properties persist
+        /// until you dispose that foundry. When you pass a dictionary to <c>ForgeAsync(workflow, data)</c>, the smith
+        /// uses it directly and leaves its contents in place so results can be read back. Values in <c>Properties</c>
+        /// are never auto-disposed; use <see cref="Services"/> for extension-owned
+        /// <see cref="System.IDisposable"/> resources.</para>
         ///
         /// <para>Use extension methods (GetProperty, SetProperty, TryGetProperty) for convenient access patterns.</para>
         /// </summary>
         ConcurrentDictionary<string, object?> Properties { get; }
+
+        /// <summary>
+        /// Gets foundry-scoped services (extension capabilities). Disposed when the foundry lease ends.
+        /// </summary>
+        IFoundryServices Services { get; }
 
         /// <summary>
         /// Gets the logger for this foundry context.

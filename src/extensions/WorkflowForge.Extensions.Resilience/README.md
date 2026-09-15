@@ -39,7 +39,8 @@ await smith.ForgeAsync(workflow, foundry);
 - `IWorkflowResilienceStrategy` is the single extension point for delay and retry decisions.
 - Ships exponential backoff, fixed interval, and random (jitter) helpers.
 - `RetryPolicySettings` centralizes attempt counts and delay bounds.
-- For circuit breaker, bulkheads, or Polly pipelines, see **WorkflowForge.Extensions.Resilience.Polly**.
+- A `CircuitBreakerMiddleware` is exposed here, but you must supply your own
+  `ICircuitBreakerPolicy`; for a ready-made breaker use **WorkflowForge.Extensions.Resilience.Polly**.
 
 ## Retry strategies
 
@@ -119,10 +120,11 @@ public class CustomRetryStrategy : ResilienceStrategyBase
 ```csharp
 var settings = new RetryPolicySettings
 {
+    StrategyType = RetryStrategyType.ExponentialBackoff,
     MaxAttempts = 3,
     BaseDelay = TimeSpan.FromSeconds(1),
     MaxDelay = TimeSpan.FromSeconds(30),
-    UseExponentialBackoff = true,
+    BackoffMultiplier = 2.0,
     UseJitter = true
 };
 ```
@@ -164,7 +166,7 @@ var workflow = WorkflowForge.CreateWorkflow("ResilientProcess")
 - `FixedIntervalStrategy` - Best for databases
 - `RandomIntervalStrategy` - Prevents thundering herd
 
-[Resilience configuration](../../../docs/core/configuration.md#resilience-extension)
+[Resilience configuration](https://animatlabs.com/workflow-forge/core/configuration/#resilience-extension)
 
 ## Interfaces
 
@@ -185,16 +187,16 @@ public interface IWorkflowResilienceStrategy
 
 **This package** fits when you want to avoid a third-party policy library and simple retry timing is enough.
 
-**WorkflowForge.Extensions.Resilience.Polly** fits when you need circuit breakers, bulkheads, rate limits, or stacked policies. Polly is ILRepacked there; this package pulls in no third-party policy library (only small BCL polyfills).
+**WorkflowForge.Extensions.Resilience.Polly** fits when you need a ready-made circuit breaker or stacked policies. Polly is ILRepacked there; this package pulls in no third-party policy library (only small BCL polyfills).
 
 ## Links
 
-- [Getting Started](../../../docs/getting-started/getting-started.md)
-- [Configuration Guide](../../../docs/core/configuration.md#resilience-extension)
-- [Extensions Overview](../../../docs/extensions/index.md)
-- [Samples](../../samples/WorkflowForge.Samples.BasicConsole/) (see Sample 14: Polly Resilience for related patterns)
-- [Sample source (PollyResilienceSample)](../../samples/WorkflowForge.Samples.BasicConsole/Samples/PollyResilienceSample.cs)
+- [Getting Started](https://animatlabs.com/workflow-forge/getting-started/getting-started/)
+- [Configuration Guide](https://animatlabs.com/workflow-forge/core/configuration/#resilience-extension)
+- [Extensions Overview](https://animatlabs.com/workflow-forge/extensions/)
+- [Samples](https://github.com/animatlabs/workflow-forge/blob/main/src/samples/WorkflowForge.Samples.BasicConsole/) (see Sample 14: Polly Resilience for related patterns)
+- [Sample source (PollyResilienceSample)](https://github.com/animatlabs/workflow-forge/blob/main/src/samples/WorkflowForge.Samples.BasicConsole/Samples/PollyResilienceSample.cs)
 
 ## License
 
-MIT License - see [LICENSE](../../../LICENSE) for details.
+MIT License - see [LICENSE](https://github.com/animatlabs/workflow-forge/blob/main/LICENSE) for details.

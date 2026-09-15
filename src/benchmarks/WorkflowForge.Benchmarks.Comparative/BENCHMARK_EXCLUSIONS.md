@@ -49,7 +49,7 @@ Scenario 8 runs **50** lifecycle iterations.
 
 #### What we saw
 
-Workflow Core Scenario 8 landed north of **220 μs** per iteration versus **2–5 μs** for the lighter stacks, pushed multi-minute runs for 50 iterations, and sometimes stalled in **OverheadJitting** because thread startup dominated.
+Workflow Core Scenario 8 landed north of **220 μs** per iteration versus **2–5 μs** for the lighter stacks, pushed multi-minute runs for 10 iterations per job, and sometimes stalled in **OverheadJitting** because thread startup dominated.
 
 #### Design choice, not a bug
 

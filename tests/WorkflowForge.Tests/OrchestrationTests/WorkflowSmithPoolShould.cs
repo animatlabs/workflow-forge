@@ -21,19 +21,32 @@ namespace WorkflowForge.Tests.OrchestrationTests
         { }
 
         [Fact]
-        public async Task ReusePooledFoundry_GivenConsecutiveForgeAsyncCalls()
+        public async Task ReuseTheSameFoundryInstance_GivenConsecutiveForgeAsyncCalls()
         {
             using var smith = WorkflowForge.CreateSmith();
-            var workflow1 = CreateNoOpWorkflow($"Pool-Reuse-1-{_uniqueTestId}");
-            var workflow2 = CreateNoOpWorkflow($"Pool-Reuse-2-{_uniqueTestId}");
+            var first = new RecordingOperation();
+            var second = new RecordingOperation();
 
-            var ex = await Record.ExceptionAsync(async () =>
-            {
-                await smith.ForgeAsync(workflow1);
-                await smith.ForgeAsync(workflow2);
-            });
+            await smith.ForgeAsync(CreateWorkflow($"Pool-Reuse-1-{_uniqueTestId}", first));
+            await smith.ForgeAsync(CreateWorkflow($"Pool-Reuse-2-{_uniqueTestId}", second));
 
-            Assert.Null(ex);
+            Assert.NotNull(first.SeenFoundry);
+            Assert.NotNull(second.SeenFoundry);
+            Assert.Same(first.SeenFoundry, second.SeenFoundry);
+            Assert.NotEqual(first.SeenExecutionId, second.SeenExecutionId);
+        }
+
+        [Fact]
+        public async Task StartEachRunWithEmptyProperties_GivenAPooledFoundry()
+        {
+            using var smith = WorkflowForge.CreateSmith();
+            var first = new RecordingOperation(foundry => foundry.Properties["carryover"] = "leaked");
+            var second = new RecordingOperation();
+
+            await smith.ForgeAsync(CreateWorkflow($"Pool-Clean-1-{_uniqueTestId}", first));
+            await smith.ForgeAsync(CreateWorkflow($"Pool-Clean-2-{_uniqueTestId}", second));
+
+            Assert.False(second.SawCarryover);
         }
 
         [Fact]
@@ -62,38 +75,44 @@ namespace WorkflowForge.Tests.OrchestrationTests
         }
 
         [Fact]
-        public async Task DrainPoolWithoutException_GivenDisposeAfterForgeAsync()
+        public async Task RejectFurtherWork_GivenDisposeAfterForgeAsync()
         {
             var smith = WorkflowForge.CreateSmith();
             var workflow = CreateNoOpWorkflow($"Pool-Drain-{_uniqueTestId}");
 
             await smith.ForgeAsync(workflow);
+            smith.Dispose();
 
-            var ex = Record.Exception(() => smith.Dispose());
-
-            Assert.Null(ex);
+            await Assert.ThrowsAsync<ObjectDisposedException>(() => smith.ForgeAsync(workflow));
         }
 
         [Fact]
-        public async Task CompleteWithinPoolBounds_GivenManyParallelExecutions()
+        public async Task RunEveryWorkflowOnItsOwnFoundry_GivenManyParallelExecutions()
         {
             using var smith = WorkflowForge.CreateSmith();
             var concurrency = Environment.ProcessorCount * 2 + 5;
+            var foundries = new ConcurrentBag<IWorkflowFoundry>();
 
-            var tasks = Enumerable.Range(0, concurrency)
-                .Select(i => smith.ForgeAsync(CreateNoOpWorkflow($"Pool-Max-{_uniqueTestId}-{i}")))
+            var operations = Enumerable.Range(0, concurrency)
+                .Select(_ => new RecordingOperation(foundry => foundries.Add(foundry)))
                 .ToArray();
 
-            var ex = await Record.ExceptionAsync(() => Task.WhenAll(tasks));
+            var tasks = operations
+                .Select((op, i) => smith.ForgeAsync(CreateWorkflow($"Pool-Max-{_uniqueTestId}-{i}", op)))
+                .ToArray();
 
-            Assert.Null(ex);
+            await Task.WhenAll(tasks);
+
+            // Every concurrent run must have had its own foundry; the pool may only reuse
+            // instances after a run returns them.
+            Assert.Equal(concurrency, foundries.Count);
+            Assert.Equal(concurrency, operations.Select(o => o.SeenExecutionId).Distinct().Count());
         }
 
         [Fact]
         public async Task NotThrowUnhandledException_GivenConcurrentForgeAndDisposeRace()
         {
             var smith = WorkflowForge.CreateSmith();
-            var cts = new CancellationTokenSource();
             var exceptions = new ConcurrentBag<Exception>();
 
             var forgeTask = Task.Run(async () =>
@@ -125,29 +144,82 @@ namespace WorkflowForge.Tests.OrchestrationTests
         }
 
         [Fact]
-        public async Task CompleteAllSuccessfully_GivenSequentialBatch()
+        public async Task ExecuteEveryOperation_GivenSequentialBatch()
         {
             using var smith = WorkflowForge.CreateSmith();
+            var operations = new List<RecordingOperation>();
 
             for (var i = 0; i < 20; i++)
             {
-                var ex = await Record.ExceptionAsync(() =>
-                    smith.ForgeAsync(CreateNoOpWorkflow($"Batch-{_uniqueTestId}-{i}")));
-                Assert.Null(ex);
+                var op = new RecordingOperation();
+                operations.Add(op);
+                await smith.ForgeAsync(CreateWorkflow($"Batch-{_uniqueTestId}-{i}", op));
             }
+
+            Assert.All(operations, o => Assert.Equal(1, o.Invocations));
+            Assert.Equal(20, operations.Select(o => o.SeenExecutionId).Distinct().Count());
         }
 
         [Fact]
-        public async Task NotThrow_GivenMultipleDisposeCalls()
+        public async Task StayDisposed_GivenMultipleDisposeCalls()
         {
             var smith = WorkflowForge.CreateSmith();
-            await smith.ForgeAsync(CreateNoOpWorkflow($"Multi-Dispose-{_uniqueTestId}"));
+            var workflow = CreateNoOpWorkflow($"Multi-Dispose-{_uniqueTestId}");
+            await smith.ForgeAsync(workflow);
 
-            var ex1 = Record.Exception(() => smith.Dispose());
-            var ex2 = Record.Exception(() => smith.Dispose());
+            smith.Dispose();
+            smith.Dispose();
 
-            Assert.Null(ex1);
-            Assert.Null(ex2);
+            await Assert.ThrowsAsync<ObjectDisposedException>(() => smith.ForgeAsync(workflow));
+        }
+
+        private static Workflow CreateWorkflow(string name, IWorkflowOperation operation)
+        {
+            return new Workflow(
+                name,
+                "Pool test workflow",
+                "1.0.0",
+                new List<IWorkflowOperation> { operation },
+                new Dictionary<string, object?>());
+        }
+
+        private sealed class RecordingOperation : IWorkflowOperation
+        {
+            private readonly Action<IWorkflowFoundry>? _onForge;
+            private int _invocations;
+
+            public RecordingOperation(Action<IWorkflowFoundry>? onForge = null)
+            {
+                _onForge = onForge;
+            }
+
+            public Guid Id { get; } = Guid.NewGuid();
+
+            public string Name => "Recording";
+
+            public int Invocations => Volatile.Read(ref _invocations);
+
+            public IWorkflowFoundry? SeenFoundry { get; private set; }
+
+            public Guid SeenExecutionId { get; private set; }
+
+            public bool SawCarryover { get; private set; }
+
+            public Task<object?> ForgeAsync(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+            {
+                Interlocked.Increment(ref _invocations);
+                SeenFoundry = foundry;
+                SeenExecutionId = foundry.ExecutionId;
+                SawCarryover = foundry.Properties.ContainsKey("carryover");
+                _onForge?.Invoke(foundry);
+                return Task.FromResult<object?>(null);
+            }
+
+            public Task RestoreAsync(object? outputData, IWorkflowFoundry foundry, CancellationToken cancellationToken = default)
+                => Task.CompletedTask;
+
+            public void Dispose()
+            { }
         }
 
         private static Workflow CreateNoOpWorkflow(string name, int operationCount = 1)

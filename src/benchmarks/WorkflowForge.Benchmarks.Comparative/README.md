@@ -1,12 +1,12 @@
 # WorkflowForge comparative benchmarks
 
-**Last updated:** March 2026
+**Last updated:** September 2026
 
 Head-to-head numbers: **WorkflowForge** vs **Workflow Core** vs **Elsa Workflows** on the same logical scenarios, each written the way that library expects.
 
 ## Frameworks
 
-- **WorkflowForge 2.1.1:** zero dependency, in-process orchestration
+- **WorkflowForge 2.2.0:** zero dependency, in-process orchestration
 - **Workflow Core:** persistence-first engine
 - **Elsa Workflows:** designer-friendly, HTTP-heavy workflows
 
@@ -14,24 +14,24 @@ Head-to-head numbers: **WorkflowForge** vs **Workflow Core** vs **Elsa Workflows
 
 | # | Scenario | What we measure | WorkflowForge vs others |
 |---|----------|-----------------|-------------------------|
-| 1 | Simple sequential workflow | 10 operations in sequence | **26–51×** faster (237–422μs vs 9,878–18,675μs) |
-| 2 | Data passing workflow | Data across 10 operations | **31–56×** faster (304–325μs vs 9,751–18,510μs) |
-| 3 | Conditional branching | If/else over 10 operations | **29–62×** faster (301–333μs vs 9,247–19,165μs) |
-| 4 | Loop/ForEach processing | 50 items through the pipeline | **64–121×** faster (450–494μs vs 30,742–58,346μs) |
-| 5 | Concurrent execution | Eight workflows at once | **123–251×** faster (276–372μs vs 7,588–87,491μs) |
-| 6 | Error handling | Exceptions and recovery paths | **13–108×** faster (70–114μs vs 1,349–7,737μs) |
-| 7 | Creation overhead | Instantiation cost only | **38–207×** faster (11–11.4μs vs 819–2,329μs) |
-| 8 | Complete lifecycle | Create, execute, tear down | Workflow Core omitted: `WorkflowHost.Start()` background threads skew rapid repeat lifecycles (see exclusions doc). **165–272×** faster than Elsa (36–59μs vs 9,723–9,878μs) |
-| 9 | State machine workflow | 25 conditional transitions | **305–511×** faster (65–71μs vs 21,683–33,062μs) |
-| 10 | Long running workflow | Multi-phase run with one delay | **51–63×** faster (39ms vs 51ms) |
-| 11 | Parallel scaling | 16 operations in parallel | **43–429×** faster (57–68μs vs 2,794–24,637μs) |
-| 12 | Event-driven workflow | Event-triggered execution | **2.7–2.9×** faster than Elsa; **11–288×** lower allocation |
+| 1 | Simple sequential workflow | 10 operations in sequence | **60–186×** faster (119μs vs 7,074–22,028μs) |
+| 2 | Data passing workflow | Data across 10 operations | **55–172×** faster (129μs vs 7,070–22,211μs) |
+| 3 | Conditional branching | If/else over 10 operations | **52–153×** faster (138μs vs 7,117–21,034μs) |
+| 4 | Loop/ForEach processing | 50 items through the pipeline | **102–182×** faster (322μs vs 32,922–58,601μs) |
+| 5 | Concurrent execution | Eight workflows at once | **183–383×** faster (260μs vs 47,648–99,384μs) |
+| 6 | Error handling | Exceptions and recovery paths | **18–133×** faster (69μs vs 1,225–9,249μs) |
+| 7 | Creation overhead | Instantiation cost only | **2–3×** faster vs Workflow Core (18μs vs 46μs); Elsa ~4μs |
+| 8 | Complete lifecycle | Create, execute, tear down | Workflow Core omitted (see exclusions doc). **69×** faster than Elsa (108μs vs 7,464μs) |
+| 9 | State machine workflow | 25 conditional transitions | **289–584×** faster (59μs vs 17,133–34,627μs) |
+| 10 | Long running workflow | Multi-phase run with one delay | Delay-bound (~72ms); memory advantage dominates |
+| 11 | Parallel scaling | 16 operations in parallel | **44–444×** faster (50μs vs 2,214–22,285μs) |
+| 12 | Event-driven workflow | Event-triggered execution | **1–3×** faster than Elsa on execution; large memory gap |
 
 ## Running
 
 ```bash
-dotnet run --project WorkflowForge.Benchmarks.csproj --configuration Release
-dotnet run --project WorkflowForge.Benchmarks.Comparative.csproj --configuration Release
+dotnet run --project src/benchmarks/WorkflowForge.Benchmarks --configuration Release -f net10.0
+dotnet run --project src/benchmarks/WorkflowForge.Benchmarks.Comparative --configuration Release -f net10.0
 ```
 
 Artifacts land under `BenchmarkDotNet.Artifacts/`.
@@ -52,8 +52,8 @@ Reports sit in `BenchmarkDotNet.Artifacts/results/` and per-scenario folders.
 
 ## Headline results
 
-- **13–511×** faster execution across the 12 scenarios in these runs
-- **6–575×** lower allocation where we measured allocations
+- **2–583×** faster execution across the 12 scenarios in these runs
+- **2–533×** lower allocation where we measured allocations
 - WorkflowForge stayed in the microsecond band while several competitors sat in milliseconds
 
 ### Why WorkflowForge reads faster here
@@ -108,7 +108,7 @@ Each scenario:
 - **CPU:** Intel 11th Gen i7-1185G7
 - **Runtimes:** .NET 10.0.3, .NET 8.0.24, .NET Framework 4.8.1
 - **BenchmarkDotNet:** v0.15.8
-- **Iterations:** 50 per benchmark, 5 warmup
+- **Iterations:** 10 per benchmark job
 
 ## Docs
 

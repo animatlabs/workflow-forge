@@ -11,12 +11,18 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
     /// </summary>
     public static class WorkflowFoundryHealthCheckExtensions
     {
+        private const string HealthCheckServiceKeyPrefix = "_healthcheck_service_";
+
         /// <summary>
         /// Creates a new health check service for monitoring workflow components.
         /// </summary>
         /// <param name="foundry">The workflow foundry.</param>
         /// <param name="checkInterval">Optional interval for periodic health checks. If null, periodic checks are disabled.</param>
-        /// <returns>A new health check service instance.</returns>
+        /// <returns>
+        /// A new health check service instance. The service is also registered on
+        /// <see cref="IWorkflowExecutionContext.Services"/> so it is disposed when the foundry lease ends;
+        /// disposing it yourself as well is safe.
+        /// </returns>
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
         public static HealthCheckService CreateHealthCheckService(this IWorkflowFoundry foundry, TimeSpan? checkInterval = null)
         {
@@ -24,7 +30,13 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
                 throw new ArgumentNullException(nameof(foundry));
 
             // Use the foundry's logger, which is always available
-            return new HealthCheckService(foundry.Logger, timeProvider: null, checkInterval);
+            var service = new HealthCheckService(foundry.Logger, timeProvider: null, checkInterval);
+
+            // The timer this service may own has to stop even when the caller forgets to dispose it.
+            // A distinct key per service means creating several never displaces an earlier one.
+            foundry.Services?.TryAdd(HealthCheckServiceKeyPrefix + Guid.NewGuid().ToString("N"), service);
+
+            return service;
         }
 
         /// <summary>

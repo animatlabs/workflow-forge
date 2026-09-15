@@ -1,0 +1,29 @@
+WorkflowForge.Extensions.Logging.Serilog — third-party notices
+=============================================================
+
+This package redistributes the following libraries in binary form. They are merged into this
+package's assembly at build time and therefore do not appear as NuGet dependencies.
+
+Serilog 4.4.0 — Apache License 2.0
+  Copyright (c) Serilog Contributors
+  https://github.com/serilog/serilog/blob/dev/LICENSE
+
+Serilog.Sinks.Console 6.1.1 — Apache License 2.0
+  Copyright (c) Serilog Contributors
+  https://github.com/serilog/serilog-sinks-console/blob/dev/LICENSE
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use these files
+except in compliance with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the
+License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+either express or implied. See the License for the specific language governing permissions
+and limitations under the License.
+
+WorkflowForge itself is licensed under the MIT License; see LICENSE in the package.

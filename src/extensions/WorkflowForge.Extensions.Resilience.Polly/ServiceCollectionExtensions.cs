@@ -52,11 +52,11 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         public static IServiceCollection AddWorkflowForgePolly(
             this IServiceCollection services,
             IConfiguration configuration,
-            string sectionName = "WorkflowForge:Polly")
+            string? sectionName = null)
         {
             // Bind configuration
             var settings = new PollyMiddlewareOptions();
-            configuration.GetSection(sectionName).Bind(settings);
+            configuration.GetSection(sectionName ?? PollyMiddlewareOptions.DefaultSectionName).Bind(settings);
 
             return services.AddWorkflowForgePolly(opts =>
             {
@@ -64,7 +64,6 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                 opts.Retry = settings.Retry;
                 opts.CircuitBreaker = settings.CircuitBreaker;
                 opts.Timeout = settings.Timeout;
-                opts.RateLimiter = settings.RateLimiter;
                 opts.EnableComprehensivePolicies = settings.EnableComprehensivePolicies;
                 opts.DefaultTags = settings.DefaultTags;
                 opts.EnableDetailedLogging = settings.EnableDetailedLogging;
@@ -74,28 +73,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         private static PollyMiddleware CreateMiddlewareFromSettings(IServiceProvider provider, PollyMiddlewareOptions settings)
         {
             var logger = provider.GetRequiredService<IWorkflowForgeLogger>();
-
-            if (settings.EnableComprehensivePolicies)
-            {
-                return PollyMiddleware.WithComprehensivePolicy(
-                    logger,
-                    settings.Retry.MaxRetryAttempts,
-                    settings.Retry.BaseDelay,
-                    settings.CircuitBreaker.FailureThreshold,
-                    settings.CircuitBreaker.BreakDuration,
-                    settings.Timeout.DefaultTimeout);
-            }
-            else if (settings.Retry.IsEnabled)
-            {
-                return PollyMiddleware.WithRetryPolicy(
-                    logger,
-                    settings.Retry.MaxRetryAttempts,
-                    settings.Retry.BaseDelay,
-                    settings.Retry.BaseDelay); // MaxDelay doesn't exist, using BaseDelay
-            }
-
-            // Fallback to simple retry
-            return PollyMiddleware.WithRetryPolicy(logger);
+            return PollyMiddleware.FromOptions(settings, logger);
         }
     }
 

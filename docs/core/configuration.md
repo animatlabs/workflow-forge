@@ -433,7 +433,7 @@ var resilientOp = new RetryWorkflowOperation(myOperation, strategy);
 
 // Add to workflow
 var workflow = WorkflowForge.CreateWorkflow("ResilientProcess")
-    .AddOperation("ProcessWithRetry", resilientOp)
+    .AddOperation(resilientOp)
     .Build();
 ```
 
@@ -502,7 +502,7 @@ var tracer = tracerProvider.GetTracer("WorkflowForge");
 await smith.ForgeAsync(workflow, foundry);
 ```
 
-**Bundling**: ILRepack embeds OpenTelemetry; Microsoft/System stay external.
+**Bundling**: none. This extension depends only on `System.Diagnostics.DiagnosticSource`.
 
 ### Validation Extension
 

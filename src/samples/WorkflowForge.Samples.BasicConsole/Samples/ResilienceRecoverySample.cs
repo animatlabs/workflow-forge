@@ -48,7 +48,7 @@ public class ResilienceRecoverySample : ISample
                 maxAttempts: 2);
             f1.AddMiddleware(retry);
 
-            var smith = WorkflowForge.CreateSmith();
+            using var smith = WorkflowForge.CreateSmith();
             try
             {
                 await smith.ForgeAsync(workflow, f1);
@@ -72,7 +72,7 @@ public class ResilienceRecoverySample : ISample
                 maxAttempts: 2);
             f2.AddMiddleware(retry);
 
-            var smith = WorkflowForge.CreateSmith();
+            using var smith = WorkflowForge.CreateSmith();
             Console.WriteLine("Starting recovery phase...");
             await smith.ForgeWithRecoveryAsync(
                 workflow,

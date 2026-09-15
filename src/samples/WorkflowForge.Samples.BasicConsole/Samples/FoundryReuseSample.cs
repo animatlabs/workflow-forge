@@ -16,7 +16,7 @@ public class FoundryReuseSample : ISample
     {
         Console.WriteLine("Demonstrating foundry reuse across workflows...");
 
-        var smith = WorkflowForge.CreateSmith();
+        using var smith = WorkflowForge.CreateSmith();
         using var foundry = smith.CreateFoundry();
 
         var workflowA = WorkflowForge.CreateWorkflow("ReuseA")

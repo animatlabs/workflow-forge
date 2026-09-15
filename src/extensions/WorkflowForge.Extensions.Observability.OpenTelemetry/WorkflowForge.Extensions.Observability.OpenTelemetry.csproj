@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <!-- Version is centralized in src/Directory.Build.props -->
-    <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -33,11 +32,19 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <ILRepackTargetsFile>$(MSBuildThisFileDirectory)ILRepack.targets</ILRepackTargetsFile>
-    
-    <!-- Documentation -->
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Documentation (NuGet readme generated; see src/build/Packaging/NuGetReadme.targets) -->
     <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes><![CDATA[WorkflowForge.Extensions.Observability.OpenTelemetry 2.2.0
+
+BREAKING
+- This package no longer depends on the OpenTelemetry SDK. It referenced no OpenTelemetry type, so the packages are removed along with their 10.0.10 floors and advisory GHSA-g94r-2vxg-569j. It now declares System.Diagnostics.DiagnosticSource 8.0.1 alone and is no longer an ILRepack package. Your application owns the SDK and subscribes with .AddSource(serviceName) / .AddMeter(serviceName).
+
+Added
+- EnableOpenTelemetry now registers middleware that creates one span and one set of metrics per operation. CreateOpenTelemetryWorkflowMiddleware() returns the workflow-level middleware that parents those spans. EnableTracing, EnableMetrics, EnableSystemMetrics and EnableOperationMetrics all take effect.
+- EnableOpenTelemetry is idempotent; it previously built a second instrument graph and silently stopped instruments already handed out.
+
+Full changelog: https://github.com/animatlabs/workflow-forge/blob/main/CHANGELOG.md#220---2026-09-15]]></PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -45,27 +52,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenTelemetry.Api" Version="1.17.0" PrivateAssets="all" />
-    <PackageReference Include="OpenTelemetry" Version="1.17.0" PrivateAssets="all" />
-    <!--
-      OpenTelemetry* assemblies are ILRepack-merged (PrivateAssets="all"), so their transitive
-      dependencies are NOT written to this package's nuspec. The merged IL still references these
-      at runtime; declare them as regular (flowing) dependencies so consumers don't hit
-      FileNotFoundException. Do NOT ILRepack these (System.*/Microsoft.Extensions.* identity).
-    -->
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="10.0.10" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.10" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.10" />
-    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.46" PrivateAssets="all" />
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.29.0.143774">
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" />
+    <PackageReference Include="SonarAnalyzer.CSharp">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="../../../icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 

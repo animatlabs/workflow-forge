@@ -16,6 +16,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3fe9ddb5d55189d2a6fa9c01d4 # v4
+        with:
+          global-json-file: global.json
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@09a7688d3b55cf0e976497ff046b70949eeaccfd # v1.288.0
         with:
@@ -27,12 +32,8 @@ jobs:
         id: pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
 
-      - name: Build with Jekyll
-        run: |
-          cd docs
-          bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
-        env:
-          JEKYLL_ENV: production
+      - name: Build documentation (DocFX + Jekyll)
+        run: python scripts/build_docs.py --baseurl "${{ steps.pages.outputs.base_path }}"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0

@@ -275,7 +275,7 @@ public class ErrorHandlingMiddlewareShould
         var middleware = new ErrorHandlingMiddleware(logger, options);
         var foundry = new FakeWorkflowFoundry();
         var operation = CreateMockOperation("TestOp");
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act & Assert - OperationCanceledException should propagate (not wrapped)

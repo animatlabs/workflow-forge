@@ -1,5 +1,6 @@
 # Contributing to WorkflowForge
 
+[![Build and Test](https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml/badge.svg?branch=main)](https://github.com/animatlabs/workflow-forge/actions/workflows/build-test.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=coverage)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=animatlabs_workflow-forge&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=animatlabs_workflow-forge)
@@ -8,9 +9,22 @@
 
 Thank you for helping improve WorkflowForge.
 
+## Continuous integration
+
+Pull requests and pushes to `main` run [`.github/workflows/build-test.yml`](.github/workflows/build-test.yml):
+
+| Job | Runner | What it proves |
+|-----|--------|----------------|
+| `build-linux` | `ubuntu-latest` | Release build; tests on **net8.0** and **net10.0**; SonarCloud + OpenCover when `SONAR_TOKEN` is set |
+| `build-windows-net48` | `windows-latest` | Release build; tests on **net48** (.NET Framework harness) |
+
+The workflow badge is green only when **both** jobs succeed. Configure branch protection to require both job names (not the legacy `build` job).
+
+Release packing (`release-pack` on `workflow_dispatch`) and NuGet publish (`publish` when `publish=true`) are separate from per-PR CI. See [`docs/RELEASING.md`](docs/RELEASING.md).
+
 ## Sonar coverage and PRs
 
-For pull requests, use the SonarCloud PR dashboard or new-code view (from each CI run summary) when you need the quality gate for that change. The README coverage badge tracks the main branch and may not match a fresh PR analysis yet.
+For pull requests, use the SonarCloud PR dashboard or new-code view (from the **build-linux** job summary) when you need the quality gate for that change. The README coverage badge tracks the main branch and may not match a fresh PR analysis yet.
 
 ## Ways to Contribute
 
@@ -65,7 +79,7 @@ dotnet test -c Release
 
 ## Release Process
 
-1. **Version Bump**: Update `<Version>` and `<PackageReleaseNotes>` in all 13 packable `.csproj` files (core, Testing, and 11 extensions)
+1. **Version Bump**: Update `<Version>` and the shared `<PackageReleaseNotes>` in `src/Directory.Build.props`; all 13 packable projects inherit both. Add a package-specific `<PackageReleaseNotes>` to an individual `.csproj` only when that package has its own breaking change
 2. **Documentation**: Update `README.md`, `CHANGELOG.md`, and `docs/` with new version and benchmark data
 3. **Build & Test**: Run `dotnet build` and `dotnet test` across all target frameworks (net48, net8.0, net10.0)
 4. **Pack**: Run `dotnet pack` to generate `.nupkg` and `.snupkg` packages

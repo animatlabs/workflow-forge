@@ -46,7 +46,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         public void ThrowArgumentNullException_GivenNullServiceName()
         {
             Assert.Throws<ArgumentNullException>(() =>
-                new WorkflowForgeOpenTelemetryService(null!));
+                new WorkflowForgeOpenTelemetryService((string)null!));
         }
 
         [Fact]
@@ -70,28 +70,37 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry.Tests
         [Fact]
         public void ReturnActivityOrNull_GivenStartActivityWhenNotSampled()
         {
+            using var listener = EnableAllActivitySampling();
             using var service = new WorkflowForgeOpenTelemetryService("TestService");
 
             var activity = service.StartActivity("TestOperation");
 
-            if (activity != null)
-            {
-                Assert.Equal("TestOperation", activity.OperationName);
-                Assert.Equal(ActivityKind.Internal, activity.Kind);
-            }
+            Assert.NotNull(activity);
+            Assert.Equal("TestOperation", activity.OperationName);
+            Assert.Equal(ActivityKind.Internal, activity.Kind);
         }
 
         [Fact]
         public void ReturnActivityWithKind_GivenStartActivityWithCustomKindWhenSampled()
         {
+            using var listener = EnableAllActivitySampling();
             using var service = new WorkflowForgeOpenTelemetryService("TestService");
 
             var activity = service.StartActivity("TestOperation", ActivityKind.Server);
 
-            if (activity != null)
+            Assert.NotNull(activity);
+            Assert.Equal(ActivityKind.Server, activity.Kind);
+        }
+
+        private static ActivityListener EnableAllActivitySampling()
+        {
+            var listener = new ActivityListener
             {
-                Assert.Equal(ActivityKind.Server, activity.Kind);
-            }
+                ShouldListenTo = _ => true,
+                Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllData,
+            };
+            ActivitySource.AddActivityListener(listener);
+            return listener;
         }
 
         [Fact]

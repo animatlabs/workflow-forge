@@ -10,8 +10,9 @@ using WorkflowForge.Constants;
 namespace WorkflowForge.Operations
 {
     /// <summary>
-    /// Executes a workflow operation for each item in a collection with configurable data strategy.
-    /// Supports parallel and sequential execution with proper resource management and error handling.
+    /// Runs a fixed set of operations over the input, distributing items to operations by index
+    /// according to the configured data strategy. Supports parallel and sequential execution with
+    /// resource management and error handling.
     /// </summary>
     public sealed class ForEachWorkflowOperation : WorkflowOperationBase
     {
@@ -90,6 +91,7 @@ namespace WorkflowForge.Operations
                 Name, workflowName, workflowId, _operations.Count, effectiveMaxConcurrency?.ToString() ?? "unlimited");
 
             object?[] results;
+            var splitInputCache = CreateSplitInputCache(inputData);
             using var timeoutCts = _timeout.HasValue ? new CancellationTokenSource(_timeout.Value) : null;
             using var combinedCts = _timeout.HasValue
                 ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts!.Token)
@@ -101,7 +103,7 @@ namespace WorkflowForge.Operations
                 // Execute with throttling
                 using var semaphore = new SemaphoreSlim(effectiveMaxConcurrency.Value, effectiveMaxConcurrency.Value);
                 var tasks = _operations.Select((op, index) =>
-                    ForgeOperationWithThrottlingAsync(op, inputData, index, foundry, semaphore, effectiveToken)).ToArray();
+                    ForgeOperationWithThrottlingAsync(op, inputData, splitInputCache, index, foundry, semaphore, effectiveToken)).ToArray();
 
                 results = await Task.WhenAll(tasks).ConfigureAwait(false);
             }
@@ -109,7 +111,7 @@ namespace WorkflowForge.Operations
             {
                 // Execute without throttling
                 var tasks = _operations.Select((op, index) =>
-                    ForgeOperationAsync(op, inputData, index, foundry, effectiveToken)).ToArray();
+                    ForgeOperationAsync(op, inputData, splitInputCache, index, foundry, effectiveToken)).ToArray();
 
                 results = await Task.WhenAll(tasks).ConfigureAwait(false);
             }
@@ -193,18 +195,18 @@ namespace WorkflowForge.Operations
             base.Dispose(disposing);
         }
 
-        private async Task<object?> ForgeOperationAsync(IWorkflowOperation operation, object? inputData, int index, IWorkflowFoundry foundry, CancellationToken cancellationToken)
+        private async Task<object?> ForgeOperationAsync(IWorkflowOperation operation, object? inputData, object? splitInputCache, int index, IWorkflowFoundry foundry, CancellationToken cancellationToken)
         {
-            var operationInput = GetInputForOperation(inputData, index);
+            var operationInput = GetInputForOperation(inputData, splitInputCache, index);
             return await operation.ForgeAsync(operationInput, foundry, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<object?> ForgeOperationWithThrottlingAsync(IWorkflowOperation operation, object? inputData, int index, IWorkflowFoundry foundry, SemaphoreSlim semaphore, CancellationToken cancellationToken)
+        private async Task<object?> ForgeOperationWithThrottlingAsync(IWorkflowOperation operation, object? inputData, object? splitInputCache, int index, IWorkflowFoundry foundry, SemaphoreSlim semaphore, CancellationToken cancellationToken)
         {
             await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                return await ForgeOperationAsync(operation, inputData, index, foundry, cancellationToken).ConfigureAwait(false);
+                return await ForgeOperationAsync(operation, inputData, splitInputCache, index, foundry, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -230,13 +232,27 @@ namespace WorkflowForge.Operations
             }
         }
 
-        private object? GetInputForOperation(object? inputData, int index) => _dataStrategy switch
+        private object? GetInputForOperation(object? inputData, object? splitInputCache, int index) => _dataStrategy switch
         {
             ForEachDataStrategy.SharedInput => inputData,
-            ForEachDataStrategy.SplitInput => ExtractDataForIndex(inputData, index),
+            ForEachDataStrategy.SplitInput => ExtractDataForIndex(inputData, splitInputCache, index),
             ForEachDataStrategy.NoInput => null,
             _ => throw new InvalidOperationException($"Unsupported ForEach data strategy: {_dataStrategy}")
         };
+
+        private object? CreateSplitInputCache(object? inputData)
+        {
+            if (_dataStrategy != ForEachDataStrategy.SplitInput || inputData == null)
+                return null;
+
+            if (inputData is Array or IList or string)
+                return null;
+
+            if (inputData is IEnumerable enumerable)
+                return enumerable.Cast<object>().ToList();
+
+            return null;
+        }
 
         private object? CombineResults(object?[] results)
         {
@@ -264,10 +280,13 @@ namespace WorkflowForge.Operations
             return index < results.Length ? results[index] : null;
         }
 
-        private static object? ExtractDataForIndex(object? inputData, int index)
+        private static object? ExtractDataForIndex(object? inputData, object? splitInputCache, int index)
         {
             if (inputData == null)
                 return null;
+
+            if (splitInputCache is IList cachedList)
+                return index < cachedList.Count ? cachedList[index] : null;
 
             // Handle array types
             if (inputData is Array array && index < array.Length)
@@ -276,13 +295,6 @@ namespace WorkflowForge.Operations
             // Handle generic lists
             if (inputData is IList list && index < list.Count)
                 return list[index];
-
-            // Handle enumerable (convert to list for indexing)
-            if (inputData is IEnumerable enumerable && enumerable is not string)
-            {
-                var items = enumerable.Cast<object>().ToList();
-                return index < items.Count ? items[index] : null;
-            }
 
             // If it's not a collection, return the input for all operations
             return inputData;
@@ -340,7 +352,7 @@ namespace WorkflowForge.Operations
         }
 
         /// <summary>
-        /// Creates a simple ForEach operation (legacy compatibility).
+        /// Creates a ForEach operation from a params array of child operations.
         /// </summary>
         /// <param name="operations">The operations to execute.</param>
         /// <returns>A new ForEach operation instance.</returns>

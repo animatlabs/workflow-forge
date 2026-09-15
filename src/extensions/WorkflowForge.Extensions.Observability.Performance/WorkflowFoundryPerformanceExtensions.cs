@@ -27,6 +27,12 @@ namespace WorkflowForge.Extensions.Observability.Performance
                 return performanceFoundry.GetPerformanceStatistics();
             }
 
+            if (foundry.Services != null
+                && foundry.Services.TryGet<IFoundryPerformanceStatistics>(PerformancePropertyKeys.PerformanceStatistics, out var fromServices))
+            {
+                return fromServices;
+            }
+
             return foundry.Properties.TryGetValue(PerformancePropertyKeys.PerformanceStatistics, out var statsObj) && statsObj is IFoundryPerformanceStatistics stats
                 ? stats
                 : null;
@@ -37,7 +43,9 @@ namespace WorkflowForge.Extensions.Observability.Performance
         /// This method is available as an extension when WorkflowForge.Extensions.Observability.Performance is installed.
         /// </summary>
         /// <param name="foundry">The workflow foundry.</param>
-        /// <returns>True if performance monitoring was enabled; otherwise, false.</returns>
+        /// <returns>
+        /// True when monitoring is active for the foundry. Re-enabling starts from a fresh set of counters.
+        /// </returns>
         /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
         public static bool EnablePerformanceMonitoring(this IWorkflowFoundry foundry)
         {
@@ -52,13 +60,11 @@ namespace WorkflowForge.Extensions.Observability.Performance
 
             // Standard foundry: store a fresh statistics accumulator under the well-known key. The
             // PerformanceStatisticsMiddleware resolves that key on each operation and records into it.
-            foundry.Properties[PerformancePropertyKeys.PerformanceStatistics] = new FoundryPerformanceStatistics();
+            foundry.Services.Set(PerformancePropertyKeys.PerformanceStatistics, new FoundryPerformanceStatistics());
 
-            // Register the middleware exactly once per foundry, even under concurrent EnablePerformanceMonitoring
-            // calls. TryAdd is atomic; a ContainsKey-then-add check would be a race that could register the
-            // middleware twice and permanently double-count every operation.
+            // Register the middleware exactly once per foundry, even under concurrent EnablePerformanceMonitoring calls.
             var middleware = new PerformanceStatisticsMiddleware();
-            if (foundry.Properties.TryAdd(PerformancePropertyKeys.PerformanceMiddleware, middleware))
+            if (foundry.Services.TryAdd(PerformancePropertyKeys.PerformanceMiddleware, middleware))
             {
                 foundry.AddMiddleware(middleware);
             }
@@ -86,6 +92,12 @@ namespace WorkflowForge.Extensions.Observability.Performance
             // Removing the statistics deactivates recording. The middleware stays registered but
             // becomes a no-op pass-through until monitoring is enabled again. Returns whether
             // monitoring was active.
+            if (foundry.Services != null
+                && foundry.Services.TryRemove(PerformancePropertyKeys.PerformanceStatistics, out _))
+            {
+                return true;
+            }
+
             return foundry.Properties.TryRemove(PerformancePropertyKeys.PerformanceStatistics, out _);
         }
     }

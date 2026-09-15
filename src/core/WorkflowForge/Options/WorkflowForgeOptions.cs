@@ -41,7 +41,8 @@ namespace WorkflowForge.Options
         /// <summary>
         /// Gets or sets whether to continue executing remaining operations after a failure.
         /// When true, failures are aggregated and thrown after execution completes.
-        /// Default is false (stop on first error).
+        /// <see cref="System.OperationCanceledException"/> is always rethrown immediately and is
+        /// never aggregated. Default is false (stop on first error).
         /// </summary>
         public bool ContinueOnError { get; set; } = false;
 

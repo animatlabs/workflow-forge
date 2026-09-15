@@ -16,7 +16,7 @@ public class WorkflowMiddlewareSample : ISample
     {
         Console.WriteLine("Demonstrating workflow-level middleware...");
 
-        var smith = WorkflowForge.CreateSmith(new ConsoleLogger("WF-MW"));
+        using var smith = WorkflowForge.CreateSmith(new ConsoleLogger("WF-MW"));
         smith.AddWorkflowMiddleware(new WorkflowTimingMiddleware());
         smith.AddWorkflowMiddleware(new WorkflowAuditMiddleware());
 

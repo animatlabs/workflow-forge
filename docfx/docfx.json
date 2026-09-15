@@ -1,0 +1,64 @@
+{
+  "metadata": [
+    {
+      "src": [
+        { "files": ["**/*.csproj"], "src": "../src/core/WorkflowForge" },
+        { "files": ["**/*.csproj"], "src": "../src/core/WorkflowForge.Testing" },
+        { "files": ["**/*.csproj"], "src": "../src/extensions/WorkflowForge.Extensions.Audit" },
+        { "files": ["**/*.csproj"], "src": "../src/extensions/WorkflowForge.Extensions.DependencyInjection" },
+        { "files": ["**/*.csproj"], "src": "../src/extensions/WorkflowForge.Extensions.Logging.Serilog" },
+        { "files": ["**/*.csproj"], "src": "../src/extensions/WorkflowForge.Extensions.Observability.HealthChecks" },
+        { "files": ["**/*.csproj"], "src": "../src/extensions/WorkflowForge.Extensions.Observability.OpenTelemetry" },
+        { "files": ["**/*.csproj"], "src": "../src/extensions/WorkflowForge.Extensions.Observability.Performance" },
+        { "files": ["**/*.csproj"], "src": "../src/extensions/WorkflowForge.Extensions.Persistence" },
+        { "files": ["**/*.csproj"], "src": "../src/extensions/WorkflowForge.Extensions.Persistence.Recovery" },
+        { "files": ["**/*.csproj"], "src": "../src/extensions/WorkflowForge.Extensions.Resilience" },
+        { "files": ["**/*.csproj"], "src": "../src/extensions/WorkflowForge.Extensions.Resilience.Polly" },
+        { "files": ["**/*.csproj"], "src": "../src/extensions/WorkflowForge.Extensions.Validation" }
+      ],
+      "dest": "api",
+      "disableGitFeatures": true
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": ["**/*.yml"]
+      },
+      {
+        "files": ["**/*.md"],
+        "exclude": ["index.md"]
+      }
+    ],
+    "resource": [
+      {
+        "files": ["icon.png"],
+        "src": "..",
+        "dest": "."
+      },
+      {
+        "files": ["icon-navbar.png"],
+        "src": ".",
+        "dest": "."
+      },
+      {
+        "files": ["branding.css"],
+        "src": ".",
+        "dest": "."
+      }
+    ],
+    "output": "../docs/api",
+    "template": ["default", "modern"],
+    "globalMetadata": {
+      "_appTitle": "WorkflowForge API",
+      "_appName": "WorkflowForge",
+      "_appLogoPath": "icon-navbar.png",
+      "_appLogoUrl": "../",
+      "_appFaviconPath": "icon.png",
+      "_enableSearch": true,
+      "_disableContribution": true,
+      "_description": "WorkflowForge .NET API reference.",
+      "_appFooter": "&copy; AnimatLabs &middot; <a href=\"../\">Documentation home</a> &middot; <a href=\"https://github.com/animatlabs/workflow-forge\">GitHub</a><br/>Generated with <a href=\"https://dotnet.github.io/docfx/\">DocFX</a>."
+    }
+  }
+}

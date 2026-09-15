@@ -25,7 +25,8 @@ namespace WorkflowForge.Abstractions
 
         /// <summary>
         /// Forges a workflow asynchronously using the provided data dictionary.
-        /// The smith creates a foundry internally with the provided data.
+        /// The smith creates a foundry internally over the supplied dictionary, so workflow results
+        /// are readable from it after the call returns.
         /// </summary>
         /// <param name="workflow">The workflow to forge.</param>
         /// <param name="data">The shared data dictionary for workflow execution.</param>
@@ -37,6 +38,7 @@ namespace WorkflowForge.Abstractions
         /// Forges a workflow asynchronously using a pre-configured foundry.
         /// This is the advanced pattern for scenarios requiring foundry reuse across multiple workflows.
         /// The foundry's CurrentWorkflow will be set to the provided workflow during execution.
+        /// The caller retains ownership of the foundry and of the operations and middleware it holds.
         /// </summary>
         /// <param name="workflow">The workflow to forge.</param>
         /// <param name="foundry">The foundry providing the execution context.</param>

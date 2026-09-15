@@ -270,6 +270,40 @@ namespace WorkflowForge.Tests.OrchestrationTests
         }
 
         [Fact]
+        public async Task ExecuteInCorrectOrder_GivenMultipleWorkflowMiddlewares()
+        {
+            using var smith = WorkflowForge.CreateSmith();
+            var executionOrder = new List<string>();
+
+            smith.AddWorkflowMiddleware(new WorkflowOrderTrackingMiddleware("MW1", executionOrder));
+            smith.AddWorkflowMiddleware(new WorkflowOrderTrackingMiddleware("MW2", executionOrder));
+            smith.AddWorkflowMiddleware(new WorkflowOrderTrackingMiddleware("MW3", executionOrder));
+
+            var workflow = WorkflowForge.CreateWorkflow($"WorkflowMiddlewareOrder-{_uniqueTestId}")
+                .AddOperation("Op1", (_, _) =>
+                {
+                    executionOrder.Add("Operation");
+                    return Task.CompletedTask;
+                })
+                .Build();
+
+            await smith.ForgeAsync(workflow);
+
+            var expectedOrder = new[]
+            {
+                "MW1-Before", "MW2-Before", "MW3-Before",
+                "Operation",
+                "MW3-After", "MW2-After", "MW1-After"
+            };
+
+            Assert.Equal(expectedOrder.Length, executionOrder.Count);
+            for (int i = 0; i < expectedOrder.Length; i++)
+            {
+                Assert.Equal(expectedOrder[i], executionOrder[i]);
+            }
+        }
+
+        [Fact]
         public async Task EmitStartedAndCompletedEvents_GivenSuccessfulForgeAsync()
         {
             using var smith = WorkflowForge.CreateSmith();
@@ -609,6 +643,29 @@ namespace WorkflowForge.Tests.OrchestrationTests
 
             public void Dispose()
             {
+            }
+        }
+
+        private sealed class WorkflowOrderTrackingMiddleware : IWorkflowMiddleware
+        {
+            private readonly string _name;
+            private readonly List<string> _executionOrder;
+
+            public WorkflowOrderTrackingMiddleware(string name, List<string> executionOrder)
+            {
+                _name = name;
+                _executionOrder = executionOrder;
+            }
+
+            public async Task ExecuteAsync(
+                IWorkflow workflow,
+                IWorkflowFoundry foundry,
+                Func<Task> next,
+                CancellationToken cancellationToken = default)
+            {
+                _executionOrder.Add($"{_name}-Before");
+                await next().ConfigureAwait(false);
+                _executionOrder.Add($"{_name}-After");
             }
         }
     }

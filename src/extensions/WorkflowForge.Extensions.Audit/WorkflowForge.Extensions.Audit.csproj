@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <!-- Version is centralized in src/Directory.Build.props -->
-    <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -33,9 +32,18 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     
-    <!-- Documentation -->
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- Documentation (NuGet readme generated; see src/build/Packaging/NuGetReadme.targets) -->
     <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes><![CDATA[WorkflowForge.Extensions.Audit 2.2.0
+
+BREAKING
+- InMemoryAuditProvider(int maxEntries) throws ArgumentOutOfRangeException for values below one instead of silently substituting 10,000.
+
+Fixed
+- AuditDetailLevel values are now distinct: Minimal omits metadata, duration and initiator; Verbose adds foundry properties; Complete adds input and output payloads. LogDataPayloads now captures payloads at any level above Minimal.
+- InMemoryAuditProvider evicts through a queue instead of List.RemoveAt(0), which was an O(n) memmove on every write once at cap.
+
+Full changelog: https://github.com/animatlabs/workflow-forge/blob/main/CHANGELOG.md#220---2026-09-15]]></PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -43,19 +51,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.10" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.10" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.10" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.10" />
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.29.0.143774">
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="SonarAnalyzer.CSharp">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="../../../icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 

@@ -1,0 +1,13 @@
+{
+  "siteTitle": "WorkflowForge",
+  "iconUrl": "https://raw.githubusercontent.com/animatlabs/workflow-forge/main/icon.png",
+  "githubUrl": "https://github.com/animatlabs/workflow-forge",
+  "links": [
+    { "label": "Get Started", "path": "getting-started/getting-started/" },
+    { "label": "Operations", "path": "core/operations/" },
+    { "label": "Extensions", "path": "extensions/" },
+    { "label": "Performance", "path": "performance/performance/" },
+    { "label": "API reference", "path": "reference/api-reference/" },
+    { "label": ".NET API", "path": "api/", "docfxSection": true }
+  ]
+}

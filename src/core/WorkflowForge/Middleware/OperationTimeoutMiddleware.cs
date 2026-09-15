@@ -102,6 +102,7 @@ namespace WorkflowForge.Middleware
             _logger.LogDebug("Operation {OperationName} executing with {TimeoutSeconds}s timeout", operation.Name, timeout.TotalSeconds);
 
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
             var effectiveToken = timeoutCts.Token;
             var executionTask = next(effectiveToken);
             var timeoutTask = Task.Delay(timeout, cancellationToken);
@@ -110,9 +111,14 @@ namespace WorkflowForge.Middleware
             if (completedTask == timeoutTask)
             {
                 timeoutCts.Cancel();
-                _ = executionTask.ContinueWith(
-                    t => _ = t.Exception,
-                    TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+                try
+                {
+                    await executionTask.ConfigureAwait(false);
+                }
+                catch (Exception ex) when (ex is OperationCanceledException or TimeoutException)
+                {
+                    _ = ex;
+                }
 
                 if (cancellationToken.IsCancellationRequested)
                 {

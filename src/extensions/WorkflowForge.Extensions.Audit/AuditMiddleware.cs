@@ -70,6 +70,8 @@ namespace WorkflowForge.Extensions.Audit
                 startTime,
                 null,
                 null,
+                inputData,
+                null,
                 cancellationToken).ConfigureAwait(false);
 
             try
@@ -88,6 +90,8 @@ namespace WorkflowForge.Extensions.Audit
                     _timeProvider.UtcNow,
                     null,
                     stopwatch.ElapsedMilliseconds,
+                    inputData,
+                    result,
                     cancellationToken).ConfigureAwait(false);
 
                 return result;
@@ -107,6 +111,8 @@ namespace WorkflowForge.Extensions.Audit
                     _timeProvider.UtcNow,
                     ex.Message,
                     stopwatch.ElapsedMilliseconds,
+                    inputData,
+                    null,
                     cancellationToken).ConfigureAwait(false);
 
                 throw;
@@ -123,30 +129,38 @@ namespace WorkflowForge.Extensions.Audit
             DateTimeOffset timestamp,
             string? errorMessage,
             long? durationMs,
+            object? inputData,
+            object? outputData,
             CancellationToken cancellationToken)
         {
-            // Determine what metadata to include based on options
+            var minimal = _options.DetailLevel == AuditDetailLevel.Minimal;
             var metadata = new System.Collections.Generic.Dictionary<string, object?>();
 
-            // Include foundry properties based on detail level
-            if (_options.DetailLevel >= AuditDetailLevel.Verbose)
+            if (!minimal)
             {
-                foreach (var prop in foundry.Properties)
+                if (_options.DetailLevel >= AuditDetailLevel.Verbose)
                 {
-                    metadata[prop.Key] = prop.Value;
+                    foreach (var prop in foundry.Properties)
+                    {
+                        metadata[prop.Key] = prop.Value;
+                    }
                 }
-            }
 
-            // Add timestamp if configured
-            if (_options.IncludeTimestamps)
-            {
-                metadata["AuditTimestamp"] = timestamp;
-            }
+                if (_options.IncludeTimestamps)
+                {
+                    metadata["AuditTimestamp"] = timestamp;
+                }
 
-            // Add user context if configured
-            if (_options.IncludeUserContext && !string.IsNullOrEmpty(_initiatedBy))
-            {
-                metadata["InitiatedBy"] = _initiatedBy;
+                if (_options.IncludeUserContext && !string.IsNullOrEmpty(_initiatedBy))
+                {
+                    metadata["InitiatedBy"] = _initiatedBy;
+                }
+
+                if (_options.LogDataPayloads || _options.DetailLevel == AuditDetailLevel.Complete)
+                {
+                    metadata["InputData"] = inputData?.ToString();
+                    metadata["OutputData"] = outputData?.ToString();
+                }
             }
 
             var entry = new AuditEntry(
@@ -155,10 +169,10 @@ namespace WorkflowForge.Extensions.Audit
                 operationName,
                 eventType,
                 status,
-                _initiatedBy,
+                minimal ? null : _initiatedBy,
                 metadata,
                 errorMessage,
-                durationMs,
+                minimal ? null : durationMs,
                 timestamp);
 
             try

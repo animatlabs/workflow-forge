@@ -338,6 +338,8 @@ public class WorkflowForgeShould
     // Helper test logger for testing
     private class TestLogger : IWorkflowForgeLogger
     {
+        public bool IsEnabled(global::WorkflowForge.Operations.WorkflowForgeLogLevel level) => true;
+
         public void LogTrace(string message, params object[] args)
         { }
 

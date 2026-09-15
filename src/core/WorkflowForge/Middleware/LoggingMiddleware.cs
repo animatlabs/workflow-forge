@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
 using WorkflowForge.Constants;
 using WorkflowForge.Extensions;
+using WorkflowForge.Operations;
 using WorkflowForge.Options.Middleware;
 
 namespace WorkflowForge.Middleware
@@ -19,6 +20,7 @@ namespace WorkflowForge.Middleware
     {
         private readonly LoggingMiddlewareOptions _options;
         private readonly IWorkflowForgeLogger _logger;
+        private readonly WorkflowForgeLogLevel _minimumLevel;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LoggingMiddleware"/> class.
@@ -32,6 +34,7 @@ namespace WorkflowForge.Middleware
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _options = options ?? throw new ArgumentNullException(nameof(options));
+            _minimumLevel = WorkflowForgeLogLevelParsing.ParseMinimumLevel(_options.MinimumLevel);
         }
 
         /// <summary>
@@ -51,10 +54,8 @@ namespace WorkflowForge.Middleware
             Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default)
         {
-            // Note: Enabled check is done at registration time (UseDefaultMiddleware)
-            // If this middleware is registered, it's enabled - no need for runtime check
-
-            // Create middleware scope with operation context using consistent property names
+            // The scope is operation context, not verbosity: it enriches the failure log below and
+            // everything the operation logs through next(), so it is always established.
             var middlewareProperties = new Dictionary<string, string>
             {
                 [PropertyNameConstants.ExecutionId] = operation?.Id.ToString() ?? FoundryPropertyKeys.UnknownValue,
@@ -62,7 +63,6 @@ namespace WorkflowForge.Middleware
                 [PropertyNameConstants.ExecutionType] = operation?.GetType().Name ?? FoundryPropertyKeys.UnknownValue
             };
 
-            // Optionally include data payloads if configured
             if (_options.LogDataPayloads && inputData != null)
             {
                 middlewareProperties["InputDataType"] = inputData.GetType().Name;
@@ -71,26 +71,36 @@ namespace WorkflowForge.Middleware
 
             using var middlewareScope = _logger.BeginScope("MiddlewareExecution", middlewareProperties);
 
-            _logger.LogTrace(WorkflowLogMessageConstants.MiddlewareExecutionStarted);
+            var traceEnabled = WorkflowForgeLogLevelParsing.IsLevelEnabled(
+                _logger,
+                WorkflowForgeLogLevel.Trace,
+                _minimumLevel);
+
+            if (traceEnabled)
+            {
+                _logger.LogTrace(WorkflowLogMessageConstants.MiddlewareExecutionStarted);
+            }
 
             try
             {
                 var result = await next(cancellationToken).ConfigureAwait(false);
 
-                // Log result if configured
-                if (_options.LogDataPayloads && result != null)
+                if (traceEnabled)
                 {
-                    var resultProperties = new Dictionary<string, string>
+                    if (_options.LogDataPayloads && result != null)
                     {
-                        ["ResultType"] = result.GetType().Name,
-                        ["Result"] = result.ToString() ?? FoundryPropertyKeys.NullDisplayValue
-                    };
-                    using var resultScope = _logger.BeginScope("OperationResult", resultProperties);
-                    _logger.LogTrace(WorkflowLogMessageConstants.MiddlewareExecutionCompleted);
-                }
-                else
-                {
-                    _logger.LogTrace(WorkflowLogMessageConstants.MiddlewareExecutionCompleted);
+                        var resultProperties = new Dictionary<string, string>
+                        {
+                            ["ResultType"] = result.GetType().Name,
+                            ["Result"] = result.ToString() ?? FoundryPropertyKeys.NullDisplayValue
+                        };
+                        using var resultScope = _logger.BeginScope("OperationResult", resultProperties);
+                        _logger.LogTrace(WorkflowLogMessageConstants.MiddlewareExecutionCompleted);
+                    }
+                    else
+                    {
+                        _logger.LogTrace(WorkflowLogMessageConstants.MiddlewareExecutionCompleted);
+                    }
                 }
 
                 return result;

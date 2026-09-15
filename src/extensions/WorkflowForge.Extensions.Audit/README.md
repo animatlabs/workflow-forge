@@ -18,6 +18,7 @@ Targets .NET Standard 2.0 or later.
 using WorkflowForge;
 using WorkflowForge.Extensions.Audit;
 using WorkflowForge.Extensions.Audit.Options;
+using WorkflowForge.Operations;
 
 // Create the audit provider
 var auditProvider = new InMemoryAuditProvider();
@@ -44,7 +45,7 @@ await smith.ForgeAsync(workflow, foundry);
 ## Key points
 
 - Depends on WorkflowForge core plus `Microsoft.Extensions.*` (options/DI integration); no storage library — you supply storage by implementing `IAuditProvider`.
-- Covers workflow and operation lifecycle events in one stream.
+- Emits operation started / completed / failed automatically; workflow-level entries are written explicitly with `WriteCustomAuditAsync`.
 - Optional initiator/session-style context and timestamps; detail level is configurable.
 - `ISystemTimeProvider` helps keep tests deterministic.
 - Entries carry metadata dictionaries; append-only style storage fits many compliance setups.
@@ -52,7 +53,7 @@ await smith.ForgeAsync(workflow, foundry);
 ## Audit entry shape
 
 ```csharp
-public class AuditEntry
+public sealed class AuditEntry
 {
     public Guid AuditId { get; }                    // Unique identifier for this entry
     public DateTimeOffset Timestamp { get; }
@@ -110,13 +111,14 @@ foundry.UseAudit(auditProvider, options);
 ```csharp
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using WorkflowForge.Extensions.Audit;
 
 services.AddAuditConfiguration(configuration);
 var options = serviceProvider.GetRequiredService<IOptions<AuditMiddlewareOptions>>().Value;
 ```
 
-[Configuration: Audit](../../../docs/core/configuration.md#audit-extension)
+[Configuration: Audit](https://animatlabs.com/workflow-forge/core/configuration/#audit-extension)
 
 ## Storage provider examples
 
@@ -159,7 +161,7 @@ public class AzureAuditProvider : IAuditProvider
 
 ## Links
 
-- [Getting Started](../../../docs/getting-started/getting-started.md)
-- [Configuration Guide](../../../docs/core/configuration.md#audit-extension)
-- [Extensions Overview](../../../docs/extensions/index.md)
-- [Sample 24: Audit](../../samples/WorkflowForge.Samples.BasicConsole/README.md)
+- [Getting Started](https://animatlabs.com/workflow-forge/getting-started/getting-started/)
+- [Configuration Guide](https://animatlabs.com/workflow-forge/core/configuration/#audit-extension)
+- [Extensions Overview](https://animatlabs.com/workflow-forge/extensions/)
+- [Sample 24: Audit](https://github.com/animatlabs/workflow-forge/blob/main/src/samples/WorkflowForge.Samples.BasicConsole/README.md)

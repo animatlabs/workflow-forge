@@ -18,6 +18,7 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
         private readonly IWorkflowForgeLogger _logger;
         private readonly ISystemTimeProvider _timeProvider;
         private readonly Timer? _periodicCheckTimer;
+        private int _periodicCheckRunning;
         private volatile bool _disposed;
 
         /// <summary>
@@ -294,6 +295,10 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
             if (_disposed)
                 return;
 
+            // A check slower than the interval must not stack up behind itself.
+            if (Interlocked.CompareExchange(ref _periodicCheckRunning, 1, 0) != 0)
+                return;
+
             _ = Task.Run(async () =>
             {
                 try
@@ -304,6 +309,10 @@ namespace WorkflowForge.Extensions.Observability.HealthChecks
                 {
                     var errorProperties = _logger.CreateErrorProperties(ex, "PeriodicHealthCheck");
                     _logger.LogError(errorProperties, ex, HealthCheckLogMessages.PeriodicHealthCheckFailed);
+                }
+                finally
+                {
+                    Interlocked.Exchange(ref _periodicCheckRunning, 0);
                 }
             });
         }

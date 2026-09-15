@@ -38,10 +38,11 @@ namespace WorkflowForge.Options.Middleware
         }
 
         /// <summary>
-        /// Gets or sets the minimum log level for WorkflowForge logging.
+        /// Gets or sets the minimum log level for the per-operation trace messages this middleware
+        /// emits. Operation failures are always logged regardless of this setting.
         /// Valid values: Trace, Debug, Information, Warning, Error, Critical.
         /// This setting works in conjunction with your logging provider's configuration.
-        /// Default is Information.
+        /// Default is Information, which suppresses the per-operation trace messages.
         /// </summary>
         public string MinimumLevel { get; set; } = "Information";
 

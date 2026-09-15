@@ -136,7 +136,7 @@ namespace WorkflowForge.Extensions.DependencyInjection.Tests
                 Guid.NewGuid(),
                 options);
 
-            Assert.True(true);
+            Assert.Equal(0, GetMiddlewareCount(foundry));
         }
 
         private static int GetMiddlewareCount(IWorkflowFoundry foundry)

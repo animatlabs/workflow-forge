@@ -50,7 +50,7 @@ public class ConfigurationSample : ISample
         services.AddRecoveryConfiguration(configuration);
         services.AddWorkflowForgePolly(configuration);
 
-        var serviceProvider = services.BuildServiceProvider();
+        using var serviceProvider = services.BuildServiceProvider();
 
         // Demonstrate configuration-driven workflow execution
         await DemonstrateEnabledExtensions(serviceProvider);
@@ -98,7 +98,7 @@ public class ConfigurationSample : ISample
             .AddOperation(new ConfigLogOperation("Op1", "Operation executed"))
             .Build();
 
-        var smith = WF.WorkflowForge.CreateSmith();
+        using var smith = WF.WorkflowForge.CreateSmith();
         await smith.ForgeAsync(workflow, foundry);
 
         Console.WriteLine("   ✓ Workflow executed successfully");
@@ -132,7 +132,7 @@ public class ConfigurationSample : ISample
             .AddOperation(new ConfigLogOperation("Op1", "Operation executed"))
             .Build();
 
-        var smith = WF.WorkflowForge.CreateSmith();
+        using var smith = WF.WorkflowForge.CreateSmith();
 
         if (recoveryOptions.Enabled)
         {

@@ -15,9 +15,11 @@ Targets .NET Standard 2.0. Validation uses BCL DataAnnotations plus `Microsoft.E
 ## Quick Start
 
 ```csharp
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using WorkflowForge;
 using WorkflowForge.Extensions.Validation;
-using System.ComponentModel.DataAnnotations;
 
 // Define validator
 public class Order : IValidatableObject
@@ -97,13 +99,14 @@ foundry.UseValidation(f => f.GetPropertyOrDefault<Order>("Order"), options);
 ```csharp
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using WorkflowForge.Extensions.Validation;
 
 services.AddValidationConfiguration(configuration);
 var options = serviceProvider.GetRequiredService<IOptions<ValidationMiddlewareOptions>>().Value;
 ```
 
-[Validation configuration](../../../docs/core/configuration.md#validation-extension)
+[Validation configuration](https://animatlabs.com/workflow-forge/core/configuration/#validation-extension)
 
 ## Validation examples
 
@@ -141,7 +144,7 @@ foundry.UseValidation(
 
 ## Links
 
-- [Getting Started](../../../docs/getting-started/getting-started.md)
-- [Configuration Guide](../../../docs/core/configuration.md#validation-extension)
-- [Extensions Overview](../../../docs/extensions/index.md)
-- [Sample 23: Validation](../../samples/WorkflowForge.Samples.BasicConsole/README.md)
+- [Getting Started](https://animatlabs.com/workflow-forge/getting-started/getting-started/)
+- [Configuration Guide](https://animatlabs.com/workflow-forge/core/configuration/#validation-extension)
+- [Extensions Overview](https://animatlabs.com/workflow-forge/extensions/)
+- [Sample 23: Validation](https://github.com/animatlabs/workflow-forge/blob/main/src/samples/WorkflowForge.Samples.BasicConsole/README.md)

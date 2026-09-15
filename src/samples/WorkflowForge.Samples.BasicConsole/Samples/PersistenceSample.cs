@@ -26,7 +26,7 @@ public class PersistenceSample : ISample
         var fileProvider = new FilePersistenceProvider(Path.Combine(AppContext.BaseDirectory, "checkpoints"));
         var options = new PersistenceOptions { InstanceId = "PersistenceDemoFoundry", WorkflowKey = "PersistenceDemo" };
 
-        var smith = WorkflowForge.CreateSmith();
+        using var smith = WorkflowForge.CreateSmith();
 
         // First run: will crash at Step2, but persistence middleware will checkpoint and keep snapshot
         using (var foundry = WorkflowForge.CreateFoundry("PersistenceDemoFoundry"))

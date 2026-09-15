@@ -59,6 +59,21 @@ public class OperationCreationPatternsSample : ISample
         await mathSmith.ForgeAsync(mathWorkflow, mathFoundry);
         Console.WriteLine("Math operation pattern completed\n");
 
+        // Pattern: strongly-typed operation base (WorkflowOperationBase<TInput, TOutput>)
+        Console.WriteLine("Pattern: Typed operation base");
+        var typedWorkflow = WorkflowForge.CreateWorkflow()
+            .WithName("TypedOperationWorkflow")
+            // Output chaining feeds this operation's typed input from the previous output.
+            .AddOperation(WorkflowOperations.Create("SeedNumber", _ => (object?)7))
+            .AddOperation(new TypedMathOperation(42))
+            .Build();
+
+        using var typedFoundry = WorkflowForge.CreateFoundry("TypedOperation");
+
+        using var typedSmith = WorkflowForge.CreateSmith();
+        await typedSmith.ForgeAsync(typedWorkflow, typedFoundry);
+        Console.WriteLine($"Typed operation produced: {typedFoundry.GetPropertyOrDefault<double>("mathResult")}\n");
+
         // Separate workflow for PaymentOperation
         var paymentWorkflow = WorkflowForge.CreateWorkflow()
             .WithName("PaymentWorkflow")

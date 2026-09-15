@@ -528,21 +528,17 @@ public class Program
         return DefaultConfig.Instance
             .WithOption(ConfigOptions.DisableOptimizationsValidator, true)
             .AddJob(Job.Default.WithRuntime(ClrRuntime.Net48)
-                .WithStrategy(RunStrategy.Monitoring)
-                .WithIterationCount(50)
-                .WithInvocationCount(1).WithUnrollFactor(1))
+                .WithStrategy(RunStrategy.Throughput)
+                .WithIterationCount(10))
             .AddJob(Job.Default.WithRuntime(CoreRuntime.Core80)
-                .WithWarmupCount(5).WithIterationCount(50)
-                .WithInvocationCount(1).WithUnrollFactor(1))
+                .WithStrategy(RunStrategy.Throughput)
+                .WithIterationCount(10))
             .AddJob(Job.Default.WithRuntime(CoreRuntime.Core10_0)
-                .WithWarmupCount(5).WithIterationCount(50)
-                .WithInvocationCount(1).WithUnrollFactor(1))
+                .WithStrategy(RunStrategy.Throughput)
+                .WithIterationCount(10))
             .AddDiagnoser(MemoryDiagnoser.Default)
             .AddColumn(StatisticColumn.Median)
             .AddColumn(StatisticColumn.P95)
-            .AddColumn(StatisticColumn.StdDev)
-            .AddExporter(MarkdownExporter.GitHub)
-            .AddExporter(HtmlExporter.Default)
-            .AddExporter(BenchmarkDotNet.Exporters.Csv.CsvExporter.Default);
+            .AddColumn(StatisticColumn.StdDev);
     }
 }

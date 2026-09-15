@@ -4,7 +4,7 @@ namespace WorkflowForge.Constants
     /// Centralized static log message templates for consistent, professional logging.
     /// Messages use structured logging patterns with property-based context.
     /// </summary>
-    public static class WorkflowLogMessageConstants
+    internal static class WorkflowLogMessageConstants
     {
         #region Workflow Lifecycle
 

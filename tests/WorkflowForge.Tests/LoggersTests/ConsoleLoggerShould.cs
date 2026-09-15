@@ -10,6 +10,7 @@ namespace WorkflowForge.Tests.LoggersTests;
 /// Comprehensive tests for ConsoleLogger covering FormatMessage (via log methods),
 /// ConvertTemplateToPositional (via structured templates), all log levels, and edge cases.
 /// </summary>
+[Collection(ConsoleOutputCollection.Name)]
 public class ConsoleLoggerShould
 {
     #region Constructor

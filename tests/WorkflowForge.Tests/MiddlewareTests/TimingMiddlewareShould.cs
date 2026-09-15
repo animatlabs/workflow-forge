@@ -236,7 +236,7 @@ public class TimingMiddlewareShould
         var middleware = new TimingMiddlewareCore(options);
         var foundry = new FakeWorkflowFoundry();
         var operation = CreateMockOperation("TestOp");
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         // Act & Assert

@@ -69,7 +69,13 @@ namespace WorkflowForge.Extensions.Resilience.Strategies
 
             if (_enableJitter)
             {
-                var jitterFactor = 1.0 + (JitterRandom.NextDouble() - 0.5) * 0.5;
+                double jitterSample;
+                lock (JitterRandom)
+                {
+                    jitterSample = JitterRandom.NextDouble();
+                }
+
+                var jitterFactor = 1.0 + (jitterSample - 0.5) * 0.5;
                 actualDelay = TimeSpan.FromMilliseconds(actualDelay.TotalMilliseconds * jitterFactor);
                 if (actualDelay > _maxDelay)
                     actualDelay = _maxDelay;

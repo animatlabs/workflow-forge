@@ -27,42 +27,14 @@ namespace WorkflowForge.Extensions.Persistence.Tests.Options
             Assert.True(options.PersistOnOperationComplete);
             Assert.True(options.PersistOnWorkflowComplete);
             Assert.True(options.PersistOnFailure);
-            Assert.Equal(0, options.MaxVersions);
         }
 
         [Fact]
         public void ReturnEmptyErrors_GivenValidConfiguration()
         {
-            var options = new PersistenceOptions { MaxVersions = 10 };
+            var options = new PersistenceOptions { PersistOnFailure = false };
             var errors = options.Validate();
             Assert.Empty(errors);
-        }
-
-        [Fact]
-        public void ReturnError_GivenNegativeMaxVersions()
-        {
-            var options = new PersistenceOptions { MaxVersions = -1 };
-            var errors = options.Validate();
-            Assert.Single(errors);
-            Assert.Contains("MaxVersions must be >= 0", errors[0]);
-        }
-
-        [Fact]
-        public void ReturnEmptyErrors_GivenZeroMaxVersions()
-        {
-            var options = new PersistenceOptions { MaxVersions = 0 };
-            var errors = options.Validate();
-            Assert.Empty(errors);
-        }
-
-        [Fact]
-        public void IncludeSectionNameInError_GivenInvalidConfiguration()
-        {
-            var customSection = "Custom:Section";
-            var options = new PersistenceOptions(customSection) { MaxVersions = -5 };
-            var errors = options.Validate();
-            Assert.Single(errors);
-            Assert.Contains(customSection, errors[0]);
         }
     }
 }

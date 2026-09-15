@@ -15,15 +15,24 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
     {
         private readonly IWorkflowPersistenceProvider _provider;
         private readonly RecoveryMiddlewareOptions _options;
+        private readonly IWorkflowForgeLogger _logger;
 
         /// <summary>
-        /// Initializes a new instance of <see cref="RecoveryCoordinator"/> with the specified persistence provider and optional recovery options.
+        /// Initializes a new instance of <see cref="RecoveryCoordinator"/>.
         /// </summary>
         /// <param name="provider">The persistence provider used to load and save workflow snapshots.</param>
+        /// <param name="logger">
+        /// Logger for resume failures during bulk recovery. Required: <see cref="ResumeAllAsync"/>
+        /// continues past a snapshot it cannot resume and the logger is the only record of it.
+        /// </param>
         /// <param name="options">Optional recovery middleware options; defaults are used when <c>null</c>.</param>
-        public RecoveryCoordinator(IWorkflowPersistenceProvider provider, RecoveryMiddlewareOptions? options = null)
+        public RecoveryCoordinator(
+            IWorkflowPersistenceProvider provider,
+            IWorkflowForgeLogger logger,
+            RecoveryMiddlewareOptions? options = null)
         {
             _provider = provider ?? throw new ArgumentNullException(nameof(provider));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _options = options ?? new RecoveryMiddlewareOptions();
         }
 
@@ -117,10 +126,13 @@ namespace WorkflowForge.Extensions.Persistence.Recovery
                     await ResumeAsync(foundryFactory, workflowFactory, s.FoundryExecutionId, s.WorkflowId, cancellationToken).ConfigureAwait(false);
                     success++;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // Intentionally swallowed: best-effort resume must not fail
-                    // remaining snapshots. No logger available in this static context.
+                    _logger.LogWarning(
+                        ex,
+                        "Failed to resume workflow snapshot (foundry: {FoundryExecutionId}, workflow: {WorkflowId})",
+                        s.FoundryExecutionId,
+                        s.WorkflowId);
                 }
             }
             return success;

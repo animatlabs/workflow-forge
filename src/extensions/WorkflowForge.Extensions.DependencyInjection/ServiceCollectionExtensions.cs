@@ -67,7 +67,8 @@ namespace WorkflowForge.Extensions.DependencyInjection
                     var errors = opts.Validate();
                     return errors.Count == 0;
                 },
-                "WorkflowForge configuration validation failed");
+                "WorkflowForge configuration validation failed")
+                .ValidateOnStart();
 
             // Bind and validate middleware options with configurable section names
             var timingSection = timingSectionName ?? TimingMiddlewareOptions.DefaultSectionName;
@@ -82,7 +83,8 @@ namespace WorkflowForge.Extensions.DependencyInjection
                     var errors = opts.Validate();
                     return errors.Count == 0;
                 },
-                "Logging middleware configuration validation failed");
+                "Logging middleware configuration validation failed")
+                .ValidateOnStart();
 
             var errorHandlingSection = errorHandlingSectionName ?? ErrorHandlingMiddlewareOptions.DefaultSectionName;
             services.AddOptions<ErrorHandlingMiddlewareOptions>()
@@ -137,7 +139,8 @@ namespace WorkflowForge.Extensions.DependencyInjection
                     var errors = opts.Validate();
                     return errors.Count == 0;
                 },
-                "WorkflowForge configuration validation failed");
+                "WorkflowForge configuration validation failed")
+                .ValidateOnStart();
 
             // Configure timing options
             if (configureTiming != null)
@@ -160,7 +163,8 @@ namespace WorkflowForge.Extensions.DependencyInjection
                     var errors = opts.Validate();
                     return errors.Count == 0;
                 },
-                "Logging middleware configuration validation failed");
+                "Logging middleware configuration validation failed")
+                .ValidateOnStart();
 
             // Configure error handling options
             if (configureErrorHandling != null)

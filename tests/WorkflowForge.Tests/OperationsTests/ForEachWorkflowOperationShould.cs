@@ -234,7 +234,7 @@ namespace WorkflowForge.Tests.OperationsTests
             var operations = new[] { CreateMockOperation("Op1").Object };
             var foundry = CreateMockFoundry();
             var foreachOp = new ForEachWorkflowOperation(operations);
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
             // Don't cancel the token
 
             // Act

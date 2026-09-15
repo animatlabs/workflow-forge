@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Services;
 
 namespace WorkflowForge.Extensions.Observability.Performance.Tests;
 
@@ -47,7 +48,9 @@ public class PerformanceStatisticsMiddlewareShould
     public async Task PassThroughWithoutRecording_WhenNoStatisticsPresent()
     {
         var middleware = new PerformanceStatisticsMiddleware(); // resolves from properties
-        var foundry = Mock.Of<IWorkflowFoundry>(f => f.Properties == new ConcurrentDictionary<string, object?>());
+        var foundry = Mock.Of<IWorkflowFoundry>(f =>
+            f.Properties == new ConcurrentDictionary<string, object?>() &&
+            f.Services == new FoundryServices());
 
         var result = await middleware.ExecuteAsync(
             Operation(), foundry, null, _ => Task.FromResult<object?>("passed"));
@@ -59,10 +62,12 @@ public class PerformanceStatisticsMiddlewareShould
     public async Task ResolveStatisticsFromFoundryProperties()
     {
         var stats = new FoundryPerformanceStatistics();
-        var properties = new ConcurrentDictionary<string, object?>();
-        properties["PerformanceStatistics"] = stats;
+        var services = new FoundryServices();
+        services.Set("PerformanceStatistics", stats);
         var middleware = new PerformanceStatisticsMiddleware();
-        var foundry = Mock.Of<IWorkflowFoundry>(f => f.Properties == properties);
+        var foundry = Mock.Of<IWorkflowFoundry>(f =>
+            f.Properties == new ConcurrentDictionary<string, object?>() &&
+            f.Services == services);
 
         await middleware.ExecuteAsync(Operation(), foundry, null, _ => Task.FromResult<object?>("ok"));
 

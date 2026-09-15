@@ -27,7 +27,6 @@ namespace WorkflowForge.Extensions.Resilience.Tests.Options
             Assert.NotNull(options.Retry);
             Assert.NotNull(options.CircuitBreaker);
             Assert.NotNull(options.Timeout);
-            Assert.NotNull(options.RateLimiter);
             Assert.False(options.EnableComprehensivePolicies);
             Assert.True(options.EnableDetailedLogging);
         }

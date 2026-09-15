@@ -37,13 +37,13 @@ The core stays small. Optional packages add logging, resilience, observability, 
 
 Core has no package dependencies. Extensions bundle third-party libs where that helps. Microsoft and System assemblies stay external so the runtime can unify versions.
 
-- **Internalized with ILRepack**: Serilog, Polly, OpenTelemetry
+- **Internalized with ILRepack**: Serilog, Polly
 - **Always external**: Microsoft/System assemblies (runtime unification)
 - **Validation**: DataAnnotations (no third-party dependency)
 
 ### How it works
 
-Non-BCL dependencies are often merged into the extension assembly with ILRepack. The surface area you code against stays WorkflowForge plus BCL types.
+`Resilience.Polly` and `Logging.Serilog` merge their third-party library into the extension assembly with ILRepack. The surface area you code against stays WorkflowForge plus BCL types.
 
 Microsoft and System assemblies are not embedded; they follow the app’s normal reference graph.
 
@@ -52,7 +52,7 @@ Microsoft and System assemblies are not embedded; they follow the app’s normal
 ### Core Principles
 
 1. **Dependency-free core**: zero NuGet dependencies on the main package.
-2. **Isolated extensions**: ILRepack hides many third-party implementations inside the extension assembly.
+2. **Isolated extensions**: ILRepack hides the Polly and Serilog implementations inside their extension assemblies.
 3. **Optional packages**: take only what you use.
 4. **Composable**: Serilog, Polly, OpenTelemetry, and others can coexist without type clashes.
 5. **Explicit config**: options and `appsettings` drive behavior; surprises are rare on purpose.
@@ -219,8 +219,9 @@ public class OrderService
 ```
 
 ```csharp
-// Bind from configuration
-services.AddWorkflowForge(configuration.GetSection("WorkflowForge"));
+// AddWorkflowForge takes the root IConfiguration and resolves the "WorkflowForge"
+// section itself; passing the section in would double-nest the path.
+services.AddWorkflowForge(configuration);
 ```
 
 ---
@@ -260,22 +261,20 @@ var options = new WorkflowForgeOptions
 var foundry = WorkflowForge.CreateFoundry("ProcessOrder", logger, options: options);
 ```
 
-**Configuration:**
+**Configuration:** the embedded Serilog pipeline reads only these three settings. A standard
+Serilog `WriteTo` / `Enrich` section is **not** bound by this package — configure Serilog in your
+host and use `SerilogLoggerFactory.CreateLogger(ILoggerFactory)` for other sinks.
+
 ```json
 {
-  "Serilog": {
-    "MinimumLevel": "Information",
-    "WriteTo": [
-      { "Name": "Console" },
-      { 
-        "Name": "File", 
-        "Args": { 
-          "path": "logs/workflow-.txt",
-          "rollingInterval": "Day" 
-        } 
+  "WorkflowForge": {
+    "Extensions": {
+      "Serilog": {
+        "MinimumLevel": "Information",
+        "EnableConsoleSink": true,
+        "ConsoleOutputTemplate": "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
       }
-    ],
-    "Enrich": ["FromLogContext", "WithMachineName"]
+    }
   }
 }
 ```
@@ -285,7 +284,7 @@ var foundry = WorkflowForge.CreateFoundry("ProcessOrder", logger, options: optio
 #### WorkflowForge.Extensions.Resilience
 
 Retry with pluggable backoff strategies, without pulling in a third-party policy library. For circuit
-breakers, bulkheads, rate limiting, or stacked policies, use `WorkflowForge.Extensions.Resilience.Polly`.
+breakers or stacked policies, use `WorkflowForge.Extensions.Resilience.Polly`.
 
 **Installation:**
 ```bash
@@ -326,7 +325,6 @@ dotnet add package WorkflowForge.Extensions.Resilience.Polly
 **Includes:**
 - Retry with backoff and jitter
 - Circuit breaker thresholds
-- Rate limits and bulkheads
 - Timeouts
 - Chained or combined policies
 - Bind settings per environment from config
@@ -349,26 +347,37 @@ foundry
 ```json
 {
   "WorkflowForge": {
-    "Polly": {
-      "Retry": {
-        "MaxRetryAttempts": 3,
-        "BaseDelay": "00:00:01",
-        "UseExponentialBackoff": true,
-        "UseJitter": true
-      },
-      "CircuitBreaker": {
-        "FailureThreshold": 5,
-        "BreakDuration": "00:01:00",
-        "MinimumThroughput": 10
-      },
-      "RateLimit": {
-        "PermitLimit": 100,
-        "Window": "00:00:01"
+    "Extensions": {
+      "Polly": {
+        "Enabled": true,
+        "EnableComprehensivePolicies": false,
+        "Retry": {
+          "IsEnabled": true,
+          "MaxRetryAttempts": 3,
+          "BaseDelay": "00:00:01",
+          "BackoffType": "Exponential",
+          "UseJitter": true
+        },
+        "CircuitBreaker": {
+          "IsEnabled": false,
+          "FailureThreshold": 5,
+          "BreakDuration": "00:01:00",
+          "SamplingDuration": "00:00:30",
+          "MinimumThroughput": 10
+        },
+        "Timeout": {
+          "IsEnabled": false,
+          "DefaultTimeout": "00:00:30"
+        }
       }
     }
   }
 }
 ```
+
+Bind it with `services.AddWorkflowForgePolly(configuration)`, which reads
+`PollyMiddlewareOptions.DefaultSectionName` (`WorkflowForge:Extensions:Polly`) unless you pass a
+section name.
 
 ### Persistence Extensions
 
@@ -630,7 +639,7 @@ public sealed class MyRecoveryCatalog : IRecoveryCatalog
 }
 
 var catalog = new MyRecoveryCatalog();
-var coordinator = new RecoveryCoordinator(provider, new RecoveryMiddlewareOptions { MaxRetryAttempts = 3 });
+var coordinator = new RecoveryCoordinator(provider, logger, new RecoveryMiddlewareOptions { MaxRetryAttempts = 3 });
 int recovered = await coordinator.ResumeAllAsync(
     () => WorkflowForge.CreateFoundry("Service"),
     () => BuildWorkflow(),
@@ -696,18 +705,21 @@ foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions
     ServiceVersion = "1.0.0"
 });
 
-// Create custom spans
-using var activity = foundry.StartActivity("ProcessOrder")
-    .SetTag("order.id", order.Id)
-    .SetTag("customer.id", order.CustomerId);
+// Every operation already gets its own span. Add a custom one only for work that
+// is not an operation.
+using (var activity = foundry.StartActivity("ProcessOrder"))
+{
+    activity?.SetTag("order.id", order.Id);
+    activity?.SetTag("customer.id", order.CustomerId);
 
-// Execute with tracing
-foundry.SetProperty("Order", order);
-await smith.ForgeAsync(workflow, foundry);
+    foundry.SetProperty("Order", order);
+    await smith.ForgeAsync(workflow, foundry);
+}
 
-// Add custom events
-using var activity = foundry.StartActivity("PaymentProcessed");
-activity?.SetTag("amount", order.Amount.ToString());
+using (var payment = foundry.StartActivity("PaymentProcessed"))
+{
+    payment?.SetTag("amount", order.Amount.ToString());
+}
 ```
 
 ## Extension Configuration Patterns
@@ -718,36 +730,31 @@ Use `appsettings.{Environment}.json` or code per environment. Names and toggles 
 
 ### Configuration-Driven Setup
 
-```csharp
-// appsettings.json
+Each extension binds its own section under `WorkflowForge:Extensions:<Name>`, using the
+`DefaultSectionName` constant on its options type. There is no single aggregate schema.
+
+```json
 {
   "WorkflowForge": {
     "Extensions": {
-      "Logging": {
-        "Provider": "Serilog",
-        "Configuration": { /* Serilog config */ }
-      },
-      "Resilience": {
-        "Provider": "Polly",
-        "Configuration": { /* Polly config */ }
-      },
-      "Observability": {
-        "Performance": { "Enabled": true },
-        "HealthChecks": { "Enabled": true },
-        "OpenTelemetry": { 
-          "Enabled": true,
-          "ServiceName": "MyService",
-          "ServiceVersion": "1.0.0"
-        }
-      }
+      "Polly": { "Enabled": true },
+      "Validation": { "Enabled": true },
+      "Audit": { "Enabled": true },
+      "Persistence": { "Enabled": true }
     }
   }
 }
+```
 
-// Configuration loading
-var foundryConfig = configuration.GetSection("WorkflowForge");
-services.Configure<WorkflowForgeOptions>(foundryConfig);
-var foundry = WorkflowForge.CreateFoundry("ProcessOrder");
+```csharp
+// Core options
+services.AddWorkflowForge(configuration);
+
+// Each extension registers its own binding
+services.AddWorkflowForgePolly(configuration);
+services.AddValidationConfiguration(configuration);
+services.AddAuditConfiguration(configuration);
+services.AddPersistenceConfiguration(configuration);
 ```
 
 ### Validation Extension
@@ -806,20 +813,23 @@ var workflow = WorkflowForge.CreateWorkflow()
     .AddOperation(new ProcessOrderOperation())
     .Build();
 
-// Validation errors are stored in foundry properties
-var status = foundry.GetPropertyOrDefault<string>("Validation.ProcessOrder.Status");
-var errors = foundry.GetPropertyOrDefault<IReadOnlyList<ValidationError>>(
-    "Validation.ProcessOrder.Errors");
+// Validation results are stored in foundry properties
+var status = foundry.GetPropertyOrDefault<string>("Validation.Status");
+var errors = foundry.GetPropertyOrDefault<IReadOnlyList<ValidationError>>("Validation.Errors");
 ```
 
 **Configuration:**
 ```json
 {
   "WorkflowForge": {
-    "Validation": {
-      "ThrowOnFailure": true,
-      "CacheResults": false,
-      "DetailedErrors": true
+    "Extensions": {
+      "Validation": {
+        "Enabled": true,
+        "ThrowOnValidationError": true,
+        "IgnoreValidationFailures": false,
+        "LogValidationErrors": true,
+        "StoreValidationResults": true
+      }
     }
   }
 }
@@ -935,10 +945,16 @@ public sealed class AuditEntry
 ```csharp
 public enum AuditEventType
 {
-    OperationStarted,
-    OperationCompleted,
-    OperationFailed,
-    Custom
+    WorkflowStarted = 1,
+    WorkflowCompleted = 2,
+    WorkflowFailed = 3,
+    OperationStarted = 4,
+    OperationCompleted = 5,
+    OperationFailed = 6,
+    DataModified = 7,
+    ValidationPerformed = 8,
+    CompensationTriggered = 9,
+    Custom = 100
 }
 ```
 
@@ -946,10 +962,14 @@ public enum AuditEventType
 ```json
 {
   "WorkflowForge": {
-    "Audit": {
-      "Enabled": true,
-      "IncludeMetadata": true,
-      "DefaultInitiatedBy": "system"
+    "Extensions": {
+      "Audit": {
+        "Enabled": true,
+        "DetailLevel": "Standard",
+        "LogDataPayloads": false,
+        "IncludeTimestamps": true,
+        "IncludeUserContext": true
+      }
     }
   }
 }
@@ -978,9 +998,9 @@ public class CustomExtensionImplementation : ICustomExtension
 {
     private readonly CustomExtensionSettings _settings;
 
-    public CustomExtensionImplementation(IOptions<CustomExtensionSettings> settings)
+    public CustomExtensionImplementation(CustomExtensionSettings settings)
     {
-        _settings = settings.Value;
+        _settings = settings;
     }
 
     public async Task<string> ProcessAsync(string input)
@@ -997,18 +1017,10 @@ public static class CustomExtensions
         this IWorkflowFoundry foundry, 
         Action<CustomExtensionSettings>? configureOptions = null)
     {
-        // Register services
-        var services = foundry.ServiceProvider ?? new ServiceCollection().BuildServiceProvider();
-        services.AddSingleton<ICustomExtension, CustomExtensionImplementation>();
-        
-        // Configure options
-        if (configureOptions != null)
-        {
-            services.Configure(configureOptions);
-        }
-
-        // Return configured foundry
-        return foundry.WithServiceProvider(services);
+        var settings = new CustomExtensionSettings();
+        configureOptions?.Invoke(settings);
+        foundry.AddMiddleware(new CustomExtensionMiddleware(settings));
+        return foundry;
     }
 }
 
@@ -1066,7 +1078,8 @@ public static class CustomMiddlewareExtensions
 {
     public static IWorkflowFoundry UseCustomMiddleware(this IWorkflowFoundry foundry)
     {
-        return foundry.UseMiddleware<CustomMiddleware>();
+        foundry.AddMiddleware(new CustomMiddleware());
+        return foundry;
     }
 }
 ```

@@ -1,5 +1,6 @@
 using System;
 using WorkflowForge.Extensions.Resilience.Strategies;
+using WorkflowForge.Loggers;
 
 namespace WorkflowForge.Extensions.Resilience.Tests;
 
@@ -48,7 +49,7 @@ public class FixedIntervalStrategyFactoryShould
     [Fact]
     public void CreateStrategy_GivenSlowWithLogger()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         var strategy = FixedIntervalStrategy.Slow(logger: logger);
 
         Assert.NotNull(strategy);

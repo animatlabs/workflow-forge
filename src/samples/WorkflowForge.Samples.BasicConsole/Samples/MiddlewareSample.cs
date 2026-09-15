@@ -25,6 +25,12 @@ public class MiddlewareSample : ISample
 
         // Scenario 3: Middleware pipeline
         await RunMiddlewarePipelineDemo();
+
+        // Scenario 4: Conditional middleware
+        await RunConditionalMiddlewareDemo();
+
+        // Scenario 5: Middleware ordering
+        await RunCustomMiddlewareOrderingDemo();
     }
 
     private static async Task RunBuiltInMiddlewareDemo()
@@ -106,41 +112,80 @@ public class MiddlewareSample : ISample
     {
         Console.WriteLine("\n--- Conditional Middleware Demo ---");
 
+        // Same operations, different foundry properties: the operation takes a different path.
+        Console.WriteLine($"   Caching off -> {await RunConditionalAsync(enableCaching: false)}");
+        Console.WriteLine($"   Caching on  -> {await RunConditionalAsync(enableCaching: true)}");
+    }
+
+    private static async Task<string> RunConditionalAsync(bool enableCaching)
+    {
         using var foundry = WorkflowForge.CreateFoundry("ConditionalMiddlewareDemo");
-
-        // Set condition for middleware behavior
+        foundry.UseLogging();
         foundry.SetProperty("enable_validation", true);
-        foundry.SetProperty("enable_caching", false);
+        foundry.SetProperty("enable_caching", enableCaching);
 
-        foundry
-            .WithOperation(LoggingOperation.Info("Starting conditional middleware demonstration"))
-            .UseLogging()
-            .UseLogging()
-            .WithOperation(new ConditionalOperation("DataProcessor"))
-            .WithOperation(new ConditionalOperation("ResultValidator"))
-            .WithOperation(LoggingOperation.Info("Conditional middleware demonstration completed"));
+        var operation = new ConditionalOperation("DataProcessor");
+        foundry.WithOperation(operation);
 
         await foundry.ForgeAsync();
 
-        Console.WriteLine("   Conditional middleware processing completed");
+        return foundry.GetPropertyOrDefault<string>("conditional_result") ?? "(none)";
     }
 
     private static async Task RunCustomMiddlewareOrderingDemo()
     {
         Console.WriteLine("\n--- Custom Middleware Ordering Demo ---");
 
-        using var foundry = WorkflowForge.CreateFoundry("MiddlewareOrderingDemo");
+        // First registered is the outermost layer, so registration order is the entry order.
+        Console.WriteLine($"   Security first:   {await RunOrderedAsync(securityFirst: true)}");
+        Console.WriteLine($"   Validation first: {await RunOrderedAsync(securityFirst: false)}");
+    }
 
-        foundry
-            .UseLogging()
-            .UseLogging()
-            .WithOperation(LoggingOperation.Info("Starting middleware ordering demonstration"))
-            .WithOperation(new ProcessingOperation("OrderedOperation", TimeSpan.FromMilliseconds(200)))
-            .WithOperation(LoggingOperation.Info("Middleware ordering demonstration completed"));
+    private static async Task<string> RunOrderedAsync(bool securityFirst)
+    {
+        using var foundry = WorkflowForge.CreateFoundry("MiddlewareOrderingDemo");
+        var order = new List<string>();
+
+        if (securityFirst)
+        {
+            foundry.AddMiddleware(new OrderRecordingMiddleware("Security", order));
+            foundry.AddMiddleware(new OrderRecordingMiddleware("Validation", order));
+        }
+        else
+        {
+            foundry.AddMiddleware(new OrderRecordingMiddleware("Validation", order));
+            foundry.AddMiddleware(new OrderRecordingMiddleware("Security", order));
+        }
+
+        foundry.WithOperation(new ProcessingOperation("OrderedOperation", TimeSpan.FromMilliseconds(20)));
 
         await foundry.ForgeAsync();
 
-        Console.WriteLine("   Middleware ordering demonstration completed");
+        return string.Join(" -> ", order);
+    }
+}
+
+/// <summary>
+/// Records the order in which middleware layers are entered and left.
+/// </summary>
+public class OrderRecordingMiddleware : IWorkflowOperationMiddleware
+{
+    private readonly string _name;
+    private readonly List<string> _order;
+
+    public OrderRecordingMiddleware(string name, List<string> order)
+    {
+        _name = name;
+        _order = order;
+    }
+
+    public async Task<object?> ExecuteAsync(IWorkflowOperation operation, IWorkflowFoundry foundry, object? inputData,
+        Func<CancellationToken, Task<object?>> next, CancellationToken cancellationToken = default)
+    {
+        _order.Add($"enter:{_name}");
+        var result = await next(cancellationToken);
+        _order.Add($"exit:{_name}");
+        return result;
     }
 }
 
@@ -345,35 +390,6 @@ public class BusinessOperation : WorkflowOperationBase
 }
 
 /// <summary>
-/// Demo operation that simulates processing with configurable timing
-/// </summary>
-public class DemoOperation : WorkflowOperationBase
-{
-    private readonly string _operationName;
-    private readonly TimeSpan _processingTime;
-
-    public DemoOperation(string operationName, TimeSpan processingTime)
-    {
-        _operationName = operationName ?? throw new ArgumentNullException(nameof(operationName));
-        _processingTime = processingTime;
-    }
-
-    public override string Name => _operationName;
-
-    protected override async Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoundry foundry, CancellationToken cancellationToken)
-    {
-        foundry.Logger.LogInformation("Executing demo operation: {OperationName}", _operationName);
-
-        // Simulate processing time
-        await Task.Delay(_processingTime, cancellationToken);
-
-        foundry.Logger.LogInformation("Completed demo operation: {OperationName}", _operationName);
-
-        return $"Result from {_operationName}";
-    }
-}
-
-/// <summary>
 /// Conditional operation that behaves differently based on foundry properties
 /// </summary>
 public class ConditionalOperation : WorkflowOperationBase
@@ -404,12 +420,15 @@ public class ConditionalOperation : WorkflowOperationBase
         if ((bool)enableCaching)
         {
             foundry.Logger.LogDebug("Using cached result for {OperationName}", _operationName);
+            foundry.SetProperty("conditional_result", "Cached result");
             return "Cached result";
         }
 
         // Simulate normal processing
         await Task.Delay(100, cancellationToken);
 
-        return $"Processed result from {_operationName}";
+        var processed = $"Processed result from {_operationName}";
+        foundry.SetProperty("conditional_result", processed);
+        return processed;
     }
 }

@@ -10,6 +10,8 @@ using WorkflowForge.Events;
 using WorkflowForge.Extensions;
 using WorkflowForge.Loggers;
 using WorkflowForge.Options;
+using WorkflowForge.Middleware;
+using WorkflowForge.Services;
 
 namespace WorkflowForge
 {
@@ -26,11 +28,37 @@ namespace WorkflowForge
         private readonly ISystemTimeProvider _timeProvider;
         private WorkflowForgeOptions _options;
         private volatile bool _disposed;
-        private IWorkflow? _currentWorkflow;
+        private volatile IWorkflow? _currentWorkflow;
+        private readonly bool _ownsProperties;
+        private FoundryServices _services;
         private int _executionState;
         private volatile bool _isFrozen;
         private IWorkflowOperation[]? _cachedOperations;
+        private string[]? _cachedOperationOutputKeys;
         private IWorkflowOperationMiddleware[]? _cachedMiddlewares;
+        private readonly OperationMiddlewarePipelineState _middlewarePipelineState = new();
+        private string[]? _activeOperationOutputKeys;
+        // Written on operation-completion continuations and read by the smith from a different
+        // continuation, so every access goes through Volatile/Interlocked.
+        private int _currentOperationIndex = -1;
+        private int _lastCompletedIndex = -1;
+        private readonly object _lastCompletedIdLock = new();
+        private Guid _lastCompletedId;
+
+        internal int CurrentOperationIndex => Volatile.Read(ref _currentOperationIndex);
+
+        internal int LastCompletedIndex => Volatile.Read(ref _lastCompletedIndex);
+
+        internal Guid LastCompletedId
+        {
+            get
+            {
+                lock (_lastCompletedIdLock)
+                {
+                    return _lastCompletedId;
+                }
+            }
+        }
 
         public event EventHandler<OperationStartedEventArgs>? OperationStarted;
 
@@ -43,6 +71,9 @@ namespace WorkflowForge
 
         /// <inheritdoc />
         public ConcurrentDictionary<string, object?> Properties { get; }
+
+        /// <inheritdoc />
+        public IFoundryServices Services => _services;
 
         /// <inheritdoc />
         public IWorkflow? CurrentWorkflow => _currentWorkflow;
@@ -69,6 +100,7 @@ namespace WorkflowForge
         /// <param name="currentWorkflow">Optional initial workflow to associate with this foundry.</param>
         /// <param name="timeProvider">The time provider to use for timestamps.</param>
         /// <param name="options">Optional execution options for this foundry.</param>
+        /// <param name="ownsProperties">Whether the foundry may clear <paramref name="properties"/> when its lease ends.</param>
         /// <exception cref="ArgumentNullException">Thrown when properties is null.</exception>
         public WorkflowFoundry(
             Guid executionId,
@@ -77,7 +109,8 @@ namespace WorkflowForge
             IServiceProvider? serviceProvider = null,
             IWorkflow? currentWorkflow = null,
             ISystemTimeProvider? timeProvider = null,
-            WorkflowForgeOptions? options = null)
+            WorkflowForgeOptions? options = null,
+            bool ownsProperties = true)
         {
             ExecutionId = executionId;
             Properties = properties ?? throw new ArgumentNullException(nameof(properties));
@@ -86,6 +119,8 @@ namespace WorkflowForge
             _currentWorkflow = currentWorkflow;
             _timeProvider = timeProvider ?? SystemTimeProvider.Instance;
             _options = options?.CloneTyped() ?? new WorkflowForgeOptions();
+            _ownsProperties = ownsProperties;
+            _services = new FoundryServices(Logger);
         }
 
         /// <inheritdoc />
@@ -113,6 +148,7 @@ namespace WorkflowForge
             lock (_operations)
             {
                 _operations.Add(operation);
+                InvalidateOperationCaches();
             }
         }
 
@@ -134,7 +170,7 @@ namespace WorkflowForge
             {
                 _operations.Clear();
                 _operations.AddRange(operations);
-                _cachedOperations = null;
+                InvalidateOperationCaches();
             }
         }
 
@@ -155,6 +191,7 @@ namespace WorkflowForge
             lock (_middlewareLock)
             {
                 _middlewares.Add(middleware);
+                _cachedMiddlewares = null;
             }
         }
 
@@ -175,6 +212,7 @@ namespace WorkflowForge
             lock (_middlewareLock)
             {
                 _middlewares.AddRange(middlewares);
+                _cachedMiddlewares = null;
             }
         }
 
@@ -191,7 +229,13 @@ namespace WorkflowForge
             ThrowIfFrozen();
             lock (_middlewareLock)
             {
-                return _middlewares.Remove(middleware);
+                var removed = _middlewares.Remove(middleware);
+                if (removed)
+                {
+                    _cachedMiddlewares = null;
+                }
+
+                return removed;
             }
         }
 
@@ -219,6 +263,10 @@ namespace WorkflowForge
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task representing the execution of all operations.</returns>
         /// <exception cref="ObjectDisposedException">Thrown when the foundry has been disposed.</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the foundry is already executing.</exception>
+        /// <exception cref="AggregateException">
+        /// Rethrown when <see cref="WorkflowForgeOptions.ContinueOnError"/> collected operation failures.
+        /// </exception>
         public async Task ForgeAsync(CancellationToken cancellationToken = default)
         {
             if (_disposed)
@@ -235,8 +283,9 @@ namespace WorkflowForge
                 IWorkflowOperation[] operationsSnapshot;
                 lock (_operations)
                 {
-                    _cachedOperations ??= _operations.ToArray();
-                    operationsSnapshot = _cachedOperations;
+                    EnsureOperationCaches();
+                    operationsSnapshot = _cachedOperations!;
+                    _activeOperationOutputKeys = _cachedOperationOutputKeys;
                 }
 
                 var shouldAggregate = Options.ContinueOnError;
@@ -260,6 +309,7 @@ namespace WorkflowForge
             }
             finally
             {
+                _activeOperationOutputKeys = null;
                 _isFrozen = false;
                 Interlocked.Exchange(ref _executionState, 0);
             }
@@ -281,7 +331,7 @@ namespace WorkflowForge
             try
             {
                 InvokeOperationStarted(operation);
-                Properties[FoundryPropertyKeys.CurrentOperationIndex] = index;
+                SetCurrentOperationIndex(index);
 
                 var result = await ExecuteOperationWithMiddleware(operation, inputData, cancellationToken).ConfigureAwait(false);
                 inputData = ApplyOutputChaining(inputData, result);
@@ -304,10 +354,30 @@ namespace WorkflowForge
 
         private void ApplyOperationSuccessProperties(IWorkflowOperation operation, int index, object? result)
         {
-            Properties[string.Format(FoundryPropertyKeys.OperationOutputFormat, index, operation.Name)] = result;
+            var outputKey = _activeOperationOutputKeys != null && index < _activeOperationOutputKeys.Length
+                ? _activeOperationOutputKeys[index]
+                : string.Format(FoundryPropertyKeys.OperationOutputFormat, index, operation.Name);
+            Properties[outputKey] = result;
+            SetLastCompletedOperation(index, operation.Name, operation.Id);
+        }
+
+        private void SetCurrentOperationIndex(int index)
+        {
+            Volatile.Write(ref _currentOperationIndex, index);
+            Properties[FoundryPropertyKeys.CurrentOperationIndex] = index;
+        }
+
+        private void SetLastCompletedOperation(int index, string operationName, Guid operationId)
+        {
+            Volatile.Write(ref _lastCompletedIndex, index);
+            lock (_lastCompletedIdLock)
+            {
+                _lastCompletedId = operationId;
+            }
+
             Properties[FoundryPropertyKeys.LastCompletedIndex] = index;
-            Properties[FoundryPropertyKeys.LastCompletedName] = operation.Name;
-            Properties[FoundryPropertyKeys.LastCompletedId] = operation.Id;
+            Properties[FoundryPropertyKeys.LastCompletedName] = operationName;
+            Properties[FoundryPropertyKeys.LastCompletedId] = operationId;
         }
 
         private void InvokeOperationStarted(IWorkflowOperation operation)
@@ -402,22 +472,16 @@ namespace WorkflowForge
                 return await operation.ForgeAsync(inputData, this, cancellationToken).ConfigureAwait(false);
             }
 
-            // Russian Doll pattern: Middleware wraps from inside-out (reverse iteration).
-            // First middleware added = outermost layer. See /docs/architecture/middleware-pipeline.md
-
-            Func<CancellationToken, Task<object?>> next = token => operation.ForgeAsync(inputData, this, token);
-
-            for (int i = middlewareSnapshot.Length - 1; i >= 0; i--)
-            {
-                var middleware = middlewareSnapshot[i];
-                var currentNext = next;
-                next = token => middleware.ExecuteAsync(operation, this, inputData, currentNext, token);
-            }
-
-            return await next(cancellationToken).ConfigureAwait(false);
+            // Russian Doll pattern: first middleware added is the outermost layer.
+            _middlewarePipelineState.Initialize(this, operation, inputData, middlewareSnapshot);
+            return await _middlewarePipelineState.InvokeAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// Ends the foundry lease: clears events, operations, middleware and properties, and disposes
+        /// everything registered on <see cref="Services"/>. Caller-supplied operations and middleware
+        /// are released but not disposed.
+        /// </summary>
         public void Dispose()
         {
             if (_disposed)
@@ -428,31 +492,29 @@ namespace WorkflowForge
             OperationFailed = null;
 
             _disposed = true;
-            // Dispose operations
+
+            // Operations and middleware are supplied by the caller and are not owned here;
+            // only the references are released. Services are the explicit opt-in for
+            // foundry-owned disposables and are the only thing torn down.
             lock (_operations)
             {
-                foreach (var operation in _operations.OfType<IDisposable>())
-                {
-                    try
-                    {
-                        operation.Dispose();
-                    }
-                    catch (Exception)
-                    {
-                        // Intentionally swallowed: disposal must not prevent remaining
-                        // operations from being cleaned up.
-                    }
-                }
                 _operations.Clear();
-                _cachedOperations = null;
+                InvalidateOperationCaches();
             }
             lock (_middlewareLock)
             {
                 _middlewares.Clear();
                 _cachedMiddlewares = null;
             }
-            // Dispose properties
-            Properties.Clear();
+
+            _services.DisposeAll();
+
+            if (_ownsProperties)
+            {
+                Properties.Clear();
+            }
+
+            ResetOperationTrackingFields();
             GC.SuppressFinalize(this);
         }
 
@@ -465,7 +527,10 @@ namespace WorkflowForge
         }
 
         /// <summary>
-        /// Resets the foundry state so it can be reused from a pool.
+        /// Resets the foundry state so it can be reused from a pool: clears the three lifecycle
+        /// events, the operation list, the middleware pipeline and all properties, and disposes
+        /// everything registered on <see cref="Services"/>. Caller-supplied operations and
+        /// middleware are released but not disposed.
         /// </summary>
         internal void Reset(
             Guid executionId,
@@ -477,8 +542,12 @@ namespace WorkflowForge
             ExecutionId = executionId;
             Logger = logger;
             ServiceProvider = serviceProvider;
-            _options = options;
+            _options = options?.CloneTyped() ?? new WorkflowForgeOptions();
             _currentWorkflow = currentWorkflow;
+
+            OperationStarted = null;
+            OperationCompleted = null;
+            OperationFailed = null;
 
             _disposed = false;
             _executionState = 0;
@@ -493,14 +562,59 @@ namespace WorkflowForge
             lock (_operations)
             {
                 _operations.Clear();
-                _cachedOperations = null;
+                InvalidateOperationCaches();
             }
             lock (_middlewareLock)
             {
                 _middlewares.Clear();
                 _cachedMiddlewares = null;
             }
+
+            _services.DisposeAll();
+            _services = new FoundryServices(logger);
             Properties.Clear();
+            ResetOperationTrackingFields();
+        }
+
+        private void EnsureOperationCaches()
+        {
+            if (_cachedOperations != null)
+            {
+                return;
+            }
+
+            _cachedOperations = _operations.ToArray();
+            _cachedOperationOutputKeys = BuildOperationOutputKeys(_cachedOperations);
+        }
+
+        private void InvalidateOperationCaches()
+        {
+            _cachedOperations = null;
+            _cachedOperationOutputKeys = null;
+            _activeOperationOutputKeys = null;
+        }
+
+        private static string[] BuildOperationOutputKeys(IWorkflowOperation[] operations)
+        {
+            var keys = new string[operations.Length];
+            for (int i = 0; i < operations.Length; i++)
+            {
+                keys[i] = string.Format(FoundryPropertyKeys.OperationOutputFormat, i, operations[i].Name);
+            }
+
+            return keys;
+        }
+
+        private void ResetOperationTrackingFields()
+        {
+            Volatile.Write(ref _currentOperationIndex, -1);
+            Volatile.Write(ref _lastCompletedIndex, -1);
+            lock (_lastCompletedIdLock)
+            {
+                _lastCompletedId = Guid.Empty;
+            }
+
+            _activeOperationOutputKeys = null;
         }
     }
 }

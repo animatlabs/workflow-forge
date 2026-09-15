@@ -1,11 +1,11 @@
 ---
 title: Samples Catalog
-description: 33 progressive samples covering basic workflows, compensation, parallel execution, and real-world patterns in WorkflowForge.
+description: 37 progressive samples covering basic workflows, compensation, parallel execution, and real-world patterns in WorkflowForge.
 ---
 
 # WorkflowForge Samples Catalog
 
-**Total Samples**: 33  
+**Total Samples**: 37  
 **Project**: `src/samples/WorkflowForge.Samples.BasicConsole`
 
 > Samples use **`WorkflowOperationBase`** for custom steps unless noted.
@@ -18,7 +18,7 @@ description: 33 progressive samples covering basic workflows, compensation, para
 - [Category 3: Configuration & Middleware (Samples 9-12)](#category-3-configuration--middleware-samples-9-12)
 - [Category 4: Extensions (Samples 13-18, 21-25)](#category-4-extensions-samples-13-18-21-25)
 - [Category 5: Advanced (Samples 19-20)](#category-5-advanced-samples-19-20)
-- [Category 6: Onboarding & Guidelines (Samples 26-33)](#category-6-onboarding--guidelines-samples-26-33)
+- [Category 6: Onboarding & Guidelines (Samples 26-37)](#category-6-onboarding--guidelines-samples-26-37)
 - [Key Patterns Across All Samples](#key-patterns-across-all-samples)
 - [Sample Execution Order (Recommended)](#sample-execution-order-recommended)
 - [Sample Coverage Matrix](#sample-coverage-matrix)
@@ -29,7 +29,7 @@ description: 33 progressive samples covering basic workflows, compensation, para
 
 **Beginner** → Samples 1-4  
 **Intermediate** → Samples 5-12  
-**Advanced** → Samples 13-33
+**Advanced** → Samples 13-37
 
 ---
 
@@ -306,20 +306,16 @@ var smith = WorkflowForge.CreateSmith(logger);
 
 ### Sample 14: PollyResilienceSample.cs
 
-Polly retry, breaker, timeout; `UsePollyComprehensive` vs single-policy calls.
+Polly resilience via `UsePollyFromSettings` and `PollyMiddlewareOptions` (development, production, and enterprise scenarios).
 
 ```csharp
-// Comprehensive policy with retry, circuit breaker, and timeout
-foundry.UsePollyComprehensive(
-    maxRetryAttempts: 3,
-    circuitBreakerThreshold: 5,
-    circuitBreakerDuration: TimeSpan.FromSeconds(30),
-    timeoutDuration: TimeSpan.FromSeconds(10));
-
-// Or use individual policies
-foundry.UsePollyRetry(maxRetryAttempts: 3);
-foundry.UsePollyCircuitBreaker(failureThreshold: 5, durationOfBreak: TimeSpan.FromSeconds(30));
-foundry.UsePollyTimeout(TimeSpan.FromSeconds(10));
+foundry.UsePollyFromSettings(new PollyMiddlewareOptions
+{
+    Retry = { MaxRetryAttempts = 5 },
+    CircuitBreaker = { IsEnabled = true },
+    Timeout = { IsEnabled = true },
+    EnableComprehensivePolicies = true
+});
 ```
 
 **Extension**: WorkflowForge.Extensions.Resilience.Polly  
@@ -343,7 +339,7 @@ foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions
 ```
 
 **Extension**: WorkflowForge.Extensions.Observability.OpenTelemetry  
-**Bundling**: ILRepack internalizes OpenTelemetry.
+**Bundling**: none. The extension depends only on `System.Diagnostics.DiagnosticSource`; you own the OpenTelemetry SDK.
 
 ---
 
@@ -463,12 +459,10 @@ foundry.UseValidation(
 var auditProvider = new InMemoryAuditProvider();
 foundry.UseAudit(
     auditProvider,
-    initiatedBy: "user@example.com",
-    includeMetadata: true
-);
+    options: new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Standard },
+    initiatedBy: "user@example.com");
 
 // All operations automatically audited
-// Access audit entries
 var entries = auditProvider.Entries;
 ```
 
@@ -495,10 +489,10 @@ services.AddRecoveryConfiguration(configuration);
 services.AddWorkflowForgePolly(configuration);
 
 // Check if extension is enabled before use
-var auditOptions = serviceProvider.GetRequiredService<IOptions<AuditOptions>>();
+var auditOptions = serviceProvider.GetRequiredService<IOptions<AuditMiddlewareOptions>>();
 if (auditOptions.Value.Enabled)
 {
-    foundry.UseAudit(auditProvider);
+    foundry.UseAudit(auditProvider, auditOptions.Value);
 }
 ```
 
@@ -510,20 +504,25 @@ Options toggles plus the usual registration helpers.
 
 ### Sample 19: ComprehensiveIntegrationSample.cs
 
-Performance stats, Polly retry, validation, audit, persistence, and timing on one foundry.
+Serilog logging, Polly resilience (`UsePollyFromSettings`), and OpenTelemetry (`EnableOpenTelemetry`) in an e-commerce order flow.
 
 ```csharp
-foundry.EnablePerformanceMonitoring();
-foundry.UsePollyRetry(maxRetryAttempts: 3);
-foundry.UseValidation<OrderDto>(f => f.GetPropertyOrDefault<OrderDto>("Order"));
-foundry.UseAudit(auditProvider);
-foundry.UsePersistence(persistenceProvider);
-foundry.UseTiming();
+using var foundry = WorkflowForge.CreateFoundry("ECommerceOrderProcessing", logger);
 
-// Complex workflow with all features enabled
+foundry.UsePollyFromSettings(new PollyMiddlewareOptions
+{
+    Retry = { MaxRetryAttempts = 5 },
+    CircuitBreaker = { IsEnabled = true }
+});
+
+foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions
+{
+    ServiceName = "ECommerceOrderService",
+    ServiceVersion = "1.0.0"
+});
 ```
 
-**Extensions**: Performance, Polly, Validation, Audit, Persistence (sample wiring).
+**Extensions**: Logging.Serilog, Resilience.Polly, Observability.OpenTelemetry (as wired in the sample).
 
 ---
 
@@ -555,7 +554,7 @@ Classes when you need DI or tests; lambdas for glue.
 
 ---
 
-## Category 6: Onboarding & Guidelines (Samples 26-33)
+## Category 6: Onboarding & Guidelines (Samples 26-37)
 
 ### Sample 26: DependencyInjectionSample.cs
 
@@ -794,6 +793,103 @@ protected override Task<object?> ForgeAsyncCore(object? inputData, IWorkflowFoun
 
 ---
 
+### Sample 34: WorkflowTimeoutSample.cs
+
+Bounds the total run time of a workflow, as opposed to a single operation. Register
+`WorkflowTimeoutMiddleware` on the smith, not the foundry.
+
+```csharp
+using var foundry = WorkflowForge.CreateFoundry("WorkflowTimeoutDemo");
+using var smith = WorkflowForge.CreateSmith();
+
+smith.AddWorkflowMiddleware(new WorkflowTimeoutMiddleware(TimeSpan.FromMilliseconds(250), foundry.Logger));
+
+var workflow = WorkflowForge.CreateWorkflow("SlowPipeline")
+    .AddOperation("Step1", async (_, ct) => await Task.Delay(200, ct))
+    .AddOperation("Step2", async (_, ct) => await Task.Delay(200, ct))
+    .Build();
+
+await smith.ForgeAsync(workflow, foundry);   // throws once the budget is spent
+```
+
+---
+
+### Sample 35: OpenTelemetryAutoInstrumentationSample.cs
+
+`EnableOpenTelemetry` registers middleware that emits one span per operation. Your application owns
+the OpenTelemetry SDK and subscribes with `AddSource(serviceName)` / `AddMeter(serviceName)`.
+
+```csharp
+using var foundry = WorkflowForge.CreateFoundry("OrderPipeline");
+
+foundry.EnableOpenTelemetry(new WorkflowForgeOpenTelemetryOptions
+{
+    ServiceName = "MyApp.Orders",
+    EnableTracing = true,
+    EnableMetrics = true,
+    EnableSystemMetrics = false
+});
+
+using var smith = WorkflowForge.CreateSmith();
+
+// Parents the per-operation spans under one workflow span.
+var workflowMiddleware = foundry.CreateOpenTelemetryWorkflowMiddleware();
+if (workflowMiddleware != null)
+{
+    smith.AddWorkflowMiddleware(workflowMiddleware);
+}
+
+await smith.ForgeAsync(workflow, foundry);   // no StartActivity calls needed in operations
+```
+
+---
+
+### Sample 36: AuditDetailLevelsSample.cs
+
+Runs the same workflow at every `AuditDetailLevel` and prints what each one captures.
+
+```csharp
+var provider = new InMemoryAuditProvider();
+
+using var foundry = WorkflowForge.CreateFoundry("AuditDetailLevels");
+foundry.AddMiddleware(new AuditMiddleware(
+    provider,
+    new AuditMiddlewareOptions { DetailLevel = AuditDetailLevel.Verbose },
+    initiatedBy: "sample-user"));
+
+await foundry.ForgeAsync();
+
+var entry = provider.Entries.Last(e => e.EventType == AuditEventType.OperationCompleted);
+Console.WriteLine(string.Join(", ", entry.Metadata.Keys));
+```
+
+| Level | Adds |
+|-------|------|
+| `Minimal` | Event type, timestamp, workflow/operation name. No metadata, duration or initiator. |
+| `Standard` | Execution IDs, status, duration, audit timestamp, user context. |
+| `Verbose` | Every foundry property in the entry metadata. |
+| `Complete` | Operation input and output payloads, regardless of `LogDataPayloads`. |
+
+---
+
+### Sample 37: PersistenceTriggersSample.cs
+
+Shows when each `PersistOn*` option writes a checkpoint, by counting the saves a recording provider
+receives.
+
+```csharp
+foundry.UsePersistence(provider, new PersistenceOptions
+{
+    InstanceId = "orders-instance",
+    WorkflowKey = "OrderPipeline",
+    PersistOnOperationComplete = true,   // checkpoint after each non-final operation
+    PersistOnWorkflowComplete = true,    // checkpoint after the final operation
+    PersistOnFailure = true              // checkpoint the failed operation so a resume re-runs it
+});
+```
+
+---
+
 ## Key Patterns Across All Samples
 
 - Almost every sample uses `foundry.Properties` for shared state.
@@ -860,6 +956,10 @@ Within a phase you can reorder. Sample 19 assumes you have skimmed the extension
 | Foundry reuse | 31 |
 | Output chaining | 32 |
 | Service provider resolution | 33 |
+| Workflow-level timeout | 34 |
+| Automatic OpenTelemetry spans | 35 |
+| Audit detail levels | 36 |
+| Persistence triggers | 37 |
 | Multi-extension stack | 19 |
 
 ---

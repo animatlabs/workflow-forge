@@ -88,9 +88,10 @@ public class WorkflowService
 
 ## Key points
 
-- `AddWorkflowForge(IConfiguration)` binds and validates options at startup.
+- `AddWorkflowForge(IConfiguration)` binds options and registers validation with `ValidateOnStart()`.
 - `AddWorkflowSmith()` needs `IWorkflowForgeLogger` and a prior `AddWorkflowForge` call.
-- Invalid `appsettings.json` values throw during startup instead of mid-run.
+- On a .NET generic host, invalid `appsettings.json` values fail the host at startup rather than
+  mid-request. Outside a host, validation runs on first `IOptions<T>.Value` resolution.
 
 ## Configuration
 
@@ -112,10 +113,12 @@ services.AddWorkflowForge(
 
 ### Startup validation
 
-`Validate()` runs on options; `IValidateOptions<WorkflowForgeOptions>` is registered so bad config fails fast:
+Options are registered with `.Validate(...)` plus `.ValidateOnStart()`, and
+`IValidateOptions<WorkflowForgeOptions>` is registered as well. On a generic host,
+`IHost.StartAsync` throws before the application serves traffic:
 
 ```csharp
-// This will throw on startup if configuration is invalid
+// host.RunAsync() throws at startup if configuration is invalid
 services.AddWorkflowForge(configuration);
 
 // Invalid configuration example:
@@ -172,12 +175,12 @@ services.AddWorkflowSmith(); // ✅ Now WorkflowSmith is available
 | `WorkflowForge:Middleware:Logging` | `LoggingMiddlewareOptions` | Yes |
 | `WorkflowForge:Middleware:ErrorHandling` | `ErrorHandlingMiddlewareOptions` | No |
 
-[WorkflowForge configuration](../../../docs/core/configuration.md)
+[WorkflowForge configuration](https://animatlabs.com/workflow-forge/core/configuration/)
 
 ## Links
 
-- [Getting Started](../../../docs/getting-started/getting-started.md)
-- [Extensions Overview](../../../docs/extensions/index.md)
+- [Getting Started](https://animatlabs.com/workflow-forge/getting-started/getting-started/)
+- [Extensions Overview](https://animatlabs.com/workflow-forge/extensions/)
 - **WorkflowForge**: core workflow engine (zero dependencies)
 - **WorkflowForge.Extensions.Logging.Serilog**: Serilog integration
 - **WorkflowForge.Extensions.Resilience.Polly**: Polly resilience patterns

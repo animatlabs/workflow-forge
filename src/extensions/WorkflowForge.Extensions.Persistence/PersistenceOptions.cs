@@ -55,13 +55,6 @@ namespace WorkflowForge.Extensions.Persistence
         public bool PersistOnFailure { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets the maximum number of persisted versions to retain per workflow.
-        /// 0 = unlimited, otherwise older versions are automatically purged.
-        /// Default is 0 (unlimited).
-        /// </summary>
-        public int MaxVersions { get; set; } = 0;
-
-        /// <summary>
         /// Optional stable instance identifier to correlate a foundry across process restarts.
         /// When set, a deterministic key will be used instead of the transient ExecutionId.
         /// </summary>
@@ -79,14 +72,7 @@ namespace WorkflowForge.Extensions.Persistence
         /// <returns>A list of validation error messages, empty if valid.</returns>
         public override IList<string> Validate()
         {
-            var errors = new List<string>();
-
-            if (MaxVersions < 0)
-            {
-                errors.Add($"{SectionName}:MaxVersions must be >= 0 (current value: {MaxVersions})");
-            }
-
-            return errors;
+            return new List<string>();
         }
 
         /// <summary>
@@ -101,7 +87,6 @@ namespace WorkflowForge.Extensions.Persistence
                 PersistOnOperationComplete = PersistOnOperationComplete,
                 PersistOnWorkflowComplete = PersistOnWorkflowComplete,
                 PersistOnFailure = PersistOnFailure,
-                MaxVersions = MaxVersions,
                 InstanceId = InstanceId,
                 WorkflowKey = WorkflowKey
             };

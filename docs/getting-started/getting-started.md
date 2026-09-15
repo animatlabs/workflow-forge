@@ -15,6 +15,7 @@ Install the package, model a short pipeline, run it with a smith and foundry.
 
 ## Table of Contents
 
+- [What's New in 2.2.0](#whats-new-in-220)
 - [What's New in 2.1.2](#whats-new-in-212)
 - [What's New in 2.1.1](#whats-new-in-211)
 - [What's New in 2.0.0](#whats-new-in-200)
@@ -26,6 +27,35 @@ Install the package, model a short pipeline, run it with a smith and foundry.
 - [Troubleshooting](#troubleshooting)
 
 ---
+
+## What's New in 2.2.0
+
+**2.2.0** adds `IWorkflowExecutionContext.Services` (`IFoundryServices`), a foundry-scoped bag whose
+`IDisposable` values are torn down when the lease ends, and `IWorkflowForgeLogger.IsEnabled` so
+callers can skip building log payloads that would be discarded.
+
+Both are **breaking** for anyone implementing those interfaces directly:
+
+- A custom `IWorkflowFoundry` / `IWorkflowExecutionContext` must expose `IFoundryServices Services`.
+  Return `new FoundryServices()` per context.
+- A custom `IWorkflowForgeLogger` must implement `bool IsEnabled(WorkflowForgeLogLevel level)`.
+  Derive from **`WorkflowForgeLoggerBase`** to inherit a `MinimumLevel`-driven implementation and
+  only override what you need.
+
+```csharp
+public sealed class MyLogger : WorkflowForgeLoggerBase
+{
+    protected override WorkflowForgeLogLevel MinimumLevel => WorkflowForgeLogLevel.Information;
+
+    public override void LogInformation(string message, params object[] args) { /* ... */ }
+    // ... remaining abstract members
+}
+```
+
+The foundry now disposes **only** what it owns. Operations and middleware you pass to
+`AddOperation` / `ReplaceOperations` / `AddMiddleware` / `AddMiddlewares` stay yours; register
+anything the foundry should tear down on `Services`. Full notes:
+[CHANGELOG.md](https://github.com/animatlabs/workflow-forge/blob/main/CHANGELOG.md).
 
 ## What's New in 2.1.2
 
@@ -269,7 +299,7 @@ Console.WriteLine($"Processing order {order.Id}...\n");
 // Build the workflow
 var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
     .WithDescription("Complete order processing workflow")
-    .WithVersion("2.1.1")
+    .WithVersion("2.2.0")
     .AddOperation(new ValidateOrderOperation())
     .AddOperation(new ProcessPaymentOperation())
     .AddOperation(new FulfillOrderOperation())
@@ -377,7 +407,7 @@ Prefer the bag for most flows. Typed ops help when the contract is stable.
 
 ### Compensation
 
-Implement **`RestoreAsync`** where undo matters; the base no-op is skipped safely on failure. Inline ops can pass **`restoreAction`**:
+Implement **`RestoreAsync`** where undo matters; compensation calls it on every completed operation and the base default does nothing. Inline ops can pass **`restoreAction`**:
 
 ```csharp
 var workflow = WorkflowForge.CreateWorkflow("OrderWorkflow")
@@ -429,7 +459,7 @@ var foundry = WorkflowForge.CreateFoundry("MyWorkflow", options: options);
 
 ### Samples
 
-Repo has 33 samples:
+Repo has 37 samples:
 
 ```bash
 # Clone the repository
@@ -544,7 +574,7 @@ foundry.UseValidation(
 - **[Operations Guide](../core/operations.md)** - Built-in and custom operations
 - **[Event System](../core/events.md)** - Lifecycle events and monitoring
 - **[Configuration](../core/configuration.md)** - Environment-specific settings
-- **[API Reference](../reference/api-reference.md)** - Member-level reference
+- **[API reference](../reference/api-reference.md)** — [.NET API]({{ "/api/WorkflowForge.html" | relative_url }}) and guides
 
 ## Troubleshooting
 
@@ -560,7 +590,7 @@ Call `.Build()` and `await smith.ForgeAsync(...)`.
 Write with `foundry.SetProperty`, read with `foundry.GetPropertyOrDefault`.
 
 **Compensation never does anything**  
-Override `RestoreAsync` where rollback is real; on failure the smith walks completed ops in reverse and skips base no-ops.
+Override `RestoreAsync` where rollback is real; on failure the smith walks completed ops in reverse and calls `RestoreAsync` on each, which does nothing unless you override it.
 
 ### Getting Help
 
@@ -583,4 +613,4 @@ You added packages, three `WorkflowOperationBase` steps, a smith, a foundry, and
 - [Events System](../core/events.md) - Lifecycle hooks
 - [Extensions](../extensions/index.md) - Optional packages
 - [Configuration](../core/configuration.md) - Options and appsettings
-- [API Reference](../reference/api-reference.md) - Member listings
+- [API reference](../reference/api-reference.md) · [.NET API]({{ "/api/WorkflowForge.html" | relative_url }})

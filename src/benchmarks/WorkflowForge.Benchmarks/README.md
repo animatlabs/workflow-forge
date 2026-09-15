@@ -5,8 +5,6 @@
 
 BenchmarkDotNet lives here to measure WorkflowForge across scenarios and configuration profiles and to watch how those numbers move over time.
 
-`ConfigurationProfilesBenchmark` may be missing from the latest `BenchmarkDotNet.Artifacts` output; check the artifacts folder if you expect it.
-
 ## Categories
 
 ### Operation performance (`OperationPerformanceBenchmark`)
@@ -42,7 +40,7 @@ Allocation and GC shapes:
 
 - **MinimalAllocationWorkflow**, **LargeObjectAllocation**, **MemoryPressureScenario**
 
-**Results:** **~3,408 B** on the minimal path; large-object paths up to about **~1 MB**.
+**Results:** **~4,126 B** on the minimal path; large-object paths up to about **~1 MB**.
 
 ## Running
 
@@ -50,7 +48,7 @@ All benchmarks:
 
 ```bash
 cd src/benchmarks/WorkflowForge.Benchmarks
-dotnet run -c Release
+dotnet run -c Release -f net10.0
 ```
 
 Filter:
@@ -62,8 +60,10 @@ dotnet run -c Release --filter *OperationPerformanceBenchmark*
 Memory diagnoser:
 
 ```bash
-dotnet run -c Release --memory
+dotnet run -c Release
 ```
+
+The memory diagnoser is always on; there is no flag to toggle it.
 
 ## Outputs
 
@@ -75,10 +75,10 @@ Under `BenchmarkDotNet.Artifacts/results/`:
 
 | Area | Target | Observed |
 |------|--------|----------|
-| Operation execution | < 50 μs | 8.75–82 μs |
-| Workflow creation | < 25 μs | 1.2–1.9 μs |
-| Memory / op | < 2 KB | 56–8,536 B |
-| Concurrent speedup | > 5× | ~8× |
+| Operation execution | < 50 μs | ~74ns–9.5μs (excluding 1ms delay op) |
+| Workflow creation | < 25 μs | ~48–51ns |
+| Memory / op | < 2 KB | 32–8,536 B |
+| Concurrent speedup | > 5× | measure per ConcurrencyBenchmark harness |
 
 ## Test rig
 

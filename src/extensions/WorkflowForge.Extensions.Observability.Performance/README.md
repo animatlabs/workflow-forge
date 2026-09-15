@@ -61,7 +61,7 @@ foundry.AddMiddleware(new DetailedTimingMiddleware(foundry.Logger, TimeSpan.From
 
 - `IFoundryPerformanceStatistics` and `IOperationStatistics` define the contract for built-in performance statistics on a foundry.
 
-[Performance extension](../../../docs/core/configuration.md)
+[Performance extension](https://animatlabs.com/workflow-forge/core/configuration/)
 
 ## Advanced usage
 
@@ -178,7 +178,7 @@ foreach (var opStats in stats.GetAllOperationStatistics())
 
 ## Links
 
-- [Getting Started](../../../docs/getting-started/getting-started.md)
-- [Configuration Guide](../../../docs/core/configuration.md)
-- [Extensions Overview](../../../docs/extensions/index.md)
-- [Sample 17: Performance Monitoring](../../samples/WorkflowForge.Samples.BasicConsole/)
+- [Getting Started](https://animatlabs.com/workflow-forge/getting-started/getting-started/)
+- [Configuration Guide](https://animatlabs.com/workflow-forge/core/configuration/)
+- [Extensions Overview](https://animatlabs.com/workflow-forge/extensions/)
+- [Sample 17: Performance Monitoring](https://github.com/animatlabs/workflow-forge/blob/main/src/samples/WorkflowForge.Samples.BasicConsole/)

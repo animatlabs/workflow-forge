@@ -39,8 +39,10 @@ namespace WorkflowForge.Extensions.Audit.Options
 
         /// <summary>
         /// Gets or sets whether to log data payloads in audit entries.
-        /// When true, includes operation input/output data (can be very verbose).
-        /// When false, only logs metadata and event information.
+        /// When true, includes the operation input and output rendered as strings (can be very verbose).
+        /// Payloads are also captured when <see cref="DetailLevel"/> is
+        /// <see cref="AuditDetailLevel.Complete"/>, and never at
+        /// <see cref="AuditDetailLevel.Minimal"/>.
         /// Default is false.
         /// </summary>
         public bool LogDataPayloads { get; set; } = false;
@@ -96,22 +98,23 @@ namespace WorkflowForge.Extensions.Audit.Options
     public enum AuditDetailLevel
     {
         /// <summary>
-        /// Minimal audit information (event type, timestamp, workflow/operation name).
+        /// Event type, timestamp and workflow/operation name only. No metadata, duration or initiator.
         /// </summary>
         Minimal,
 
         /// <summary>
-        /// Standard audit information (includes execution IDs, status, duration).
+        /// Adds execution IDs, status, duration, audit timestamp and user context.
         /// </summary>
         Standard,
 
         /// <summary>
-        /// Verbose audit information (includes all standard info plus properties, metadata).
+        /// Adds every foundry property to the entry metadata.
         /// </summary>
         Verbose,
 
         /// <summary>
-        /// Complete audit information (includes everything, including data payloads if enabled).
+        /// Adds the operation input and output payloads regardless of
+        /// <see cref="AuditMiddlewareOptions.LogDataPayloads"/>.
         /// </summary>
         Complete
     }

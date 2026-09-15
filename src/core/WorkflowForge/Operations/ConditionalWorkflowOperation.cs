@@ -217,7 +217,7 @@ namespace WorkflowForge.Operations
         }
 
         /// <summary>
-        /// Creates a conditional operation with simple condition (legacy compatibility).
+        /// Creates a conditional operation using a synchronous foundry-only predicate.
         /// </summary>
         /// <param name="condition">The simple condition to evaluate.</param>
         /// <param name="trueOperation">The operation to execute when condition is true.</param>

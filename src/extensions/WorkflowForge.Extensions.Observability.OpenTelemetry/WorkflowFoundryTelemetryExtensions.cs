@@ -50,6 +50,7 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
     public static class WorkflowFoundryOpenTelemetryExtensions
     {
         private const string OpenTelemetryServiceKey = "_opentelemetry_service";
+        private const string OpenTelemetryMiddlewareKey = "_opentelemetry_middleware";
 
         /// <summary>
         /// Gets the OpenTelemetry service from the foundry.
@@ -62,12 +63,33 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             if (foundry == null)
                 throw new ArgumentNullException(nameof(foundry));
 
-            return foundry.Properties.TryGetValue(OpenTelemetryServiceKey, out var serviceObj) && serviceObj is WorkflowForgeOpenTelemetryService service ? service : null;
+            return foundry.Services != null
+                && foundry.Services.TryGet<WorkflowForgeOpenTelemetryService>(OpenTelemetryServiceKey, out var service)
+                ? service
+                : null;
         }
 
         /// <summary>
-        /// Enables comprehensive OpenTelemetry observability for the foundry.
-        /// Includes both distributed tracing and metrics collection.
+        /// Creates the workflow-level middleware that parents the per-operation spans.
+        /// Register it with <c>smith.AddWorkflowMiddleware(...)</c>.
+        /// </summary>
+        /// <param name="foundry">The workflow foundry.</param>
+        /// <returns>The middleware, or null when OpenTelemetry is not enabled for the foundry.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when foundry is null.</exception>
+        public static OpenTelemetryWorkflowMiddleware? CreateOpenTelemetryWorkflowMiddleware(this IWorkflowFoundry foundry)
+        {
+            if (foundry == null)
+                throw new ArgumentNullException(nameof(foundry));
+
+            var service = foundry.GetOpenTelemetryService();
+            return service == null ? null : new OpenTelemetryWorkflowMiddleware(service);
+        }
+
+        /// <summary>
+        /// Enables OpenTelemetry observability for the foundry and registers the middleware that
+        /// emits one span and one set of metrics per operation.
+        /// The consumer owns the OpenTelemetry SDK and subscribes with
+        /// <c>.AddSource(serviceName)</c> and <c>.AddMeter(serviceName)</c>.
         /// </summary>
         /// <param name="foundry">The workflow foundry.</param>
         /// <param name="options">Configuration options for OpenTelemetry.</param>
@@ -78,16 +100,41 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             if (foundry == null)
                 throw new ArgumentNullException(nameof(foundry));
 
+            WorkflowForgeOpenTelemetryService? service = null;
             try
             {
+                if (foundry.IsOpenTelemetryEnabled())
+                {
+                    return false;
+                }
+
                 options ??= new WorkflowForgeOpenTelemetryOptions();
 
-                var service = new WorkflowForgeOpenTelemetryService(
-                    options.ServiceName,
-                    options.ServiceVersion,
-                    foundry.Logger);
+                service = new WorkflowForgeOpenTelemetryService(options, foundry.Logger);
 
-                foundry.Properties[OpenTelemetryServiceKey] = service;
+                if (foundry.Services == null)
+                {
+                    service.Dispose();
+                    return false;
+                }
+
+                if (!foundry.Services.TryAdd(OpenTelemetryServiceKey, service))
+                {
+                    service.Dispose();
+                    return false;
+                }
+
+                try
+                {
+                    var middleware = new OpenTelemetryOperationMiddleware(service);
+                    foundry.AddMiddleware(middleware);
+                    foundry.Services.TryAdd(OpenTelemetryMiddlewareKey, middleware);
+                }
+                catch
+                {
+                    foundry.Services.TryRemove(OpenTelemetryServiceKey, out _);
+                    throw;
+                }
 
                 foundry.Logger.LogInformation(
                     "OpenTelemetry enabled for foundry with service name '{ServiceName}', tracing: {TracingEnabled}, metrics: {MetricsEnabled}",
@@ -97,13 +144,16 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
             }
             catch (Exception ex)
             {
+                service?.Dispose();
                 foundry.Logger.LogError(ex, "Failed to enable OpenTelemetry for foundry");
                 return false;
             }
         }
 
         /// <summary>
-        /// Disables OpenTelemetry observability for the foundry.
+        /// Disables OpenTelemetry observability for the foundry and unregisters its operation
+        /// middleware, so a later <see cref="EnableOpenTelemetry"/> call does not accumulate a
+        /// second middleware instance in the pipeline.
         /// </summary>
         /// <param name="foundry">The workflow foundry.</param>
         /// <returns>True if OpenTelemetry was disabled successfully; otherwise, false.</returns>
@@ -115,11 +165,20 @@ namespace WorkflowForge.Extensions.Observability.OpenTelemetry
 
             try
             {
-                if (foundry.Properties.TryGetValue(OpenTelemetryServiceKey, out var serviceObj) && serviceObj is WorkflowForgeOpenTelemetryService service)
+                if (foundry.Services != null
+                    && foundry.Services.TryRemove(OpenTelemetryServiceKey, out var removed)
+                    && removed is WorkflowForgeOpenTelemetryService)
                 {
-                    service.Dispose();
-                    // Remove the key entirely (rather than leaving a null value behind).
-                    foundry.Properties.TryRemove(OpenTelemetryServiceKey, out _);
+                    // WorkflowFoundry is the only IWorkflowFoundry implementation that exposes
+                    // RemoveMiddleware; other implementations keep the now-inert middleware in
+                    // their pipeline (harmless no-op once the service above is disposed).
+                    if (foundry.Services.TryRemove(OpenTelemetryMiddlewareKey, out var middlewareObj)
+                        && middlewareObj is OpenTelemetryOperationMiddleware middleware
+                        && foundry is WorkflowFoundry concreteFoundry)
+                    {
+                        concreteFoundry.RemoveMiddleware(middleware);
+                    }
+
                     foundry.Logger.LogInformation("OpenTelemetry disabled for foundry");
                     return true;
                 }

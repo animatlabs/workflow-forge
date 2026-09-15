@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Loggers
 {
@@ -20,6 +21,9 @@ namespace WorkflowForge.Loggers
         /// </summary>
         private NullLogger()
         { }
+
+        /// <inheritdoc />
+        public bool IsEnabled(WorkflowForgeLogLevel level) => false;
 
         /// <inheritdoc />
         public void LogTrace(string message, params object[] args)

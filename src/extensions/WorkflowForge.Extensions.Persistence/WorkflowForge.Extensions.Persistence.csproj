@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -29,14 +28,22 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
 
-    <!-- Documentation -->
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- Documentation (NuGet readme generated; see src/build/Packaging/NuGetReadme.targets) -->
     <PackageIcon>icon.png</PackageIcon>
     <!-- Version is centralized in src/Directory.Build.props -->
 
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
     <WarningsNotAsErrors>CS1591</WarningsNotAsErrors>
+    <PackageReleaseNotes><![CDATA[WorkflowForge.Extensions.Persistence 2.2.0
+
+BREAKING
+- Removed PersistenceOptions.MaxVersions and the duplicate PersistenceMiddlewareOptions type. IWorkflowPersistenceProvider stores one snapshot per key, so versioning was not implementable, and the duplicate type bound the same configuration section with different defaults.
+
+Fixed
+- PersistOnOperationComplete, PersistOnWorkflowComplete and PersistOnFailure now each change when a checkpoint is written. PersistOnFailure in particular wrote nothing before, because the checkpoint ran only after a successful operation.
+
+Full changelog: https://github.com/animatlabs/workflow-forge/blob/main/CHANGELOG.md#220---2026-09-15]]></PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -44,19 +51,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.10" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.10" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.10" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.10" />
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.29.0.143774">
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="SonarAnalyzer.CSharp">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="../../../icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 

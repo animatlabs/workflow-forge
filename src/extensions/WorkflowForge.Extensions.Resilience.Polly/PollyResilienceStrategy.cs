@@ -12,7 +12,7 @@ namespace WorkflowForge.Extensions.Resilience.Polly
 {
     /// <summary>
     /// Enterprise-grade resilience strategy that uses Polly for advanced fault tolerance.
-    /// Supports retry policies, circuit breakers, timeouts, and bulkhead isolation.
+    /// Supports retry policies, circuit breakers and timeouts.
     /// </summary>
     public sealed class PollyResilienceStrategy : IWorkflowResilienceStrategy
     {

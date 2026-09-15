@@ -8,6 +8,7 @@ using WorkflowForge.Exceptions;
 using WorkflowForge.Extensions.Persistence.Abstractions;
 using WorkflowForge.Extensions.Persistence.Recovery;
 using WorkflowForge.Extensions.Persistence.Recovery.Options;
+using WorkflowForge.Testing;
 using Xunit;
 
 namespace WorkflowForge.Extensions.Persistence.Tests.Recovery;
@@ -17,14 +18,14 @@ public class RecoveryCoordinatorShould
     [Fact]
     public void ThrowArgumentNullException_GivenNullProvider()
     {
-        Assert.Throws<ArgumentNullException>(() => new RecoveryCoordinator(null!));
+        Assert.Throws<ArgumentNullException>(() => new RecoveryCoordinator(null!, TestNullLogger.Instance));
     }
 
     [Fact]
     public async Task ReturnImmediately_GivenNoSnapshot()
     {
         var provider = new InMemoryPersistenceProvider();
-        var coordinator = new RecoveryCoordinator(provider);
+        var coordinator = new RecoveryCoordinator(provider, TestNullLogger.Instance);
         var foundryFactoryInvoked = false;
         var workflowFactoryInvoked = false;
 
@@ -65,7 +66,7 @@ public class RecoveryCoordinatorShould
             }
         });
 
-        var coordinator = new RecoveryCoordinator(provider);
+        var coordinator = new RecoveryCoordinator(provider, TestNullLogger.Instance);
         IWorkflowFoundry? createdFoundry = null;
 
         await coordinator.ResumeAsync(
@@ -109,6 +110,7 @@ public class RecoveryCoordinatorShould
 
         var coordinator = new RecoveryCoordinator(
             provider,
+            TestNullLogger.Instance,
             new RecoveryMiddlewareOptions
             {
                 MaxRetryAttempts = 3,
@@ -156,6 +158,7 @@ public class RecoveryCoordinatorShould
 
         var coordinator = new RecoveryCoordinator(
             provider,
+            TestNullLogger.Instance,
             new RecoveryMiddlewareOptions
             {
                 MaxRetryAttempts = 2,
@@ -190,7 +193,7 @@ public class RecoveryCoordinatorShould
         await provider.SaveAsync(snapshot2);
 
         var catalog = new InMemoryRecoveryCatalog(snapshot1, snapshot2);
-        var coordinator = new RecoveryCoordinator(provider);
+        var coordinator = new RecoveryCoordinator(provider, TestNullLogger.Instance);
         var completed = 0;
 
         var resumed = await coordinator.ResumeAllAsync(
@@ -219,7 +222,7 @@ public class RecoveryCoordinatorShould
         await provider.SaveAsync(failingSnapshot);
 
         var catalog = new InMemoryRecoveryCatalog(healthySnapshot, failingSnapshot);
-        var coordinator = new RecoveryCoordinator(provider);
+        var coordinator = new RecoveryCoordinator(provider, TestNullLogger.Instance);
 
         var resumed = await coordinator.ResumeAllAsync(
             foundryFactory: () => WorkflowForge.CreateFoundry("ResumeAll-Mixed"),

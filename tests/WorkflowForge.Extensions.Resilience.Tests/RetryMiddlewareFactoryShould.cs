@@ -1,5 +1,6 @@
 using System;
 using WorkflowForge.Extensions.Resilience.Strategies;
+using WorkflowForge.Loggers;
 
 namespace WorkflowForge.Extensions.Resilience.Tests;
 
@@ -8,7 +9,7 @@ public class RetryMiddlewareFactoryShould
     [Fact]
     public void CreateMiddleware_GivenWithFixedInterval()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         var middleware = RetryMiddleware.WithFixedInterval(logger, TimeSpan.FromMilliseconds(100));
 
         Assert.NotNull(middleware);
@@ -17,7 +18,7 @@ public class RetryMiddlewareFactoryShould
     [Fact]
     public void CreateMiddleware_GivenWithFixedIntervalAndCustomAttempts()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         var middleware = RetryMiddleware.WithFixedInterval(logger, TimeSpan.FromMilliseconds(100), maxAttempts: 5);
 
         Assert.NotNull(middleware);
@@ -26,7 +27,7 @@ public class RetryMiddlewareFactoryShould
     [Fact]
     public void CreateMiddleware_GivenWithFixedIntervalAndPredicate()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         var middleware = RetryMiddleware.WithFixedInterval(logger, TimeSpan.FromMilliseconds(100),
             retryPredicate: ex => ex is InvalidOperationException);
 
@@ -36,7 +37,7 @@ public class RetryMiddlewareFactoryShould
     [Fact]
     public void CreateMiddleware_GivenWithExponentialBackoff()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         var middleware = RetryMiddleware.WithExponentialBackoff(
             logger,
             TimeSpan.FromMilliseconds(100),
@@ -48,7 +49,7 @@ public class RetryMiddlewareFactoryShould
     [Fact]
     public void CreateMiddleware_GivenWithExponentialBackoffAndCustomAttempts()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         var middleware = RetryMiddleware.WithExponentialBackoff(
             logger,
             TimeSpan.FromMilliseconds(100),
@@ -61,7 +62,7 @@ public class RetryMiddlewareFactoryShould
     [Fact]
     public void CreateMiddleware_GivenWithRandomInterval()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         var middleware = RetryMiddleware.WithRandomInterval(
             logger,
             TimeSpan.FromMilliseconds(50),
@@ -73,7 +74,7 @@ public class RetryMiddlewareFactoryShould
     [Fact]
     public void CreateMiddleware_GivenWithRandomIntervalAndCustomAttempts()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         var middleware = RetryMiddleware.WithRandomInterval(
             logger,
             TimeSpan.FromMilliseconds(50),
@@ -86,7 +87,7 @@ public class RetryMiddlewareFactoryShould
     [Fact]
     public void CreateMiddleware_GivenDefault()
     {
-        var logger = WorkflowForgeLoggers.Null;
+        var logger = NullLogger.Instance;
         var middleware = RetryMiddleware.Default(logger);
 
         Assert.NotNull(middleware);

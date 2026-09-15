@@ -10,6 +10,7 @@ namespace WorkflowForge.Benchmarks.Comparative.Implementations.Elsa;
 public class Scenario7_CreationOverhead_Elsa : IWorkflowScenario
 {
     private readonly ScenarioParameters _parameters;
+    private ServiceProvider? _serviceProvider;
 
     public string Name => "Creation Overhead";
     public string Description => "Measure workflow definition creation time";
@@ -17,19 +18,22 @@ public class Scenario7_CreationOverhead_Elsa : IWorkflowScenario
     public Scenario7_CreationOverhead_Elsa(ScenarioParameters parameters)
     { _parameters = parameters; }
 
-    public Task SetupAsync() => Task.CompletedTask;
+    public Task SetupAsync()
+    {
+        // Container construction belongs in setup. Building the whole AddElsa() graph inside the
+        // timed method measured DI registration, not workflow creation, and made this arm
+        // incomparable with the WorkflowCore and WorkflowForge arms.
+        var services = new ServiceCollection();
+        services.AddElsa();
+        _serviceProvider = services.BuildServiceProvider();
+        _ = _serviceProvider.GetRequiredService<IWorkflowRunner>();
+        return Task.CompletedTask;
+    }
 
     public async Task<ScenarioResult> ExecuteAsync()
     {
-        var services = new ServiceCollection();
-        services.AddElsa();
-        var serviceProvider = services.BuildServiceProvider();
-        var workflowRunner = serviceProvider.GetRequiredService<IWorkflowRunner>();
-
-        // Just create workflow instance, don't execute
+        // Just create the workflow definition, don't execute it.
         var workflow = new CreationWorkflow();
-
-        if (serviceProvider is IDisposable disposable) disposable.Dispose();
         await Task.CompletedTask;
 
         return new ScenarioResult
@@ -41,7 +45,12 @@ public class Scenario7_CreationOverhead_Elsa : IWorkflowScenario
         };
     }
 
-    public Task CleanupAsync() => Task.CompletedTask;
+    public Task CleanupAsync()
+    {
+        _serviceProvider?.Dispose();
+        _serviceProvider = null;
+        return Task.CompletedTask;
+    }
 
     public class CreationWorkflow : WorkflowBase
     {

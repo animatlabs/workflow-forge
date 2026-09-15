@@ -38,22 +38,30 @@ namespace WorkflowForge.Operations
             if (foundry == null)
                 throw new ArgumentNullException(nameof(foundry));
 
-            // Create logging properties with comprehensive operation information
-            var loggingProperties = new Dictionary<string, string>
+            // These properties are only ever read by the two debug messages below.
+            var logDebug = foundry.Logger.IsEnabled(WorkflowForgeLogLevel.Debug);
+            Dictionary<string, string>? loggingProperties = null;
+            if (logDebug)
             {
-                ["DelayMs"] = _delay.TotalMilliseconds.ToString(),
-                ["InputType"] = inputData?.GetType().Name ?? FoundryPropertyKeys.NullDisplayValue,
-                ["OperationId"] = Id.ToString(),
-                ["OperationName"] = Name,
-                ["WorkflowId"] = foundry.ExecutionId.ToString(),
-                ["WorkflowName"] = foundry.CurrentWorkflow?.Name ?? FoundryPropertyKeys.UnknownValue
-            };
+                loggingProperties = new Dictionary<string, string>
+                {
+                    ["DelayMs"] = _delay.TotalMilliseconds.ToString(),
+                    ["InputType"] = inputData?.GetType().Name ?? FoundryPropertyKeys.NullDisplayValue,
+                    ["OperationId"] = Id.ToString(),
+                    ["OperationName"] = Name,
+                    ["WorkflowId"] = foundry.ExecutionId.ToString(),
+                    ["WorkflowName"] = foundry.CurrentWorkflow?.Name ?? FoundryPropertyKeys.UnknownValue
+                };
 
-            foundry.Logger.LogDebug(loggingProperties, "Starting delay operation");
+                foundry.Logger.LogDebug(loggingProperties, "Starting delay operation");
+            }
 
             await Task.Delay(_delay, cancellationToken).ConfigureAwait(false);
 
-            foundry.Logger.LogDebug(loggingProperties, "Completed delay operation");
+            if (logDebug)
+            {
+                foundry.Logger.LogDebug(loggingProperties!, "Completed delay operation");
+            }
 
             return inputData; // Pass through input data unchanged
         }

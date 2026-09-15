@@ -23,10 +23,10 @@ namespace WorkflowForge.Abstractions
     ///
     /// <para><strong>Isolation Guarantees:</strong></para>
     /// <para>
-    /// Each foundry instance is completely isolated:
+    /// Each foundry lease is isolated:
     /// <list type="bullet">
-    /// <item><description>Unique ExecutionId (Guid.NewGuid())</description></item>
-    /// <item><description>Separate Properties dictionary (new ConcurrentDictionary per foundry)</description></item>
+    /// <item><description>Unique ExecutionId per lease</description></item>
+    /// <item><description>Properties visible only to that lease; execution state is cleared between leases</description></item>
     /// <item><description>Independent middleware pipeline</description></item>
     /// <item><description>Isolated event subscriptions</description></item>
     /// </list>
@@ -35,9 +35,8 @@ namespace WorkflowForge.Abstractions
     ///
     /// <para><strong>Lifecycle:</strong></para>
     /// <para>
-    /// Foundries can be reused across multiple workflows for advanced scenarios like pipeline processing
-    /// or batch operations. Properties persist across workflow executions within the same foundry instance.
-    /// Dispose the foundry when done to release resources.
+    /// Foundries can be reused when you own the instance; the default pooled smith clears execution state
+    /// after each run. Dispose the foundry (or end the lease) to release <see cref="IWorkflowExecutionContext.Services"/>.
     /// </para>
     /// <para>
     /// The foundry pipeline is frozen during execution. Operations and middleware
@@ -74,6 +73,7 @@ namespace WorkflowForge.Abstractions
 
         /// <summary>
         /// Replaces the current operations with a new sequence.
+        /// The foundry does not take ownership: disposing it does not dispose the operations.
         /// </summary>
         /// <param name="operations">The operations to set.</param>
         void ReplaceOperations(IEnumerable<IWorkflowOperation> operations);

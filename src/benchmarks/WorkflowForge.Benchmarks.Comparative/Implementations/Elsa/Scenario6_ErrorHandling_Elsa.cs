@@ -31,12 +31,31 @@ public class Scenario6_ErrorHandling_Elsa : IWorkflowScenario
     public async Task<ScenarioResult> ExecuteAsync()
     {
         var workflow = new ErrorHandlingWorkflow();
-        var result = await _workflowRunner.RunAsync(workflow);
-        var status = result.WorkflowState.Status.ToString();
-        if (string.Equals(status, "Faulted", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(status, "Failed", StringComparison.OrdinalIgnoreCase))
+
+        // Elsa surfaces an activity fault in more than one way depending on the configured
+        // incident strategy: a recorded incident, a Faulted sub-status, or a thrown exception.
+        // Treat all three as the error path, otherwise this arm silently measures a no-op.
+        try
+        {
+            var result = await _workflowRunner.RunAsync(workflow);
+            var state = result.WorkflowState;
+
+            if (state.Incidents.Count > 0
+                || state.Status.ToString().IndexOf("Fault", StringComparison.OrdinalIgnoreCase) >= 0
+                || state.SubStatus.ToString().IndexOf("Fault", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                workflow.Compensated = true;
+            }
+        }
+        catch (InvalidOperationException)
         {
             workflow.Compensated = true;
+        }
+
+        if (!workflow.ErrorThrown)
+        {
+            throw new InvalidOperationException(
+                "Scenario6 Elsa arm never executed the failing activity; it is not measuring error handling.");
         }
 
         return new ScenarioResult

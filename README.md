@@ -14,11 +14,11 @@
 
 Workflow orchestration for .NET. The core package has no dependencies. Benchmarks show high workflow throughput, microsecond-scale operation latency, and modest steady-state allocation.
 
-**Version**: 2.1.2  
+**Version**: 2.2.0  
 **License**: MIT  
 **Compatibility**: .NET Standard 2.0
 
-Against Workflow Core and Elsa, published runs hit **13-511×** faster execution and **6-575×** lower allocation in covered scenarios. [Internal metrics](docs/performance/performance.md) and [competitive methodology](docs/performance/competitive-analysis.md) live in the docs.
+Against Workflow Core and Elsa, published runs hit **2-583×** faster execution and **1-533×** lower allocation in covered scenarios. [Internal metrics](docs/performance/performance.md) and [competitive methodology](docs/performance/competitive-analysis.md) live in the docs.
 
 ---
 
@@ -88,6 +88,9 @@ await smith.ForgeAsync(workflow);
 ### Data passing between operations
 
 ```csharp
+using WorkflowForge;
+using WorkflowForge.Extensions;   // SetProperty / GetPropertyOrDefault
+
 var workflow = WorkflowForge.CreateWorkflow("ProcessOrder")
     .AddOperation("LoadOrder", async (foundry, ct) => {
         var order = await LoadOrderFromDb();
@@ -144,7 +147,7 @@ Details: [Architecture](docs/architecture/overview.md)
 
 ## Examples
 
-**33 samples** across basics, control flow, configuration, middleware, events, all packages, and integration-style demos.
+**37 samples** across basics, control flow, configuration, middleware, events, all packages, and integration-style demos.
 
 [Basic console sample](src/samples/WorkflowForge.Samples.BasicConsole/README.md) · [Samples guide](docs/getting-started/samples-guide.md)
 
@@ -160,7 +163,7 @@ Details: [Architecture](docs/architecture/overview.md)
 | Lifecycle events | [Events](docs/core/events.md) |
 | Extensions (11 + Testing) | [Extensions](docs/extensions/index.md) |
 | Configuration | [Configuration](docs/core/configuration.md) |
-| API reference | [API Reference](docs/reference/api-reference.md) |
+| API reference | [API hub](docs/reference/api-reference.md) |
 | Benchmarks and tuning | [Performance](docs/performance/performance.md) |
 | vs. Workflow Core and Elsa | [Competitive analysis](docs/performance/competitive-analysis.md) |
 | Sample index | [Samples guide](docs/getting-started/samples-guide.md) |
@@ -175,19 +178,19 @@ Details: [Architecture](docs/architecture/overview.md)
 
 | Runtime | WorkflowForge | Workflow Core | Elsa |
 |---------|---------------|---------------|------|
-| .NET 10.0 | 65μs | 29,537μs (455x) | 33,062μs (511x) |
-| .NET 8.0 | 71μs | 21,683μs (305x) | 34,426μs (485x) |
-| .NET FX 4.8 | 61μs | 18,486μs (303x) | N/A |
+| .NET 10.0 | 59.3μs | 17133μs (288x) | 34627μs (583x) |
+| .NET 8.0 | 59.7μs | 13798μs (231x) | 33184μs (555x) |
+| .NET FX 4.8 | 55.9μs | 15166μs (271x) | N/A |
 
 **Sequential workflow** (10 operations):
 
 | Runtime | WorkflowForge | Workflow Core | Elsa |
 |---------|---------------|---------------|------|
-| .NET 10.0 | 422μs | 13,828μs (33x) | 18,676μs (44x) |
-| .NET 8.0 | 377μs | 9,879μs (26x) | 19,168μs (51x) |
-| .NET FX 4.8 | 122μs | 6,743μs (55x) | N/A |
+| .NET 10.0 | 119μs | 7074μs (60-186x) | 22028μs |
+| .NET 8.0 | 127μs | 5661μs (45-144x) | 18257μs |
+| .NET FX 4.8 | 110μs | 5896μs (53x) | N/A |
 
-On **.NET 10.0**, state machine vs. Elsa reaches **511×**. For internal latency, throughput, and allocation, see [Performance](docs/performance/performance.md). The full competitive set is in [Competitive analysis](docs/performance/competitive-analysis.md).
+On **.NET 10.0**, state machine vs. Elsa reaches **584×**. For internal latency, throughput, and allocation, see [Performance](docs/performance/performance.md). The full competitive set is in [Competitive analysis](docs/performance/competitive-analysis.md).
 
 ---
 

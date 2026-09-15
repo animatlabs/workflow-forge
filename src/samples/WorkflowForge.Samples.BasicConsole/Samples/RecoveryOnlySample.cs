@@ -33,7 +33,7 @@ public class RecoveryOnlySample : ISample
         using (var f1 = WorkflowForge.CreateFoundry("RecoveryOnlyDemo"))
         {
             f1.UsePersistence(provider, options);
-            var smith = WorkflowForge.CreateSmith();
+            using var smith = WorkflowForge.CreateSmith();
             try
             {
                 await smith.ForgeAsync(workflow, f1);
@@ -48,7 +48,7 @@ public class RecoveryOnlySample : ISample
         using (var f2 = WorkflowForge.CreateFoundry("RecoveryOnlyDemo"))
         {
             f2.UsePersistence(provider, options);
-            var smith = WorkflowForge.CreateSmith();
+            using var smith = WorkflowForge.CreateSmith();
             await smith.ForgeWithRecoveryAsync(
                 workflow,
                 f2,

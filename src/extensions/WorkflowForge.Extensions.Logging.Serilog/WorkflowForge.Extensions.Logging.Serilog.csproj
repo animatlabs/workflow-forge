@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <!-- Version is centralized in src/Directory.Build.props -->
-    <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -32,34 +31,42 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ILRepackTargetsFile>$(MSBuildThisFileDirectory)ILRepack.targets</ILRepackTargetsFile>
+    <WorkflowForgeIlRepackVerifyAssemblies>Serilog.dll;Serilog.Sinks.Console.dll</WorkflowForgeIlRepackVerifyAssemblies>
     
-    <!-- Documentation -->
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- Documentation (NuGet readme generated; see src/build/Packaging/NuGetReadme.targets) -->
     <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes><![CDATA[WorkflowForge.Extensions.Logging.Serilog 2.2.0
+
+BREAKING
+- Removed SerilogLoggerFactory.CreateLogger(ILogger). Its parameter was an internalized Serilog type, so the overload could not be called from outside the assembly. Use CreateLogger(SerilogLoggerOptions) or CreateLogger(ILoggerFactory).
+
+Fixed
+- Structured properties and scopes reached no sink: the embedded pipeline never enabled Enrich.FromLogContext(), so everything pushed through LogContext was dropped.
+- The logger returned by CreateLogger(SerilogLoggerOptions) now owns and disposes its Serilog pipeline.
+- Dropped the unused Serilog.Extensions.Logging reference, removing a 10.0.10 dependency floor.
+
+Full changelog: https://github.com/animatlabs/workflow-forge/blob/main/CHANGELOG.md#220---2026-09-15]]></PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="../../../icon.png" Pack="true" PackagePath="\" />
+    <None Include="../../build/Packaging/THIRD-PARTY-NOTICES-Serilog.txt" Pack="true" PackagePath="THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
-    <PackageReference Include="Serilog" Version="4.4.0" PrivateAssets="all" />
-    <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" PrivateAssets="all" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Serilog" PrivateAssets="all" />
+    <PackageReference Include="Serilog.Sinks.Console" PrivateAssets="all" />
     <!--
-      Serilog* assemblies are ILRepack-merged (PrivateAssets="all"), so their transitive
-      dependencies are NOT written to this package's nuspec. The merged IL still references these
-      at runtime; declare them as regular (flowing) dependencies so consumers don't hit
-      FileNotFoundException. Microsoft.Extensions.Logging (full) is distinct from the .Abstractions
-      reference above and pulls its own subtree. Do NOT ILRepack these (System.* identity).
+      Serilog is ILRepack-merged (PrivateAssets="all"), so its transitive dependencies are NOT
+      written to this package's nuspec. The merged IL still references these at runtime; declare
+      them as regular (flowing) dependencies so consumers don't hit FileNotFoundException.
+      Do NOT ILRepack these (System.* type-identity conflicts).
     -->
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.10" />
-    <PackageReference Include="System.Threading.Channels" Version="10.0.10" />
-    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="10.0.10" />
-    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.46" PrivateAssets="all" />
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="10.29.0.143774">
+    <PackageReference Include="System.Threading.Channels" />
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" />
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" PrivateAssets="all" />
+    <PackageReference Include="SonarAnalyzer.CSharp">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -67,6 +74,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\core\WorkflowForge\WorkflowForge.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WorkflowForge.Extensions.Logging.Serilog.Tests, PublicKey=00240000048000009400000006020000002400005253413100040000010001009d883a96b0c1cfcb01446b2ba3852a92b3bc02360271519ee55b0b7fa1b6800caa47bb0549aa61d1ffc32a5a868596e3f232b875cca12d4e16bb28344a4aa91f233a28fb18bffbf962d661c1120760cc04b8431fd2e2c02104b92095e7ffd7ebd58ccac1fdb32ac7418d60176305494ee7d3f86192d8d4acef83642b81ce5ed2" />
   </ItemGroup>
 
 </Project>

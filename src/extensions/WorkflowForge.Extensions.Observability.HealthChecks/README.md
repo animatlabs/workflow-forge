@@ -97,13 +97,13 @@ if (result?.Status == HealthStatus.Unhealthy)
 }
 ```
 
-[Health checks configuration](../../../docs/core/configuration.md)
+[Health checks configuration](https://animatlabs.com/workflow-forge/core/configuration/)
 
 You can surface results over ASP.NET Core `/health`, Application Insights, Prometheus, or your own dashboards.
 
 ## Links
 
-- [Getting Started](../../../docs/getting-started/getting-started.md)
-- [Configuration Guide](../../../docs/core/configuration.md)
-- [Extensions Overview](../../../docs/extensions/index.md)
-- [Sample 16: Health Checks](../../samples/WorkflowForge.Samples.BasicConsole/README.md)
+- [Getting Started](https://animatlabs.com/workflow-forge/getting-started/getting-started/)
+- [Configuration Guide](https://animatlabs.com/workflow-forge/core/configuration/)
+- [Extensions Overview](https://animatlabs.com/workflow-forge/extensions/)
+- [Sample 16: Health Checks](https://github.com/animatlabs/workflow-forge/blob/main/src/samples/WorkflowForge.Samples.BasicConsole/README.md)

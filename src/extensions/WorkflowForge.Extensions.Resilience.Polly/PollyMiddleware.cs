@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Polly;
@@ -6,6 +7,7 @@ using Polly.CircuitBreaker;
 using Polly.Retry;
 using Polly.Timeout;
 using WorkflowForge.Abstractions;
+using WorkflowForge.Extensions.Resilience.Polly.Options;
 
 namespace WorkflowForge.Extensions.Resilience.Polly
 {
@@ -18,6 +20,8 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         private readonly ResiliencePipeline _pipeline;
         private readonly IWorkflowForgeLogger _logger;
         private readonly string _name;
+        private readonly bool _detailedLogging;
+        private readonly IDictionary<string, string>? _scopeTags;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PollyMiddleware"/> class.
@@ -26,10 +30,22 @@ namespace WorkflowForge.Extensions.Resilience.Polly
         /// <param name="logger">The logger for middleware events.</param>
         /// <param name="name">Optional name for the middleware.</param>
         internal PollyMiddleware(ResiliencePipeline pipeline, IWorkflowForgeLogger logger, string? name = null)
+            : this(pipeline, logger, name, detailedLogging: true, scopeTags: null)
+        {
+        }
+
+        private PollyMiddleware(
+            ResiliencePipeline pipeline,
+            IWorkflowForgeLogger logger,
+            string? name,
+            bool detailedLogging,
+            IDictionary<string, string>? scopeTags)
         {
             _pipeline = pipeline ?? throw new ArgumentNullException(nameof(pipeline));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _name = name ?? "PollyMiddleware";
+            _detailedLogging = detailedLogging;
+            _scopeTags = scopeTags != null && scopeTags.Count > 0 ? scopeTags : null;
         }
 
         /// <summary>
@@ -45,18 +61,25 @@ namespace WorkflowForge.Extensions.Resilience.Polly
             Func<CancellationToken, Task<object?>> next,
             CancellationToken cancellationToken = default)
         {
-            using var policyScope = _logger.BeginScope(_name);
+            using var policyScope = _logger.BeginScope(_name, _scopeTags);
 
             try
             {
-                _logger.LogDebug(ResilienceLogMessages.PolicyPipelineExecutionStarted);
+                if (_detailedLogging)
+                {
+                    _logger.LogDebug(ResilienceLogMessages.PolicyPipelineExecutionStarted);
+                }
 
                 var result = await _pipeline.ExecuteAsync(async (ct) =>
                 {
                     return await next(ct).ConfigureAwait(false);
                 }, cancellationToken).ConfigureAwait(false);
 
-                _logger.LogDebug(ResilienceLogMessages.PolicyPipelineExecutionCompleted);
+                if (_detailedLogging)
+                {
+                    _logger.LogDebug(ResilienceLogMessages.PolicyPipelineExecutionCompleted);
+                }
+
                 return result;
             }
             catch (BrokenCircuitException ex)
@@ -76,6 +99,133 @@ namespace WorkflowForge.Extensions.Resilience.Polly
                 _logger.LogError(errorProperties, ex, ResilienceLogMessages.PolicyPipelineExecutionFailed);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Creates middleware whose pipeline is composed from the supplied options.
+        /// Only the strategies whose settings are enabled are added, in the order
+        /// timeout, retry, circuit breaker.
+        /// </summary>
+        /// <param name="options">The options describing the pipeline.</param>
+        /// <param name="logger">The logger to use.</param>
+        /// <returns>A new Polly middleware instance.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when options or logger is null.</exception>
+        public static PollyMiddleware FromOptions(PollyMiddlewareOptions options, IWorkflowForgeLogger logger)
+        {
+            if (options == null)
+                throw new ArgumentNullException(nameof(options));
+            if (logger == null)
+                throw new ArgumentNullException(nameof(logger));
+
+            if (!options.Enabled)
+            {
+                return new PollyMiddleware(
+                    ResiliencePipeline.Empty,
+                    logger,
+                    "PollyDisabled",
+                    options.EnableDetailedLogging,
+                    options.DefaultTags);
+            }
+
+            if (options.EnableComprehensivePolicies)
+            {
+                var comprehensive = WithComprehensivePolicy(
+                    logger,
+                    options.Retry.MaxRetryAttempts,
+                    options.Retry.BaseDelay,
+                    options.CircuitBreaker.FailureThreshold,
+                    options.CircuitBreaker.BreakDuration,
+                    options.Timeout.DefaultTimeout);
+
+                return new PollyMiddleware(
+                    comprehensive._pipeline,
+                    logger,
+                    comprehensive._name,
+                    options.EnableDetailedLogging,
+                    options.DefaultTags);
+            }
+
+            var builder = new ResiliencePipelineBuilder();
+            var names = new List<string>();
+
+            if (options.Timeout.IsEnabled)
+            {
+                builder.AddTimeout(options.Timeout.DefaultTimeout);
+                names.Add("timeout");
+            }
+
+            if (options.Retry.IsEnabled)
+            {
+                builder.AddRetry(BuildRetryOptions(options.Retry, logger));
+                names.Add("retry");
+            }
+
+            if (options.CircuitBreaker.IsEnabled)
+            {
+                builder.AddCircuitBreaker(BuildCircuitBreakerOptions(options.CircuitBreaker, logger));
+                names.Add("circuitBreaker");
+            }
+
+            var name = names.Count == 0 ? "PollyNoStrategies" : "Polly(" + string.Join(",", names.ToArray()) + ")";
+
+            return new PollyMiddleware(
+                builder.Build(),
+                logger,
+                name,
+                options.EnableDetailedLogging,
+                options.DefaultTags);
+        }
+
+        private static RetryStrategyOptions BuildRetryOptions(PollyRetrySettings settings, IWorkflowForgeLogger logger)
+        {
+            return new RetryStrategyOptions
+            {
+                ShouldHandle = new PredicateBuilder().Handle<Exception>(ex => !(ex is OperationCanceledException)),
+                MaxRetryAttempts = settings.MaxRetryAttempts,
+                Delay = settings.BaseDelay,
+                BackoffType = ParseBackoffType(settings.BackoffType),
+                UseJitter = settings.UseJitter,
+                OnRetry = args =>
+                {
+                    var delayMs = args.RetryDelay.TotalMilliseconds.ToString("F0");
+                    logger.LogWarning("{Message} (Attempt {RetryAttempt} of {MaxRetryAttempts} in {RetryDelayMs}ms)",
+                        ResilienceLogMessages.RetryAttemptStarted, args.AttemptNumber, settings.MaxRetryAttempts, delayMs);
+                    return default;
+                }
+            };
+        }
+
+        private static CircuitBreakerStrategyOptions BuildCircuitBreakerOptions(PollyCircuitBreakerSettings settings, IWorkflowForgeLogger logger)
+        {
+            return new CircuitBreakerStrategyOptions
+            {
+                ShouldHandle = new PredicateBuilder().Handle<Exception>(ex => !(ex is OperationCanceledException)),
+                FailureRatio = Math.Min(1.0, settings.FailureThreshold / 10.0),
+                MinimumThroughput = Math.Max(2, settings.MinimumThroughput),
+                SamplingDuration = settings.SamplingDuration,
+                BreakDuration = settings.BreakDuration,
+                OnOpened = args =>
+                {
+                    logger.LogWarning("{Message} (State: Open, Threshold: {FailureThreshold})",
+                        ResilienceLogMessages.CircuitBreakerOpened, settings.FailureThreshold);
+                    return default;
+                },
+                OnClosed = args =>
+                {
+                    logger.LogInformation("{Message} (State: Closed)", ResilienceLogMessages.CircuitBreakerReset);
+                    return default;
+                }
+            };
+        }
+
+        private static DelayBackoffType ParseBackoffType(string? backoffType)
+        {
+            if (string.Equals(backoffType, "Linear", StringComparison.OrdinalIgnoreCase))
+                return DelayBackoffType.Linear;
+            if (string.Equals(backoffType, "Constant", StringComparison.OrdinalIgnoreCase))
+                return DelayBackoffType.Constant;
+
+            return DelayBackoffType.Exponential;
         }
 
         /// <summary>

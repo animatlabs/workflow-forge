@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using WorkflowForge.Operations;
 
 namespace WorkflowForge.Abstractions
 {
@@ -8,6 +9,14 @@ namespace WorkflowForge.Abstractions
     /// </summary>
     public interface IWorkflowForgeLogger
     {
+        /// <summary>
+        /// Returns whether the given log level is enabled for this logger.
+        /// Call before allocating message payloads for disabled levels.
+        /// </summary>
+        /// <param name="level">The log level to check.</param>
+        /// <returns><see langword="true"/> when messages at <paramref name="level"/> would be emitted.</returns>
+        bool IsEnabled(WorkflowForgeLogLevel level);
+
         /// <summary>
         /// Log a message with log level as trace.
         /// </summary>

@@ -63,17 +63,20 @@ public async Task Workflow_Should_ExecuteAllOperations()
 
 ### Logger and reset
 
+The package ships `TestNullLogger`, a no-op logger used as the default. To assert on log output,
+supply your own recording implementation of `IWorkflowForgeLogger`:
+
 ```csharp
 [Fact]
 public async Task Operation_Should_Log_Messages()
 {
-    var testLogger = new TestLogger();
-    var foundry = new FakeWorkflowFoundry { Logger = testLogger };
+    var recorder = new RecordingLogger();          // your own IWorkflowForgeLogger
+    var foundry = new FakeWorkflowFoundry { Logger = recorder };
     var operation = new LoggingOperation("Test");
 
     await operation.ForgeAsync(null, foundry, CancellationToken.None);
 
-    Assert.Contains(testLogger.Messages, m => m.Contains("Test"));
+    Assert.Contains(recorder.Messages, m => m.Contains("Test"));
 }
 ```
 
@@ -102,4 +105,4 @@ public void Cleanup() => _foundry.Reset();
 
 ## License
 
-MIT. See the repository [LICENSE](../../../LICENSE).
+MIT. See the repository [LICENSE](https://github.com/animatlabs/workflow-forge/blob/main/LICENSE).

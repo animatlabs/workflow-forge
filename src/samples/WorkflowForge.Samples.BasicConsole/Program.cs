@@ -51,7 +51,7 @@ public static class Program
         ["24"] = new AuditSample(),
         ["25"] = new ConfigurationSample(),
 
-        // Onboarding Samples (26-33)
+        // Onboarding Samples (26-37)
         ["26"] = new DependencyInjectionSample(),
         ["27"] = new WorkflowMiddlewareSample(),
         ["28"] = new CancellationAndTimeoutSample(),
@@ -60,6 +60,10 @@ public static class Program
         ["31"] = new FoundryReuseSample(),
         ["32"] = new OutputChainingSample(),
         ["33"] = new ServiceProviderResolutionSample(),
+        ["34"] = new WorkflowTimeoutSample(),
+        ["35"] = new OpenTelemetryAutoInstrumentationSample(),
+        ["36"] = new AuditDetailLevelsSample(),
+        ["37"] = new PersistenceTriggersSample(),
 
         // Advanced Samples (19-20)
         ["19"] = new ComprehensiveIntegrationSample(),
@@ -89,7 +93,11 @@ public static class Program
             builder.AddConsole();
         });
 
-        ServiceProvider = services.BuildServiceProvider();
+        var serviceProvider = services.BuildServiceProvider();
+        ServiceProvider = serviceProvider;
+
+        // The provider owns console logging for the whole run; dispose it on the way out.
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => serviceProvider.Dispose();
 
         if (args.Length > 0 && args[0].Equals("--validate", StringComparison.OrdinalIgnoreCase))
         {

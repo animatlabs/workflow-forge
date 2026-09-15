@@ -1,6 +1,6 @@
 # WorkflowForge Basic Console samples
 
-Console menu for **WorkflowForge 2.1.2**. Run a single sample or queue them all.
+Console menu for **WorkflowForge 2.2.0**. Run a single sample or queue them all.
 
 ## Run
 
@@ -9,7 +9,7 @@ cd src/samples/WorkflowForge.Samples.BasicConsole
 dotnet run
 ```
 
-## Samples (33)
+## Samples (37)
 
 ### Basic (1–4)
 
@@ -46,7 +46,7 @@ dotnet run
 - **24. Audit:** pluggable audit sinks  
 - **25. Configuration-driven:** turn extensions on or off from `appsettings.json`  
 
-### Onboarding (26–33)
+### Onboarding (26–37)
 
 - **26. Dependency injection:** register and resolve `IWorkflowSmith`  
 - **27. Workflow middleware:** scope middleware to the whole workflow  
@@ -55,7 +55,11 @@ dotnet run
 - **30. Compensation behaviors:** success vs failure rollback  
 - **31. Foundry reuse:** one foundry, many workflows  
 - **32. Output chaining:** feed one operation’s output into the next  
-- **33. Service provider access:** resolve dependencies inside operations  
+- **33. Service provider access:** resolve dependencies inside operations
+- **34. Workflow timeout:** bound the whole run with `WorkflowTimeoutMiddleware`
+- **35. OpenTelemetry auto-instrumentation:** one span per operation, no instrumentation code
+- **36. Audit detail levels:** what `Minimal` / `Standard` / `Verbose` / `Complete` each capture
+- **37. Persistence triggers:** when each `PersistOn*` option writes a checkpoint  
 
 ### Advanced (19–20)
 
@@ -64,7 +68,7 @@ dotnet run
 
 ## Menu
 
-- **1–33:** single sample  
+- **1–37:** single sample  
 - **A:** run all samples in order  
 - **B:** basics only (1–4)  
 - **Q:** quit  
@@ -77,7 +81,7 @@ Most samples narrate on the console, print timings where it matters, and failure
 
 ## Path through the menu
 
-Start with **1–4**, add **5–12** for control flow and wiring, then **13–33** for extensions and hosting notes. **19–20** are the widest end-to-end passes.
+Start with **1–4**, add **5–12** for control flow and wiring, then **13–37** for extensions and hosting notes. **19–20** are the widest end-to-end passes.
 
 ## What is covered
 

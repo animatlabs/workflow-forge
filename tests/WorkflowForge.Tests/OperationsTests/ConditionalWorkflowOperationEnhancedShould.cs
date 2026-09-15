@@ -154,7 +154,7 @@ public class ConditionalWorkflowOperationEnhancedShould
     [Fact]
     public async Task PropagateToCondition_GivenCancellation()
     {
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var conditionCalled = false;
         var condition = new Func<object?, IWorkflowFoundry, CancellationToken, Task<bool>>((_, _, ct) =>
         {
